@@ -64,11 +64,11 @@ class AdminPanelProvider extends PanelProvider
             ),
             Css::make(
                 'workmode-order',
-                asset('css/workmode-order.css') . '?v=20260520-workmode-final'
+                asset('css/workmode-order.css') . '?v=20260601-product-profiles-lote3'
             ),
             Css::make(
                 'workmode-ux',
-                asset('css/workmode-ux.css') . '?v=20260520-workmode-final'
+                asset('css/workmode-ux.css') . '?v=20260601-product-profiles-lote3'
             ),
         ]);
 
