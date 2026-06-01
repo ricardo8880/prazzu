@@ -195,6 +195,7 @@
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "git-widget-placeholder": "main",
@@ -266,6 +267,7 @@
       <workItem from="1780053769232" duration="2541000" />
       <workItem from="1780073384080" duration="738000" />
       <workItem from="1780313929440" duration="880000" />
+      <workItem from="1780325191046" duration="595000" />
     </task>
     <servers />
   </component>
