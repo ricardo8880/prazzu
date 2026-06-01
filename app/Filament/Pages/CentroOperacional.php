@@ -22,6 +22,11 @@ class CentroOperacional extends Page
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.centro-operacional';
 
+    public function getHeading(): string
+    {
+        return '';
+    }
+
     protected function getViewData(): array
     {
         return [
