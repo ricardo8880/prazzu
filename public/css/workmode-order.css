@@ -1,0 +1,255 @@
+/* =========================
+   WORKMODE - ORDEM REAL DA SIDEBAR
+   Projeto atual: grupos reais do Filament
+   Trabalho, Governança, Clientes, Documentos, Financeiro, Relatórios, Configurações
+
+   Importante:
+   - Não usa display:none.
+   - Não mexe em $store.sidebar.
+   - Não força hidden.
+   - Apenas muda order visual dos grupos.
+   ========================= */
+
+
+
+/* Cada grupo principal fica ordenável. */
+.fi-sidebar-nav [data-group-label] {
+    order: 50;
+    transition:
+        order .2s ease,
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+/* =========================
+   MODO GERAL / DEFAULT
+   Mantém o menu natural sem forçar prioridade.
+   ========================= */
+html[data-workmode="default"] .fi-sidebar-nav [data-group-label] {
+    order: initial;
+}
+
+/* =========================
+   MODO RH
+   No seu projeto, RH está dentro do grupo "Trabalho".
+   ========================= */
+html[data-workmode="rh"] [data-group-label="Trabalho"],
+html[data-workmode="rh"] [data-group-label="TRABALHO"] {
+    order: 1;
+}
+
+html[data-workmode="rh"] [data-group-label="Documentos"] {
+    order: 2;
+}
+
+html[data-workmode="rh"] [data-group-label="Relatórios"] {
+    order: 3;
+}
+
+html[data-workmode="rh"] [data-group-label="Clientes"] {
+    order: 4;
+}
+
+html[data-workmode="rh"] [data-group-label="Financeiro"] {
+    order: 20;
+}
+
+html[data-workmode="rh"] [data-group-label="Governança"] {
+    order: 30;
+}
+
+html[data-workmode="rh"] [data-group-label="Configurações"] {
+    order: 90;
+}
+
+/* =========================
+   MODO CONTÁBIL
+   ========================= */
+html[data-workmode="contabil"] [data-group-label="Financeiro"] {
+    order: 1;
+}
+
+html[data-workmode="contabil"] [data-group-label="Documentos"] {
+    order: 2;
+}
+
+html[data-workmode="contabil"] [data-group-label="Relatórios"] {
+    order: 3;
+}
+
+html[data-workmode="contabil"] [data-group-label="Clientes"] {
+    order: 4;
+}
+
+html[data-workmode="contabil"] [data-group-label="Governança"] {
+    order: 20;
+}
+
+html[data-workmode="contabil"] [data-group-label="Trabalho"],
+html[data-workmode="contabil"] [data-group-label="TRABALHO"] {
+    order: 30;
+}
+
+html[data-workmode="contabil"] [data-group-label="Configurações"] {
+    order: 90;
+}
+
+/* =========================
+   MODO FINANCEIRO
+   ========================= */
+html[data-workmode="financeiro"] [data-group-label="Financeiro"] {
+    order: 1;
+}
+
+html[data-workmode="financeiro"] [data-group-label="Relatórios"] {
+    order: 2;
+}
+
+html[data-workmode="financeiro"] [data-group-label="Clientes"] {
+    order: 3;
+}
+
+html[data-workmode="financeiro"] [data-group-label="Documentos"] {
+    order: 4;
+}
+
+html[data-workmode="financeiro"] [data-group-label="Governança"] {
+    order: 20;
+}
+
+html[data-workmode="financeiro"] [data-group-label="Trabalho"],
+html[data-workmode="financeiro"] [data-group-label="TRABALHO"] {
+    order: 30;
+}
+
+html[data-workmode="financeiro"] [data-group-label="Configurações"] {
+    order: 90;
+}
+
+/* =========================
+   MODO DOCUMENTOS
+   ========================= */
+html[data-workmode="documentos"] [data-group-label="Documentos"] {
+    order: 1;
+}
+
+html[data-workmode="documentos"] [data-group-label="Trabalho"],
+html[data-workmode="documentos"] [data-group-label="TRABALHO"] {
+    order: 2;
+}
+
+html[data-workmode="documentos"] [data-group-label="Clientes"] {
+    order: 3;
+}
+
+html[data-workmode="documentos"] [data-group-label="Financeiro"] {
+    order: 4;
+}
+
+html[data-workmode="documentos"] [data-group-label="Relatórios"] {
+    order: 5;
+}
+
+html[data-workmode="documentos"] [data-group-label="Governança"] {
+    order: 20;
+}
+
+html[data-workmode="documentos"] [data-group-label="Configurações"] {
+    order: 90;
+}
+
+/* =========================
+   MODO CLIENTES
+   ========================= */
+html[data-workmode="clientes"] [data-group-label="Clientes"] {
+    order: 1;
+}
+
+html[data-workmode="clientes"] [data-group-label="Documentos"] {
+    order: 2;
+}
+
+html[data-workmode="clientes"] [data-group-label="Financeiro"] {
+    order: 3;
+}
+
+html[data-workmode="clientes"] [data-group-label="Relatórios"] {
+    order: 4;
+}
+
+html[data-workmode="clientes"] [data-group-label="Trabalho"],
+html[data-workmode="clientes"] [data-group-label="TRABALHO"] {
+    order: 20;
+}
+
+html[data-workmode="clientes"] [data-group-label="Governança"] {
+    order: 30;
+}
+
+html[data-workmode="clientes"] [data-group-label="Configurações"] {
+    order: 90;
+}
+
+/* =========================
+   MODO GOVERNANÇA
+   ========================= */
+html[data-workmode="governanca"] [data-group-label="Governança"] {
+    order: 1;
+}
+
+html[data-workmode="governanca"] [data-group-label="Relatórios"] {
+    order: 2;
+}
+
+html[data-workmode="governanca"] [data-group-label="Documentos"] {
+    order: 3;
+}
+
+html[data-workmode="governanca"] [data-group-label="Clientes"] {
+    order: 20;
+}
+
+html[data-workmode="governanca"] [data-group-label="Financeiro"] {
+    order: 30;
+}
+
+html[data-workmode="governanca"] [data-group-label="Trabalho"],
+html[data-workmode="governanca"] [data-group-label="TRABALHO"] {
+    order: 40;
+}
+
+html[data-workmode="governanca"] [data-group-label="Configurações"] {
+    order: 90;
+}
+
+/* =========================
+   MODO RELATÓRIOS
+   ========================= */
+html[data-workmode="relatorios"] [data-group-label="Relatórios"] {
+    order: 1;
+}
+
+html[data-workmode="relatorios"] [data-group-label="Financeiro"] {
+    order: 2;
+}
+
+html[data-workmode="relatorios"] [data-group-label="Documentos"] {
+    order: 3;
+}
+
+html[data-workmode="relatorios"] [data-group-label="Clientes"] {
+    order: 4;
+}
+
+html[data-workmode="relatorios"] [data-group-label="Governança"] {
+    order: 5;
+}
+
+html[data-workmode="relatorios"] [data-group-label="Trabalho"],
+html[data-workmode="relatorios"] [data-group-label="TRABALHO"] {
+    order: 20;
+}
+
+html[data-workmode="relatorios"] [data-group-label="Configurações"] {
+    order: 90;
+}

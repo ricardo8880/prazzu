@@ -1,0 +1,1302 @@
+{
+    "executado_em": "2026-05-25 18:39:38",
+    "ambiente": "local",
+    "app_url": "http://localhost",
+    "database_connection": "mysql",
+    "limite_amostragem": 1000,
+    "duracao_segundos": 0.23,
+    "resumo": {
+        "ok": 163,
+        "avisos": 8,
+        "erros": 0
+    },
+    "achados": [
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "PHP >= 8.2",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP bcmath carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP ctype carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP curl carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP dom carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP fileinfo carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP json carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP mbstring carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP openssl carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP pdo carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP tokenizer carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Extensão PHP xml carregada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "APP_KEY configurada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "APP_URL configurada",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Ambiente PHP/Laravel",
+            "mensagem": "APP_ENV não está como production.",
+            "detalhe": "Isso é esperado em desenvolvimento/homologação. Revise antes de publicar.",
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Locale configurado para português",
+            "detalhe": null,
+            "contexto": {
+                "locale": "pt_BR"
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório existe: C:\\xampp\\htdocs\\sistemrh\\storage",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório gravável: C:\\xampp\\htdocs\\sistemrh\\storage",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório existe: C:\\xampp\\htdocs\\sistemrh\\storage\\logs",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório gravável: C:\\xampp\\htdocs\\sistemrh\\storage\\logs",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório existe: C:\\xampp\\htdocs\\sistemrh\\storage\\framework",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório gravável: C:\\xampp\\htdocs\\sistemrh\\storage\\framework",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório existe: C:\\xampp\\htdocs\\sistemrh\\storage\\app/public",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório gravável: C:\\xampp\\htdocs\\sistemrh\\storage\\app/public",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório existe: C:\\xampp\\htdocs\\sistemrh\\bootstrap\\cache",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Diretório gravável: C:\\xampp\\htdocs\\sistemrh\\bootstrap\\cache",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Execute php artisan storage:link para publicar anexos e uploads.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Banco e schema real",
+            "mensagem": "Conexão com banco funcionando.",
+            "detalhe": null,
+            "contexto": {
+                "connection": "mysql"
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela users existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela empresas existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela assinaturas existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela pagamentos existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela responsaveis existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela item_controles existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela item_controle_assinaturas existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela item_controle_anexos existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela portal_solicitacoes existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela prazzu_client_portal_messages existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Tabela prazzu_permissions existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Estrutura de clientes disponível.",
+            "detalhe": null,
+            "contexto": {
+                "clientes": false,
+                "crm_clientes": true,
+                "financeiro_clientes": true
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.razao_social existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.nome_fantasia existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.cnpj existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.email existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.plano existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.ativo existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.limite_usuarios existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna empresas.limite_itens existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna users.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna users.name existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna users.email existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna users.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.gateway existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.gateway_customer_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.gateway_subscription_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.plano existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.valor existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.proximo_vencimento existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna assinaturas.cancelado_em existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.assinatura_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.gateway_payment_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.valor existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.vencimento existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.pago_em existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna pagamentos.invoice_url existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.responsavel_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.titulo existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.data_vencimento existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.portal_ativo existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.portal_token existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.portal_expira_em existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.portal_status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.approval_status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.document_status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.custom_payload existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.bloqueado existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.faturado_em existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controles.pago_em existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.item_controle_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.nome existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.email existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.hash_assinatura existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_assinaturas.assinado_em existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.item_controle_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.arquivo existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.caminho existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.nome_original existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.mime_type existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna item_controle_anexos.tamanho_bytes existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.item_controle_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.titulo existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.descricao existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.prioridade existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna portal_solicitacoes.status existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna prazzu_client_portal_messages.id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna prazzu_client_portal_messages.empresa_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna prazzu_client_portal_messages.item_controle_id existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna prazzu_client_portal_messages.message existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Coluna prazzu_client_portal_messages.sender_type existe",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Contagem",
+            "mensagem": "Total de empresas cadastradas: 12",
+            "detalhe": null,
+            "contexto": {
+                "tabela": "empresas",
+                "total": 12
+            }
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Empresas com e-mail duplicado.",
+            "detalhe": null,
+            "contexto": {
+                "tabela": "empresas",
+                "coluna": "email",
+                "grupos": 1,
+                "amostra": [
+                    {
+                        "email": "testecompleto@prazzu.com",
+                        "total": 4
+                    }
+                ]
+            }
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Empresas com CNPJ duplicado.",
+            "detalhe": null,
+            "contexto": {
+                "tabela": "empresas",
+                "coluna": "cnpj",
+                "grupos": 1,
+                "amostra": [
+                    {
+                        "cnpj": "99999999000199",
+                        "total": 2
+                    }
+                ]
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Empresas ativas não possuem status bloqueante.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Existem usuários sem empresa_id.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 1
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Usuários apontam para empresas existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Contagem",
+            "mensagem": "Total de itens de controle: 27",
+            "detalhe": null,
+            "contexto": {
+                "tabela": "item_controles",
+                "total": 27
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Itens apontam para empresas existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Itens possuem título.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Itens possuem status.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Existem itens com data vencida e status ainda aberto.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 21
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Itens com portal ativo possuem token.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Itens com portal_token duplicado: nenhum duplicado encontrado.",
+            "detalhe": null,
+            "contexto": {
+                "tabela": "item_controles",
+                "coluna": "portal_token",
+                "grupos": 0,
+                "amostra": []
+            }
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Existem itens com portal ativo e data expirada.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 4
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Itens com aprovação obrigatória possuem approval_status.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Assinaturas do portal apontam para itens existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Assinaturas com hash duplicado: nenhum duplicado encontrado.",
+            "detalhe": null,
+            "contexto": {
+                "tabela": "item_controle_assinaturas",
+                "coluna": "hash_assinatura",
+                "grupos": 0,
+                "amostra": []
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Não há assinaturas repetidas para o mesmo item/e-mail.",
+            "detalhe": null,
+            "contexto": {
+                "grupos": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Solicitações do portal apontam para empresas existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Solicitações vinculadas apontam para itens existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Mensagens do portal apontam para itens existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "ASAAS_API_KEY configurada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "ASAAS_WEBHOOK_TOKEN configurado.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Assinaturas apontam para empresas existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Assinaturas ativas possuem gateway_subscription_id.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Assinaturas canceladas não permanecem ativas.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Pagamentos apontam para assinaturas existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Pagamentos confirmados possuem pago_em.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "aviso",
+            "secao": "Validação",
+            "mensagem": "Existem empresas ativas sem assinatura ativa/confirmada.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 8
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Anexos apontam para itens existentes.",
+            "detalhe": null,
+            "contexto": {
+                "quantidade": 0
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Amostra de anexos existe fisicamente no disco public.",
+            "detalhe": null,
+            "contexto": {
+                "amostra_com_problema": []
+            }
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Comando de vencidos oficial existe.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Comando de notificação de vencimentos existe.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Comando de reconciliação Asaas existe.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "routes/console.php existe.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "app/Console/Kernel.php existe.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Scheduler contém item-controle:notificar-vencimentos.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Scheduler contém itens-controle:atualizar-vencidos.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Scheduler contém asaas:reconciliar-assinaturas.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Kernel não duplica scheduler de itens vencidos.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "QUEUE_CONNECTION configurada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica portal.item-controles.show registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica portal.item-controles.assinar registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica portal.item-controles.documentos registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica portal.cliente.show registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica portal.cliente.solicitacoes.store registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica asaas.webhook registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Rota crítica billing.cancelar registrada.",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: app\\Http/Controllers/PortalItemControleController.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: app\\Http/Controllers/PortalClientePublicoController.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: app\\Http/Controllers/AsaasWebhookController.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: app\\Http/Controllers/BillingController.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: app\\Services/AsaasService.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: app\\Services/GlobalSearchService.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: resources\\views/portal/item-controle-show.blade.php",
+            "detalhe": null,
+            "contexto": []
+        },
+        {
+            "nivel": "ok",
+            "secao": "Validação",
+            "mensagem": "Arquivo crítico presente: resources\\views/components/global-search.blade.php",
+            "detalhe": null,
+            "contexto": []
+        }
+    ]
+}

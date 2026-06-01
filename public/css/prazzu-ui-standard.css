@@ -1,0 +1,1028 @@
+:root {
+    --pzu-primary: #6d2df6;
+    --pzu-primary-dark: #5420cf;
+    --pzu-primary-soft: #f4f0ff;
+    --pzu-success: #16a34a;
+    --pzu-success-soft: #ecfdf3;
+    --pzu-warning: #f59e0b;
+    --pzu-warning-soft: #fffbeb;
+    --pzu-danger: #dc2626;
+    --pzu-danger-soft: #fef2f2;
+    --pzu-info: #0284c7;
+    --pzu-info-soft: #eff6ff;
+    --pzu-text: #0f172a;
+    --pzu-muted: #64748b;
+    --pzu-border: #e2e8f0;
+    --pzu-surface: #ffffff;
+    --pzu-surface-soft: #f8fafc;
+    --pzu-radius: 22px;
+    --pzu-radius-sm: 14px;
+    --pzu-shadow: 0 18px 45px rgba(15, 23, 42, .075);
+    --pzu-shadow-hover: 0 24px 60px rgba(15, 23, 42, .12);
+}
+
+.dark {
+    --pzu-text: #f8fafc;
+    --pzu-muted: #cbd5e1;
+    --pzu-border: rgba(148, 163, 184, .22);
+    --pzu-surface: #0f172a;
+    --pzu-surface-soft: #111827;
+    --pzu-shadow: 0 18px 45px rgba(0, 0, 0, .22);
+    --pzu-shadow-hover: 0 24px 60px rgba(0, 0, 0, .32);
+}
+
+.fi-main {
+    background:
+        radial-gradient(circle at top right, rgba(109, 45, 246, .07), transparent 34rem),
+        linear-gradient(180deg, rgba(248, 250, 252, .96), rgba(241, 245, 249, .78)) !important;
+}
+
+.dark .fi-main {
+    background:
+        radial-gradient(circle at top right, rgba(109, 45, 246, .15), transparent 34rem),
+        linear-gradient(180deg, rgba(15, 23, 42, .98), rgba(2, 6, 23, .92)) !important;
+}
+
+/* Cards: mantém classes existentes e cria um padrão visual único sem exigir alteração nos blades. */
+.pz-card,
+.prazzu-card,
+.prazzu-stat-card,
+.prazzu-mini-card,
+.tp-metric-card,
+.tp-info-card,
+.co-stat,
+.co-card,
+.ca-main-card,
+.ca-card,
+.gd-card,
+.gd-score-card,
+.gd-action-card,
+.fincli-card,
+.dash-profile-card,
+.dash-kpi-card,
+.central-notificacoes__hero,
+.central-notificacoes__painel,
+.central-notificacoes__card-resumo,
+.notificacao-card,
+.prazzu-global-search-modal {
+    border: 1px solid var(--pzu-border) !important;
+    border-radius: var(--pzu-radius) !important;
+    background: var(--pzu-surface) !important;
+    box-shadow: var(--pzu-shadow) !important;
+}
+
+.pz-card:hover,
+.prazzu-card:hover,
+.prazzu-stat-card:hover,
+.prazzu-mini-card:hover,
+.tp-metric-card:hover,
+.co-stat:hover,
+.ca-main-card:hover,
+.gd-card:hover,
+.gd-action-card:hover,
+.fincli-card:hover,
+.dash-profile-card:hover,
+.dash-kpi-card:hover,
+.notificacao-card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--pzu-shadow-hover) !important;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+/* Cabeçalhos de seção padronizados. */
+.pz-card-head,
+.prazzu-card-header,
+.ca-section-head,
+.gd-section-head,
+.fincli-card-head,
+.central-notificacoes__section-head,
+.dash-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.pz-card-head h2,
+.prazzu-card-header h3,
+.ca-section-head h2,
+.gd-section-head h2,
+.fincli-card-head h2,
+.central-notificacoes__section-head h2,
+.dash-section-head h2 {
+    color: var(--pzu-text) !important;
+    font-weight: 900 !important;
+    letter-spacing: -.02em;
+}
+
+.pz-card-head p,
+.prazzu-card-header p,
+.ca-section-head p,
+.gd-section-head p,
+.fincli-card-head p,
+.central-notificacoes__section-head p,
+.dash-section-head p {
+    color: var(--pzu-muted) !important;
+}
+
+/* Botões: ação principal sempre mais evidente e ações secundárias neutras. */
+.pz-btn,
+.prazzu-btn,
+.gd-btn,
+.fin-btn,
+.ca-action,
+.prazzu-actions-list a,
+.central-notificacoes__hero-actions a,
+.central-notificacoes__hero-actions button,
+.prazzu-global-search-quicklink,
+.pz-layout-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 42px;
+    border-radius: 999px !important;
+    border: 1px solid var(--pzu-border) !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    font-size: .84rem;
+    font-weight: 850 !important;
+    text-decoration: none !important;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .055) !important;
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.pz-btn:hover,
+.prazzu-btn:hover,
+.gd-btn:hover,
+.fin-btn:hover,
+.ca-action:hover,
+.prazzu-actions-list a:hover,
+.central-notificacoes__hero-actions a:hover,
+.central-notificacoes__hero-actions button:hover,
+.prazzu-global-search-quicklink:hover,
+.pz-layout-toggle-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(109, 45, 246, .35) !important;
+    box-shadow: 0 16px 36px rgba(109, 45, 246, .12) !important;
+}
+
+.pz-btn-primary,
+.pz-btn.primary,
+.prazzu-btn.primary,
+.gd-btn-primary,
+.fin-btn.primary,
+.ca-action.primary,
+.pz-layout-toggle-btn,
+button[type="submit"].gd-btn,
+button[type="submit"].pz-btn {
+    border-color: transparent !important;
+    background: linear-gradient(135deg, var(--pzu-primary), var(--pzu-primary-dark)) !important;
+    color: #ffffff !important;
+    box-shadow: 0 16px 34px rgba(109, 45, 246, .24) !important;
+}
+
+/* Badges/status: nomenclaturas diferentes, visual igual. */
+.pz-badge,
+.prazzu-badge,
+.gd-badge,
+.fincli-badge,
+.notificacao-card__badge,
+.central-notificacoes__badge,
+.ca-badge,
+.dash-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    width: fit-content;
+    min-height: 26px;
+    padding: .28rem .68rem !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(100, 116, 139, .14) !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-size: .72rem !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    letter-spacing: .01em;
+    white-space: nowrap;
+}
+
+.pz-badge-success,
+.prazzu-badge.success,
+.gd-badge-success,
+.fincli-badge.success,
+.ca-badge.success,
+.dash-badge.success,
+.success .prazzu-badge {
+    background: var(--pzu-success-soft) !important;
+    color: #15803d !important;
+    border-color: rgba(22, 163, 74, .18) !important;
+}
+
+.pz-badge-warning,
+.prazzu-badge.warning,
+.gd-badge-warning,
+.fincli-badge.warning,
+.ca-badge.warning,
+.dash-badge.warning,
+.warning .prazzu-badge {
+    background: var(--pzu-warning-soft) !important;
+    color: #b45309 !important;
+    border-color: rgba(245, 158, 11, .2) !important;
+}
+
+.pz-badge-danger,
+.prazzu-badge.danger,
+.gd-badge-danger,
+.fincli-badge.danger,
+.ca-badge.danger,
+.dash-badge.danger,
+.danger .prazzu-badge {
+    background: var(--pzu-danger-soft) !important;
+    color: #b91c1c !important;
+    border-color: rgba(220, 38, 38, .2) !important;
+}
+
+.pz-badge-info,
+.prazzu-badge.info,
+.gd-badge-info,
+.fincli-badge.info,
+.ca-badge.info,
+.dash-badge.info {
+    background: var(--pzu-info-soft) !important;
+    color: #0369a1 !important;
+    border-color: rgba(2, 132, 199, .18) !important;
+}
+
+/* Filtros: mesmo desenho em Home, Pendências, Documentos, Relatórios e telas customizadas. */
+.pz-filter,
+.pz-filters,
+.gd-filters,
+.ca-filters,
+.dash-filters,
+.central-notificacoes__filtros,
+.prazzu-filter-panel,
+form[class*="filters"],
+form[class*="filtros"] {
+    border: 1px solid var(--pzu-border) !important;
+    border-radius: var(--pzu-radius) !important;
+    background: rgba(255, 255, 255, .86) !important;
+    box-shadow: var(--pzu-shadow) !important;
+    backdrop-filter: blur(14px);
+}
+
+.pz-filter input,
+.pz-filter select,
+.pz-filters input,
+.pz-filters select,
+.gd-filters input,
+.gd-filters select,
+.ca-filters input,
+.ca-filters select,
+.dash-filters input,
+.dash-filters select,
+.central-notificacoes__filtros input,
+.central-notificacoes__filtros select,
+.prazzu-filter-panel input,
+.prazzu-filter-panel select {
+    min-height: 42px;
+    border: 1px solid var(--pzu-border) !important;
+    border-radius: 14px !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75);
+}
+
+/* Empty states: mais úteis e consistentes. */
+.pz-empty,
+.prazzu-empty,
+.tp-empty,
+.co-empty,
+.ca-empty,
+.gd-empty,
+.fincli-empty,
+.central-notificacoes__empty,
+.prazzu-global-search-empty {
+    border: 1px dashed rgba(148, 163, 184, .52) !important;
+    border-radius: var(--pzu-radius) !important;
+    background:
+        radial-gradient(circle at top, rgba(109, 45, 246, .08), transparent 26rem),
+        var(--pzu-surface-soft) !important;
+    color: var(--pzu-muted) !important;
+    text-align: center;
+}
+
+.pz-empty,
+.prazzu-empty,
+.tp-empty,
+.co-empty,
+.ca-empty,
+.gd-empty,
+.fincli-empty {
+    padding: 1.4rem !important;
+}
+
+.pz-empty strong,
+.prazzu-empty strong,
+.tp-empty strong,
+.co-empty strong,
+.ca-empty strong,
+.gd-empty strong,
+.fincli-empty strong,
+.central-notificacoes__empty strong,
+.prazzu-global-search-empty h3 {
+    color: var(--pzu-text) !important;
+    font-weight: 900 !important;
+}
+
+/* Tabelas/listas: deixa leitura mais limpa. */
+.prazzu-table,
+.gd-table,
+.fincli-table,
+.ca-table,
+.dash-table {
+    border-collapse: separate !important;
+    border-spacing: 0 .55rem !important;
+}
+
+.prazzu-table tbody tr,
+.gd-table tbody tr,
+.fincli-table tbody tr,
+.ca-table tbody tr,
+.dash-table tbody tr {
+    background: var(--pzu-surface) !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .045);
+}
+
+.prazzu-table tbody td,
+.gd-table tbody td,
+.fincli-table tbody td,
+.ca-table tbody td,
+.dash-table tbody td {
+    border-top: 1px solid var(--pzu-border) !important;
+    border-bottom: 1px solid var(--pzu-border) !important;
+}
+
+.prazzu-table tbody td:first-child,
+.gd-table tbody td:first-child,
+.fincli-table tbody td:first-child,
+.ca-table tbody td:first-child,
+.dash-table tbody td:first-child {
+    border-left: 1px solid var(--pzu-border) !important;
+    border-radius: 14px 0 0 14px;
+}
+
+.prazzu-table tbody td:last-child,
+.gd-table tbody td:last-child,
+.fincli-table tbody td:last-child,
+.ca-table tbody td:last-child,
+.dash-table tbody td:last-child {
+    border-right: 1px solid var(--pzu-border) !important;
+    border-radius: 0 14px 14px 0;
+}
+
+/* Busca global: mesma linguagem visual do restante. */
+.prazzu-global-search-trigger {
+    border-radius: 999px !important;
+    border-color: rgba(109, 45, 246, .22) !important;
+    background: rgba(255, 255, 255, .94) !important;
+    box-shadow: 0 16px 44px rgba(15, 23, 42, .1) !important;
+}
+
+.prazzu-global-search-header {
+    background:
+        radial-gradient(circle at top right, rgba(109, 45, 246, .16), transparent 24rem),
+        linear-gradient(135deg, #ffffff, #f8fafc) !important;
+}
+
+.prazzu-global-search-result,
+.prazzu-global-search-quicklink {
+    border-radius: 18px !important;
+}
+
+.prazzu-global-search-result:hover,
+.prazzu-global-search-quicklink:hover {
+    background: var(--pzu-primary-soft) !important;
+}
+
+/* Ações sempre agrupadas e previsíveis no fim dos cards. */
+.pz-quick-actions,
+.gd-filter-actions,
+.gd-doc-actions,
+.ca-actions,
+.prazzu-modal-actions,
+.central-notificacoes__hero-actions,
+.notificacao-card__actions,
+.dash-actions,
+.pz-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+
+/* Responsividade: evita telas quebradas e mantém leitura no celular. */
+@media (max-width: 900px) {
+    .pz-card-head,
+    .prazzu-card-header,
+    .ca-section-head,
+    .gd-section-head,
+    .fincli-card-head,
+    .central-notificacoes__section-head,
+    .dash-section-head,
+    .central-notificacoes__hero {
+        align-items: flex-start !important;
+        flex-direction: column !important;
+    }
+
+    .pz-quick-actions,
+    .gd-filter-actions,
+    .gd-doc-actions,
+    .ca-actions,
+    .prazzu-modal-actions,
+    .central-notificacoes__hero-actions,
+    .notificacao-card__actions,
+    .dash-actions,
+    .pz-actions {
+        justify-content: stretch !important;
+        width: 100%;
+    }
+
+    .pz-quick-actions > *,
+    .gd-filter-actions > *,
+    .gd-doc-actions > *,
+    .ca-actions > *,
+    .prazzu-modal-actions > *,
+    .central-notificacoes__hero-actions > *,
+    .notificacao-card__actions > *,
+    .dash-actions > *,
+    .pz-actions > * {
+        flex: 1 1 160px;
+    }
+}
+
+@media (max-width: 640px) {
+    .fi-main {
+        padding: 14px !important;
+    }
+
+    .prazzu-global-search {
+        left: 1rem;
+        right: 1rem;
+        transform: none;
+    }
+
+    .prazzu-global-search-trigger {
+        width: 100%;
+    }
+
+    .prazzu-global-search-backdrop {
+        padding-top: 4.75rem;
+    }
+}
+
+/* ==========================================================
+   Prazzu UI Standard v2 - Padronização global do sistema
+   Objetivo: cards, badges, botões, filtros, tabelas, empty states,
+   páginas, espaçamentos, ícones e cores de status com um único padrão.
+   ========================================================== */
+
+:root {
+    --pzu-page-max: 1480px;
+    --pzu-gap-xs: .5rem;
+    --pzu-gap-sm: .75rem;
+    --pzu-gap-md: 1rem;
+    --pzu-gap-lg: 1.35rem;
+    --pzu-gap-xl: 1.75rem;
+    --pzu-radius-lg: 24px;
+    --pzu-focus: 0 0 0 4px rgba(109, 45, 246, .14);
+}
+
+/* Layout geral das páginas Filament */
+.fi-main-ctn,
+.fi-main {
+    scroll-behavior: smooth;
+}
+
+.fi-main > .fi-page,
+.fi-page {
+    max-width: var(--pzu-page-max) !important;
+    margin-inline: auto !important;
+}
+
+.fi-page-header,
+.fi-header,
+.fi-section-header {
+    gap: var(--pzu-gap-md) !important;
+}
+
+.fi-page-header-heading,
+.fi-header-heading {
+    color: var(--pzu-text) !important;
+    font-size: clamp(1.45rem, 2vw, 2rem) !important;
+    font-weight: 950 !important;
+    letter-spacing: -.035em !important;
+    line-height: 1.05 !important;
+}
+
+.fi-page-header-description,
+.fi-header-subheading,
+.fi-section-header-description,
+.fi-section-description {
+    color: var(--pzu-muted) !important;
+    font-size: .95rem !important;
+    line-height: 1.55 !important;
+}
+
+/* Cards e seções nativas do Filament */
+.fi-section,
+.fi-wi-stats-overview-stat,
+.fi-wi-chart,
+.fi-ta-ctn,
+.fi-fo-field-wrp,
+.fi-modal-window,
+.fi-dropdown-panel {
+    border: 1px solid var(--pzu-border) !important;
+    border-radius: var(--pzu-radius-lg) !important;
+    background: var(--pzu-surface) !important;
+    box-shadow: var(--pzu-shadow) !important;
+}
+
+.fi-section,
+.fi-wi-stats-overview-stat,
+.fi-wi-chart,
+.fi-ta-ctn {
+    overflow: hidden !important;
+}
+
+.fi-section:hover,
+.fi-wi-stats-overview-stat:hover,
+.fi-wi-chart:hover {
+    border-color: rgba(109, 45, 246, .22) !important;
+}
+
+.fi-section-header {
+    padding-bottom: .95rem !important;
+}
+
+.fi-section-header-heading,
+.fi-wi-stats-overview-stat-label,
+.fi-wi-chart-header-heading {
+    color: var(--pzu-text) !important;
+    font-weight: 900 !important;
+    letter-spacing: -.015em !important;
+}
+
+.fi-wi-stats-overview-stat-value {
+    color: var(--pzu-text) !important;
+    font-weight: 950 !important;
+    letter-spacing: -.04em !important;
+}
+
+.fi-wi-stats-overview-stat-description,
+.fi-wi-chart-header-description {
+    color: var(--pzu-muted) !important;
+}
+
+/* Botões nativos e customizados */
+.fi-btn,
+.fi-ac-btn-action,
+.fi-link,
+.fi-dropdown-list-item,
+.fi-pagination-item,
+button,
+a[role="button"] {
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease, color .16s ease !important;
+}
+
+.fi-btn {
+    border-radius: 999px !important;
+    font-weight: 850 !important;
+    min-height: 40px !important;
+}
+
+.fi-btn:not(.fi-color-primary):not(.fi-color-danger):not(.fi-color-success):not(.fi-color-warning),
+.fi-btn.fi-color-gray {
+    border: 1px solid var(--pzu-border) !important;
+    background: var(--pzu-surface) !important;
+    color: #334155 !important;
+}
+
+.dark .fi-btn:not(.fi-color-primary):not(.fi-color-danger):not(.fi-color-success):not(.fi-color-warning),
+.dark .fi-btn.fi-color-gray {
+    color: #e2e8f0 !important;
+    background: #111827 !important;
+}
+
+.fi-btn:hover,
+.fi-dropdown-list-item:hover,
+.fi-pagination-item:hover {
+    transform: translateY(-1px);
+}
+
+.fi-btn:focus-visible,
+.fi-input:focus,
+.fi-select-input:focus,
+.fi-textarea:focus,
+.fi-fo-toggle:focus-visible {
+    box-shadow: var(--pzu-focus) !important;
+}
+
+.fi-color-primary.fi-btn,
+.fi-btn-color-primary,
+.fi-ac-btn-action.fi-color-primary {
+    background: linear-gradient(135deg, var(--pzu-primary), var(--pzu-primary-dark)) !important;
+    color: #fff !important;
+    box-shadow: 0 16px 34px rgba(109, 45, 246, .24) !important;
+}
+
+.fi-color-danger.fi-btn,
+.fi-ac-btn-action.fi-color-danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+    color: #fff !important;
+}
+
+.fi-color-success.fi-btn,
+.fi-ac-btn-action.fi-color-success {
+    background: linear-gradient(135deg, #22c55e, #15803d) !important;
+    color: #fff !important;
+}
+
+.fi-color-warning.fi-btn,
+.fi-ac-btn-action.fi-color-warning {
+    background: linear-gradient(135deg, #f59e0b, #b45309) !important;
+    color: #fff !important;
+}
+
+/* Badges nativas do Filament com o mesmo padrão do sistema */
+.fi-badge {
+    min-height: 26px !important;
+    padding-inline: .68rem !important;
+    border-radius: 999px !important;
+    font-size: .72rem !important;
+    font-weight: 900 !important;
+    letter-spacing: .01em !important;
+    border: 1px solid rgba(100, 116, 139, .14) !important;
+}
+
+.fi-badge.fi-color-gray {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+}
+
+.fi-badge.fi-color-success {
+    background: var(--pzu-success-soft) !important;
+    color: #15803d !important;
+    border-color: rgba(22, 163, 74, .18) !important;
+}
+
+.fi-badge.fi-color-warning {
+    background: var(--pzu-warning-soft) !important;
+    color: #b45309 !important;
+    border-color: rgba(245, 158, 11, .20) !important;
+}
+
+.fi-badge.fi-color-danger {
+    background: var(--pzu-danger-soft) !important;
+    color: #b91c1c !important;
+    border-color: rgba(220, 38, 38, .20) !important;
+}
+
+.fi-badge.fi-color-info,
+.fi-badge.fi-color-primary {
+    background: var(--pzu-info-soft) !important;
+    color: #0369a1 !important;
+    border-color: rgba(2, 132, 199, .18) !important;
+}
+
+/* Formulários e filtros nativos */
+.fi-input-wrp,
+.fi-select-input,
+.fi-input,
+.fi-textarea,
+.fi-fo-tags-input,
+.fi-fo-date-time-picker input,
+.fi-ta-search-field input {
+    border-radius: 15px !important;
+}
+
+.fi-input-wrp,
+.fi-ta-search-field .fi-input-wrp,
+.fi-fo-date-time-picker .fi-input-wrp {
+    border: 1px solid var(--pzu-border) !important;
+    background: var(--pzu-surface) !important;
+    box-shadow: none !important;
+}
+
+.fi-input,
+.fi-select-input,
+.fi-textarea {
+    color: var(--pzu-text) !important;
+}
+
+.fi-fo-field-wrp-label label,
+.fi-ta-filter label,
+.fi-fo-field-wrp-hint {
+    color: var(--pzu-muted) !important;
+    font-weight: 750 !important;
+}
+
+.fi-ta-filters,
+.fi-ta-header,
+.fi-ta-toolbar {
+    gap: var(--pzu-gap-sm) !important;
+}
+
+.fi-ta-filters > div,
+.fi-ta-filters .fi-section,
+.fi-ta-toolbar {
+    border-radius: var(--pzu-radius) !important;
+}
+
+/* Tabelas Filament */
+.fi-ta-table {
+    border-collapse: separate !important;
+    border-spacing: 0 .45rem !important;
+}
+
+.fi-ta-header-cell {
+    color: var(--pzu-muted) !important;
+    font-size: .72rem !important;
+    font-weight: 900 !important;
+    letter-spacing: .04em !important;
+    text-transform: uppercase !important;
+}
+
+.fi-ta-row {
+    background: var(--pzu-surface) !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .045) !important;
+}
+
+.fi-ta-row:hover {
+    background: var(--pzu-primary-soft) !important;
+}
+
+.fi-ta-cell {
+    border-top: 1px solid var(--pzu-border) !important;
+    border-bottom: 1px solid var(--pzu-border) !important;
+}
+
+.fi-ta-cell:first-child {
+    border-left: 1px solid var(--pzu-border) !important;
+    border-radius: 16px 0 0 16px !important;
+}
+
+.fi-ta-cell:last-child {
+    border-right: 1px solid var(--pzu-border) !important;
+    border-radius: 0 16px 16px 0 !important;
+}
+
+.fi-ta-empty-state,
+.fi-no-notification,
+.fi-in-no-results {
+    border: 1px dashed rgba(148, 163, 184, .52) !important;
+    border-radius: var(--pzu-radius-lg) !important;
+    background: radial-gradient(circle at top, rgba(109, 45, 246, .08), transparent 26rem), var(--pzu-surface-soft) !important;
+    color: var(--pzu-muted) !important;
+    margin: 1rem !important;
+}
+
+.fi-ta-empty-state-heading,
+.fi-in-no-results-heading {
+    color: var(--pzu-text) !important;
+    font-weight: 950 !important;
+}
+
+/* Ícones: tamanho e alinhamento consistentes */
+.fi-icon,
+.fi-btn-icon,
+.fi-badge-icon,
+.fi-sidebar-item-icon,
+.pz-icon,
+.prazzu-icon,
+.gd-icon,
+.ca-icon,
+.dash-icon,
+svg[class*="heroicon"] {
+    flex: 0 0 auto;
+}
+
+.fi-sidebar-item-icon,
+.fi-btn-icon,
+.fi-badge-icon {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+}
+
+/* Sidebar mais limpa e previsível */
+.fi-sidebar {
+    border-right: 1px solid rgba(148, 163, 184, .18) !important;
+}
+
+.fi-sidebar-nav {
+    gap: .35rem !important;
+}
+
+.fi-sidebar-group-label {
+    color: rgba(148, 163, 184, .92) !important;
+    font-size: .72rem !important;
+    font-weight: 900 !important;
+    letter-spacing: .06em !important;
+    text-transform: uppercase !important;
+}
+
+.fi-sidebar-item a {
+    border-radius: 16px !important;
+    min-height: 42px !important;
+}
+
+.fi-sidebar-item-active a,
+.fi-sidebar-item a:hover {
+    background: rgba(109, 45, 246, .10) !important;
+    color: var(--pzu-primary) !important;
+}
+
+/* Páginas customizadas: título, subtítulo e ações */
+.pz-page-hero,
+.prazzu-page-hero,
+.gd-hero,
+.ca-hero,
+.fincli-hero,
+.dash-hero,
+.central-notificacoes__hero,
+.co-hero,
+.tp-hero {
+    border: 1px solid var(--pzu-border) !important;
+    border-radius: 28px !important;
+    background:
+        radial-gradient(circle at top right, rgba(109, 45, 246, .14), transparent 28rem),
+        linear-gradient(135deg, rgba(255, 255, 255, .98), rgba(248, 250, 252, .92)) !important;
+    box-shadow: var(--pzu-shadow) !important;
+    padding: clamp(1.1rem, 2vw, 1.65rem) !important;
+}
+
+.dark .pz-page-hero,
+.dark .prazzu-page-hero,
+.dark .gd-hero,
+.dark .ca-hero,
+.dark .fincli-hero,
+.dark .dash-hero,
+.dark .central-notificacoes__hero,
+.dark .co-hero,
+.dark .tp-hero {
+    background:
+        radial-gradient(circle at top right, rgba(109, 45, 246, .20), transparent 28rem),
+        linear-gradient(135deg, rgba(15, 23, 42, .98), rgba(17, 24, 39, .92)) !important;
+}
+
+.pz-page-hero h1,
+.prazzu-page-hero h1,
+.gd-hero h1,
+.ca-hero h1,
+.fincli-hero h1,
+.dash-hero h1,
+.central-notificacoes__hero h1,
+.co-hero h1,
+.tp-hero h1 {
+    color: var(--pzu-text) !important;
+    font-weight: 950 !important;
+    letter-spacing: -.04em !important;
+    line-height: 1.05 !important;
+}
+
+.pz-page-hero p,
+.prazzu-page-hero p,
+.gd-hero p,
+.ca-hero p,
+.fincli-hero p,
+.dash-hero p,
+.central-notificacoes__hero p,
+.co-hero p,
+.tp-hero p {
+    color: var(--pzu-muted) !important;
+    line-height: 1.6 !important;
+}
+
+/* Espaçamentos: reduz poluição visual sem apertar a leitura */
+.pz-page,
+.prazzu-page,
+.gd-page,
+.ca-page,
+.fincli-page,
+.dash-page,
+.central-notificacoes,
+.co-page,
+.tp-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--pzu-gap-lg) !important;
+}
+
+.pz-grid,
+.prazzu-grid,
+.gd-grid,
+.ca-grid,
+.fincli-grid,
+.dash-grid,
+.co-grid,
+.tp-grid {
+    gap: var(--pzu-gap-md) !important;
+}
+
+/* Cores semânticas por status usadas em textos/classes legadas */
+.status-pendente,
+.badge-pendente,
+.pendente {
+    --pzu-current-status-bg: var(--pzu-warning-soft);
+    --pzu-current-status-color: #b45309;
+}
+
+.status-em-andamento,
+.status-andamento,
+.badge-em-andamento,
+.em-andamento,
+.andamento {
+    --pzu-current-status-bg: var(--pzu-info-soft);
+    --pzu-current-status-color: #0369a1;
+}
+
+.status-concluido,
+.status-finalizado,
+.badge-concluido,
+.concluido,
+.finalizado {
+    --pzu-current-status-bg: var(--pzu-success-soft);
+    --pzu-current-status-color: #15803d;
+}
+
+.status-vencido,
+.status-atrasado,
+.badge-vencido,
+.vencido,
+.atrasado {
+    --pzu-current-status-bg: var(--pzu-danger-soft);
+    --pzu-current-status-color: #b91c1c;
+}
+
+.status-pendente,
+.status-em-andamento,
+.status-andamento,
+.status-concluido,
+.status-finalizado,
+.status-vencido,
+.status-atrasado,
+.badge-pendente,
+.badge-em-andamento,
+.badge-concluido,
+.badge-vencido {
+    background: var(--pzu-current-status-bg) !important;
+    color: var(--pzu-current-status-color) !important;
+    border-color: color-mix(in srgb, var(--pzu-current-status-color) 20%, transparent) !important;
+}
+
+/* Dark mode refinado */
+.dark .fi-section,
+.dark .fi-wi-stats-overview-stat,
+.dark .fi-wi-chart,
+.dark .fi-ta-ctn,
+.dark .fi-modal-window,
+.dark .fi-dropdown-panel,
+.dark .fi-input-wrp,
+.dark .fi-ta-row {
+    background: var(--pzu-surface) !important;
+}
+
+.dark .fi-ta-row:hover {
+    background: rgba(109, 45, 246, .16) !important;
+}
+
+.dark .fi-badge.fi-color-gray {
+    background: rgba(148, 163, 184, .14) !important;
+    color: #cbd5e1 !important;
+}
+
+@media (max-width: 768px) {
+    .fi-page-header,
+    .fi-header {
+        align-items: flex-start !important;
+    }
+
+    .fi-page-header-actions,
+    .fi-header-actions {
+        width: 100% !important;
+        justify-content: stretch !important;
+    }
+
+    .fi-page-header-actions .fi-btn,
+    .fi-header-actions .fi-btn {
+        flex: 1 1 auto !important;
+    }
+
+    .fi-ta-table {
+        border-spacing: 0 .7rem !important;
+    }
+}

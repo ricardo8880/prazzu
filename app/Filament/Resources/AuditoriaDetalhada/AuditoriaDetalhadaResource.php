@@ -1,0 +1,233 @@
+<?php
+
+namespace App\Filament\Resources\AuditoriaDetalhada;
+
+use App\Filament\Resources\AuditoriaDetalhada\Pages\ListAuditoriaDetalhada;
+use App\Filament\Resources\AuditoriaDetalhada\Pages\VisualizarAuditoriaDetalhada;
+use App\Models\AuditoriaDetalhada;
+use App\Models\Empresa;
+use App\Models\User;
+use App\Support\AuditoriaFormatter;
+use BackedEnum;
+use Filament\Facades\Filament;
+use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use UnitEnum;
+
+class AuditoriaDetalhadaResource extends Resource
+{
+    protected static ?string $model = AuditoriaDetalhada::class;
+
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
+
+    protected static ?string $navigationLabel = 'Auditoria';
+
+    protected static string | UnitEnum | null $navigationGroup = 'Governança';
+
+    protected static ?int $navigationSort = 1;
+
+    public static function getNavigationGroup(): string | UnitEnum | null
+    {
+        return 'Governança';
+    }
+
+    public static function canAccess(): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->check();
+    }
+
+    public static function canView($record): bool
+    {
+        return auth()->check();
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->defaultSort('created_at', 'desc')
+            ->striped()
+            ->columns([
+                TextColumn::make('created_at')
+                    ->label('Data')
+                    ->dateTime('d/m/Y H:i:s')
+                    ->sortable(),
+
+                TextColumn::make('empresa.razao_social')
+                    ->label('Empresa')
+                    ->searchable()
+                    ->toggleable(),
+
+                TextColumn::make('user.name')
+                    ->label('Usuário')
+                    ->searchable()
+                    ->toggleable(),
+
+                TextColumn::make('evento')
+                    ->label('Evento')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => AuditoriaFormatter::evento($state))
+                    ->color(fn ($state) => match ($state) {
+                        'created' => 'success',
+                        'updated' => 'warning',
+                        'deleted' => 'danger',
+                        default => 'gray',
+                    }),
+
+                TextColumn::make('risco_operacional')
+                    ->label('Risco')
+                    ->state(fn (AuditoriaDetalhada $record): string => self::isSuspeito($record) ? 'Atenção' : 'Normal')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'Atenção' ? 'danger' : 'gray'),
+
+                TextColumn::make('auditable_type')
+                    ->label('Módulo')
+                    ->formatStateUsing(fn ($state) => AuditoriaFormatter::modulo($state))
+                    ->searchable(),
+
+                TextColumn::make('auditable_id')
+                    ->label('Registro')
+                    ->state(fn (AuditoriaDetalhada $record): string => AuditoriaFormatter::registroCurto($record->auditable_type, $record->auditable_id))
+                    ->sortable(),
+
+                TextColumn::make('campo')
+                    ->label('Campo')
+                    ->formatStateUsing(fn ($state) => AuditoriaFormatter::campo($state))
+                    ->searchable(),
+
+                TextColumn::make('valor_anterior')
+                    ->label('Antes')
+                    ->state(fn (AuditoriaDetalhada $record): string => AuditoriaFormatter::valor($record->valor_anterior, $record->campo, 45))
+                    ->toggleable(),
+
+                TextColumn::make('valor_novo')
+                    ->label('Depois')
+                    ->state(fn (AuditoriaDetalhada $record): string => AuditoriaFormatter::valor($record->valor_novo, $record->campo, 45))
+                    ->toggleable(),
+
+                TextColumn::make('ip')
+                    ->label('IP')
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                SelectFilter::make('evento')
+                    ->label('Evento')
+                    ->options([
+                        'created' => 'Criado',
+                        'updated' => 'Alterado',
+                        'deleted' => 'Excluído',
+                    ]),
+
+                SelectFilter::make('user_id')
+                    ->label('Usuário')
+                    ->options(fn (): array => User::query()
+                        ->whereIn('id', self::getEloquentQuery()->whereNotNull('user_id')->distinct()->pluck('user_id'))
+                        ->orderBy('name')
+                        ->pluck('name', 'id')
+                        ->all())
+                    ->searchable(),
+
+                SelectFilter::make('empresa_id')
+                    ->label('Empresa')
+                    ->options(fn (): array => Empresa::query()
+                        ->whereIn('id', self::getEloquentQuery()->whereNotNull('empresa_id')->distinct()->pluck('empresa_id'))
+                        ->orderBy('razao_social')
+                        ->get(['id', 'razao_social', 'nome_fantasia'])
+                        ->mapWithKeys(fn (Empresa $empresa): array => [
+                            $empresa->id => $empresa->razao_social ?: $empresa->nome_fantasia ?: 'Empresa #' . $empresa->id,
+                        ])
+                        ->all())
+                    ->searchable(),
+
+                SelectFilter::make('auditable_type')
+                    ->label('Módulo')
+                    ->options(fn (): array => self::getEloquentQuery()
+                        ->whereNotNull('auditable_type')
+                        ->select('auditable_type')
+                        ->distinct()
+                        ->orderBy('auditable_type')
+                        ->pluck('auditable_type')
+                        ->mapWithKeys(fn ($tipo): array => [$tipo => AuditoriaFormatter::modulo((string) $tipo)])
+                        ->all())
+                    ->searchable(),
+
+                Filter::make('acoes_sensiveis')
+                    ->label('Ações sensíveis')
+                    ->query(fn (Builder $query): Builder => $query->where(function (Builder $subQuery): void {
+                        $subQuery
+                            ->where('evento', 'deleted')
+                            ->orWhere('campo', 'like', '%password%')
+                            ->orWhere('campo', 'like', '%senha%')
+                            ->orWhere('campo', 'like', '%role%')
+                            ->orWhere('campo', 'like', '%permiss%')
+                            ->orWhere('campo', 'like', '%status%');
+                    })),
+            ]);
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = Filament::auth()->user();
+
+        return parent::getEloquentQuery()
+            ->with([
+                'empresa:id,razao_social,nome_fantasia',
+                'user:id,name',
+            ])
+            ->visibleForUser($user);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => VisualizarAuditoriaDetalhada::route('/'),
+            'gerenciar' => ListAuditoriaDetalhada::route('/gerenciar'),
+        ];
+    }
+
+    private static function eventoLabel(?string $evento): string
+    {
+        return AuditoriaFormatter::evento($evento);
+    }
+
+    private static function isSuspeito(AuditoriaDetalhada $record): bool
+    {
+        $campo = mb_strtolower((string) $record->campo);
+
+        return AuditoriaFormatter::isSuspeito($record);
+    }
+}

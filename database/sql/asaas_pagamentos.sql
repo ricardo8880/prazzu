@@ -1,0 +1,43 @@
+CREATE TABLE IF NOT EXISTS `assinaturas` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` bigint(20) UNSIGNED NOT NULL,
+  `gateway` varchar(50) NOT NULL DEFAULT 'asaas',
+  `gateway_customer_id` varchar(255) DEFAULT NULL,
+  `gateway_subscription_id` varchar(255) DEFAULT NULL,
+  `plano` varchar(100) NOT NULL,
+  `valor` decimal(10,2) NOT NULL,
+  `ciclo` varchar(20) NOT NULL DEFAULT 'MONTHLY',
+  `status` varchar(50) NOT NULL DEFAULT 'PENDING',
+  `proximo_vencimento` date DEFAULT NULL,
+  `cancelado_em` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `assinaturas_empresa_id_index` (`empresa_id`),
+  KEY `assinaturas_gateway_subscription_id_index` (`gateway_subscription_id`),
+  KEY `assinaturas_gateway_customer_id_index` (`gateway_customer_id`),
+  CONSTRAINT `assinaturas_empresa_id_foreign` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `pagamentos` (
+  `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` bigint(20) UNSIGNED NOT NULL,
+  `assinatura_id` bigint(20) UNSIGNED NOT NULL,
+  `gateway_payment_id` varchar(255) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `billing_type` varchar(50) DEFAULT NULL,
+  `valor` decimal(10,2) DEFAULT NULL,
+  `vencimento` date DEFAULT NULL,
+  `pago_em` datetime DEFAULT NULL,
+  `invoice_url` text DEFAULT NULL,
+  `pix_qr_code` longtext DEFAULT NULL,
+  `payload_gateway` longtext DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `pagamentos_empresa_id_index` (`empresa_id`),
+  KEY `pagamentos_assinatura_id_index` (`assinatura_id`),
+  KEY `pagamentos_gateway_payment_id_index` (`gateway_payment_id`),
+  CONSTRAINT `pagamentos_empresa_id_foreign` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `pagamentos_assinatura_id_foreign` FOREIGN KEY (`assinatura_id`) REFERENCES `assinaturas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

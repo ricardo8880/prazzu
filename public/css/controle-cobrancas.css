@@ -1,0 +1,146 @@
+#controle-cobrancas-page {
+    width: 100%;
+}
+
+#controle-cobrancas-page > .grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 20px !important;
+}
+
+#controle-cobrancas-page section,
+#controle-cobrancas-page .fi-section {
+    border-radius: 18px !important;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#controle-cobrancas-page section:hover,
+#controle-cobrancas-page .fi-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 35px rgba(15, 23, 42, 0.10);
+}
+
+#controle-cobrancas-page .grid > section,
+#controle-cobrancas-page .grid > .fi-section {
+    min-height: 130px;
+}
+
+#controle-cobrancas-page .text-lg {
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+}
+
+#controle-cobrancas-page .text-2xl {
+    font-size: 28px !important;
+    font-weight: 800 !important;
+    color: #0f172a;
+    line-height: 1.15;
+}
+
+#controle-cobrancas-page .text-xl {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    color: #0f172a;
+}
+
+#controle-cobrancas-page .mt-8 {
+    margin-top: 28px !important;
+}
+
+#controle-cobrancas-page .overflow-auto {
+    overflow-x: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.20);
+}
+
+#controle-cobrancas-page table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+#controle-cobrancas-page thead tr {
+    background: #f8fafc;
+}
+
+#controle-cobrancas-page th {
+    padding: 15px 18px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+#controle-cobrancas-page td {
+    padding: 15px 18px;
+    font-size: 14px;
+    color: #334155;
+    white-space: nowrap;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+#controle-cobrancas-page tbody tr:last-child td {
+    border-bottom: none;
+}
+
+#controle-cobrancas-page tbody tr {
+    transition: background 0.2s ease;
+}
+
+#controle-cobrancas-page tbody tr:hover {
+    background: #f8fafc;
+}
+
+#controle-cobrancas-page .max-w-md {
+    max-width: 420px !important;
+    margin: 45px auto !important;
+    padding: 28px;
+    background: #ffffff;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+#controle-cobrancas-page .fi-btn {
+    width: 100%;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+}
+
+#controle-cobrancas-page input,
+#controle-cobrancas-page select,
+#controle-cobrancas-page textarea {
+    border-radius: 12px !important;
+}
+
+@media (max-width: 1280px) {
+    #controle-cobrancas-page > .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    #controle-cobrancas-page > .grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    #controle-cobrancas-page .text-2xl {
+        font-size: 23px !important;
+    }
+
+    #controle-cobrancas-page th,
+    #controle-cobrancas-page td {
+        padding: 12px 14px;
+    }
+}

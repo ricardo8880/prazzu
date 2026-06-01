@@ -1,0 +1,378 @@
+:root {
+    --prazzu-primary: #FD8605;
+    --prazzu-primary-dark: #d96f00;
+    --prazzu-primary-soft: #fff4e8;
+    --prazzu-primary-border: #ffd7ad;
+    --prazzu-secondary: #06376d;
+    --prazzu-secondary-dark: #042a52;
+    --prazzu-secondary-soft: #eaf2fb;
+    --prazzu-secondary-border: #b8d2ee;
+    --prazzu-text: #111827;
+    --prazzu-muted: #6b7280;
+    --prazzu-border: #e5e7eb;
+    --prazzu-surface: #ffffff;
+    --prazzu-surface-soft: #f8fafc;
+}
+
+/* Central de Notificações - Item Controles
+   Arquivo: public/css/style-notificações.css
+   Objetivo: organizar visualmente a central sem depender de classes CSS externas do projeto.
+*/
+
+.central-notificacoes {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.central-notificacoes__resumo {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.central-notificacoes__card-resumo,
+.central-notificacoes__empty,
+.notificacao-card {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+
+.central-notificacoes__card-resumo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.central-notificacoes__label {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.central-notificacoes__numero {
+    margin: 0.2rem 0 0;
+    font-size: 1.65rem;
+    line-height: 1;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.central-notificacoes__icone {
+    display: inline-flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 0.8rem;
+    color: #475569;
+    background: #f1f5f9;
+}
+
+.central-notificacoes__icone svg,
+.notificacao-card__icone svg,
+.notificacao-card__meta-icon svg,
+.central-notificacoes__empty-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.central-notificacoes__card-resumo--pendentes {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.central-notificacoes__card-resumo--pendentes .central-notificacoes__label,
+.central-notificacoes__card-resumo--pendentes .central-notificacoes__numero,
+.central-notificacoes__card-resumo--pendentes .central-notificacoes__icone {
+    color: #92400e;
+}
+
+.central-notificacoes__card-resumo--pendentes .central-notificacoes__icone {
+    background: #fef3c7;
+}
+
+.central-notificacoes__card-resumo--lidas {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+}
+
+.central-notificacoes__card-resumo--lidas .central-notificacoes__label,
+.central-notificacoes__card-resumo--lidas .central-notificacoes__numero,
+.central-notificacoes__card-resumo--lidas .central-notificacoes__icone {
+    color: #166534;
+}
+
+.central-notificacoes__card-resumo--lidas .central-notificacoes__icone {
+    background: #dcfce7;
+}
+
+.central-notificacoes__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.notificacao-card {
+    padding: 1rem;
+    transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, opacity 160ms ease;
+}
+
+.notificacao-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.notificacao-card--nao-lida {
+    border-color: #fde68a;
+    box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.12);
+}
+
+.notificacao-card--lida {
+    opacity: 0.78;
+}
+
+.notificacao-card__conteudo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.notificacao-card__principal {
+    min-width: 0;
+}
+
+.notificacao-card__topo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.notificacao-card__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 100%;
+    min-height: 1.65rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    line-height: 1;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.notificacao-card__badge--lida {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.notificacao-card__badge--nao-lida {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.notificacao-card__badge--tipo {
+    color: #334155;
+    background: #f1f5f9;
+}
+
+.notificacao-card__data {
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+.notificacao-card__titulo {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.notificacao-card__mensagem {
+    margin: 0.35rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: #475569;
+}
+
+.notificacao-card__metas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+}
+
+.notificacao-card__meta {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.45rem;
+    padding: 0.55rem 0.7rem;
+    border-radius: 0.75rem;
+    color: #475569;
+    background: #f8fafc;
+    font-size: 0.78rem;
+}
+
+.notificacao-card__meta-icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    color: #64748b;
+}
+
+.notificacao-card__meta-texto {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.notificacao-card__acoes {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.central-notificacoes__empty {
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    border-style: dashed;
+}
+
+.central-notificacoes__empty-icon {
+    display: inline-flex;
+    width: 3rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #64748b;
+    background: #f1f5f9;
+}
+
+.central-notificacoes__empty-title {
+    margin: 1rem 0 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.central-notificacoes__empty-text {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+@media (max-width: 900px) {
+    .central-notificacoes__resumo {
+        grid-template-columns: 1fr;
+    }
+
+    .notificacao-card__conteudo {
+        grid-template-columns: 1fr;
+    }
+
+    .notificacao-card__acoes {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 640px) {
+    .notificacao-card__metas {
+        grid-template-columns: 1fr;
+    }
+
+    .notificacao-card,
+    .central-notificacoes__card-resumo {
+        border-radius: 0.85rem;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .central-notificacoes__card-resumo,
+    .central-notificacoes__empty,
+    .notificacao-card {
+        border-color: #334155;
+        background: #111827;
+    }
+
+    .central-notificacoes__label,
+    .notificacao-card__data,
+    .central-notificacoes__empty-text {
+        color: #94a3b8;
+    }
+
+    .central-notificacoes__numero,
+    .notificacao-card__titulo,
+    .central-notificacoes__empty-title {
+        color: #f8fafc;
+    }
+
+    .central-notificacoes__icone,
+    .central-notificacoes__empty-icon {
+        color: #cbd5e1;
+        background: #1f2937;
+    }
+
+    .notificacao-card__mensagem {
+        color: #cbd5e1;
+    }
+
+    .notificacao-card__badge--tipo,
+    .notificacao-card__meta {
+        color: #cbd5e1;
+        background: #1f2937;
+    }
+
+    .notificacao-card__meta-icon {
+        color: #94a3b8;
+    }
+
+    .central-notificacoes__card-resumo--pendentes {
+        border-color: rgba(245, 158, 11, 0.35);
+        background: rgba(245, 158, 11, 0.1);
+    }
+
+    .central-notificacoes__card-resumo--pendentes .central-notificacoes__label,
+    .central-notificacoes__card-resumo--pendentes .central-notificacoes__numero,
+    .central-notificacoes__card-resumo--pendentes .central-notificacoes__icone {
+        color: #fcd34d;
+    }
+
+    .central-notificacoes__card-resumo--pendentes .central-notificacoes__icone,
+    .notificacao-card__badge--nao-lida {
+        background: rgba(245, 158, 11, 0.16);
+        color: #fcd34d;
+    }
+
+    .central-notificacoes__card-resumo--lidas {
+        border-color: rgba(34, 197, 94, 0.35);
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    .central-notificacoes__card-resumo--lidas .central-notificacoes__label,
+    .central-notificacoes__card-resumo--lidas .central-notificacoes__numero,
+    .central-notificacoes__card-resumo--lidas .central-notificacoes__icone {
+        color: #86efac;
+    }
+
+    .central-notificacoes__card-resumo--lidas .central-notificacoes__icone,
+    .notificacao-card__badge--lida {
+        background: rgba(34, 197, 94, 0.16);
+        color: #86efac;
+    }
+}

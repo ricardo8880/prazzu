@@ -1,0 +1,63 @@
+/* =========================
+   WORKMODE - UX DA SIDEBAR
+   Destaque visual seguro, sem esconder menus.
+   ========================= */
+
+/* Não aplicar opacidade no modo geral. */
+html[data-workmode="default"] .fi-sidebar-nav [data-group-label] {
+    opacity: 1;
+    transform: none;
+}
+
+/* Quando um modo específico está ativo, todos continuam visíveis, só menos destacados. */
+html[data-workmode]:not([data-workmode="default"]) .fi-sidebar-nav [data-group-label] {
+    opacity: .68;
+    transform: scale(.985);
+}
+
+/* Hover sempre restaura foco visual. */
+html[data-workmode] .fi-sidebar-nav [data-group-label]:hover {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+/* Grupos principais por modo ficam com destaque total. */
+html[data-workmode="rh"] [data-group-label="Trabalho"],
+html[data-workmode="rh"] [data-group-label="TRABALHO"],
+html[data-workmode="rh"] [data-group-label="Documentos"],
+html[data-workmode="rh"] [data-group-label="Relatórios"],
+
+html[data-workmode="contabil"] [data-group-label="Financeiro"],
+html[data-workmode="contabil"] [data-group-label="Documentos"],
+html[data-workmode="contabil"] [data-group-label="Relatórios"],
+
+html[data-workmode="financeiro"] [data-group-label="Financeiro"],
+html[data-workmode="financeiro"] [data-group-label="Relatórios"],
+html[data-workmode="financeiro"] [data-group-label="Clientes"],
+
+html[data-workmode="documentos"] [data-group-label="Documentos"],
+html[data-workmode="documentos"] [data-group-label="Trabalho"],
+html[data-workmode="documentos"] [data-group-label="TRABALHO"],
+
+html[data-workmode="clientes"] [data-group-label="Clientes"],
+html[data-workmode="clientes"] [data-group-label="Documentos"],
+
+html[data-workmode="governanca"] [data-group-label="Governança"],
+html[data-workmode="governanca"] [data-group-label="Relatórios"],
+
+html[data-workmode="relatorios"] [data-group-label="Relatórios"],
+html[data-workmode="relatorios"] [data-group-label="Financeiro"],
+html[data-workmode="relatorios"] [data-group-label="Documentos"] {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Pequena identificação visual do grupo priorizado, sem alterar funcionamento do Filament. */
+html[data-workmode]:not([data-workmode="default"]) .fi-sidebar-nav [data-group-label] {
+    transition:
+        opacity .22s ease,
+        transform .22s ease,
+        filter .22s ease;
+}
+
+/* Não usar display:none, visibility:hidden, height:0 ou hidden aqui. */

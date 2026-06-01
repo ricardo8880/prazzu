@@ -1,0 +1,1 @@
+http://localhost:8000/admin/item-controles?debug_performance=1 // para casos onde a tela demora muito a carregar, vai aparecer no console.log

@@ -1,0 +1,201 @@
+.white-label-page {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.white-label-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr);
+    gap: 1.25rem;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, .98), rgba(30, 41, 59, .95));
+    color: #fff;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, .25);
+}
+
+.white-label-eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    padding: .35rem .7rem;
+    margin-bottom: .75rem;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, .18);
+    color: #fbbf24;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.white-label-hero h2 {
+    margin: 0;
+    max-width: 760px;
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    line-height: 1.08;
+    font-weight: 800;
+}
+
+.white-label-hero p {
+    max-width: 760px;
+    margin-top: 1rem;
+    color: rgba(255,255,255,.76);
+    line-height: 1.7;
+}
+
+.white-label-preview-card {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    min-height: 260px;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    background: #fff;
+    color: #111827;
+}
+
+.white-label-preview-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+    padding: 1rem;
+    background: var(--wl-sidebar, #0f172a);
+    color: #fff;
+}
+
+.white-label-preview-sidebar img {
+    max-width: 92px;
+    max-height: 50px;
+    object-fit: contain;
+    margin-bottom: .75rem;
+}
+
+.white-label-preview-sidebar span {
+    padding: .45rem .55rem;
+    border-radius: .65rem;
+    background: rgba(255,255,255,.08);
+    font-size: .78rem;
+}
+
+.white-label-preview-content {
+    display: grid;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+}
+
+.white-label-preview-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    padding-bottom: .75rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.white-label-preview-top small {
+    color: #64748b;
+    word-break: break-all;
+}
+
+.white-label-preview-login {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: .65rem;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, .08), rgba(245, 158, 11, .14));
+    text-align: center;
+}
+
+.white-label-preview-login img {
+    max-width: 150px;
+    max-height: 70px;
+    object-fit: contain;
+}
+
+.white-label-preview-login strong {
+    color: var(--wl-primary, #f59e0b);
+}
+
+.white-label-preview-login span {
+    color: #64748b;
+    font-size: .85rem;
+}
+
+.white-label-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.white-label-status-card {
+    display: grid;
+    gap: .35rem;
+    padding: 1rem;
+    border: 1px solid rgba(148, 163, 184, .26);
+    border-radius: 1rem;
+    background: rgba(255,255,255,.82);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .06);
+}
+
+.white-label-status-card span {
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.white-label-status-card strong {
+    color: #0f172a;
+    font-size: 1rem;
+    word-break: break-word;
+}
+
+.white-label-status-card small {
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.white-label-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.white-label-actions {
+    position: sticky;
+    bottom: 1rem;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+    padding: 1rem;
+    border: 1px solid rgba(148, 163, 184, .25);
+    border-radius: 1rem;
+    background: rgba(255,255,255,.94);
+    box-shadow: 0 18px 38px rgba(15, 23, 42, .12);
+    backdrop-filter: blur(14px);
+}
+
+@media (max-width: 1100px) {
+    .white-label-hero,
+    .white-label-status-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .white-label-hero {
+        padding: 1rem;
+    }
+
+    .white-label-preview-card {
+        grid-template-columns: 1fr;
+    }
+
+    .white-label-preview-sidebar {
+        display: none;
+    }
+}

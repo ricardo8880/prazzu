@@ -1,0 +1,1 @@
+@include("components.global-search") @include("components.chat-widget")

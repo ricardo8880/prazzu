@@ -1,0 +1,236 @@
+:root {
+    --prazzu-primary: #FD8605;
+    --prazzu-primary-dark: #d96f00;
+    --prazzu-primary-soft: #fff4e8;
+    --prazzu-primary-border: #ffd7ad;
+    --prazzu-secondary: #06376d;
+    --prazzu-secondary-dark: #042a52;
+    --prazzu-secondary-soft: #eaf2fb;
+    --prazzu-secondary-border: #b8d2ee;
+    --prazzu-text: #111827;
+    --prazzu-muted: #6b7280;
+    --prazzu-border: #e5e7eb;
+    --prazzu-surface: #ffffff;
+    --prazzu-surface-soft: #f8fafc;
+}
+
+.dg-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.dg-hero {
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.08));
+}
+
+.dg-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #06376d;
+}
+
+.dg-title {
+    margin-top: 0.25rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #111827;
+}
+
+.dg-subtitle {
+    margin-top: 0.35rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.dg-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.dg-grid-2 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.dg-grid-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.dg-card {
+    border-radius: 1rem;
+    padding: 1.15rem;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+.dg-card span {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.dg-card strong {
+    display: block;
+    margin-top: 0.4rem;
+    font-size: 1.9rem;
+    line-height: 1;
+    color: #111827;
+}
+
+.dg-card small {
+    display: block;
+    margin-top: 0.45rem;
+    color: #9ca3af;
+}
+
+.dg-card-success {
+    background: #fff4e8;
+    border-color: #ffd7ad;
+}
+
+.dg-card-warning {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+
+.dg-card-danger {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.dg-chart {
+    height: 320px;
+}
+
+.dg-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+}
+
+.dg-ranking-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.dg-ranking-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.dg-ranking-top span {
+    color: #111827;
+    font-weight: 600;
+}
+
+.dg-ranking-top strong {
+    color: #374151;
+}
+
+.dg-progress {
+    height: 0.55rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e5e7eb;
+}
+
+.dg-progress div {
+    height: 100%;
+    border-radius: 999px;
+    background: #FD8605;
+}
+
+.dg-table-wrap {
+    overflow-x: auto;
+}
+
+.dg-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.dg-table th {
+    padding: 0.75rem;
+    text-align: left;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.dg-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f3f4f6;
+    color: #374151;
+}
+
+.dg-right {
+    text-align: right !important;
+}
+
+.dg-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.dg-badge-danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.dg-alert-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.dg-alert-item {
+    border-radius: 0.75rem;
+    padding: 0.85rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+}
+
+.dg-alert-item strong {
+    display: block;
+    color: #111827;
+}
+
+.dg-alert-item span {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.dg-empty {
+    color: #6b7280;
+}
+
+.dg-success-text {
+    color: #047857;
+}
+
+@media (min-width: 768px) {
+    .dg-grid-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .dg-grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

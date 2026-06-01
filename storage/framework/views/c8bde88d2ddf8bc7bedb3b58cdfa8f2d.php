@@ -1,0 +1,1 @@
+<?php echo $__env->make("components.sidebar-workmode-controls", array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\sistemrh\storage\framework\views/e9cee6720626edebeb058f5f3071696a.blade.php ENDPATH**/ ?>
