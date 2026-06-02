@@ -323,10 +323,8 @@
 .co-client-model-row {
     display: grid;
     grid-template-columns: 46px minmax(0, 1fr) auto;
-    gap: 13px;
     align-items: center;
-    min-height: 66px;
-    border-bottom: 1px solid var(--co-border);
+    min-height: 85px;
     color: inherit;
     text-decoration: none;
 }
@@ -739,10 +737,6 @@
     padding: 7px 11px;
     font-size: 11px;
     font-weight: 780;
-}
-
-.co-client-model-row {
-    min-height: 62px;
 }
 
 .co-deadline-row strong,
@@ -2807,7 +2801,6 @@
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
-    gap: 10px;
 }
 
 .co-client-row-link {
@@ -2954,7 +2947,7 @@
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 12px !important;
+    margin: 15px;
 }
 
 .co-client-row-with-actions .co-client-row-link {
