@@ -2,13 +2,18 @@
     <link rel="stylesheet" href="{{ asset('css/centro-operacional.css') }}?v={{ file_exists(public_path('css/centro-operacional.css')) ? filemtime(public_path('css/centro-operacional.css')) : time() }}">
 
     @php
+        $loadError = $loadError ?? null;
         $cards = $data['cards'] ?? [];
-        $resolverAgora = collect($data['resolver_agora'] ?? [])->take(5)->values()->all();
+        $riskCards = $data['risk_cards'] ?? [];
+        $alertasInteligentes = $data['alertas_inteligentes'] ?? [];
+        $resolverAgora = collect($data['resolver_agora'] ?? [])->take(10)->values()->all();
         $clientesCriticos = $data['clientes_criticos'] ?? [];
         $vencimentos = $data['vencimentos'] ?? ['selected' => 'today', 'periods' => [], 'rows' => [], 'total' => 0];
         $deadlineRows = collect($vencimentos['rows'] ?? [])->take(4)->values();
         $deadlineTotal = (int) ($vencimentos['total'] ?? $deadlineRows->sum('value'));
-        $aprovacoes = collect($data['aprovacoes'] ?? [])->take(3)->values()->all();
+        $aprovacoes = collect($data['aprovacoes'] ?? [])->take(5)->values()->all();
+        $financeiro = collect($data['financeiro'] ?? [])->take(5)->values()->all();
+        $financeiroResumo = $data['financeiro_resumo'] ?? ['indicadores' => [], 'impacto_total' => 'R$ 0,00'];
         $workload = collect($data['workload'] ?? [])->take(5)->values()->all();
         $departamentos = $data['departamentos'] ?? [];
         $resultadosMes = $data['resultados_mes'] ?? [];
@@ -16,6 +21,10 @@
         $statusOptions = $data['status_options'] ?? [];
         $departmentOptions = $data['department_options'] ?? [];
         $dateRangeOptions = $data['date_range_options'] ?? [];
+        $globalSearchData = $data['global_search'] ?? ['term' => '', 'results' => [], 'minimum_chars' => 2];
+        $globalSearchResults = collect($globalSearchData['results'] ?? [])->take(10)->values();
+        $globalSearchTerm = (string) ($globalSearchData['term'] ?? '');
+        $globalSearchMinimum = (int) ($globalSearchData['minimum_chars'] ?? 2);
         $dateRangeLabel = $dateRangeOptions[$dateRange] ?? 'Hoje';
         $todayLabel = now()->translatedFormat('d \d\e F');
         $defaultIcons = ['bi-exclamation-triangle-fill', 'bi-calendar2-week-fill', 'bi-clock-fill', 'bi-file-earmark-text-fill', 'bi-currency-dollar'];
@@ -45,7 +54,7 @@
         };
     @endphp
 
-    <div class="co-page co-model" wire:loading.class="is-loading">
+    <div class="co-page co-model" wire:loading.class="is-loading" x-data="{ searchOpen: false }" @keydown.window.ctrl.k.prevent="$refs.globalSearch.focus(); searchOpen = true" @keydown.window.meta.k.prevent="$refs.globalSearch.focus(); searchOpen = true" @keydown.escape.window="searchOpen = false">
         <section class="co-topbar">
             <div>
                 <div class="co-title-row">
@@ -56,6 +65,66 @@
             </div>
 
             <div class="co-top-actions">
+                <div class="co-global-search" @click.outside="searchOpen = false">
+                    <div class="co-global-search-box" :class="{ 'is-active': searchOpen }">
+                        <i class="bi bi-search"></i>
+                        <input
+                            x-ref="globalSearch"
+                            type="search"
+                            placeholder="Buscar cliente, tarefa, documento, contrato ou responsável..."
+                            wire:model.live.debounce.350ms="globalSearch"
+                            @focus="searchOpen = true"
+                            @input="searchOpen = true"
+                            autocomplete="off"
+                        >
+                        <kbd>Ctrl K</kbd>
+                    </div>
+
+                    <div class="co-global-search-results" x-show="searchOpen" x-transition>
+                        @if(mb_strlen($globalSearchTerm) < $globalSearchMinimum)
+                            <div class="co-global-search-state">
+                                <i class="bi bi-command"></i>
+                                <strong>Pesquisa global</strong>
+                                <span>Digite pelo menos {{ $globalSearchMinimum }} caracteres para buscar em clientes, tarefas, documentos, contratos e responsáveis.</span>
+                            </div>
+                        @else
+                            <div class="co-global-search-head">
+                                <span>Resultados para “{{ $globalSearchTerm }}”</span>
+                                <button type="button" wire:click="clearGlobalSearch" @click="searchOpen = false">Limpar</button>
+                            </div>
+
+                            <div class="co-global-search-list">
+                                @forelse($globalSearchResults as $result)
+                                    <a href="{{ $result['url'] }}" class="co-global-search-row {{ $result['tone'] ?? 'info' }}">
+                                        <span class="co-global-search-icon {{ $result['priority_tone'] ?? ($result['tone'] ?? 'info') }}">
+                                            <i class="bi {{ match($result['match_type'] ?? 'tarefa') {
+                                                'cliente' => 'bi-building',
+                                                'responsavel' => 'bi-person-badge',
+                                                'documento' => 'bi-file-earmark-text',
+                                                'contrato' => 'bi-file-earmark-lock',
+                                                'tipo' => 'bi-tags',
+                                                default => 'bi-check2-square',
+                                            } }}"></i>
+                                        </span>
+                                        <span class="co-global-search-content">
+                                            <strong>{{ $result['title'] ?? 'Item operacional' }}</strong>
+                                            <small>{{ $result['empresa'] ?? 'Sem cliente' }} • {{ $result['responsavel'] ?? 'Sem responsável' }} • {{ $result['due_human'] ?? 'Sem prazo' }}</small>
+                                            <em>{{ $result['match_label'] ?? 'Resultado' }}: {{ $result['search_context'] ?? '-' }}</em>
+                                        </span>
+                                        <span class="co-global-search-status {{ $result['priority_tone'] ?? 'info' }}">{{ $result['priority'] ?? 'Média' }}</span>
+                                    </a>
+                                @empty
+                                    <div class="co-global-search-state empty">
+                                        <i class="bi bi-search"></i>
+                                        <strong>Nenhum resultado encontrado.</strong>
+                                        <span>Tente buscar por outro cliente, tarefa, documento, contrato ou responsável.</span>
+                                    </div>
+                                @endforelse
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 <div class="co-dropdown" x-data="{ open: false }" @click.outside="open = false">
                     <button type="button" class="co-toolbar-btn co-date-btn" @click="open = ! open">
                         <i class="bi bi-calendar3 co-toolbar-icon"></i>
@@ -103,6 +172,49 @@
             </div>
         </section>
 
+
+
+        <nav class="co-page-cluster co-main-cluster" aria-label="Navegação do Centro Operacional">
+            <a class="co-cluster-item active" href="{{ \App\Filament\Pages\CentroOperacional::getUrl() }}">
+                <span class="co-cluster-icon"><i class="bi bi-command"></i></span>
+                <span>
+                    <strong>Centro Operacional</strong>
+                    <small>Riscos, resolver agora e resultados</small>
+                </span>
+            </a>
+            <a class="co-cluster-item" href="{{ \App\Filament\Pages\CentroOperacionalGestao::getUrl() }}?aba=workload">
+                <span class="co-cluster-icon"><i class="bi bi-grid-1x2"></i></span>
+                <span>
+                    <strong>Operação Interna</strong>
+                    <small>Workload, aprovações e financeiro</small>
+                </span>
+            </a>
+        </nav>
+
+        @if($loadError)
+            <section class="co-state-card error" role="alert">
+                <span class="co-state-icon"><i class="bi bi-exclamation-octagon"></i></span>
+                <div>
+                    <strong>Falha ao carregar dados.</strong>
+                    <p>{{ $loadError }}</p>
+                </div>
+                <button type="button" wire:click="refreshDashboard" wire:loading.attr="disabled">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Tentar novamente
+                </button>
+            </section>
+        @endif
+
+        <div class="co-loading-layer" wire:loading.flex wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,globalSearch,applyStatusShortcut,clearGlobalSearch">
+            <div class="co-loading-card">
+                <span class="co-loading-spinner"></span>
+                <div>
+                    <strong>Atualizando Centro Operacional</strong>
+                    <small>Recalculando riscos, prazos e ações prioritárias...</small>
+                </div>
+            </div>
+        </div>
+
         <section class="co-kpi-grid">
             @foreach ($cards as $index => $card)
                 @php
@@ -121,6 +233,62 @@
             @endforeach
         </section>
 
+        <section class="co-panel co-alerts-panel co-alerts-collapsible" x-data="{ open: false }">
+            <button type="button" class="co-alerts-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                <span class="co-alerts-toggle-icon" :class="{ 'is-open': open }">
+                    <i class="bi" :class="open ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
+                </span>
+                <span class="co-alerts-toggle-text">
+                    <strong>Alertas Inteligentes</strong>
+                    <small>Clique para visualizar alertas críticos, importantes, atenção e informativos.</small>
+                </span>
+                <span class="co-alerts-toggle-count">
+                    {{ number_format(collect($alertasInteligentes ?? [])->sum(fn ($group) => count($group['items'] ?? [])), 0, ',', '.') }} alertas
+                </span>
+            </button>
+
+            <div class="co-alerts-collapse" x-show="open" x-cloak>
+                <header class="co-panel-header compact">
+                    <div class="co-heading-with-icon">
+                        <span class="co-section-icon red"><i class="bi bi-broadcast-pin"></i></span>
+                        <h2>Alertas Inteligentes</h2>
+                    </div>
+                    <span class="co-panel-subtitle">Crítico, importante, atenção e informativo</span>
+                </header>
+
+                <div class="co-alerts-grid">
+                    @foreach ($alertasInteligentes as $alertKey => $group)
+                        @php $items = collect($group['items'] ?? [])->take(4)->values(); @endphp
+                        <article class="co-alert-column {{ $group['tone'] ?? 'info' }}">
+                            <header>
+                                <span><i class="bi {{ $group['icon'] ?? 'bi-info-circle' }}"></i>{{ $group['label'] ?? 'Alerta' }}</span>
+                                <b>{{ $items->count() }}</b>
+                            </header>
+                            <p>{{ $group['description'] ?? '' }}</p>
+
+                            <div class="co-alert-list">
+                                @forelse ($items as $alert)
+                                    <a href="{{ $alert['url'] }}" class="co-alert-row {{ $alert['tone'] ?? ($group['tone'] ?? 'info') }}">
+                                        <i class="bi {{ $alert['icon'] ?? ($group['icon'] ?? 'bi-info-circle') }}"></i>
+                                        <span>
+                                            <strong>{{ $alert['summary'] ?? $alert['title'] ?? 'Item operacional' }}</strong>
+                                            <small>{{ $alert['reason'] ?? '' }} • {{ $alert['due_human'] ?? 'Sem prazo' }}</small>
+                                        </span>
+                                    </a>
+                                @empty
+                                    <div class="co-alert-empty">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>Nenhum alerta nesta camada.</span>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+
         <section class="co-focus-grid">
             <section class="co-panel co-resolve-panel">
                 <header class="co-panel-header">
@@ -130,18 +298,62 @@
                     </div>
                 </header>
 
-                <div class="co-action-list">
+                <div class="co-action-list co-action-list-v2">
                     @forelse ($resolverAgora as $item)
-                        <a class="co-action-row" href="{{ $item['url'] }}">
-                            <span class="co-action-icon {{ $item['tone'] ?? 'info' }}"><i class="bi {{ ($item['tone'] ?? '') === 'danger' ? 'bi-file-earmark-pdf-fill' : (($item['tone'] ?? '') === 'success' ? 'bi-file-earmark-check-fill' : (($item['tone'] ?? '') === 'warning' ? 'bi-receipt-cutoff' : 'bi-file-earmark-text-fill')) }}"></i></span>
-                            <div class="co-action-main">
-                                <strong>{{ $item['title'] }}</strong>
-                                <span>{{ $item['empresa'] }}</span>
+                        @php
+                            $actions = $item['actions'] ?? [];
+                            $primary = $item['primary_action'] ?? ['key' => 'open', 'label' => 'Abrir', 'icon' => 'bi-box-arrow-up-right'];
+                            $canApprove = (bool) ($actions['approve'] ?? false);
+                            $canCorrect = (bool) ($actions['correct'] ?? false);
+                            $canDelegate = (bool) ($actions['delegate'] ?? false);
+                        @endphp
+                        <article class="co-action-card-v2 {{ $item['tone'] ?? 'info' }}">
+                            <a class="co-action-card-main" href="{{ $item['url'] }}">
+                                <span class="co-action-icon {{ $item['tone'] ?? 'info' }}">
+                                    <i class="bi {{ ($item['tone'] ?? '') === 'danger' ? 'bi-exclamation-octagon-fill' : (($item['tone'] ?? '') === 'success' ? 'bi-check-circle-fill' : (($item['tone'] ?? '') === 'warning' ? 'bi-lightning-charge-fill' : 'bi-file-earmark-text-fill')) }}"></i>
+                                </span>
+                                <div class="co-action-card-content">
+                                    <div class="co-action-topline">
+                                        <span class="co-action-type">{{ $item['type'] ?? 'Obrigação' }}</span>
+                                        <span class="co-priority-badge {{ $item['priority_tone'] ?? 'warning' }}">{{ $item['priority'] ?? 'Alta' }}</span>
+                                    </div>
+                                    <strong>{{ $item['title'] }}</strong>
+                                    <span>{{ $item['empresa'] }}</span>
+                                    <div class="co-action-meta">
+                                        <small><i class="bi bi-calendar2-event"></i>{{ $item['due_human'] ?? ($item['due'] ?: 'Sem prazo') }}</small>
+                                        <small><i class="bi bi-person"></i>{{ $item['responsavel'] ?? 'Sem responsável' }}</small>
+                                        <small><i class="bi bi-activity"></i>{{ $item['status'] }}</small>
+                                    </div>
+                                </div>
+                            </a>
+                            <div class="co-action-buttons-v2">
+                                @if(($primary['key'] ?? 'open') === 'approve' && $canApprove)
+                                    <button type="button" class="co-action-btn success" wire:click="aprovar({{ $item['id'] }})" wire:loading.attr="disabled" wire:target="aprovar({{ $item['id'] }})">
+                                        <i class="bi bi-check2-circle"></i>Aprovar
+                                    </button>
+                                @elseif(($primary['key'] ?? 'open') === 'correct' && $canCorrect)
+                                    <button type="button" class="co-action-btn warning" wire:click="enviarParaCorrecao({{ $item['id'] }})" wire:loading.attr="disabled" wire:target="enviarParaCorrecao({{ $item['id'] }})">
+                                        <i class="bi bi-tools"></i>Corrigir
+                                    </button>
+                                @else
+                                    <a class="co-action-btn info" href="{{ $item['url'] }}">
+                                        <i class="bi bi-box-arrow-up-right"></i>Abrir
+                                    </a>
+                                @endif
+
+                                @if($canCorrect && ($primary['key'] ?? 'open') !== 'correct')
+                                    <button type="button" class="co-action-btn muted" wire:click="enviarParaCorrecao({{ $item['id'] }})" wire:loading.attr="disabled" wire:target="enviarParaCorrecao({{ $item['id'] }})">
+                                        <i class="bi bi-arrow-counterclockwise"></i>Correção
+                                    </button>
+                                @endif
+
+                                @if($canDelegate)
+                                    <button type="button" class="co-action-btn purple" wire:click="openDelegateModal({{ $item['id'] }})" wire:loading.attr="disabled" wire:target="openDelegateModal({{ $item['id'] }})">
+                                        <i class="bi bi-person-plus"></i>Delegar
+                                    </button>
+                                @endif
                             </div>
-                            <span class="co-pill {{ $item['tone'] ?? 'info' }}">{{ $item['status'] }}</span>
-                            <span class="co-time {{ $item['tone'] ?? 'info' }}">{{ $item['due'] ? 'Prazo ' . $item['due'] : ($item['stopped_for'] ?? '-') }}</span>
-                            <span class="co-row-arrow">›</span>
-                        </a>
+                        </article>
                     @empty
                         <div class="co-empty clean">
                             <strong>Nenhuma ação crítica agora.</strong>
@@ -193,7 +405,7 @@
 
                 <div class="co-tabs">
                     @foreach (($vencimentos['periods'] ?? []) as $key => $period)
-                        @if(in_array($key, ['today', 'seven_days', 'fifteen_days'], true))
+                        @if(in_array($key, ['today', 'seven_days', 'fifteen_days', 'thirty_days'], true))
                             <button type="button" wire:click="setDeadlinePeriod('{{ $key }}')" class="{{ ($vencimentos['selected'] ?? 'today') === $key ? 'active' : '' }}">
                                 {{ $period['label'] }}
                             </button>
@@ -225,32 +437,6 @@
         </section>
 
         <section class="co-bottom-model-grid">
-            <section class="co-panel co-workload-panel">
-                <header class="co-panel-header">
-                    <div class="co-heading-with-icon">
-                        <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
-                        <h2>Workload da Equipe</h2>
-                    </div>
-                    <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todos</a>
-                </header>
-
-                <div class="co-workload-list-model">
-                    @forelse ($workload as $row)
-                        <div class="co-workload-model-row {{ $row['tone'] ?? 'success' }}">
-                            <span class="co-person-avatar">{{ mb_strtoupper(mb_substr($row['name'] ?? 'U', 0, 1)) }}</span>
-                            <div class="co-person-info">
-                                <strong>{{ $row['name'] }}</strong>
-                                <small>{{ $row['total'] }} tarefas • {{ $row['status'] ?? 'Normal' }}</small>
-                            </div>
-                            <div class="co-progress"><span style="width: {{ (int) ($row['percent'] ?? 0) }}%"></span></div>
-                            <b>{{ (int) ($row['percent'] ?? 0) }}%</b>
-                        </div>
-                    @empty
-                        <div class="co-empty clean"><strong>Nenhuma carga pendente.</strong></div>
-                    @endforelse
-                </div>
-            </section>
-
             <section class="co-panel co-department-panel">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
@@ -325,31 +511,6 @@
                 </div>
             </section>
 
-            <section class="co-panel co-approvals-panel">
-                <header class="co-panel-header">
-                    <div class="co-heading-with-icon">
-                        <span class="co-section-icon blue"><i class="bi bi-file-earmark-check"></i></span>
-                        <h2>Aprovações</h2>
-                    </div>
-                    <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todas</a>
-                </header>
-
-                <div class="co-small-list-model">
-                    @forelse ($aprovacoes as $item)
-                        <a class="co-small-model-row" href="{{ $item['url'] }}">
-                            <span class="co-small-icon {{ $item['tone'] ?? 'info' }}"><i class="bi bi-building"></i></span>
-                            <div>
-                                <strong>{{ $item['empresa'] }}</strong>
-                                <span>{{ $item['title'] }}</span>
-                            </div>
-                            <span class="co-mini-pill {{ $item['due'] ? 'warning' : 'muted' }}">{{ $item['due'] ? 'Hoje' : 'Aguardando' }}</span>
-                        </a>
-                    @empty
-                        <div class="co-empty clean"><strong>Nada esperando aprovação.</strong></div>
-                    @endforelse
-                </div>
-            </section>
-
             <section class="co-panel co-results-panel {{ $resultTone }}">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
@@ -372,5 +533,38 @@
                 <p class="co-success-message {{ $resultTone }}">{{ $resultMessage }}</p>
             </section>
         </section>
+
+
+        @if($delegateModalOpen)
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">
+                <div class="co-modal-card">
+                    <header>
+                        <span class="co-section-icon purple"><i class="bi bi-person-plus"></i></span>
+                        <div>
+                            <h3 id="co-delegate-title">Delegar item</h3>
+                            <p>Selecione o novo responsável para assumir esta pendência operacional.</p>
+                        </div>
+                    </header>
+
+                    <label class="co-modal-field">
+                        <span>Novo responsável</span>
+                        <select wire:model.live="delegateResponsavelId">
+                            <option value="">Selecione...</option>
+                            @foreach ($this->delegateResponsavelOptions() as $responsavelId => $responsavelNome)
+                                <option value="{{ $responsavelId }}">{{ $responsavelNome }}</option>
+                            @endforeach
+                        </select>
+                    </label>
+
+                    <footer>
+                        <button type="button" class="co-action-btn muted" wire:click="cancelDelegateModal">Cancelar</button>
+                        <button type="button" class="co-action-btn purple" wire:click="delegar" wire:loading.attr="disabled" wire:target="delegar">
+                            <i class="bi bi-check2"></i>Confirmar delegação
+                        </button>
+                    </footer>
+                </div>
+            </div>
+        @endif
+
     </div>
 </x-filament-panels::page>

@@ -4,6 +4,7 @@ namespace App\Services;
 
 
 use App\Support\CachedSchema;
+use App\Support\CentroOperacionalAccess;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Models\User;
@@ -84,7 +85,7 @@ class CentroOperacionalService
             ->orderBy('data_vencimento')
             ->limit(8)
             ->get()
-            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'danger'))
+            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'danger', $user))
             ->values()
             ->toArray();
 
@@ -93,7 +94,7 @@ class CentroOperacionalService
             ->orderBy('data_vencimento')
             ->limit(8)
             ->get()
-            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning'))
+            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning', $user))
             ->values()
             ->toArray();
 
@@ -101,7 +102,7 @@ class CentroOperacionalService
             ->orderByRaw($this->statusEnteredColumn() ? 'COALESCE(status_operacional_at, updated_at) asc' : 'updated_at asc')
             ->limit(8)
             ->get()
-            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning'))
+            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning', $user))
             ->values()
             ->toArray();
 
@@ -109,7 +110,7 @@ class CentroOperacionalService
             ->orderByRaw($this->statusEnteredColumn() ? 'COALESCE(status_operacional_at, updated_at) asc' : 'updated_at asc')
             ->limit(8)
             ->get()
-            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'danger'))
+            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'danger', $user))
             ->values()
             ->toArray();
 
@@ -118,7 +119,7 @@ class CentroOperacionalService
             ->orderByDesc('updated_at')
             ->limit(6)
             ->get()
-            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'success'))
+            ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'success', $user))
             ->values()
             ->toArray();
 
@@ -127,7 +128,7 @@ class CentroOperacionalService
                 ->orderByDesc('updated_at')
                 ->limit(6)
                 ->get()
-                ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning'))
+                ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning', $user))
                 ->values()
                 ->toArray()
             : [];
@@ -135,7 +136,7 @@ class CentroOperacionalService
         $resolverAgora = collect(array_merge($vencidos, $vencemHoje, $aprovacoes, $correcao, $bloqueados))
             ->unique('id')
             ->sortBy(fn (array $item): int => $this->resolverPriority($item))
-            ->take(5)
+            ->take(10)
             ->values()
             ->toArray();
 
@@ -143,10 +144,32 @@ class CentroOperacionalService
         $vencimentos = $this->vencimentosResumo($user, (string) ($filters['deadline_period'] ?? 'today'), $filters);
         $departamentos = $this->departamentosResumo($user, $filters);
         $workload = $this->workload($user, $filters);
+        $financeiroResumo = $this->financeiroResumo($user, $filters);
         $resultadosMes = $this->resultadosMes($user, $filters);
+        $globalSearchTerm = trim((string) ($filters['global_search'] ?? ''));
+        $globalSearchResults = $this->globalSearch($user, $globalSearchTerm);
+
         $healthScore = $this->healthScore($totalAbertas, $totalVencidas, $totalVencemHoje, $totalBloqueados, $totalCorrecao, $totalSemResponsavel);
+        $riskCards = $this->riskCards($totalRisco, $totalVencemHoje, $totalSemResponsavel, $totalBloqueados);
+        $alertasInteligentes = $this->alertasInteligentes(
+            user: $user,
+            vencidosQuery: clone $vencidosQuery,
+            vencemHojeQuery: clone $vencemHojeQuery,
+            proximosSeteQuery: clone $proximosSeteQuery,
+            aprovacoesQuery: clone $aprovacoesQuery,
+            correcaoQuery: clone $correcaoQuery,
+            bloqueadosQuery: $bloqueadosQuery ? clone $bloqueadosQuery : null,
+            semResponsavelQuery: clone $semResponsavelQuery,
+        );
 
         return [
+            'risk_cards' => $riskCards,
+            'global_search' => [
+                'term' => $globalSearchTerm,
+                'results' => $globalSearchResults,
+                'minimum_chars' => 2,
+            ],
+            'alertas_inteligentes' => $alertasInteligentes,
             'cards' => [
                 [
                     'label' => 'Em Risco de Multa',
@@ -184,7 +207,16 @@ class CentroOperacionalService
             'vencimentos' => $vencimentos,
             'aprovacoes' => $aprovacoes,
             'financeiro' => $financeiro,
+            'financeiro_resumo' => $financeiroResumo,
             'bloqueados' => $bloqueados,
+            'sem_responsavel' => (clone $semResponsavelQuery)
+                ->orderByRaw("CASE WHEN prioridade IN ('critica', 'urgente') THEN 1 WHEN prioridade = 'alta' THEN 2 ELSE 3 END")
+                ->orderBy('data_vencimento')
+                ->limit(6)
+                ->get()
+                ->map(fn (ItemControle $item): array => $this->taskPayload($item, 'warning', $user))
+                ->values()
+                ->toArray(),
             'workload' => $workload,
             'departamentos' => $departamentos,
             'resultados_mes' => $resultadosMes,
@@ -196,6 +228,107 @@ class CentroOperacionalService
             'me_mode' => $this->isMeMode($user),
             'missing_columns' => $this->missingRecommendedColumns(),
         ];
+    }
+
+    protected function globalSearch(?User $user, string $term): array
+    {
+        $term = trim($term);
+
+        if (mb_strlen($term) < 2) {
+            return [];
+        }
+
+        $normalizedTerm = mb_strtolower($term);
+        $like = '%' . str_replace(['%', '_'], ['\%', '\_'], $normalizedTerm) . '%';
+
+        return ItemControle::query()
+            ->visibleForUser($user)
+            ->select($this->safeSelect())
+            ->with(['responsavel:id,nome,user_id', 'empresa:id,razao_social,nome_fantasia,cnpj', 'categoria:id,nome'])
+            ->where(function (Builder $query) use ($like): void {
+                foreach ($this->globalSearchColumns() as $column) {
+                    $query->orWhereRaw('LOWER(' . $column . ') LIKE ?', [$like]);
+                }
+
+                $query->orWhereHas('empresa', function (Builder $query) use ($like): Builder {
+                    return $query
+                        ->whereRaw('LOWER(razao_social) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(nome_fantasia) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(cnpj) LIKE ?', [$like]);
+                })->orWhereHas('responsavel', function (Builder $query) use ($like): Builder {
+                    return $query
+                        ->whereRaw('LOWER(nome) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(email) LIKE ?', [$like]);
+                })->orWhereHas('categoria', fn (Builder $query): Builder => $query->whereRaw('LOWER(nome) LIKE ?', [$like]));
+            })
+            ->orderByRaw("CASE
+                WHEN LOWER(titulo) LIKE ? THEN 1
+                WHEN LOWER(tipo) LIKE ? THEN 2
+                ELSE 3
+            END", [$like, $like])
+            ->orderByRaw("CASE WHEN status IN ('concluido', 'aprovado', 'cancelado') THEN 2 ELSE 1 END")
+            ->orderByRaw("CASE WHEN data_vencimento IS NULL THEN 2 ELSE 1 END")
+            ->orderBy('data_vencimento')
+            ->limit(10)
+            ->get()
+            ->map(fn (ItemControle $item): array => $this->globalSearchPayload($item, $term, $user))
+            ->values()
+            ->toArray();
+    }
+
+    protected function globalSearchColumns(): array
+    {
+        return array_values(array_filter([
+            'titulo',
+            'descricao',
+            'tipo',
+            $this->hasColumn('arquivo') ? 'arquivo' : null,
+            $this->hasColumn('contrato_numero') ? 'contrato_numero' : null,
+            $this->hasColumn('contrato_parte_nome') ? 'contrato_parte_nome' : null,
+            $this->hasColumn('contrato_parte_documento') ? 'contrato_parte_documento' : null,
+            $this->hasColumn('document_status') ? 'document_status' : null,
+            $this->hasColumn('approval_status') ? 'approval_status' : null,
+        ]));
+    }
+
+    protected function globalSearchPayload(ItemControle $item, string $term, ?User $user): array
+    {
+        $payload = $this->taskPayload($item, $this->toneFor($item, 'info'), $user);
+        $matchType = $this->globalSearchMatchType($item, $term);
+
+        return array_merge($payload, [
+            'match_type' => $matchType['type'],
+            'match_label' => $matchType['label'],
+            'search_context' => $matchType['context'],
+        ]);
+    }
+
+    protected function globalSearchMatchType(ItemControle $item, string $term): array
+    {
+        $needle = mb_strtolower(trim($term));
+        $contains = static fn (?string $value): bool => filled($value) && str_contains(mb_strtolower($value), $needle);
+
+        if ($contains($item->empresa?->razao_social) || $contains($item->empresa?->nome_fantasia) || $contains($item->empresa?->cnpj)) {
+            return ['type' => 'cliente', 'label' => 'Cliente', 'context' => $item->empresa?->razao_social ?: 'Cliente vinculado'];
+        }
+
+        if ($contains($item->responsavel?->nome) || $contains($item->responsavel?->email)) {
+            return ['type' => 'responsavel', 'label' => 'Responsável', 'context' => $item->responsavel?->nome ?: 'Responsável vinculado'];
+        }
+
+        if ($contains((string) ($item->contrato_numero ?? null)) || $contains((string) ($item->contrato_parte_nome ?? null)) || $contains((string) ($item->contrato_parte_documento ?? null))) {
+            return ['type' => 'contrato', 'label' => 'Contrato', 'context' => $item->contrato_numero ? 'Contrato ' . $item->contrato_numero : ($item->contrato_parte_nome ?: 'Dados contratuais')];
+        }
+
+        if ($contains((string) ($item->arquivo ?? null)) || $contains((string) ($item->document_status ?? null))) {
+            return ['type' => 'documento', 'label' => 'Documento', 'context' => $item->arquivo ?: $this->statusLabel((string) ($item->document_status ?? 'documento'))];
+        }
+
+        if ($contains($item->categoria?->nome) || $contains($item->tipo)) {
+            return ['type' => 'tipo', 'label' => 'Tipo', 'context' => $item->categoria?->nome ?: $item->tipo ?: 'Obrigação operacional'];
+        }
+
+        return ['type' => 'tarefa', 'label' => 'Tarefa', 'context' => $item->titulo ?: 'Item operacional'];
     }
 
     protected function baseQuery(?User $user, array $filters = []): Builder
@@ -237,6 +370,12 @@ class CentroOperacionalService
                      'pago_em',
                      'status_operacional_at',
                      'custom_payload',
+                     'arquivo',
+                     'contrato_numero',
+                     'contrato_parte_nome',
+                     'contrato_parte_documento',
+                     'document_status',
+                     'approval_status',
                  ] as $column) {
             if ($this->hasColumn($column)) {
                 $columns[] = $column;
@@ -255,21 +394,29 @@ class CentroOperacionalService
         return array_values(array_unique($columns));
     }
 
-    protected function taskPayload(ItemControle $item, string $defaultTone): array
+    protected function taskPayload(ItemControle $item, string $defaultTone, ?User $user = null): array
     {
         $statusAt = $this->statusEnteredAt($item);
         $valor = $this->moneyValue($item);
         $blocked = $this->isBlocked($item);
+        $status = (string) $item->status;
+        $tone = $blocked ? 'warning' : $this->toneFor($item, $defaultTone);
+        $operationalAction = $this->operationalActionFor($item, $blocked, $tone);
 
         return [
             'id' => $item->id,
+            'type' => $item->categoria?->nome ?: $item->getTipoOuCategoria(),
             'title' => $item->titulo,
-            'status' => $this->statusLabel((string) $item->status),
+            'status_key' => $status,
+            'status' => $this->statusLabel($status),
             'urgency' => $this->urgencyLabel($item),
-            'tone' => $blocked ? 'warning' : $this->toneFor($item, $defaultTone),
+            'priority' => $this->priorityLabelForResolver($item, $blocked, $tone),
+            'priority_tone' => $this->priorityToneForResolver($item, $blocked, $tone),
+            'tone' => $tone,
             'responsavel' => $item->responsavel?->nome ?: 'Sem responsável',
             'empresa' => $item->empresa?->razao_social ?: 'Sem empresa',
             'due' => $item->data_vencimento?->format('d/m/Y'),
+            'due_human' => $this->deadlineHumanLabel($item),
             'stopped_for' => $statusAt
                 ? $statusAt->diffForHumans(now(), ['parts' => 2, 'short' => true])
                 : $item->updated_at?->diffForHumans(now(), ['parts' => 2, 'short' => true]),
@@ -279,7 +426,73 @@ class CentroOperacionalService
             'blocked' => $blocked,
             'value' => $valor > 0 ? 'R$ ' . number_format($valor, 2, ',', '.') : null,
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
+            'primary_action' => $operationalAction,
+            'actions' => CentroOperacionalAccess::actionPermissions($user, $item),
         ];
+    }
+
+
+    protected function operationalActionFor(ItemControle $item, bool $blocked, string $tone): array
+    {
+        $status = (string) $item->status;
+
+        if (in_array($status, ['aguardando_aprovacao', 'em_aprovacao', 'reprovado'], true)) {
+            return ['key' => 'approve', 'label' => 'Aprovar', 'icon' => 'bi-check2-circle'];
+        }
+
+        if (in_array($status, ['correcao_necessaria', 'reprovado'], true) || $blocked || $tone === 'danger') {
+            return ['key' => 'correct', 'label' => 'Corrigir', 'icon' => 'bi-tools'];
+        }
+
+        return ['key' => 'open', 'label' => 'Abrir', 'icon' => 'bi-box-arrow-up-right'];
+    }
+
+    protected function priorityLabelForResolver(ItemControle $item, bool $blocked, string $tone): string
+    {
+        if ($blocked || $tone === 'danger' || in_array((string) $item->prioridade, ['critica', 'urgente'], true)) {
+            return 'Crítica';
+        }
+
+        if ($item->data_vencimento?->isToday() || in_array((string) $item->prioridade, ['alta'], true)) {
+            return 'Alta';
+        }
+
+        if ($item->data_vencimento && $item->data_vencimento->isBetween(now()->startOfDay(), now()->addDays(3)->endOfDay())) {
+            return 'Média';
+        }
+
+        return 'Baixa';
+    }
+
+    protected function priorityToneForResolver(ItemControle $item, bool $blocked, string $tone): string
+    {
+        return match ($this->priorityLabelForResolver($item, $blocked, $tone)) {
+            'Crítica' => 'danger',
+            'Alta' => 'warning',
+            'Média' => 'attention',
+            default => 'success',
+        };
+    }
+
+    protected function deadlineHumanLabel(ItemControle $item): string
+    {
+        if (! $item->data_vencimento) {
+            return 'Sem prazo';
+        }
+
+        if ($item->data_vencimento->isToday()) {
+            return 'Hoje';
+        }
+
+        if ($item->data_vencimento->isTomorrow()) {
+            return 'Amanhã';
+        }
+
+        if ($item->data_vencimento->isPast()) {
+            return 'Vencido há ' . $item->data_vencimento->diffInDays(now()) . ' dia(s)';
+        }
+
+        return 'Em ' . $item->data_vencimento->diffInDays(now()) . ' dia(s)';
     }
 
     protected function statusEnteredAt(ItemControle $item): ?Carbon
@@ -384,16 +597,176 @@ class CentroOperacionalService
         $tone = $item['tone'] ?? 'info';
         $status = $item['status'] ?? '';
         $urgency = $item['urgency'] ?? '';
+        $dueHuman = $item['due_human'] ?? '';
 
-        if (($item['blocked'] ?? false) || $tone === 'danger' || $urgency === 'Crítica') {
-            return 1;
+        if (($item['blocked'] ?? false) || $urgency === 'Crítica') {
+            return 10;
         }
 
-        if (str_contains($status, 'Aprovação') || $tone === 'warning') {
-            return 2;
+        if ($tone === 'danger' || str_contains($dueHuman, 'Vencido')) {
+            return 20;
         }
 
-        return 3;
+        if (str_contains($status, 'Aprovação')) {
+            return 30;
+        }
+
+        if ($dueHuman === 'Hoje' || $tone === 'warning') {
+            return 40;
+        }
+
+        if ($dueHuman === 'Amanhã') {
+            return 50;
+        }
+
+        return 90;
+    }
+
+    protected function riskCards(int $totalRisco, int $totalVencemHoje, int $totalSemResponsavel, int $totalBloqueados): array
+    {
+        return [
+            [
+                'key' => 'risk',
+                'label' => 'Clientes em risco',
+                'value' => $totalRisco,
+                'tone' => $totalRisco > 0 ? 'danger' : 'success',
+                'icon' => 'bi-exclamation-octagon-fill',
+                'hint' => 'Obrigação vencida, bloqueio, correção ou aprovação parada.',
+            ],
+            [
+                'key' => 'today',
+                'label' => 'Vencem Hoje',
+                'value' => $totalVencemHoje,
+                'tone' => $totalVencemHoje > 0 ? 'warning' : 'success',
+                'icon' => 'bi-calendar2-event-fill',
+                'hint' => 'Prazos que precisam ser concluídos ainda hoje.',
+            ],
+            [
+                'key' => 'no_owner',
+                'label' => 'Sem Responsável',
+                'value' => $totalSemResponsavel,
+                'tone' => $totalSemResponsavel > 0 ? 'attention' : 'success',
+                'icon' => 'bi-person-x-fill',
+                'hint' => 'Itens abertos sem dono operacional definido.',
+            ],
+            [
+                'key' => 'blocked',
+                'label' => 'Clientes Bloqueados',
+                'value' => $totalBloqueados,
+                'tone' => $totalBloqueados > 0 ? 'danger' : 'success',
+                'icon' => 'bi-shield-lock-fill',
+                'hint' => 'Bloqueios operacionais ou dependências impeditivas.',
+            ],
+        ];
+    }
+
+    protected function alertasInteligentes(
+        ?User $user,
+        Builder $vencidosQuery,
+        Builder $vencemHojeQuery,
+        Builder $proximosSeteQuery,
+        Builder $aprovacoesQuery,
+        Builder $correcaoQuery,
+        ?Builder $bloqueadosQuery,
+        Builder $semResponsavelQuery,
+    ): array {
+        $criticos = collect();
+
+        if ($bloqueadosQuery) {
+            $criticos = $criticos->merge(
+                (clone $bloqueadosQuery)->orderBy('data_vencimento')->limit(4)->get()
+                    ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Crítico', 'Bloqueio operacional ativo', 'danger', 'bi-shield-lock-fill', $user))
+            );
+        }
+
+        $criticos = $criticos->merge(
+            (clone $vencidosQuery)->orderBy('data_vencimento')->limit(4)->get()
+                ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Crítico', 'Prazo vencido com risco de multa', 'danger', 'bi-exclamation-octagon-fill', $user))
+        )->merge(
+            (clone $correcaoQuery)->orderByRaw($this->statusEnteredColumn() ? 'COALESCE(status_operacional_at, updated_at) asc' : 'updated_at asc')->limit(3)->get()
+                ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Crítico', 'Correção parada bloqueando o fluxo', 'danger', 'bi-tools', $user))
+        );
+
+        $importantes = collect()
+            ->merge(
+                (clone $vencemHojeQuery)->orderBy('data_vencimento')->limit(5)->get()
+                    ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Importante', 'Vence hoje', 'warning', 'bi-lightning-charge-fill', $user))
+            )
+            ->merge(
+                (clone $aprovacoesQuery)->orderByRaw($this->statusEnteredColumn() ? 'COALESCE(status_operacional_at, updated_at) asc' : 'updated_at asc')->limit(4)->get()
+                    ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Importante', 'Aprovação aguardando decisão', 'warning', 'bi-file-earmark-check-fill', $user))
+            );
+
+        $atencao = collect()
+            ->merge(
+                (clone $proximosSeteQuery)->orderBy('data_vencimento')->limit(5)->get()
+                    ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Atenção', 'Prazo nos próximos 7 dias', 'attention', 'bi-calendar-week-fill', $user))
+            )
+            ->merge(
+                (clone $semResponsavelQuery)->orderBy('data_vencimento')->limit(4)->get()
+                    ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Atenção', 'Item crítico sem responsável', 'attention', 'bi-person-x-fill', $user))
+            );
+
+        $informativos = $this->informativeAlerts($user);
+
+        return [
+            'critical' => [
+                'label' => 'Crítico',
+                'tone' => 'danger',
+                'icon' => 'bi-exclamation-octagon-fill',
+                'description' => 'Pode gerar multa, bloqueio ou retrabalho imediato.',
+                'items' => $criticos->unique('id')->take(6)->values()->toArray(),
+            ],
+            'important' => [
+                'label' => 'Importante',
+                'tone' => 'warning',
+                'icon' => 'bi-lightning-charge-fill',
+                'description' => 'Precisa ser resolvido hoje para não virar atraso.',
+                'items' => $importantes->unique('id')->take(6)->values()->toArray(),
+            ],
+            'attention' => [
+                'label' => 'Atenção',
+                'tone' => 'attention',
+                'icon' => 'bi-exclamation-triangle-fill',
+                'description' => 'Próximos 7 dias ou pendências sem dono.',
+                'items' => $atencao->unique('id')->take(6)->values()->toArray(),
+            ],
+            'info' => [
+                'label' => 'Informativo',
+                'tone' => 'info',
+                'icon' => 'bi-info-circle-fill',
+                'description' => 'Atualizações operacionais recentes.',
+                'items' => $informativos,
+            ],
+        ];
+    }
+
+    protected function alertPayload(ItemControle $item, string $layer, string $reason, string $tone, string $icon, ?User $user = null): array
+    {
+        $payload = $this->taskPayload($item, $tone, $user);
+
+        return array_merge($payload, [
+            'layer' => $layer,
+            'reason' => $reason,
+            'icon' => $icon,
+            'summary' => trim(($payload['empresa'] ?? 'Sem empresa') . ' • ' . ($payload['title'] ?? 'Item operacional')),
+        ]);
+    }
+
+    protected function informativeAlerts(?User $user): array
+    {
+        return ItemControle::query()
+            ->visibleForUser($user)
+            ->select($this->safeSelect())
+            ->with(['responsavel:id,nome,user_id', 'empresa:id,razao_social', 'categoria:id,nome'])
+            ->whereIn('status', ['concluido', 'aprovado', 'assinado'])
+            ->where('updated_at', '>=', now()->subDays(7))
+            ->orderByDesc('updated_at')
+            ->limit(4)
+            ->get()
+            ->map(fn (ItemControle $item): array => $this->alertPayload($item, 'Informativo', 'Atualizado nos últimos 7 dias', 'info', 'bi-info-circle-fill', $user))
+            ->values()
+            ->toArray();
     }
 
     protected function clientesCriticos(?User $user, array $blockColumns): array
@@ -472,6 +845,11 @@ class CentroOperacionalService
                 'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(15)->toDateString())->count(),
                 'tone' => 'info',
             ],
+            'thirty_days' => [
+                'label' => '30 dias',
+                'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(30)->toDateString())->count(),
+                'tone' => 'info',
+            ],
         ];
 
         $period = array_key_exists($period, $periods) ? $period : 'today';
@@ -482,9 +860,12 @@ class CentroOperacionalService
         } elseif ($period === 'seven_days') {
             $selectedQuery->whereDate('data_vencimento', '>', now()->toDateString())
                 ->whereDate('data_vencimento', '<=', now()->addDays(7)->toDateString());
-        } else {
+        } elseif ($period === 'fifteen_days') {
             $selectedQuery->whereDate('data_vencimento', '>', now()->toDateString())
                 ->whereDate('data_vencimento', '<=', now()->addDays(15)->toDateString());
+        } else {
+            $selectedQuery->whereDate('data_vencimento', '>', now()->toDateString())
+                ->whereDate('data_vencimento', '<=', now()->addDays(30)->toDateString());
         }
 
         $rows = $selectedQuery
@@ -506,7 +887,7 @@ class CentroOperacionalService
             'selected' => $period,
             'periods' => $periods,
             'rows' => $rows,
-            'total' => array_sum(array_column($rows, 'value')),
+            'total' => (int) ($periods[$period]['value'] ?? array_sum(array_column($rows, 'value'))),
         ];
     }
 
@@ -529,7 +910,7 @@ class CentroOperacionalService
                 'tone' => $items->where('data_vencimento', '<', now()->startOfDay())->count() > 0 ? 'danger' : 'info',
             ])
             ->sortByDesc('value')
-            ->take(5)
+            ->take(10)
             ->values()
             ->toArray();
     }
@@ -551,23 +932,102 @@ class CentroOperacionalService
             ->limit(8)
             ->get();
 
-        $max = max(1, (int) $rows->max('total'));
-
         return $rows
-            ->map(function (ItemControle $item) use ($max): array {
+            ->map(function (ItemControle $item): array {
                 $total = (int) $item->total;
-                $percent = (int) min(100, max(8, round(($total / $max) * 100)));
+                $capacity = 40;
+                $percent = (int) min(160, max(0, round(($total / max(1, $capacity)) * 100)));
 
                 return [
+                    'responsavel_id' => $item->responsavel_id ? (int) $item->responsavel_id : null,
                     'name' => $item->responsavel?->nome ?: 'Sem responsável',
                     'total' => $total,
+                    'capacity' => $capacity,
                     'percent' => $percent,
-                    'status' => $percent >= 96 ? 'Sobrecarregado' : ($percent >= 75 ? 'Atenção' : 'Normal'),
-                    'tone' => $percent >= 96 ? 'danger' : ($percent >= 75 ? 'warning' : 'success'),
+                    'status' => $percent > 100 ? 'Sobrecarregado' : ($percent >= 91 ? 'No limite' : ($percent >= 71 ? 'Atenção' : 'Normal')),
+                    'tone' => $percent > 100 ? 'danger' : ($percent >= 91 ? 'warning' : ($percent >= 71 ? 'attention' : 'success')),
+                    'open_url' => ItemControleResource::getUrl('index'),
                 ];
             })
             ->values()
             ->toArray();
+    }
+
+    protected function financeiroResumo(?User $user, array $filters = []): array
+    {
+        $base = $this->applyDashboardFilters(
+            ItemControle::query()
+                ->visibleForUser($user)
+                ->select($this->safeSelect())
+                ->whereIn('status', ['concluido', 'aprovado', 'assinado']),
+            array_merge($filters, ['date_range' => 'all'])
+        );
+
+        $faturavelQuery = (clone $base)
+            ->when($this->hasColumn('faturado_em'), fn (Builder $query): Builder => $query->whereNull('faturado_em'))
+            ->when(! $this->hasColumn('faturado_em'), fn (Builder $query): Builder => $query->where(function (Builder $query): void {
+                $query->whereNull('contrato_status')->orWhereNotIn('contrato_status', ['faturado', 'pago']);
+            }));
+
+        $aVencerQuery = (clone $base)
+            ->whereNotNull('data_vencimento')
+            ->whereDate('data_vencimento', '>=', now()->toDateString())
+            ->whereDate('data_vencimento', '<=', now()->addDays(7)->toDateString());
+
+        $vencidoQuery = (clone $base)
+            ->whereNotNull('data_vencimento')
+            ->whereDate('data_vencimento', '<', now()->toDateString())
+            ->when($this->hasColumn('pago_em'), fn (Builder $query): Builder => $query->whereNull('pago_em'));
+
+        $inadimplenteQuery = (clone $base)
+            ->where(function (Builder $query): void {
+                $query->where('contrato_status', 'inadimplente')
+                    ->orWhere('contrato_status', 'vencido')
+                    ->orWhere('contrato_status', 'em_atraso');
+            });
+
+        $indicadores = [
+            $this->financialIndicator('A vencer', clone $aVencerQuery, 'warning', 'bi-calendar2-event'),
+            $this->financialIndicator('Vencido', clone $vencidoQuery, 'danger', 'bi-exclamation-octagon'),
+            $this->financialIndicator('Inadimplente', clone $inadimplenteQuery, 'danger', 'bi-person-x'),
+            $this->financialIndicator('Faturável', clone $faturavelQuery, 'success', 'bi-cash-coin'),
+        ];
+
+        $impactValue = collect($indicadores)->sum('raw_value');
+
+        return [
+            'indicadores' => $indicadores,
+            'impacto_total' => 'R$ ' . number_format((float) $impactValue, 2, ',', '.'),
+        ];
+    }
+
+    protected function financialIndicator(string $label, Builder $query, string $tone, string $icon): array
+    {
+        $items = $query->limit(250)->get();
+        $rawValue = $items->sum(fn (ItemControle $item): float => $this->moneyValue($item));
+
+        return [
+            'label' => $label,
+            'quantity' => $items->count(),
+            'value' => 'R$ ' . number_format((float) $rawValue, 2, ',', '.'),
+            'raw_value' => (float) $rawValue,
+            'tone' => $items->count() > 0 ? $tone : 'success',
+            'icon' => $icon,
+            'impact' => $items->count() > 0 ? $this->financialImpactLabel($label, $items->count(), (float) $rawValue) : 'Sem impacto imediato',
+        ];
+    }
+
+    protected function financialImpactLabel(string $label, int $quantity, float $rawValue): string
+    {
+        if ($rawValue > 0) {
+            return $quantity . ' item(ns) somando R$ ' . number_format($rawValue, 2, ',', '.');
+        }
+
+        return match ($label) {
+            'Vencido', 'Inadimplente' => $quantity . ' item(ns) exigem cobrança ativa',
+            'Faturável' => $quantity . ' entrega(s) prontas para faturar',
+            default => $quantity . ' item(ns) no radar financeiro',
+        };
     }
 
     protected function resultadosMes(?User $user, array $filters = []): array
@@ -599,6 +1059,7 @@ class CentroOperacionalService
             ['label' => 'Prazos concluídos', 'value' => $concluidos, 'hint' => 'no mês'],
             ['label' => 'Aprovações realizadas', 'value' => ItemControle::query()->visibleForUser($user)->whereIn('status', ['aprovado', 'assinado'])->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])->count(), 'hint' => 'no mês'],
             ['label' => 'Multas registradas', 'value' => $vencidosMes, 'hint' => 'risco operacional'],
+            ['label' => 'Clientes atendidos', 'value' => ItemControle::query()->visibleForUser($user)->whereIn('status', ['concluido', 'aprovado', 'assinado'])->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])->distinct('empresa_id')->count('empresa_id'), 'hint' => 'no mês'],
             ['label' => 'SLA', 'value' => $sla . '%', 'hint' => 'estimado'],
         ];
     }
@@ -715,6 +1176,18 @@ class CentroOperacionalService
                     ->when(! $this->hasColumn('faturado_em'), fn (Builder $query): Builder => $query->where(function (Builder $query): void {
                         $query->whereNull('contrato_status')->orWhereNotIn('contrato_status', ['faturado', 'pago']);
                     }));
+            } elseif ($status === 'no_owner') {
+                $query->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+                    ->whereNull('responsavel_id');
+            } elseif ($status === 'blocked') {
+                $blockColumns = $this->blockColumns();
+                $query->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+                    ->when(empty($blockColumns), fn (Builder $query): Builder => $query->whereRaw('1 = 0'))
+                    ->when(! empty($blockColumns), fn (Builder $query): Builder => $query->where(function (Builder $query) use ($blockColumns): void {
+                        foreach ($blockColumns as $column) {
+                            $query->orWhere($column, true);
+                        }
+                    }));
             } else {
                 $query->where('status', $status);
             }
@@ -754,6 +1227,8 @@ class CentroOperacionalService
             'approval' => 'Aprovações',
             'correction' => 'Correção necessária',
             'financial' => 'Pendências financeiras',
+            'no_owner' => 'Sem responsável',
+            'blocked' => 'Clientes bloqueados',
             'pendente' => 'Pendentes',
             'em_andamento' => 'Em andamento',
         ];

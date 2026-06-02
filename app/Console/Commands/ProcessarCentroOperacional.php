@@ -8,7 +8,6 @@ use App\Models\ItemControle;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class ProcessarCentroOperacional extends Command
 {
@@ -33,7 +32,7 @@ class ProcessarCentroOperacional extends Command
         $query = ItemControle::query()
             ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
             ->whereNotNull('data_vencimento')
-            ->whereDate('data_vencimento', '<', now()->toDateString())
+            ->where('data_vencimento', '<', now()->startOfDay())
             ->with('responsavel:id,nome,user_id');
 
         $count = 0;
@@ -108,6 +107,8 @@ class ProcessarCentroOperacional extends Command
 
     protected function registrarComentarioUnico(ItemControle $item, string $comentario, string $chave): void
     {
+        $registrouComentario = false;
+
         if (CachedSchema::hasTable('item_controle_comentarios')) {
             $existe = DB::table('item_controle_comentarios')
                 ->where('item_controle_id', $item->id)
@@ -123,6 +124,8 @@ class ProcessarCentroOperacional extends Command
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                $registrouComentario = true;
             }
         } elseif (CachedSchema::hasTable('comentarios')) {
             $existe = DB::table('comentarios')
@@ -138,9 +141,29 @@ class ProcessarCentroOperacional extends Command
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                $registrouComentario = true;
             }
         }
 
-        $item->registrarTimeline('automacao', 'Centro Operacional atualizou o item', $comentario);
+        if (! $registrouComentario && $this->timelineAutomacaoJaRegistrada($item, $comentario)) {
+            return;
+        }
+
+        $item->registrarTimeline('automacao', 'Centro Operacional atualizou o item', $comentario, ['chave' => $chave]);
+    }
+
+    protected function timelineAutomacaoJaRegistrada(ItemControle $item, string $comentario): bool
+    {
+        if (! CachedSchema::hasTable('item_controle_timelines')) {
+            return false;
+        }
+
+        return DB::table('item_controle_timelines')
+            ->where('item_controle_id', $item->id)
+            ->where('tipo', 'automacao')
+            ->where('titulo', 'Centro Operacional atualizou o item')
+            ->where('descricao', $comentario)
+            ->exists();
     }
 }
