@@ -301,12 +301,16 @@
 
 
         <section class="co-focus-grid">
-            <section class="co-panel co-resolve-panel">
+            <section class="co-panel co-resolve-panel co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon red"><i class="bi bi-lightning-charge-fill"></i></span>
                         <h2>Resolver Agora <small>(prioridade máxima)</small></h2>
                     </div>
+                    <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                        <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
                 </header>
 
                 <div class="co-action-list co-action-list-v2">
@@ -338,6 +342,10 @@
                                 </div>
                             </a>
                             <div class="co-action-buttons-v2">
+                                <button type="button" class="co-action-btn dark" wire:click="openItemDetailModal(<?php echo e($item['id']); ?>, 'resolver')" wire:loading.attr="disabled" wire:target="openItemDetailModal(<?php echo e($item['id']); ?>, 'resolver')">
+                                    <i class="bi bi-eye"></i>Detalhes
+                                </button>
+
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($primary['key'] ?? 'open') === 'approve' && $canApprove): ?>
                                     <button type="button" class="co-action-btn success" wire:click="aprovar(<?php echo e($item['id']); ?>)" wire:loading.attr="disabled" wire:target="aprovar(<?php echo e($item['id']); ?>)">
                                         <i class="bi bi-check2-circle"></i>Aprovar
@@ -378,25 +386,38 @@
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </section>
 
-            <section class="co-panel co-clients-panel">
+            <section class="co-panel co-clients-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon orange"><i class="bi bi-exclamation-triangle"></i></span>
                         <h2>Clientes Críticos</h2>
                     </div>
-                    <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todos</a>
+                    <div class="co-header-actions-inline">
+                        <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todos</a>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-client-list-model">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $clientesCriticos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <a class="co-client-model-row" href="<?php echo e($cliente['url']); ?>">
-                            <span class="co-client-avatar"><i class="bi bi-building"></i></span>
-                            <div class="co-client-main">
-                                <strong><?php echo e($cliente['cliente']); ?></strong>
-                                <span><?php echo e($cliente['problema']); ?></span>
-                            </div>
-                            <span class="co-risk-badge <?php echo e($cliente['tone'] ?? 'warning'); ?>">Risco <?php echo e($cliente['risco']); ?></span>
-                        </a>
+                        <article class="co-client-model-row co-client-row-with-actions">
+                            <a class="co-client-row-link" href="<?php echo e($cliente['url']); ?>">
+                                <span class="co-client-avatar"><i class="bi bi-building"></i></span>
+                                <div class="co-client-main">
+                                    <strong><?php echo e($cliente['cliente']); ?></strong>
+                                    <span><?php echo e($cliente['problema']); ?></span>
+                                </div>
+                                <span class="co-risk-badge <?php echo e($cliente['tone'] ?? 'warning'); ?>">Risco <?php echo e($cliente['risco']); ?></span>
+                            </a>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($cliente['item_id'])): ?>
+                                <button type="button" class="co-mini-action dark" wire:click="openItemDetailModal(<?php echo e((int) $cliente['item_id']); ?>, 'cliente')" wire:loading.attr="disabled">
+                                    <i class="bi bi-eye"></i>Detalhes
+                                </button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </article>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         <div class="co-empty clean">
                             <strong>Nenhum cliente crítico.</strong>
@@ -406,12 +427,16 @@
                 </div>
             </section>
 
-            <aside class="co-panel co-deadline-panel">
+            <aside class="co-panel co-deadline-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header compact">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon blue"><i class="bi bi-calendar3"></i></span>
                         <h2>Vencimentos</h2>
                     </div>
+                    <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                        <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
                 </header>
 
                 <div class="co-tabs">
@@ -449,12 +474,16 @@
         </section>
 
         <section class="co-bottom-model-grid">
-            <section class="co-panel co-department-panel">
+            <section class="co-panel co-department-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon muted"><i class="bi bi-diagram-3"></i></span>
                         <h2>Pendências por Departamento</h2>
                     </div>
+                    <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                        <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
                 </header>
 
                 <div class="co-department-content">
@@ -523,13 +552,19 @@
                 </div>
             </section>
 
-            <section class="co-panel co-results-panel <?php echo e($resultTone); ?>">
+            <section class="co-panel co-results-panel <?php echo e($resultTone); ?> co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon green"><i class="bi bi-trophy-fill"></i></span>
                         <h2>Resultados deste mês</h2>
                     </div>
-                    <span class="co-party"><i class="bi bi-stars"></i></span>
+                    <div class="co-header-actions-inline">
+                        <span class="co-party"><i class="bi bi-stars"></i></span>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-result-grid-model">
@@ -546,6 +581,64 @@
             </section>
         </section>
 
+
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalOpen): ?>
+            <?php $detail = $this->selectedItemDetail(); ?>
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-detail-title">
+                <div class="co-modal-card co-detail-modal-card">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail): ?>
+                        <header>
+                            <span class="co-section-icon <?php echo e($detailModalSource === 'cliente' ? 'orange' : 'red'); ?>"><i class="bi <?php echo e($detailModalSource === 'cliente' ? 'bi-building-exclamation' : 'bi-lightning-charge-fill'); ?>"></i></span>
+                            <div>
+                                <h3 id="co-detail-title"><?php echo e($detailModalSource === 'cliente' ? 'Detalhes do Cliente Crítico' : 'Detalhes para Resolver Agora'); ?></h3>
+                                <p><?php echo e($detail['empresa']); ?> • <?php echo e($detail['categoria']); ?></p>
+                            </div>
+                        </header>
+
+                        <div class="co-detail-modal-body">
+                            <div class="co-detail-main-info">
+                                <span class="co-priority-badge warning"><?php echo e($detail['prioridade']); ?></span>
+                                <h4><?php echo e($detail['title']); ?></h4>
+                                <p><?php echo e($detail['descricao']); ?></p>
+                            </div>
+
+                            <div class="co-detail-grid">
+                                <div><small>Status</small><strong><?php echo e($detail['status']); ?></strong></div>
+                                <div><small>Responsável</small><strong><?php echo e($detail['responsavel']); ?></strong></div>
+                                <div><small>Vencimento</small><strong><?php echo e($detail['vencimento']); ?></strong></div>
+                                <div><small>Valor/Impacto</small><strong><?php echo e($detail['valor']); ?></strong></div>
+                                <div><small>Conclusão</small><strong><?php echo e($detail['conclusao']); ?></strong></div>
+                                <div><small>Origem</small><strong><?php echo e($detailModalSource === 'cliente' ? 'Clientes Críticos' : 'Resolver Agora'); ?></strong></div>
+                            </div>
+                        </div>
+
+                        <footer class="co-detail-footer-actions">
+                            <button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button>
+                            <a class="co-action-btn info" href="<?php echo e($detail['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir cadastro</a>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['approve'] ?? false)): ?>
+                                <button type="button" class="co-action-btn success" wire:click="aprovar(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-check2-circle"></i>Aprovar</button>
+                                <button type="button" class="co-action-btn danger" wire:click="reprovar(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-x-lg"></i>Reprovar</button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['correct'] ?? false) && ! $detail['is_closed']): ?>
+                                <button type="button" class="co-action-btn warning" wire:click="enviarParaCorrecao(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-tools"></i>Solicitar correção</button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed']): ?>
+                                <button type="button" class="co-action-btn purple" wire:click="openDelegateModal(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-person-plus"></i>Delegar</button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </footer>
+                    <?php else: ?>
+                        <header>
+                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                            <div>
+                                <h3 id="co-detail-title">Item não encontrado</h3>
+                                <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
+                            </div>
+                        </header>
+                        <footer><button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button></footer>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($delegateModalOpen): ?>
             <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">

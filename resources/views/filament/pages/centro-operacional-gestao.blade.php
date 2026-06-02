@@ -76,13 +76,19 @@
         @endif
 
         @if($activeTab === 'workload')
-            <section class="co-panel co-workload-panel co-detail-panel-large">
+            <section class="co-panel co-workload-panel co-detail-panel-large co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
                         <h2>Workload da Equipe</h2>
                     </div>
-                    <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todos</a>
+                    <div class="co-header-actions-inline">
+                        <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todos</a>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-workload-list-model co-workload-v2 co-workload-detail-list">
@@ -97,10 +103,11 @@
                             <div class="co-progress"><span style="width: {{ $barWidth }}%"></span></div>
                             <b>{{ (int) ($row['percent'] ?? 0) }}%</b>
                             <div class="co-workload-actions">
-                                <a class="co-mini-action" href="{{ $row['open_url'] ?? \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}"><i class="bi bi-list-task"></i>Abrir tarefas</a>
                                 @if(!empty($row['responsavel_id']))
-                                    <button type="button" class="co-mini-action" wire:click="abrirTarefasResponsavel({{ (int) $row['responsavel_id'] }})"><i class="bi bi-arrow-left-right"></i>Redistribuir</button>
+                                    <button type="button" class="co-mini-action dark" wire:click="openWorkloadModal({{ (int) $row['responsavel_id'] }})" wire:loading.attr="disabled"><i class="bi bi-eye"></i>Detalhes</button>
+                                    <button type="button" class="co-mini-action" wire:click="openWorkloadModal({{ (int) $row['responsavel_id'] }})" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir</button>
                                 @endif
+                                <a class="co-mini-action" href="{{ $row['open_url'] ?? \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}"><i class="bi bi-list-task"></i>Abrir tarefas</a>
                             </div>
                         </div>
                     @empty
@@ -109,13 +116,19 @@
                 </div>
             </section>
         @elseif($activeTab === 'aprovacoes')
-            <section class="co-panel co-approvals-panel co-detail-panel-large">
+            <section class="co-panel co-approvals-panel co-detail-panel-large co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon blue"><i class="bi bi-file-earmark-check"></i></span>
                         <h2>Aprovações</h2>
                     </div>
-                    <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todas</a>
+                    <div class="co-header-actions-inline">
+                        <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todas</a>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-small-list-model co-approvals-v2 co-approvals-detail-list">
@@ -150,13 +163,19 @@
                 </div>
             </section>
         @else
-            <section class="co-panel co-financial-panel co-detail-panel-large">
+            <section class="co-panel co-financial-panel co-detail-panel-large co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon green"><i class="bi bi-cash-coin"></i></span>
                         <h2>Pendências Financeiras</h2>
                     </div>
-                    <button type="button" class="co-see-all as-button" wire:click="abrirPendenciasFinanceiras">Filtrar financeiro</button>
+                    <div class="co-header-actions-inline">
+                        <button type="button" class="co-see-all as-button" wire:click="abrirPendenciasFinanceiras">Filtrar financeiro</button>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-financial-grid co-financial-detail-grid">
@@ -194,6 +213,83 @@
                     @endforelse
                 </div>
             </section>
+        @endif
+
+        @if($workloadModalOpen)
+            @php $workloadDetail = $this->selectedWorkloadDetail(); @endphp
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title">
+                <div class="co-modal-card co-detail-modal-card co-workload-modal-card">
+                    @if($workloadDetail['responsavel'])
+                        <header>
+                            <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
+                            <div>
+                                <h3 id="co-workload-detail-title">Workload de {{ $workloadDetail['responsavel']->nome }}</h3>
+                                <p>{{ $workloadDetail['total'] }} tarefa(s) aberta(s), {{ $workloadDetail['critical'] }} prioridade alta/crítica e {{ $workloadDetail['late'] }} vencida(s).</p>
+                            </div>
+                        </header>
+
+                        <div class="co-workload-modal-summary">
+                            <article><small>Tarefas</small><strong>{{ $workloadDetail['total'] }}</strong></article>
+                            <article><small>Alta/Crítica</small><strong>{{ $workloadDetail['critical'] }}</strong></article>
+                            <article><small>Vencidas</small><strong>{{ $workloadDetail['late'] }}</strong></article>
+                        </div>
+
+                        <div class="co-workload-modal-list">
+                            @forelse($workloadDetail['items'] as $task)
+                                <article class="{{ $task['is_late'] ? 'danger' : '' }}">
+                                    <div>
+                                        <strong>{{ $task['title'] }}</strong>
+                                        <span>{{ $task['empresa'] }} • {{ $task['categoria'] }}</span>
+                                        <small>{{ $task['status'] }} • {{ $task['prioridade'] }} • {{ $task['vencimento'] }}</small>
+                                    </div>
+                                    <a class="co-mini-action" href="{{ $task['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
+                                </article>
+                            @empty
+                                <div class="co-empty clean"><strong>Nenhuma tarefa aberta para este responsável.</strong></div>
+                            @endforelse
+                        </div>
+
+                        <div class="co-redistribution-box">
+                            <h4>Redistribuir sem sair da tela</h4>
+                            <p>Escolha uma tarefa desse responsável e envie para outra pessoa disponível no seu escopo.</p>
+                            <div class="co-redistribution-grid">
+                                <label class="co-modal-field">
+                                    <span>Tarefa</span>
+                                    <select wire:model.live="redistributionItemId">
+                                        <option value="">Selecione...</option>
+                                        @foreach($workloadDetail['items'] as $task)
+                                            <option value="{{ $task['id'] }}">{{ $task['title'] }} — {{ $task['empresa'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                                <label class="co-modal-field">
+                                    <span>Novo responsável</span>
+                                    <select wire:model.live="redistributionResponsavelId">
+                                        <option value="">Selecione...</option>
+                                        @foreach ($this->delegateResponsavelOptions() as $responsavelId => $responsavelNome)
+                                            <option value="{{ $responsavelId }}">{{ $responsavelNome }}</option>
+                                        @endforeach
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+
+                        <footer class="co-detail-footer-actions">
+                            <button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button>
+                            <button type="button" class="co-action-btn purple" wire:click="redistribuirItemSelecionado" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir selecionada</button>
+                        </footer>
+                    @else
+                        <header>
+                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                            <div>
+                                <h3 id="co-workload-detail-title">Responsável não encontrado</h3>
+                                <p>Não foi possível carregar o workload selecionado.</p>
+                            </div>
+                        </header>
+                        <footer><button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button></footer>
+                    @endif
+                </div>
+            </div>
         @endif
 
         @if($delegateModalOpen)

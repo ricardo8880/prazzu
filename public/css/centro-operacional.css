@@ -2505,3 +2505,506 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+/* Lote 10 - Ajustes finais: remove subnav duplicado e melhora usabilidade mobile */
+.co-header-actions-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.co-mobile-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid rgba(103, 80, 164, .18);
+    background: rgba(255, 255, 255, .92);
+    color: #4c3b86;
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .18s ease;
+}
+
+.co-mobile-toggle:hover {
+    border-color: rgba(103, 80, 164, .35);
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(31, 41, 55, .08);
+}
+
+@media (max-width: 768px) {
+    .co-page {
+        padding-bottom: 88px;
+    }
+
+    .co-topbar,
+    .co-operational-detail-hero {
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .co-title-row h1 {
+        font-size: 26px;
+        line-height: 1.12;
+    }
+
+    .co-top-actions,
+    .co-filter-row,
+    .co-filter-panel {
+        width: 100%;
+    }
+
+    .co-refresh-btn,
+    .co-filter-button,
+    .co-filter-clear {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .co-page-cluster {
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 10px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .co-page-cluster::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .co-page-cluster::-webkit-scrollbar-thumb {
+        background: rgba(103, 80, 164, .2);
+        border-radius: 999px;
+    }
+
+    .co-cluster-item {
+        min-width: 245px;
+        scroll-snap-align: start;
+    }
+
+    .co-kpi-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .co-kpi-card {
+        min-height: 118px;
+        padding: 14px;
+    }
+
+    .co-kpi-content strong {
+        font-size: 24px;
+    }
+
+    .co-alerts-toggle {
+        align-items: flex-start;
+        padding: 14px;
+    }
+
+    .co-alerts-toggle-count {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .co-focus-grid,
+    .co-bottom-model-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px;
+    }
+
+    .co-mobile-toggle {
+        display: inline-flex;
+    }
+
+    .co-panel-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .co-heading-with-icon h2 {
+        font-size: 17px;
+    }
+
+    .co-heading-with-icon h2 small {
+        display: block;
+        margin-top: 2px;
+        font-size: 11px;
+    }
+
+    .co-header-actions-inline {
+        margin-left: 0;
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .co-mobile-collapsible:not(.is-open) > :not(header) {
+        display: none !important;
+    }
+
+    .co-mobile-collapsible:not(.is-open) {
+        padding-bottom: 16px;
+    }
+
+    .co-mobile-collapsible:not(.is-open) .co-panel-header {
+        margin-bottom: 0;
+    }
+
+    .co-action-list-v2,
+    .co-client-list-model {
+        max-height: min(56vh, 460px);
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .co-action-card-v2,
+    .co-client-model-row,
+    .co-workload-detail-list .co-workload-model-row,
+    .co-small-model-row,
+    .co-financial-row {
+        border-radius: 18px;
+    }
+
+    .co-action-card-main,
+    .co-action-card-v2,
+    .co-client-model-row,
+    .co-workload-detail-list .co-workload-model-row,
+    .co-small-model-row,
+    .co-financial-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .co-action-buttons,
+    .co-workload-actions,
+    .co-approval-actions,
+    .co-financial-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .co-action-btn,
+    .co-mini-action,
+    .co-see-all.as-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .co-tabs {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .co-department-content {
+        grid-template-columns: 1fr !important;
+    }
+
+    .co-result-grid-model,
+    .co-financial-detail-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .co-financial-card {
+        min-height: 132px;
+    }
+}
+
+@media (max-width: 420px) {
+    .co-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .co-cluster-item {
+        min-width: 220px;
+    }
+}
+
+/* Lote 11 - Popups operacionais detalhados */
+.co-action-btn.dark,
+.co-mini-action.dark {
+    background: #111827;
+    color: #fff;
+    border-color: #111827;
+}
+
+.co-detail-modal-card {
+    width: min(920px, calc(100vw - 32px));
+    max-height: min(86vh, 820px);
+    overflow: auto;
+}
+
+.co-detail-modal-body {
+    display: grid;
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.co-detail-main-info {
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 18px;
+    background: #f8fafc;
+    padding: 18px;
+}
+
+.co-detail-main-info h4 {
+    margin: 10px 0 8px;
+    font-size: 1.15rem;
+    color: #0f172a;
+}
+
+.co-detail-main-info p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.55;
+}
+
+.co-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.co-detail-grid > div,
+.co-workload-modal-summary > article {
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 16px;
+    padding: 14px;
+    background: #fff;
+}
+
+.co-detail-grid small,
+.co-workload-modal-summary small {
+    display: block;
+    font-size: .75rem;
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+.co-detail-grid strong,
+.co-workload-modal-summary strong {
+    display: block;
+    color: #0f172a;
+    font-weight: 800;
+    word-break: break-word;
+}
+
+.co-detail-footer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.co-client-row-with-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 10px;
+}
+
+.co-client-row-link {
+    display: contents;
+    color: inherit;
+    text-decoration: none;
+}
+
+.co-workload-modal-card {
+    width: min(980px, calc(100vw - 32px));
+}
+
+.co-workload-modal-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.co-workload-modal-list {
+    display: grid;
+    gap: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.co-workload-modal-list article {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: 16px;
+    padding: 14px;
+    background: #fff;
+}
+
+.co-workload-modal-list article.danger {
+    border-color: rgba(239, 68, 68, .28);
+    background: #fff7f7;
+}
+
+.co-workload-modal-list strong,
+.co-workload-modal-list span,
+.co-workload-modal-list small {
+    display: block;
+}
+
+.co-workload-modal-list strong {
+    color: #0f172a;
+}
+
+.co-workload-modal-list span,
+.co-workload-modal-list small {
+    color: #64748b;
+    margin-top: 3px;
+}
+
+.co-redistribution-box {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(109, 45, 246, .08), rgba(37, 99, 235, .06));
+    border: 1px solid rgba(109, 45, 246, .16);
+}
+
+.co-redistribution-box h4 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-weight: 800;
+}
+
+.co-redistribution-box p {
+    margin: 0 0 14px;
+    color: #64748b;
+}
+
+.co-redistribution-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .co-detail-modal-card,
+    .co-workload-modal-card {
+        width: calc(100vw - 20px);
+        max-height: 88vh;
+        border-radius: 18px;
+    }
+
+    .co-detail-grid,
+    .co-workload-modal-summary,
+    .co-redistribution-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .co-detail-footer-actions,
+    .co-workload-modal-list article,
+    .co-client-row-with-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .co-detail-footer-actions .co-action-btn,
+    .co-client-row-with-actions .co-mini-action,
+    .co-workload-actions .co-mini-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Lote 12 - Correção estrutural dos cards Resolver Agora e Clientes Críticos
+   Conteúdo ocupa 100% no topo e os botões ficam na base do card. */
+.co-action-card-v2 {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+}
+
+.co-action-card-v2 .co-action-card-main {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.co-action-card-v2 .co-action-card-content {
+    width: 100% !important;
+}
+
+.co-action-card-v2 .co-action-buttons-v2 {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding-top: 12px !important;
+    margin-top: auto !important;
+    border-top: 1px solid rgba(15, 23, 42, .08) !important;
+}
+
+.co-client-row-with-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+}
+
+.co-client-row-with-actions .co-client-row-link {
+    display: grid !important;
+    grid-template-columns: 42px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    color: inherit !important;
+    text-decoration: none !important;
+}
+
+.co-client-row-with-actions .co-client-main {
+    min-width: 0 !important;
+}
+
+.co-client-row-with-actions .co-mini-action {
+    align-self: flex-start !important;
+    margin-top: auto !important;
+}
+
+@media (max-width: 768px) {
+    .co-action-card-v2 .co-action-card-main {
+        grid-template-columns: 1fr !important;
+    }
+
+    .co-action-card-v2 .co-action-icon {
+        display: none !important;
+    }
+
+    .co-action-card-v2 .co-action-buttons-v2 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .co-action-card-v2 .co-action-btn,
+    .co-client-row-with-actions .co-mini-action {
+        width: 100% !important;
+    }
+
+    .co-client-row-with-actions .co-client-row-link {
+        grid-template-columns: 1fr !important;
+    }
+
+    .co-client-row-with-actions .co-client-avatar {
+        display: none !important;
+    }
+
+    .co-client-row-with-actions .co-risk-badge {
+        width: fit-content !important;
+    }
+}

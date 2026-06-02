@@ -798,12 +798,16 @@ class CentroOperacionalService
                 $risk = $criticalCount >= 2 ? 'Crítico' : ($criticalCount === 1 ? 'Alto' : 'Médio');
 
                 return [
+                    'id' => $first->id,
+                    'item_id' => $first->id,
+                    'empresa_id' => $first->empresa_id ? (int) $first->empresa_id : null,
                     'cliente' => $first->empresa?->razao_social ?: 'Sem empresa vinculada',
                     'problema' => $this->clientProblemLabel($first, $items->count()),
                     'responsavel' => $first->responsavel?->nome ?: 'Sem responsável',
                     'dias' => $this->daysRemainingLabel($first),
                     'risco' => $risk,
                     'tone' => $risk === 'Crítico' ? 'danger' : ($risk === 'Alto' ? 'warning' : 'info'),
+                    'total_itens' => $items->count(),
                     'url' => ItemControleResource::getUrl('edit', ['record' => $first]),
                 ];
             })

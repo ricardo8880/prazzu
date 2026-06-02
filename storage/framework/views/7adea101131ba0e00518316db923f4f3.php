@@ -87,13 +87,19 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($activeTab === 'workload'): ?>
-            <section class="co-panel co-workload-panel co-detail-panel-large">
+            <section class="co-panel co-workload-panel co-detail-panel-large co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
                         <h2>Workload da Equipe</h2>
                     </div>
-                    <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todos</a>
+                    <div class="co-header-actions-inline">
+                        <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todos</a>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-workload-list-model co-workload-v2 co-workload-detail-list">
@@ -108,10 +114,11 @@
                             <div class="co-progress"><span style="width: <?php echo e($barWidth); ?>%"></span></div>
                             <b><?php echo e((int) ($row['percent'] ?? 0)); ?>%</b>
                             <div class="co-workload-actions">
-                                <a class="co-mini-action" href="<?php echo e($row['open_url'] ?? \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>"><i class="bi bi-list-task"></i>Abrir tarefas</a>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($row['responsavel_id'])): ?>
-                                    <button type="button" class="co-mini-action" wire:click="abrirTarefasResponsavel(<?php echo e((int) $row['responsavel_id']); ?>)"><i class="bi bi-arrow-left-right"></i>Redistribuir</button>
+                                    <button type="button" class="co-mini-action dark" wire:click="openWorkloadModal(<?php echo e((int) $row['responsavel_id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-eye"></i>Detalhes</button>
+                                    <button type="button" class="co-mini-action" wire:click="openWorkloadModal(<?php echo e((int) $row['responsavel_id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir</button>
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <a class="co-mini-action" href="<?php echo e($row['open_url'] ?? \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>"><i class="bi bi-list-task"></i>Abrir tarefas</a>
                             </div>
                         </div>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
@@ -120,13 +127,19 @@
                 </div>
             </section>
         <?php elseif($activeTab === 'aprovacoes'): ?>
-            <section class="co-panel co-approvals-panel co-detail-panel-large">
+            <section class="co-panel co-approvals-panel co-detail-panel-large co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon blue"><i class="bi bi-file-earmark-check"></i></span>
                         <h2>Aprovações</h2>
                     </div>
-                    <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todas</a>
+                    <div class="co-header-actions-inline">
+                        <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todas</a>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-small-list-model co-approvals-v2 co-approvals-detail-list">
@@ -161,13 +174,19 @@
                 </div>
             </section>
         <?php else: ?>
-            <section class="co-panel co-financial-panel co-detail-panel-large">
+            <section class="co-panel co-financial-panel co-detail-panel-large co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon green"><i class="bi bi-cash-coin"></i></span>
                         <h2>Pendências Financeiras</h2>
                     </div>
-                    <button type="button" class="co-see-all as-button" wire:click="abrirPendenciasFinanceiras">Filtrar financeiro</button>
+                    <div class="co-header-actions-inline">
+                        <button type="button" class="co-see-all as-button" wire:click="abrirPendenciasFinanceiras">Filtrar financeiro</button>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-financial-grid co-financial-detail-grid">
@@ -205,6 +224,83 @@
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
             </section>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadModalOpen): ?>
+            <?php $workloadDetail = $this->selectedWorkloadDetail(); ?>
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title">
+                <div class="co-modal-card co-detail-modal-card co-workload-modal-card">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadDetail['responsavel']): ?>
+                        <header>
+                            <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
+                            <div>
+                                <h3 id="co-workload-detail-title">Workload de <?php echo e($workloadDetail['responsavel']->nome); ?></h3>
+                                <p><?php echo e($workloadDetail['total']); ?> tarefa(s) aberta(s), <?php echo e($workloadDetail['critical']); ?> prioridade alta/crítica e <?php echo e($workloadDetail['late']); ?> vencida(s).</p>
+                            </div>
+                        </header>
+
+                        <div class="co-workload-modal-summary">
+                            <article><small>Tarefas</small><strong><?php echo e($workloadDetail['total']); ?></strong></article>
+                            <article><small>Alta/Crítica</small><strong><?php echo e($workloadDetail['critical']); ?></strong></article>
+                            <article><small>Vencidas</small><strong><?php echo e($workloadDetail['late']); ?></strong></article>
+                        </div>
+
+                        <div class="co-workload-modal-list">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workloadDetail['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <article class="<?php echo e($task['is_late'] ? 'danger' : ''); ?>">
+                                    <div>
+                                        <strong><?php echo e($task['title']); ?></strong>
+                                        <span><?php echo e($task['empresa']); ?> • <?php echo e($task['categoria']); ?></span>
+                                        <small><?php echo e($task['status']); ?> • <?php echo e($task['prioridade']); ?> • <?php echo e($task['vencimento']); ?></small>
+                                    </div>
+                                    <a class="co-mini-action" href="<?php echo e($task['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
+                                </article>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                <div class="co-empty clean"><strong>Nenhuma tarefa aberta para este responsável.</strong></div>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        </div>
+
+                        <div class="co-redistribution-box">
+                            <h4>Redistribuir sem sair da tela</h4>
+                            <p>Escolha uma tarefa desse responsável e envie para outra pessoa disponível no seu escopo.</p>
+                            <div class="co-redistribution-grid">
+                                <label class="co-modal-field">
+                                    <span>Tarefa</span>
+                                    <select wire:model.live="redistributionItemId">
+                                        <option value="">Selecione...</option>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $workloadDetail['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <option value="<?php echo e($task['id']); ?>"><?php echo e($task['title']); ?> — <?php echo e($task['empresa']); ?></option>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    </select>
+                                </label>
+                                <label class="co-modal-field">
+                                    <span>Novo responsável</span>
+                                    <select wire:model.live="redistributionResponsavelId">
+                                        <option value="">Selecione...</option>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->delegateResponsavelOptions(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $responsavelId => $responsavelNome): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <option value="<?php echo e($responsavelId); ?>"><?php echo e($responsavelNome); ?></option>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+
+                        <footer class="co-detail-footer-actions">
+                            <button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button>
+                            <button type="button" class="co-action-btn purple" wire:click="redistribuirItemSelecionado" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir selecionada</button>
+                        </footer>
+                    <?php else: ?>
+                        <header>
+                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                            <div>
+                                <h3 id="co-workload-detail-title">Responsável não encontrado</h3>
+                                <p>Não foi possível carregar o workload selecionado.</p>
+                            </div>
+                        </header>
+                        <footer><button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button></footer>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            </div>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($delegateModalOpen): ?>

@@ -12,6 +12,7 @@ use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class CentroOperacional extends Page
@@ -31,6 +32,13 @@ class CentroOperacional extends Page
     public ?int $delegateItemId = null;
     public ?int $delegateResponsavelId = null;
     public bool $delegateModalOpen = false;
+    public bool $detailModalOpen = false;
+    public ?int $detailItemId = null;
+    public string $detailModalSource = 'resolver';
+    public bool $workloadModalOpen = false;
+    public ?int $workloadResponsavelId = null;
+    public ?int $redistributionItemId = null;
+    public ?int $redistributionResponsavelId = null;
 
     public function getHeading(): string
     {
@@ -163,9 +171,190 @@ class CentroOperacional extends Page
 
     public function abrirTarefasResponsavel(?int $responsavelId = null): void
     {
+        if ($responsavelId) {
+            $this->openWorkloadModal($responsavelId);
+            return;
+        }
+
         $this->statusFilter = 'all';
 
         $this->redirect(ItemControleResource::getUrl('index'));
+    }
+
+    public function openItemDetailModal(int $id, string $source = 'resolver'): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_VIEW);
+
+        if (! $item) {
+            return;
+        }
+
+        $this->detailItemId = $item->id;
+        $this->detailModalSource = in_array($source, ['resolver', 'cliente'], true) ? $source : 'resolver';
+        $this->detailModalOpen = true;
+    }
+
+    public function closeItemDetailModal(): void
+    {
+        $this->detailModalOpen = false;
+        $this->detailItemId = null;
+        $this->detailModalSource = 'resolver';
+    }
+
+    public function selectedItemDetail(): ?array
+    {
+        if (! $this->detailItemId) {
+            return null;
+        }
+
+        $item = ItemControle::query()
+            ->visibleForUser(Filament::auth()->user())
+            ->with(['empresa', 'responsavel', 'categoria'])
+            ->whereKey($this->detailItemId)
+            ->first();
+
+        if (! $item) {
+            return null;
+        }
+
+        $description = filled($item->descricao)
+            ? (string) $item->descricao
+            : 'Sem descrição cadastrada.';
+
+        $value = null;
+        if (CachedSchema::hasColumn('item_controles', 'valor_tarefa') && filled($item->valor_tarefa)) {
+            $value = (float) $item->valor_tarefa;
+        } elseif (filled($item->contrato_valor)) {
+            $value = (float) $item->contrato_valor;
+        }
+
+        return [
+            'id' => $item->id,
+            'title' => $item->titulo ?: 'Item operacional',
+            'empresa' => $item->empresa?->razao_social ?: 'Sem empresa vinculada',
+            'responsavel' => $item->responsavel?->nome ?: 'Sem responsável',
+            'categoria' => $item->categoria?->nome ?: ($item->getTipoOuCategoria() ?: 'Operacional'),
+            'status' => str((string) $item->status)->replace('_', ' ')->title()->toString(),
+            'status_key' => (string) $item->status,
+            'prioridade' => str((string) ($item->prioridade ?: 'normal'))->replace('_', ' ')->title()->toString(),
+            'vencimento' => $item->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+            'conclusao' => $item->data_conclusao?->format('d/m/Y') ?: 'Não concluído',
+            'descricao' => $description,
+            'valor' => $value !== null ? 'R$ ' . number_format($value, 2, ',', '.') : 'Sem valor informado',
+            'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
+            'actions' => CentroOperacionalAccess::actionPermissions(Filament::auth()->user(), $item),
+            'is_closed' => in_array((string) $item->status, ['concluido', 'cancelado'], true),
+        ];
+    }
+
+    public function openWorkloadModal(int $responsavelId): void
+    {
+        $responsavel = Responsavel::query()
+            ->whereKey($responsavelId)
+            ->first();
+
+        if (! $responsavel) {
+            $this->notifyError('Responsável não encontrado.');
+            return;
+        }
+
+        $this->workloadResponsavelId = $responsavel->id;
+        $this->redistributionItemId = null;
+        $this->redistributionResponsavelId = null;
+        $this->workloadModalOpen = true;
+    }
+
+    public function closeWorkloadModal(): void
+    {
+        $this->workloadModalOpen = false;
+        $this->workloadResponsavelId = null;
+        $this->redistributionItemId = null;
+        $this->redistributionResponsavelId = null;
+    }
+
+    public function selectedWorkloadDetail(): array
+    {
+        if (! $this->workloadResponsavelId) {
+            return ['responsavel' => null, 'items' => [], 'total' => 0, 'critical' => 0, 'late' => 0];
+        }
+
+        $responsavel = Responsavel::query()->whereKey($this->workloadResponsavelId)->first();
+
+        if (! $responsavel) {
+            return ['responsavel' => null, 'items' => [], 'total' => 0, 'critical' => 0, 'late' => 0];
+        }
+
+        $items = ItemControle::query()
+            ->visibleForUser(Filament::auth()->user())
+            ->with(['empresa:id,razao_social', 'categoria:id,nome'])
+            ->where('responsavel_id', $responsavel->id)
+            ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+            ->orderByRaw("CASE WHEN prioridade IN ('critica', 'urgente') THEN 1 WHEN prioridade = 'alta' THEN 2 ELSE 3 END")
+            ->orderBy('data_vencimento')
+            ->limit(12)
+            ->get();
+
+        return [
+            'responsavel' => $responsavel,
+            'items' => $items->map(fn (ItemControle $item): array => [
+                'id' => $item->id,
+                'title' => $item->titulo ?: 'Item operacional',
+                'empresa' => $item->empresa?->razao_social ?: 'Sem empresa',
+                'categoria' => $item->categoria?->nome ?: ($item->getTipoOuCategoria() ?: 'Operacional'),
+                'status' => str((string) $item->status)->replace('_', ' ')->title()->toString(),
+                'prioridade' => str((string) ($item->prioridade ?: 'normal'))->replace('_', ' ')->title()->toString(),
+                'vencimento' => $item->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+                'is_late' => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()),
+                'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
+            ])->values()->toArray(),
+            'total' => $items->count(),
+            'critical' => $items->whereIn('prioridade', ['critica', 'urgente', 'alta'])->count(),
+            'late' => $items->filter(fn (ItemControle $item): bool => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()))->count(),
+        ];
+    }
+
+    public function redistribuirItemSelecionado(): void
+    {
+        if (! $this->redistributionItemId || ! $this->redistributionResponsavelId) {
+            $this->notifyError('Selecione a tarefa e o novo responsável.');
+            return;
+        }
+
+        $item = $this->findAllowedItem($this->redistributionItemId, CentroOperacionalAccess::ACTION_DELEGATE);
+
+        if (! $item) {
+            return;
+        }
+
+        $novoResponsavel = $this->allowedResponsaveisForDelegation($item)
+            ->whereKey($this->redistributionResponsavelId)
+            ->first();
+
+        if (! $novoResponsavel) {
+            $this->notifyError('Responsável inválido para redistribuição.');
+            return;
+        }
+
+        if ((int) $item->responsavel_id === (int) $novoResponsavel->id) {
+            $this->notifyError('Este item já está com esse responsável.');
+            return;
+        }
+
+        $responsavelAnterior = $item->responsavel?->nome ?: 'Sem responsável';
+        $responsavelNovo = $novoResponsavel->nome ?: 'Novo responsável';
+
+        $item->update(['responsavel_id' => $novoResponsavel->id]);
+        $item->registrarTimeline(
+            'redistribuicao',
+            'Item redistribuído pelo Centro Operacional',
+            "Responsável alterado de {$responsavelAnterior} para {$responsavelNovo} pelo painel de Workload.",
+            ['responsavel_anterior_id' => $this->workloadResponsavelId, 'responsavel_novo_id' => $novoResponsavel->id],
+            Filament::auth()->user()
+        );
+
+        $this->redistributionItemId = null;
+        $this->redistributionResponsavelId = null;
+        $this->notifySuccess('Item redistribuído com sucesso.');
     }
 
     public function enviarParaCorrecao(int $id): void
@@ -275,13 +464,15 @@ class CentroOperacional extends Page
 
     public function delegateResponsavelOptions(): array
     {
-        if (! $this->delegateItemId) {
+        $targetItemId = $this->delegateItemId ?: $this->redistributionItemId;
+
+        if (! $targetItemId) {
             return [];
         }
 
         $item = ItemControle::query()
             ->visibleForUser(Filament::auth()->user())
-            ->whereKey($this->delegateItemId)
+            ->whereKey($targetItemId)
             ->first();
 
         if (! $item) {

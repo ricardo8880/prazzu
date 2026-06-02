@@ -290,12 +290,16 @@
 
 
         <section class="co-focus-grid">
-            <section class="co-panel co-resolve-panel">
+            <section class="co-panel co-resolve-panel co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon red"><i class="bi bi-lightning-charge-fill"></i></span>
                         <h2>Resolver Agora <small>(prioridade máxima)</small></h2>
                     </div>
+                    <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                        <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
                 </header>
 
                 <div class="co-action-list co-action-list-v2">
@@ -327,6 +331,10 @@
                                 </div>
                             </a>
                             <div class="co-action-buttons-v2">
+                                <button type="button" class="co-action-btn dark" wire:click="openItemDetailModal({{ $item['id'] }}, 'resolver')" wire:loading.attr="disabled" wire:target="openItemDetailModal({{ $item['id'] }}, 'resolver')">
+                                    <i class="bi bi-eye"></i>Detalhes
+                                </button>
+
                                 @if(($primary['key'] ?? 'open') === 'approve' && $canApprove)
                                     <button type="button" class="co-action-btn success" wire:click="aprovar({{ $item['id'] }})" wire:loading.attr="disabled" wire:target="aprovar({{ $item['id'] }})">
                                         <i class="bi bi-check2-circle"></i>Aprovar
@@ -367,25 +375,38 @@
                 @endif
             </section>
 
-            <section class="co-panel co-clients-panel">
+            <section class="co-panel co-clients-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon orange"><i class="bi bi-exclamation-triangle"></i></span>
                         <h2>Clientes Críticos</h2>
                     </div>
-                    <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todos</a>
+                    <div class="co-header-actions-inline">
+                        <a class="co-see-all" href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index') }}">Ver todos</a>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-client-list-model">
                     @forelse ($clientesCriticos as $cliente)
-                        <a class="co-client-model-row" href="{{ $cliente['url'] }}">
-                            <span class="co-client-avatar"><i class="bi bi-building"></i></span>
-                            <div class="co-client-main">
-                                <strong>{{ $cliente['cliente'] }}</strong>
-                                <span>{{ $cliente['problema'] }}</span>
-                            </div>
-                            <span class="co-risk-badge {{ $cliente['tone'] ?? 'warning' }}">Risco {{ $cliente['risco'] }}</span>
-                        </a>
+                        <article class="co-client-model-row co-client-row-with-actions">
+                            <a class="co-client-row-link" href="{{ $cliente['url'] }}">
+                                <span class="co-client-avatar"><i class="bi bi-building"></i></span>
+                                <div class="co-client-main">
+                                    <strong>{{ $cliente['cliente'] }}</strong>
+                                    <span>{{ $cliente['problema'] }}</span>
+                                </div>
+                                <span class="co-risk-badge {{ $cliente['tone'] ?? 'warning' }}">Risco {{ $cliente['risco'] }}</span>
+                            </a>
+                            @if(!empty($cliente['item_id']))
+                                <button type="button" class="co-mini-action dark" wire:click="openItemDetailModal({{ (int) $cliente['item_id'] }}, 'cliente')" wire:loading.attr="disabled">
+                                    <i class="bi bi-eye"></i>Detalhes
+                                </button>
+                            @endif
+                        </article>
                     @empty
                         <div class="co-empty clean">
                             <strong>Nenhum cliente crítico.</strong>
@@ -395,12 +416,16 @@
                 </div>
             </section>
 
-            <aside class="co-panel co-deadline-panel">
+            <aside class="co-panel co-deadline-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header compact">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon blue"><i class="bi bi-calendar3"></i></span>
                         <h2>Vencimentos</h2>
                     </div>
+                    <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                        <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
                 </header>
 
                 <div class="co-tabs">
@@ -437,12 +462,16 @@
         </section>
 
         <section class="co-bottom-model-grid">
-            <section class="co-panel co-department-panel">
+            <section class="co-panel co-department-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon muted"><i class="bi bi-diagram-3"></i></span>
                         <h2>Pendências por Departamento</h2>
                     </div>
+                    <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                        <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                        <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
                 </header>
 
                 <div class="co-department-content">
@@ -511,13 +540,19 @@
                 </div>
             </section>
 
-            <section class="co-panel co-results-panel {{ $resultTone }}">
+            <section class="co-panel co-results-panel {{ $resultTone }} co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
                 <header class="co-panel-header">
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon green"><i class="bi bi-trophy-fill"></i></span>
                         <h2>Resultados deste mês</h2>
                     </div>
-                    <span class="co-party"><i class="bi bi-stars"></i></span>
+                    <div class="co-header-actions-inline">
+                        <span class="co-party"><i class="bi bi-stars"></i></span>
+                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
+                        </button>
+                    </div>
                 </header>
 
                 <div class="co-result-grid-model">
@@ -534,6 +569,64 @@
             </section>
         </section>
 
+
+        @if($detailModalOpen)
+            @php $detail = $this->selectedItemDetail(); @endphp
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-detail-title">
+                <div class="co-modal-card co-detail-modal-card">
+                    @if($detail)
+                        <header>
+                            <span class="co-section-icon {{ $detailModalSource === 'cliente' ? 'orange' : 'red' }}"><i class="bi {{ $detailModalSource === 'cliente' ? 'bi-building-exclamation' : 'bi-lightning-charge-fill' }}"></i></span>
+                            <div>
+                                <h3 id="co-detail-title">{{ $detailModalSource === 'cliente' ? 'Detalhes do Cliente Crítico' : 'Detalhes para Resolver Agora' }}</h3>
+                                <p>{{ $detail['empresa'] }} • {{ $detail['categoria'] }}</p>
+                            </div>
+                        </header>
+
+                        <div class="co-detail-modal-body">
+                            <div class="co-detail-main-info">
+                                <span class="co-priority-badge warning">{{ $detail['prioridade'] }}</span>
+                                <h4>{{ $detail['title'] }}</h4>
+                                <p>{{ $detail['descricao'] }}</p>
+                            </div>
+
+                            <div class="co-detail-grid">
+                                <div><small>Status</small><strong>{{ $detail['status'] }}</strong></div>
+                                <div><small>Responsável</small><strong>{{ $detail['responsavel'] }}</strong></div>
+                                <div><small>Vencimento</small><strong>{{ $detail['vencimento'] }}</strong></div>
+                                <div><small>Valor/Impacto</small><strong>{{ $detail['valor'] }}</strong></div>
+                                <div><small>Conclusão</small><strong>{{ $detail['conclusao'] }}</strong></div>
+                                <div><small>Origem</small><strong>{{ $detailModalSource === 'cliente' ? 'Clientes Críticos' : 'Resolver Agora' }}</strong></div>
+                            </div>
+                        </div>
+
+                        <footer class="co-detail-footer-actions">
+                            <button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button>
+                            <a class="co-action-btn info" href="{{ $detail['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir cadastro</a>
+                            @if(($detail['actions']['approve'] ?? false))
+                                <button type="button" class="co-action-btn success" wire:click="aprovar({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-check2-circle"></i>Aprovar</button>
+                                <button type="button" class="co-action-btn danger" wire:click="reprovar({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-x-lg"></i>Reprovar</button>
+                            @endif
+                            @if(($detail['actions']['correct'] ?? false) && ! $detail['is_closed'])
+                                <button type="button" class="co-action-btn warning" wire:click="enviarParaCorrecao({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-tools"></i>Solicitar correção</button>
+                            @endif
+                            @if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed'])
+                                <button type="button" class="co-action-btn purple" wire:click="openDelegateModal({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-person-plus"></i>Delegar</button>
+                            @endif
+                        </footer>
+                    @else
+                        <header>
+                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                            <div>
+                                <h3 id="co-detail-title">Item não encontrado</h3>
+                                <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
+                            </div>
+                        </header>
+                        <footer><button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button></footer>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         @if($delegateModalOpen)
             <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">
