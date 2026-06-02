@@ -572,7 +572,7 @@
 
         @if($detailModalOpen)
             @php $detail = $this->selectedItemDetail(); @endphp
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-detail-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-detail-title" wire:click.self="closeItemDetailModal">
                 <div class="co-modal-card co-detail-modal-card">
                     @if($detail)
                         <header>
@@ -590,14 +590,67 @@
                                 <p>{{ $detail['descricao'] }}</p>
                             </div>
 
+                            <div class="co-decision-box {{ $detail['suggestion']['tone'] ?? 'info' }}">
+                                <div>
+                                    <small>Sugestão operacional</small>
+                                    <strong>{{ $detail['suggestion']['title'] ?? 'Avaliar item' }}</strong>
+                                    <p>{{ $detail['suggestion']['text'] ?? 'Use os dados abaixo para decidir a próxima ação.' }}</p>
+                                </div>
+                                <span>{{ $detail['suggestion']['primary_action'] ?? 'Decidir agora' }}</span>
+                            </div>
+
                             <div class="co-detail-grid">
                                 <div><small>Status</small><strong>{{ $detail['status'] }}</strong></div>
                                 <div><small>Responsável</small><strong>{{ $detail['responsavel'] }}</strong></div>
-                                <div><small>Vencimento</small><strong>{{ $detail['vencimento'] }}</strong></div>
+                                <div><small>Vencimento</small><strong>{{ $detail['vencimento'] }}</strong><em>{{ $detail['dias_prazo'] ?? '' }}</em></div>
                                 <div><small>Valor/Impacto</small><strong>{{ $detail['valor'] }}</strong></div>
                                 <div><small>Conclusão</small><strong>{{ $detail['conclusao'] }}</strong></div>
                                 <div><small>Origem</small><strong>{{ $detailModalSource === 'cliente' ? 'Clientes Críticos' : 'Resolver Agora' }}</strong></div>
                             </div>
+
+                            <div class="co-detail-insights-grid">
+                                <section class="co-detail-insight-card">
+                                    <h4><i class="bi bi-clock-history"></i>Últimas movimentações</h4>
+                                    @forelse(($detail['timeline'] ?? []) as $entry)
+                                        <article>
+                                            <strong>{{ $entry['titulo'] }}</strong>
+                                            <span>{{ $entry['tipo'] }} • {{ $entry['data'] }}</span>
+                                            <p>{{ $entry['descricao'] }}</p>
+                                        </article>
+                                    @empty
+                                        <div class="co-empty clean small"><strong>Sem histórico operacional ainda.</strong></div>
+                                    @endforelse
+                                </section>
+
+                                <section class="co-detail-insight-card">
+                                    <h4><i class="bi bi-check2-square"></i>Checklist / próximas etapas</h4>
+                                    @forelse(($detail['checklist'] ?? []) as $check)
+                                        <article class="co-checkline {{ $check['concluido'] ? 'done' : '' }}">
+                                            <i class="bi {{ $check['concluido'] ? 'bi-check-circle-fill' : 'bi-circle' }}"></i>
+                                            <strong>{{ $check['titulo'] }}</strong>
+                                        </article>
+                                    @empty
+                                        <div class="co-empty clean small"><strong>Nenhum checklist cadastrado.</strong></div>
+                                    @endforelse
+                                </section>
+                            </div>
+
+                            @if($detailModalSource === 'cliente')
+                                <section class="co-detail-insight-card co-related-client-card">
+                                    <h4><i class="bi bi-building"></i>Outros itens recentes do cliente</h4>
+                                    @forelse(($detail['related_client_items'] ?? []) as $related)
+                                        <article>
+                                            <div>
+                                                <strong>{{ $related['titulo'] }}</strong>
+                                                <span>{{ $related['status'] }} • {{ $related['responsavel'] }} • {{ $related['vencimento'] }}</span>
+                                            </div>
+                                            <a class="co-mini-action" href="{{ $related['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
+                                        </article>
+                                    @empty
+                                        <div class="co-empty clean small"><strong>Nenhum outro item recente desse cliente.</strong></div>
+                                    @endforelse
+                                </section>
+                            @endif
                         </div>
 
                         <footer class="co-detail-footer-actions">
@@ -629,7 +682,7 @@
         @endif
 
         @if($delegateModalOpen)
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title" wire:click.self="cancelDelegateModal">
                 <div class="co-modal-card">
                     <header>
                         <span class="co-section-icon purple"><i class="bi bi-person-plus"></i></span>

@@ -228,7 +228,7 @@
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadModalOpen): ?>
             <?php $workloadDetail = $this->selectedWorkloadDetail(); ?>
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title" wire:click.self="closeWorkloadModal">
                 <div class="co-modal-card co-detail-modal-card co-workload-modal-card">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadDetail['responsavel']): ?>
                         <header>
@@ -245,13 +245,28 @@
                             <article><small>Vencidas</small><strong><?php echo e($workloadDetail['late']); ?></strong></article>
                         </div>
 
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($workloadDetail['recommendation'])): ?>
+                            <div class="co-decision-box purple">
+                                <div>
+                                    <small>Recomendação de redistribuição</small>
+                                    <strong><?php echo e($workloadDetail['recommendation']['title']); ?></strong>
+                                    <p><?php echo e($workloadDetail['recommendation']['text']); ?></p>
+                                </div>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($workloadDetail['recommendation']['target_id']) && ! empty($workloadDetail['items'][0]['id'])): ?>
+                                    <button type="button" class="co-mini-action dark" wire:click="preencherSugestaoRedistribuicao(<?php echo e((int) $workloadDetail['items'][0]['id']); ?>, <?php echo e((int) $workloadDetail['recommendation']['target_id']); ?>)" wire:loading.attr="disabled">
+                                        <i class="bi bi-magic"></i>Usar sugestão
+                                    </button>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
                         <div class="co-workload-modal-list">
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workloadDetail['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                 <article class="<?php echo e($task['is_late'] ? 'danger' : ''); ?>">
                                     <div>
                                         <strong><?php echo e($task['title']); ?></strong>
                                         <span><?php echo e($task['empresa']); ?> • <?php echo e($task['categoria']); ?></span>
-                                        <small><?php echo e($task['status']); ?> • <?php echo e($task['prioridade']); ?> • <?php echo e($task['vencimento']); ?></small>
+                                        <small><?php echo e($task['status']); ?> • <?php echo e($task['prioridade']); ?> • <?php echo e($task['vencimento']); ?> • <?php echo e($task['dias_prazo'] ?? ''); ?></small>
                                     </div>
                                     <a class="co-mini-action" href="<?php echo e($task['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
                                 </article>
@@ -304,7 +319,7 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($delegateModalOpen): ?>
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title" wire:click.self="cancelDelegateModal">
                 <div class="co-modal-card">
                     <header>
                         <span class="co-section-icon purple"><i class="bi bi-person-plus"></i></span>

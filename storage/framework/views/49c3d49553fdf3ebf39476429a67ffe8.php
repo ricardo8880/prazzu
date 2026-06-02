@@ -584,7 +584,7 @@
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalOpen): ?>
             <?php $detail = $this->selectedItemDetail(); ?>
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-detail-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-detail-title" wire:click.self="closeItemDetailModal">
                 <div class="co-modal-card co-detail-modal-card">
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail): ?>
                         <header>
@@ -602,14 +602,67 @@
                                 <p><?php echo e($detail['descricao']); ?></p>
                             </div>
 
+                            <div class="co-decision-box <?php echo e($detail['suggestion']['tone'] ?? 'info'); ?>">
+                                <div>
+                                    <small>Sugestão operacional</small>
+                                    <strong><?php echo e($detail['suggestion']['title'] ?? 'Avaliar item'); ?></strong>
+                                    <p><?php echo e($detail['suggestion']['text'] ?? 'Use os dados abaixo para decidir a próxima ação.'); ?></p>
+                                </div>
+                                <span><?php echo e($detail['suggestion']['primary_action'] ?? 'Decidir agora'); ?></span>
+                            </div>
+
                             <div class="co-detail-grid">
                                 <div><small>Status</small><strong><?php echo e($detail['status']); ?></strong></div>
                                 <div><small>Responsável</small><strong><?php echo e($detail['responsavel']); ?></strong></div>
-                                <div><small>Vencimento</small><strong><?php echo e($detail['vencimento']); ?></strong></div>
+                                <div><small>Vencimento</small><strong><?php echo e($detail['vencimento']); ?></strong><em><?php echo e($detail['dias_prazo'] ?? ''); ?></em></div>
                                 <div><small>Valor/Impacto</small><strong><?php echo e($detail['valor']); ?></strong></div>
                                 <div><small>Conclusão</small><strong><?php echo e($detail['conclusao']); ?></strong></div>
                                 <div><small>Origem</small><strong><?php echo e($detailModalSource === 'cliente' ? 'Clientes Críticos' : 'Resolver Agora'); ?></strong></div>
                             </div>
+
+                            <div class="co-detail-insights-grid">
+                                <section class="co-detail-insight-card">
+                                    <h4><i class="bi bi-clock-history"></i>Últimas movimentações</h4>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($detail['timeline'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <article>
+                                            <strong><?php echo e($entry['titulo']); ?></strong>
+                                            <span><?php echo e($entry['tipo']); ?> • <?php echo e($entry['data']); ?></span>
+                                            <p><?php echo e($entry['descricao']); ?></p>
+                                        </article>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div class="co-empty clean small"><strong>Sem histórico operacional ainda.</strong></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </section>
+
+                                <section class="co-detail-insight-card">
+                                    <h4><i class="bi bi-check2-square"></i>Checklist / próximas etapas</h4>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($detail['checklist'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $check): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <article class="co-checkline <?php echo e($check['concluido'] ? 'done' : ''); ?>">
+                                            <i class="bi <?php echo e($check['concluido'] ? 'bi-check-circle-fill' : 'bi-circle'); ?>"></i>
+                                            <strong><?php echo e($check['titulo']); ?></strong>
+                                        </article>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div class="co-empty clean small"><strong>Nenhum checklist cadastrado.</strong></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </section>
+                            </div>
+
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalSource === 'cliente'): ?>
+                                <section class="co-detail-insight-card co-related-client-card">
+                                    <h4><i class="bi bi-building"></i>Outros itens recentes do cliente</h4>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($detail['related_client_items'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $related): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <article>
+                                            <div>
+                                                <strong><?php echo e($related['titulo']); ?></strong>
+                                                <span><?php echo e($related['status']); ?> • <?php echo e($related['responsavel']); ?> • <?php echo e($related['vencimento']); ?></span>
+                                            </div>
+                                            <a class="co-mini-action" href="<?php echo e($related['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
+                                        </article>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div class="co-empty clean small"><strong>Nenhum outro item recente desse cliente.</strong></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </section>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </div>
 
                         <footer class="co-detail-footer-actions">
@@ -641,7 +694,7 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($delegateModalOpen): ?>
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title" wire:click.self="cancelDelegateModal">
                 <div class="co-modal-card">
                     <header>
                         <span class="co-section-icon purple"><i class="bi bi-person-plus"></i></span>

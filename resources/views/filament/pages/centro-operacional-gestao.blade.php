@@ -217,7 +217,7 @@
 
         @if($workloadModalOpen)
             @php $workloadDetail = $this->selectedWorkloadDetail(); @endphp
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title" wire:click.self="closeWorkloadModal">
                 <div class="co-modal-card co-detail-modal-card co-workload-modal-card">
                     @if($workloadDetail['responsavel'])
                         <header>
@@ -234,13 +234,28 @@
                             <article><small>Vencidas</small><strong>{{ $workloadDetail['late'] }}</strong></article>
                         </div>
 
+                        @if(! empty($workloadDetail['recommendation']))
+                            <div class="co-decision-box purple">
+                                <div>
+                                    <small>Recomendação de redistribuição</small>
+                                    <strong>{{ $workloadDetail['recommendation']['title'] }}</strong>
+                                    <p>{{ $workloadDetail['recommendation']['text'] }}</p>
+                                </div>
+                                @if(! empty($workloadDetail['recommendation']['target_id']) && ! empty($workloadDetail['items'][0]['id']))
+                                    <button type="button" class="co-mini-action dark" wire:click="preencherSugestaoRedistribuicao({{ (int) $workloadDetail['items'][0]['id'] }}, {{ (int) $workloadDetail['recommendation']['target_id'] }})" wire:loading.attr="disabled">
+                                        <i class="bi bi-magic"></i>Usar sugestão
+                                    </button>
+                                @endif
+                            </div>
+                        @endif
+
                         <div class="co-workload-modal-list">
                             @forelse($workloadDetail['items'] as $task)
                                 <article class="{{ $task['is_late'] ? 'danger' : '' }}">
                                     <div>
                                         <strong>{{ $task['title'] }}</strong>
                                         <span>{{ $task['empresa'] }} • {{ $task['categoria'] }}</span>
-                                        <small>{{ $task['status'] }} • {{ $task['prioridade'] }} • {{ $task['vencimento'] }}</small>
+                                        <small>{{ $task['status'] }} • {{ $task['prioridade'] }} • {{ $task['vencimento'] }} • {{ $task['dias_prazo'] ?? '' }}</small>
                                     </div>
                                     <a class="co-mini-action" href="{{ $task['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
                                 </article>
@@ -293,7 +308,7 @@
         @endif
 
         @if($delegateModalOpen)
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title">
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title" wire:click.self="cancelDelegateModal">
                 <div class="co-modal-card">
                     <header>
                         <span class="co-section-icon purple"><i class="bi bi-person-plus"></i></span>

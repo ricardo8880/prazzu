@@ -228,6 +228,55 @@ class CentroOperacional extends Page
             $value = (float) $item->contrato_valor;
         }
 
+        $timeline = CachedSchema::hasTable('item_controle_timeline')
+            ? $item->timelines()
+                ->latest('id')
+                ->limit(5)
+                ->get()
+                ->map(fn ($entry): array => [
+                    'tipo' => method_exists($entry, 'getTipoExibicao') ? $entry->getTipoExibicao() : str((string) $entry->tipo)->replace('_', ' ')->title()->toString(),
+                    'titulo' => $entry->titulo ?: 'Atualização operacional',
+                    'descricao' => $entry->descricao ?: 'Sem detalhe adicional.',
+                    'data' => $entry->created_at?->format('d/m/Y H:i') ?: '-',
+                ])
+                ->values()
+                ->toArray()
+            : [];
+
+        $checklist = CachedSchema::hasTable('item_controle_checklists')
+            ? $item->checklists()
+                ->orderBy('ordem')
+                ->orderBy('id')
+                ->limit(6)
+                ->get()
+                ->map(fn ($check): array => [
+                    'titulo' => $check->titulo ?: 'Etapa operacional',
+                    'concluido' => (bool) $check->concluido,
+                ])
+                ->values()
+                ->toArray()
+            : [];
+
+        $relatedClientItems = $item->empresa_id
+            ? ItemControle::query()
+                ->visibleForUser(Filament::auth()->user())
+                ->with(['categoria:id,nome', 'responsavel:id,nome'])
+                ->where('empresa_id', $item->empresa_id)
+                ->where('id', '<>', $item->id)
+                ->latest('id')
+                ->limit(5)
+                ->get()
+                ->map(fn (ItemControle $related): array => [
+                    'titulo' => $related->titulo ?: 'Item operacional',
+                    'status' => str((string) $related->status)->replace('_', ' ')->title()->toString(),
+                    'responsavel' => $related->responsavel?->nome ?: 'Sem responsável',
+                    'vencimento' => $related->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+                    'url' => ItemControleResource::getUrl('edit', ['record' => $related]),
+                ])
+                ->values()
+                ->toArray()
+            : [];
+
         return [
             'id' => $item->id,
             'title' => $item->titulo ?: 'Item operacional',
@@ -238,12 +287,17 @@ class CentroOperacional extends Page
             'status_key' => (string) $item->status,
             'prioridade' => str((string) ($item->prioridade ?: 'normal'))->replace('_', ' ')->title()->toString(),
             'vencimento' => $item->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+            'dias_prazo' => $this->deadlineLabel($item),
             'conclusao' => $item->data_conclusao?->format('d/m/Y') ?: 'Não concluído',
             'descricao' => $description,
             'valor' => $value !== null ? 'R$ ' . number_format($value, 2, ',', '.') : 'Sem valor informado',
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
             'actions' => CentroOperacionalAccess::actionPermissions(Filament::auth()->user(), $item),
             'is_closed' => in_array((string) $item->status, ['concluido', 'cancelado'], true),
+            'suggestion' => $this->operationalSuggestion($item),
+            'timeline' => $timeline,
+            'checklist' => $checklist,
+            'related_client_items' => $relatedClientItems,
         ];
     }
 
@@ -294,22 +348,28 @@ class CentroOperacional extends Page
             ->limit(12)
             ->get();
 
+        $itemsPayload = $items->map(fn (ItemControle $item): array => [
+            'id' => $item->id,
+            'title' => $item->titulo ?: 'Item operacional',
+            'empresa' => $item->empresa?->razao_social ?: 'Sem empresa',
+            'categoria' => $item->categoria?->nome ?: ($item->getTipoOuCategoria() ?: 'Operacional'),
+            'status' => str((string) $item->status)->replace('_', ' ')->title()->toString(),
+            'prioridade' => str((string) ($item->prioridade ?: 'normal'))->replace('_', ' ')->title()->toString(),
+            'vencimento' => $item->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+            'dias_prazo' => $this->deadlineLabel($item),
+            'is_late' => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()),
+            'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
+        ])->values()->toArray();
+
+        $criticalItem = $items->first(fn (ItemControle $item): bool => in_array((string) $item->prioridade, ['critica', 'urgente', 'alta'], true)) ?: $items->first();
+
         return [
             'responsavel' => $responsavel,
-            'items' => $items->map(fn (ItemControle $item): array => [
-                'id' => $item->id,
-                'title' => $item->titulo ?: 'Item operacional',
-                'empresa' => $item->empresa?->razao_social ?: 'Sem empresa',
-                'categoria' => $item->categoria?->nome ?: ($item->getTipoOuCategoria() ?: 'Operacional'),
-                'status' => str((string) $item->status)->replace('_', ' ')->title()->toString(),
-                'prioridade' => str((string) ($item->prioridade ?: 'normal'))->replace('_', ' ')->title()->toString(),
-                'vencimento' => $item->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
-                'is_late' => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()),
-                'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
-            ])->values()->toArray(),
+            'items' => $itemsPayload,
             'total' => $items->count(),
             'critical' => $items->whereIn('prioridade', ['critica', 'urgente', 'alta'])->count(),
             'late' => $items->filter(fn (ItemControle $item): bool => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()))->count(),
+            'recommendation' => $criticalItem ? $this->workloadRedistributionSuggestion($criticalItem) : null,
         ];
     }
 
@@ -355,6 +415,29 @@ class CentroOperacional extends Page
         $this->redistributionItemId = null;
         $this->redistributionResponsavelId = null;
         $this->notifySuccess('Item redistribuído com sucesso.');
+    }
+
+
+    public function preencherSugestaoRedistribuicao(int $itemId, int $responsavelId): void
+    {
+        $item = $this->findAllowedItem($itemId, CentroOperacionalAccess::ACTION_DELEGATE);
+
+        if (! $item) {
+            return;
+        }
+
+        $responsavel = $this->allowedResponsaveisForDelegation($item)
+            ->whereKey($responsavelId)
+            ->first();
+
+        if (! $responsavel) {
+            $this->notifyError('Sugestão indisponível para o seu escopo de acesso.');
+            return;
+        }
+
+        $this->redistributionItemId = $item->id;
+        $this->redistributionResponsavelId = $responsavel->id;
+        $this->notifySuccess('Sugestão aplicada. Confirme a redistribuição para concluir.');
     }
 
     public function enviarParaCorrecao(int $id): void
@@ -567,6 +650,118 @@ class CentroOperacional extends Page
         $item->update($payload);
         $item->registrarTimeline('financeiro', 'Item marcado como pago', 'Pagamento atualizado pelo Centro Operacional.', null, Filament::auth()->user());
         $this->notifySuccess('Item marcado como pago.');
+    }
+
+    protected function operationalSuggestion(ItemControle $item): array
+    {
+        $status = (string) $item->status;
+        $priority = (string) ($item->prioridade ?: 'normal');
+        $actions = CentroOperacionalAccess::actionPermissions(Filament::auth()->user(), $item);
+
+        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
+            return [
+                'tone' => 'danger',
+                'title' => 'Resolver antes de qualquer item novo',
+                'text' => 'Este item já passou do prazo. Abra, valide o impedimento e delegue imediatamente se o responsável atual estiver sobrecarregado.',
+                'primary_action' => ($actions['delegate'] ?? false) ? 'Delegar para responsável disponível' : 'Abrir cadastro e regularizar',
+            ];
+        }
+
+        if (in_array($status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
+            return [
+                'tone' => 'warning',
+                'title' => 'Decisão pendente de aprovação',
+                'text' => 'Revise o contexto, aprove se estiver correto ou solicite correção sem sair do popup.',
+                'primary_action' => ($actions['approve'] ?? false) ? 'Aprovar ou solicitar correção' : 'Abrir cadastro para acompanhar',
+            ];
+        }
+
+        if (in_array($status, ['correcao_necessaria', 'reprovado'], true)) {
+            return [
+                'tone' => 'warning',
+                'title' => 'Correção bloqueando avanço',
+                'text' => 'Verifique o motivo da correção e direcione para o responsável certo para evitar retrabalho.',
+                'primary_action' => ($actions['delegate'] ?? false) ? 'Delegar correção' : 'Abrir cadastro',
+            ];
+        }
+
+        if ($item->data_vencimento?->isToday()) {
+            return [
+                'tone' => 'orange',
+                'title' => 'Vence hoje',
+                'text' => 'Esse item deve ser tratado ainda hoje. Confira responsável, checklist e últimas movimentações antes de decidir.',
+                'primary_action' => 'Resolver hoje',
+            ];
+        }
+
+        if (in_array($priority, ['critica', 'urgente', 'alta'], true)) {
+            return [
+                'tone' => 'orange',
+                'title' => 'Prioridade alta',
+                'text' => 'Item importante para a operação. Antecipe a decisão ou delegue se houver fila no responsável atual.',
+                'primary_action' => ($actions['delegate'] ?? false) ? 'Avaliar delegação' : 'Acompanhar',
+            ];
+        }
+
+        return [
+            'tone' => 'info',
+            'title' => 'Acompanhar sem urgência crítica',
+            'text' => 'Item dentro do fluxo esperado. Use o histórico e o checklist para decidir se precisa de ação agora.',
+            'primary_action' => 'Acompanhar andamento',
+        ];
+    }
+
+    protected function workloadRedistributionSuggestion(ItemControle $item): array
+    {
+        $candidate = $this->allowedResponsaveisForDelegation($item)
+            ->where('id', '<>', $item->responsavel_id)
+            ->get()
+            ->map(function (Responsavel $responsavel): array {
+                $openCount = ItemControle::query()
+                    ->visibleForUser(Filament::auth()->user())
+                    ->where('responsavel_id', $responsavel->id)
+                    ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+                    ->count();
+
+                return [
+                    'id' => $responsavel->id,
+                    'nome' => $responsavel->nome ?: 'Responsável',
+                    'open_count' => $openCount,
+                ];
+            })
+            ->sortBy('open_count')
+            ->first();
+
+        if (! $candidate) {
+            return [
+                'title' => 'Sem alternativa automática segura',
+                'text' => 'Não encontrei outro responsável disponível dentro do escopo permitido. Use a lista manual se existir alguém habilitado.',
+                'target_id' => null,
+            ];
+        }
+
+        return [
+            'title' => 'Sugestão de redistribuição',
+            'text' => "Mover uma tarefa prioritária para {$candidate['nome']}, que possui {$candidate['open_count']} item(ns) aberto(s).",
+            'target_id' => $candidate['id'],
+        ];
+    }
+
+    protected function deadlineLabel(ItemControle $item): string
+    {
+        if (! $item->data_vencimento) {
+            return 'Sem prazo definido';
+        }
+
+        if ($item->data_vencimento->isToday()) {
+            return 'Vence hoje';
+        }
+
+        if ($item->data_vencimento->isPast()) {
+            return 'Vencido há ' . $item->data_vencimento->diffInDays(now()) . ' dia(s)';
+        }
+
+        return 'Faltam ' . now()->startOfDay()->diffInDays($item->data_vencimento->copy()->startOfDay()) . ' dia(s)';
     }
 
     protected function findAllowedItem(int $id, string $action = CentroOperacionalAccess::ACTION_VIEW): ?ItemControle
