@@ -22,6 +22,11 @@ class CentroOperacional extends Page
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.centro-operacional';
 
+    public string $dateRange = 'today';
+    public string $deadlinePeriod = 'today';
+    public string $statusFilter = 'all';
+    public string $departmentFilter = 'all';
+
     public function getHeading(): string
     {
         return '';
@@ -30,7 +35,48 @@ class CentroOperacional extends Page
     protected function getViewData(): array
     {
         return [
-            'data' => app(CentroOperacionalService::class)->dashboard(Filament::auth()->user()),
+            'data' => app(CentroOperacionalService::class)->dashboard(Filament::auth()->user(), $this->dashboardFilters()),
+        ];
+    }
+
+    public function setDateRange(string $range): void
+    {
+        if (! in_array($range, ['today', 'seven_days', 'fifteen_days', 'month'], true)) {
+            return;
+        }
+
+        $this->dateRange = $range;
+    }
+
+    public function setDeadlinePeriod(string $period): void
+    {
+        if (! in_array($period, ['today', 'seven_days', 'fifteen_days'], true)) {
+            return;
+        }
+
+        $this->deadlinePeriod = $period;
+    }
+
+    public function resetOperationalFilters(): void
+    {
+        $this->dateRange = 'today';
+        $this->deadlinePeriod = 'today';
+        $this->statusFilter = 'all';
+        $this->departmentFilter = 'all';
+    }
+
+    public function refreshDashboard(): void
+    {
+        $this->notifySuccess('Centro Operacional atualizado.');
+    }
+
+    protected function dashboardFilters(): array
+    {
+        return [
+            'date_range' => $this->dateRange,
+            'deadline_period' => $this->deadlinePeriod,
+            'status' => $this->statusFilter,
+            'department' => $this->departmentFilter,
         ];
     }
 

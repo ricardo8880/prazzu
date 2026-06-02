@@ -1,3 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+*{
+    font-family: 'Roboto', sans-serif !important;
+}
+html,
+body,
+button,
+input,
+select,
+textarea {
+    font-family: 'Roboto', sans-serif !important;
+}
 :root {
     --pzu-primary: #6d2df6;
     --pzu-primary-dark: #5420cf;

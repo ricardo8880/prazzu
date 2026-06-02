@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Schema;
 
 class CentroOperacionalService
 {
-    public function dashboard(?User $user): array
+    public function dashboard(?User $user, array $filters = []): array
     {
-        $base = $this->baseQuery($user);
+        $base = $this->baseQuery($user, $filters);
         $today = now()->toDateString();
         $closedStatuses = ['concluido', 'aprovado', 'cancelado'];
 
@@ -135,15 +135,15 @@ class CentroOperacionalService
         $resolverAgora = collect(array_merge($vencidos, $vencemHoje, $aprovacoes, $correcao, $bloqueados))
             ->unique('id')
             ->sortBy(fn (array $item): int => $this->resolverPriority($item))
-            ->take(10)
+            ->take(5)
             ->values()
             ->toArray();
 
         $clientesCriticos = $this->clientesCriticos($user, $blockColumns);
-        $vencimentos = $this->vencimentosResumo($user);
-        $departamentos = $this->departamentosResumo($user);
-        $workload = $this->workload($user);
-        $resultadosMes = $this->resultadosMes($user);
+        $vencimentos = $this->vencimentosResumo($user, (string) ($filters['deadline_period'] ?? 'today'), $filters);
+        $departamentos = $this->departamentosResumo($user, $filters);
+        $workload = $this->workload($user, $filters);
+        $resultadosMes = $this->resultadosMes($user, $filters);
         $healthScore = $this->healthScore($totalAbertas, $totalVencidas, $totalVencemHoje, $totalBloqueados, $totalCorrecao, $totalSemResponsavel);
 
         return [
@@ -189,18 +189,24 @@ class CentroOperacionalService
             'departamentos' => $departamentos,
             'resultados_mes' => $resultadosMes,
             'health_score' => $healthScore,
+            'status_options' => $this->statusOptions(),
+            'department_options' => $this->departmentOptions(),
+            'date_range_options' => $this->dateRangeOptions(),
             'total_abertas' => $totalAbertas,
             'me_mode' => $this->isMeMode($user),
             'missing_columns' => $this->missingRecommendedColumns(),
         ];
     }
 
-    protected function baseQuery(?User $user): Builder
+    protected function baseQuery(?User $user, array $filters = []): Builder
     {
-        return ItemControle::query()
-            ->visibleForUser($user)
-            ->select($this->safeSelect())
-            ->with(['responsavel:id,nome,user_id', 'empresa:id,razao_social', 'categoria:id,nome']);
+        return $this->applyDashboardFilters(
+            ItemControle::query()
+                ->visibleForUser($user)
+                ->select($this->safeSelect())
+                ->with(['responsavel:id,nome,user_id', 'empresa:id,razao_social', 'categoria:id,nome']),
+            $filters
+        );
     }
 
     protected function safeSelect(): array
@@ -438,26 +444,80 @@ class CentroOperacionalService
             ->toArray();
     }
 
-    protected function vencimentosResumo(?User $user): array
+    protected function vencimentosResumo(?User $user, string $period = 'today', array $filters = []): array
     {
-        $base = ItemControle::query()
-            ->visibleForUser($user)
-            ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
-            ->whereNotNull('data_vencimento');
+        $base = $this->applyDashboardFilters(
+            ItemControle::query()
+                ->visibleForUser($user)
+                ->select($this->safeSelect())
+                ->with(['categoria:id,nome'])
+                ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+                ->whereNotNull('data_vencimento'),
+            array_merge($filters, ['date_range' => 'all'])
+        );
+
+        $periods = [
+            'today' => [
+                'label' => 'Hoje',
+                'value' => (clone $base)->whereDate('data_vencimento', now()->toDateString())->count(),
+                'tone' => 'warning',
+            ],
+            'seven_days' => [
+                'label' => '7 dias',
+                'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(7)->toDateString())->count(),
+                'tone' => 'info',
+            ],
+            'fifteen_days' => [
+                'label' => '15 dias',
+                'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(15)->toDateString())->count(),
+                'tone' => 'info',
+            ],
+        ];
+
+        $period = array_key_exists($period, $periods) ? $period : 'today';
+        $selectedQuery = clone $base;
+
+        if ($period === 'today') {
+            $selectedQuery->whereDate('data_vencimento', now()->toDateString());
+        } elseif ($period === 'seven_days') {
+            $selectedQuery->whereDate('data_vencimento', '>', now()->toDateString())
+                ->whereDate('data_vencimento', '<=', now()->addDays(7)->toDateString());
+        } else {
+            $selectedQuery->whereDate('data_vencimento', '>', now()->toDateString())
+                ->whereDate('data_vencimento', '<=', now()->addDays(15)->toDateString());
+        }
+
+        $rows = $selectedQuery
+            ->orderBy('data_vencimento')
+            ->limit(250)
+            ->get()
+            ->groupBy(fn (ItemControle $item): string => $this->departmentLabel($item))
+            ->map(fn ($items, string $label): array => [
+                'label' => $label,
+                'value' => $items->count(),
+                'tone' => $items->where('data_vencimento', '<', now()->startOfDay())->count() > 0 ? 'danger' : 'info',
+            ])
+            ->sortByDesc('value')
+            ->take(4)
+            ->values()
+            ->toArray();
 
         return [
-            ['label' => 'Hoje', 'value' => (clone $base)->whereDate('data_vencimento', now()->toDateString())->count(), 'tone' => 'warning'],
-            ['label' => '7 dias', 'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(7)->toDateString())->count(), 'tone' => 'info'],
-            ['label' => '15 dias', 'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(15)->toDateString())->count(), 'tone' => 'info'],
-            ['label' => '30 dias', 'value' => (clone $base)->whereDate('data_vencimento', '>', now()->toDateString())->whereDate('data_vencimento', '<=', now()->addDays(30)->toDateString())->count(), 'tone' => 'success'],
+            'selected' => $period,
+            'periods' => $periods,
+            'rows' => $rows,
+            'total' => array_sum(array_column($rows, 'value')),
         ];
     }
 
-    protected function departamentosResumo(?User $user): array
+    protected function departamentosResumo(?User $user, array $filters = []): array
     {
-        return ItemControle::query()
-            ->visibleForUser($user)
-            ->select($this->safeSelect())
+        return $this->applyDashboardFilters(
+            ItemControle::query()
+                ->visibleForUser($user)
+                ->select($this->safeSelect()),
+            $filters
+        )
             ->with(['categoria:id,nome'])
             ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
             ->limit(250)
@@ -474,11 +534,14 @@ class CentroOperacionalService
             ->toArray();
     }
 
-    protected function workload(?User $user): array
+    protected function workload(?User $user, array $filters = []): array
     {
-        return ItemControle::query()
-            ->visibleForUser($user)
-            ->select('responsavel_id')
+        $rows = $this->applyDashboardFilters(
+            ItemControle::query()
+                ->visibleForUser($user)
+                ->select('responsavel_id'),
+            $filters
+        )
             ->selectRaw('COUNT(item_controles.id) as total')
             ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
             ->whereNotNull('responsavel_id')
@@ -486,24 +549,28 @@ class CentroOperacionalService
             ->groupBy('responsavel_id')
             ->orderByDesc('total')
             ->limit(8)
-            ->get()
-            ->map(function (ItemControle $item): array {
+            ->get();
+
+        $max = max(1, (int) $rows->max('total'));
+
+        return $rows
+            ->map(function (ItemControle $item) use ($max): array {
                 $total = (int) $item->total;
-                $percent = min(140, $total * 8);
+                $percent = (int) min(100, max(8, round(($total / $max) * 100)));
 
                 return [
                     'name' => $item->responsavel?->nome ?: 'Sem responsável',
                     'total' => $total,
-                    'percent' => min(100, $percent),
-                    'status' => $percent > 100 ? 'Sobrecarregado' : ($percent >= 80 ? 'Atenção' : 'Normal'),
-                    'tone' => $percent > 100 ? 'danger' : ($percent >= 80 ? 'warning' : 'success'),
+                    'percent' => $percent,
+                    'status' => $percent >= 96 ? 'Sobrecarregado' : ($percent >= 75 ? 'Atenção' : 'Normal'),
+                    'tone' => $percent >= 96 ? 'danger' : ($percent >= 75 ? 'warning' : 'success'),
                 ];
             })
             ->values()
             ->toArray();
     }
 
-    protected function resultadosMes(?User $user): array
+    protected function resultadosMes(?User $user, array $filters = []): array
     {
         $start = now()->startOfMonth()->toDateString();
         $end = now()->endOfMonth()->toDateString();
@@ -609,6 +676,110 @@ class CentroOperacionalService
     protected function isMeMode(?User $user): bool
     {
         return $user?->isUser() === true;
+    }
+
+    protected function applyDashboardFilters(Builder $query, array $filters = []): Builder
+    {
+        $dateRange = (string) ($filters['date_range'] ?? 'today');
+        $status = (string) ($filters['status'] ?? 'all');
+        $department = (string) ($filters['department'] ?? 'all');
+
+        if ($dateRange !== 'all') {
+            $query->where(function (Builder $query) use ($dateRange): void {
+                $query->whereNull('data_vencimento');
+
+                if ($dateRange === 'today') {
+                    $query->orWhereDate('data_vencimento', '<=', now()->toDateString());
+                } elseif ($dateRange === 'seven_days') {
+                    $query->orWhereDate('data_vencimento', '<=', now()->addDays(7)->toDateString());
+                } elseif ($dateRange === 'fifteen_days') {
+                    $query->orWhereDate('data_vencimento', '<=', now()->addDays(15)->toDateString());
+                } elseif ($dateRange === 'month') {
+                    $query->orWhereBetween('data_vencimento', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()]);
+                }
+            });
+        }
+
+        if ($status !== 'all') {
+            if ($status === 'late') {
+                $query->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+                    ->whereNotNull('data_vencimento')
+                    ->whereDate('data_vencimento', '<', now()->toDateString());
+            } elseif ($status === 'approval') {
+                $query->whereIn('status', ['aguardando_aprovacao', 'em_aprovacao']);
+            } elseif ($status === 'correction') {
+                $query->whereIn('status', ['correcao_necessaria', 'reprovado']);
+            } elseif ($status === 'financial') {
+                $query->whereIn('status', ['concluido', 'aprovado', 'assinado'])
+                    ->when($this->hasColumn('faturado_em'), fn (Builder $query): Builder => $query->whereNull('faturado_em'))
+                    ->when(! $this->hasColumn('faturado_em'), fn (Builder $query): Builder => $query->where(function (Builder $query): void {
+                        $query->whereNull('contrato_status')->orWhereNotIn('contrato_status', ['faturado', 'pago']);
+                    }));
+            } else {
+                $query->where('status', $status);
+            }
+        }
+
+        if ($department !== 'all') {
+            $terms = $this->departmentTerms($department);
+            $query->where(function (Builder $query) use ($terms): void {
+                foreach ($terms as $term) {
+                    $query->orWhereRaw('LOWER(tipo) LIKE ?', ['%' . $term . '%'])
+                        ->orWhereRaw('LOWER(titulo) LIKE ?', ['%' . $term . '%'])
+                        ->orWhereHas('categoria', fn (Builder $query): Builder => $query->whereRaw('LOWER(nome) LIKE ?', ['%' . $term . '%']));
+                }
+            });
+        }
+
+        return $query;
+    }
+
+    protected function departmentTerms(string $department): array
+    {
+        return match ($department) {
+            'Fiscal' => ['fiscal', 'nota', 'sped', 'defis', 'reinf'],
+            'Contábil' => ['contáb', 'contab'],
+            'DP' => ['folha', 'dp', 'trabalh'],
+            'Societário' => ['contrato', 'societ'],
+            'Financeiro' => ['finance', 'cobran', 'fatura'],
+            default => [strtolower($department)],
+        };
+    }
+
+    protected function statusOptions(): array
+    {
+        return [
+            'all' => 'Todos os status',
+            'late' => 'Vencidas',
+            'approval' => 'Aprovações',
+            'correction' => 'Correção necessária',
+            'financial' => 'Pendências financeiras',
+            'pendente' => 'Pendentes',
+            'em_andamento' => 'Em andamento',
+        ];
+    }
+
+    protected function departmentOptions(): array
+    {
+        return [
+            'all' => 'Todos os departamentos',
+            'Fiscal' => 'Fiscal',
+            'Contábil' => 'Contábil',
+            'DP' => 'Departamento Pessoal',
+            'Societário' => 'Societário',
+            'Financeiro' => 'Financeiro',
+            'Operacional' => 'Operacional',
+        ];
+    }
+
+    protected function dateRangeOptions(): array
+    {
+        return [
+            'today' => 'Hoje',
+            'seven_days' => 'Próximos 7 dias',
+            'fifteen_days' => 'Próximos 15 dias',
+            'month' => 'Este mês',
+        ];
     }
 
     protected function missingRecommendedColumns(): array
