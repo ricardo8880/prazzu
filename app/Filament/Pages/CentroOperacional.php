@@ -24,7 +24,9 @@ class CentroOperacional extends Page
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.centro-operacional';
 
-    public string $dateRange = 'today';
+    public string $dateRange = 'all';
+    public ?string $customStartDate = null;
+    public ?string $customEndDate = null;
     public string $deadlinePeriod = 'today';
     public string $statusFilter = 'all';
     public string $departmentFilter = 'all';
@@ -54,11 +56,16 @@ class CentroOperacional extends Page
 
     public function setDateRange(string $range): void
     {
-        if (! in_array($range, ['today', 'seven_days', 'fifteen_days', 'month'], true)) {
+        if (! in_array($range, ['all', 'today', 'yesterday', 'last_7_days', 'last_30_days', 'custom'], true)) {
             return;
         }
 
         $this->dateRange = $range;
+
+        if ($range === 'custom') {
+            $this->customStartDate ??= now()->subDays(7)->toDateString();
+            $this->customEndDate ??= now()->toDateString();
+        }
     }
 
     public function setDeadlinePeriod(string $period): void
@@ -72,7 +79,9 @@ class CentroOperacional extends Page
 
     public function resetOperationalFilters(): void
     {
-        $this->dateRange = 'today';
+        $this->dateRange = 'all';
+        $this->customStartDate = null;
+        $this->customEndDate = null;
         $this->deadlinePeriod = 'today';
         $this->statusFilter = 'all';
         $this->departmentFilter = 'all';
@@ -97,7 +106,7 @@ class CentroOperacional extends Page
 
     public function applyStatusShortcut(string $status): void
     {
-        $allowed = ['all', 'late', 'approval', 'correction', 'financial', 'no_owner', 'blocked', 'pendente', 'em_andamento'];
+        $allowed = ['all', 'risk', 'late', 'approval', 'correction', 'financial', 'no_owner', 'blocked', 'pendente', 'em_andamento'];
 
         if (! in_array($status, $allowed, true)) {
             return;
@@ -106,10 +115,22 @@ class CentroOperacional extends Page
         $this->statusFilter = $status;
     }
 
+
+    public function applyKpiShortcut(string $status = 'all', ?string $dateRange = null): void
+    {
+        $this->applyStatusShortcut($status);
+
+        if ($dateRange !== null) {
+            $this->setDateRange($dateRange);
+        }
+    }
+
     protected function dashboardFilters(): array
     {
         return [
             'date_range' => $this->dateRange,
+            'custom_start_date' => $this->customStartDate,
+            'custom_end_date' => $this->customEndDate,
             'deadline_period' => $this->deadlinePeriod,
             'status' => $this->statusFilter,
             'department' => $this->departmentFilter,
@@ -357,7 +378,7 @@ class CentroOperacional extends Page
             'prioridade' => str((string) ($item->prioridade ?: 'normal'))->replace('_', ' ')->title()->toString(),
             'vencimento' => $item->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
             'dias_prazo' => $this->deadlineLabel($item),
-            'is_late' => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()),
+            'is_late' => (bool) ($item->data_vencimento && $item->data_vencimento->copy()->startOfDay()->lessThan(now()->startOfDay())),
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
         ])->values()->toArray();
 
@@ -368,7 +389,7 @@ class CentroOperacional extends Page
             'items' => $itemsPayload,
             'total' => $items->count(),
             'critical' => $items->whereIn('prioridade', ['critica', 'urgente', 'alta'])->count(),
-            'late' => $items->filter(fn (ItemControle $item): bool => (bool) ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()))->count(),
+            'late' => $items->filter(fn (ItemControle $item): bool => (bool) ($item->data_vencimento && $item->data_vencimento->copy()->startOfDay()->lessThan(now()->startOfDay())))->count(),
             'recommendation' => $criticalItem ? $this->workloadRedistributionSuggestion($criticalItem) : null,
         ];
     }
@@ -713,22 +734,33 @@ class CentroOperacional extends Page
 
     protected function workloadRedistributionSuggestion(ItemControle $item): array
     {
-        $candidate = $this->allowedResponsaveisForDelegation($item)
+        $responsaveis = $this->allowedResponsaveisForDelegation($item)
             ->where('id', '<>', $item->responsavel_id)
-            ->get()
-            ->map(function (Responsavel $responsavel): array {
-                $openCount = ItemControle::query()
-                    ->visibleForUser(Filament::auth()->user())
-                    ->where('responsavel_id', $responsavel->id)
-                    ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
-                    ->count();
+            ->get(['id', 'nome']);
 
-                return [
-                    'id' => $responsavel->id,
-                    'nome' => $responsavel->nome ?: 'Responsável',
-                    'open_count' => $openCount,
-                ];
-            })
+        if ($responsaveis->isEmpty()) {
+            return [
+                'title' => 'Sem alternativa automática segura',
+                'text' => 'Não encontrei outro responsável disponível dentro do escopo permitido. Use a lista manual se existir alguém habilitado.',
+                'target_id' => null,
+            ];
+        }
+
+        $responsavelIds = $responsaveis->pluck('id')->all();
+        $openCounts = ItemControle::query()
+            ->visibleForUser(Filament::auth()->user())
+            ->whereIn('responsavel_id', $responsavelIds)
+            ->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+            ->selectRaw('responsavel_id, COUNT(*) as total_abertos')
+            ->groupBy('responsavel_id')
+            ->pluck('total_abertos', 'responsavel_id');
+
+        $candidate = $responsaveis
+            ->map(fn (Responsavel $responsavel): array => [
+                'id' => $responsavel->id,
+                'nome' => $responsavel->nome ?: 'Responsável',
+                'open_count' => (int) ($openCounts[$responsavel->id] ?? 0),
+            ])
             ->sortBy('open_count')
             ->first();
 
@@ -753,15 +785,18 @@ class CentroOperacional extends Page
             return 'Sem prazo definido';
         }
 
-        if ($item->data_vencimento->isToday()) {
+        $dueDate = $item->data_vencimento->copy()->startOfDay();
+        $today = now()->startOfDay();
+
+        if ($dueDate->equalTo($today)) {
             return 'Vence hoje';
         }
 
-        if ($item->data_vencimento->isPast()) {
-            return 'Vencido há ' . $item->data_vencimento->diffInDays(now()) . ' dia(s)';
+        if ($dueDate->lessThan($today)) {
+            return 'Vencido há ' . $dueDate->diffInDays($today) . ' dia(s)';
         }
 
-        return 'Faltam ' . now()->startOfDay()->diffInDays($item->data_vencimento->copy()->startOfDay()) . ' dia(s)';
+        return 'Faltam ' . $today->diffInDays($dueDate) . ' dia(s)';
     }
 
     protected function findAllowedItem(int $id, string $action = CentroOperacionalAccess::ACTION_VIEW): ?ItemControle

@@ -149,6 +149,19 @@
                     </div>
                 </div>
 
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($dateRange === 'custom'): ?>
+                    <div class="co-custom-date-range" aria-label="Período personalizado">
+                        <label>
+                            <span>Início</span>
+                            <input type="date" wire:model.live.debounce.500ms="customStartDate">
+                        </label>
+                        <label>
+                            <span>Fim</span>
+                            <input type="date" wire:model.live.debounce.500ms="customEndDate">
+                        </label>
+                    </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
                 <div class="co-dropdown" x-data="{ open: false }" @click.outside="open = false">
                     <button type="button" class="co-toolbar-btn" @click="open = ! open">
                         <i class="bi bi-funnel co-toolbar-icon"></i>
@@ -176,7 +189,7 @@
                 </div>
 
                 <button type="button" class="co-refresh-btn" wire:click="refreshDashboard" wire:loading.attr="disabled">
-                    <i class="bi bi-arrow-clockwise" wire:loading.class="spin" wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter"></i>
+                    <i class="bi bi-arrow-clockwise" wire:loading.class="spin" wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,customStartDate,customEndDate"></i>
                     <span wire:loading.remove wire:target="refreshDashboard">Atualizar</span>
                     <span wire:loading wire:target="refreshDashboard">Atualizando...</span>
                 </button>
@@ -216,7 +229,7 @@
             </section>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-        <div class="co-loading-layer" wire:loading.flex wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,globalSearch,applyStatusShortcut,clearGlobalSearch">
+        <div class="co-loading-layer" wire:loading.flex wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,customStartDate,customEndDate,globalSearch,applyStatusShortcut,applyKpiShortcut,clearGlobalSearch">
             <div class="co-loading-card">
                 <span class="co-loading-spinner"></span>
                 <div>
@@ -233,72 +246,24 @@
                     $iconTone = $defaultIconClass[$index] ?? $tone;
                     $icon = $defaultIcons[$index] ?? 'bi-activity';
                 ?>
-                <article class="co-kpi-card <?php echo e($tone); ?>">
+                <?php
+                    $cardShortcut = $card['shortcut'] ?? 'all';
+                    $cardDateRange = ($card['key'] ?? null) === 'today' ? 'today' : null;
+                    $wireClick = $cardDateRange
+                        ? "applyKpiShortcut('{$cardShortcut}', '{$cardDateRange}')"
+                        : "applyKpiShortcut('{$cardShortcut}')";
+                    $icon = $card['icon'] ?? $icon;
+                ?>
+                <button type="button" class="co-kpi-card co-kpi-button <?php echo e($tone); ?>" wire:click="<?php echo e($wireClick); ?>" wire:loading.attr="disabled" title="Aplicar filtro: <?php echo e($card['label'] ?? 'Indicador'); ?>">
                     <div class="co-kpi-content">
                         <span class="co-kpi-label"><?php echo e($card['label'] ?? '-'); ?></span>
                         <strong><?php echo e(is_numeric($card['value'] ?? null) ? number_format((int) $card['value'], 0, ',', '.') : ($card['value'] ?? '-')); ?></strong>
                         <small><?php echo e($card['hint'] ?? ''); ?></small>
                     </div>
                     <div class="co-kpi-icon <?php echo e($iconTone); ?>"><i class="bi <?php echo e($icon); ?>"></i></div>
-                </article>
+                </button>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
         </section>
-
-        <section class="co-panel co-alerts-panel co-alerts-collapsible" x-data="{ open: false }">
-            <button type="button" class="co-alerts-toggle" @click="open = ! open" :aria-expanded="open.toString()">
-                <span class="co-alerts-toggle-icon" :class="{ 'is-open': open }">
-                    <i class="bi" :class="open ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
-                </span>
-                <span class="co-alerts-toggle-text">
-                    <strong>Alertas Inteligentes</strong>
-                    <small>Clique para visualizar alertas críticos, importantes, atenção e informativos.</small>
-                </span>
-                <span class="co-alerts-toggle-count">
-                    <?php echo e(number_format(collect($alertasInteligentes ?? [])->sum(fn ($group) => count($group['items'] ?? [])), 0, ',', '.')); ?> alertas
-                </span>
-            </button>
-
-            <div class="co-alerts-collapse" x-show="open" x-cloak>
-                <header class="co-panel-header compact">
-                    <div class="co-heading-with-icon">
-                        <span class="co-section-icon red"><i class="bi bi-broadcast-pin"></i></span>
-                        <h2>Alertas Inteligentes</h2>
-                    </div>
-                    <span class="co-panel-subtitle">Crítico, importante, atenção e informativo</span>
-                </header>
-
-                <div class="co-alerts-grid">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $alertasInteligentes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $alertKey => $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <?php $items = collect($group['items'] ?? [])->take(4)->values(); ?>
-                        <article class="co-alert-column <?php echo e($group['tone'] ?? 'info'); ?>">
-                            <header>
-                                <span><i class="bi <?php echo e($group['icon'] ?? 'bi-info-circle'); ?>"></i><?php echo e($group['label'] ?? 'Alerta'); ?></span>
-                                <b><?php echo e($items->count()); ?></b>
-                            </header>
-                            <p><?php echo e($group['description'] ?? ''); ?></p>
-
-                            <div class="co-alert-list">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $alert): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <a href="<?php echo e($alert['url']); ?>" class="co-alert-row <?php echo e($alert['tone'] ?? ($group['tone'] ?? 'info')); ?>">
-                                        <i class="bi <?php echo e($alert['icon'] ?? ($group['icon'] ?? 'bi-info-circle')); ?>"></i>
-                                        <span>
-                                            <strong><?php echo e($alert['summary'] ?? $alert['title'] ?? 'Item operacional'); ?></strong>
-                                            <small><?php echo e($alert['reason'] ?? ''); ?> • <?php echo e($alert['due_human'] ?? 'Sem prazo'); ?></small>
-                                        </span>
-                                    </a>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <div class="co-alert-empty">
-                                        <i class="bi bi-check2-circle"></i>
-                                        <span>Nenhum alerta nesta camada.</span>
-                                    </div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </article>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                </div>
-            </div>
-        </section>
-
 
         <section class="co-focus-grid">
             <section class="co-panel co-resolve-panel co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
@@ -580,6 +545,63 @@
                 <p class="co-success-message <?php echo e($resultTone); ?>"><?php echo e($resultMessage); ?></p>
             </section>
         </section>
+
+
+        <section class="co-panel co-alerts-panel co-alerts-collapsible" x-data="{ open: false }">
+            <button type="button" class="co-alerts-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                <span class="co-alerts-toggle-icon" :class="{ 'is-open': open }">
+                    <i class="bi" :class="open ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
+                </span>
+                <span class="co-alerts-toggle-text">
+                    <strong>Alertas Inteligentes</strong>
+                    <small>Clique para visualizar alertas críticos, importantes, atenção e informativos.</small>
+                </span>
+                <span class="co-alerts-toggle-count">
+                    <?php echo e(number_format(collect($alertasInteligentes ?? [])->sum(fn ($group) => count($group['items'] ?? [])), 0, ',', '.')); ?> alertas
+                </span>
+            </button>
+
+            <div class="co-alerts-collapse" x-show="open" x-cloak>
+                <header class="co-panel-header compact">
+                    <div class="co-heading-with-icon">
+                        <span class="co-section-icon red"><i class="bi bi-broadcast-pin"></i></span>
+                        <h2>Alertas Inteligentes</h2>
+                    </div>
+                    <span class="co-panel-subtitle">Crítico, importante, atenção e informativo</span>
+                </header>
+
+                <div class="co-alerts-grid">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $alertasInteligentes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $alertKey => $group): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <?php $items = collect($group['items'] ?? [])->take(4)->values(); ?>
+                        <article class="co-alert-column <?php echo e($group['tone'] ?? 'info'); ?>">
+                            <header>
+                                <span><i class="bi <?php echo e($group['icon'] ?? 'bi-info-circle'); ?>"></i><?php echo e($group['label'] ?? 'Alerta'); ?></span>
+                                <b><?php echo e($items->count()); ?></b>
+                            </header>
+                            <p><?php echo e($group['description'] ?? ''); ?></p>
+
+                            <div class="co-alert-list">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $alert): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <a href="<?php echo e($alert['url']); ?>" class="co-alert-row <?php echo e($alert['tone'] ?? ($group['tone'] ?? 'info')); ?>">
+                                        <i class="bi <?php echo e($alert['icon'] ?? ($group['icon'] ?? 'bi-info-circle')); ?>"></i>
+                                        <span>
+                                            <strong><?php echo e($alert['summary'] ?? $alert['title'] ?? 'Item operacional'); ?></strong>
+                                            <small><?php echo e($alert['reason'] ?? ''); ?> • <?php echo e($alert['due_human'] ?? 'Sem prazo'); ?></small>
+                                        </span>
+                                    </a>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    <div class="co-alert-empty">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>Nenhum alerta nesta camada.</span>
+                                    </div>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </div>
+                        </article>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                </div>
+            </div>
+        </section>
+
 
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalOpen): ?>

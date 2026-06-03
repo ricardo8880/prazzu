@@ -138,6 +138,19 @@
                     </div>
                 </div>
 
+                @if($dateRange === 'custom')
+                    <div class="co-custom-date-range" aria-label="Período personalizado">
+                        <label>
+                            <span>Início</span>
+                            <input type="date" wire:model.live.debounce.500ms="customStartDate">
+                        </label>
+                        <label>
+                            <span>Fim</span>
+                            <input type="date" wire:model.live.debounce.500ms="customEndDate">
+                        </label>
+                    </div>
+                @endif
+
                 <div class="co-dropdown" x-data="{ open: false }" @click.outside="open = false">
                     <button type="button" class="co-toolbar-btn" @click="open = ! open">
                         <i class="bi bi-funnel co-toolbar-icon"></i>
@@ -165,7 +178,7 @@
                 </div>
 
                 <button type="button" class="co-refresh-btn" wire:click="refreshDashboard" wire:loading.attr="disabled">
-                    <i class="bi bi-arrow-clockwise" wire:loading.class="spin" wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter"></i>
+                    <i class="bi bi-arrow-clockwise" wire:loading.class="spin" wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,customStartDate,customEndDate"></i>
                     <span wire:loading.remove wire:target="refreshDashboard">Atualizar</span>
                     <span wire:loading wire:target="refreshDashboard">Atualizando...</span>
                 </button>
@@ -205,7 +218,7 @@
             </section>
         @endif
 
-        <div class="co-loading-layer" wire:loading.flex wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,globalSearch,applyStatusShortcut,clearGlobalSearch">
+        <div class="co-loading-layer" wire:loading.flex wire:target="refreshDashboard,setDateRange,setDeadlinePeriod,statusFilter,departmentFilter,customStartDate,customEndDate,globalSearch,applyStatusShortcut,applyKpiShortcut,clearGlobalSearch">
             <div class="co-loading-card">
                 <span class="co-loading-spinner"></span>
                 <div>
@@ -222,72 +235,24 @@
                     $iconTone = $defaultIconClass[$index] ?? $tone;
                     $icon = $defaultIcons[$index] ?? 'bi-activity';
                 @endphp
-                <article class="co-kpi-card {{ $tone }}">
+                @php
+                    $cardShortcut = $card['shortcut'] ?? 'all';
+                    $cardDateRange = ($card['key'] ?? null) === 'today' ? 'today' : null;
+                    $wireClick = $cardDateRange
+                        ? "applyKpiShortcut('{$cardShortcut}', '{$cardDateRange}')"
+                        : "applyKpiShortcut('{$cardShortcut}')";
+                    $icon = $card['icon'] ?? $icon;
+                @endphp
+                <button type="button" class="co-kpi-card co-kpi-button {{ $tone }}" wire:click="{{ $wireClick }}" wire:loading.attr="disabled" title="Aplicar filtro: {{ $card['label'] ?? 'Indicador' }}">
                     <div class="co-kpi-content">
                         <span class="co-kpi-label">{{ $card['label'] ?? '-' }}</span>
                         <strong>{{ is_numeric($card['value'] ?? null) ? number_format((int) $card['value'], 0, ',', '.') : ($card['value'] ?? '-') }}</strong>
                         <small>{{ $card['hint'] ?? '' }}</small>
                     </div>
                     <div class="co-kpi-icon {{ $iconTone }}"><i class="bi {{ $icon }}"></i></div>
-                </article>
+                </button>
             @endforeach
         </section>
-
-        <section class="co-panel co-alerts-panel co-alerts-collapsible" x-data="{ open: false }">
-            <button type="button" class="co-alerts-toggle" @click="open = ! open" :aria-expanded="open.toString()">
-                <span class="co-alerts-toggle-icon" :class="{ 'is-open': open }">
-                    <i class="bi" :class="open ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
-                </span>
-                <span class="co-alerts-toggle-text">
-                    <strong>Alertas Inteligentes</strong>
-                    <small>Clique para visualizar alertas críticos, importantes, atenção e informativos.</small>
-                </span>
-                <span class="co-alerts-toggle-count">
-                    {{ number_format(collect($alertasInteligentes ?? [])->sum(fn ($group) => count($group['items'] ?? [])), 0, ',', '.') }} alertas
-                </span>
-            </button>
-
-            <div class="co-alerts-collapse" x-show="open" x-cloak>
-                <header class="co-panel-header compact">
-                    <div class="co-heading-with-icon">
-                        <span class="co-section-icon red"><i class="bi bi-broadcast-pin"></i></span>
-                        <h2>Alertas Inteligentes</h2>
-                    </div>
-                    <span class="co-panel-subtitle">Crítico, importante, atenção e informativo</span>
-                </header>
-
-                <div class="co-alerts-grid">
-                    @foreach ($alertasInteligentes as $alertKey => $group)
-                        @php $items = collect($group['items'] ?? [])->take(4)->values(); @endphp
-                        <article class="co-alert-column {{ $group['tone'] ?? 'info' }}">
-                            <header>
-                                <span><i class="bi {{ $group['icon'] ?? 'bi-info-circle' }}"></i>{{ $group['label'] ?? 'Alerta' }}</span>
-                                <b>{{ $items->count() }}</b>
-                            </header>
-                            <p>{{ $group['description'] ?? '' }}</p>
-
-                            <div class="co-alert-list">
-                                @forelse ($items as $alert)
-                                    <a href="{{ $alert['url'] }}" class="co-alert-row {{ $alert['tone'] ?? ($group['tone'] ?? 'info') }}">
-                                        <i class="bi {{ $alert['icon'] ?? ($group['icon'] ?? 'bi-info-circle') }}"></i>
-                                        <span>
-                                            <strong>{{ $alert['summary'] ?? $alert['title'] ?? 'Item operacional' }}</strong>
-                                            <small>{{ $alert['reason'] ?? '' }} • {{ $alert['due_human'] ?? 'Sem prazo' }}</small>
-                                        </span>
-                                    </a>
-                                @empty
-                                    <div class="co-alert-empty">
-                                        <i class="bi bi-check2-circle"></i>
-                                        <span>Nenhum alerta nesta camada.</span>
-                                    </div>
-                                @endforelse
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-
 
         <section class="co-focus-grid">
             <section class="co-panel co-resolve-panel co-mobile-collapsible" x-data="{ open: true }" :class="{ 'is-open': open }">
@@ -568,6 +533,63 @@
                 <p class="co-success-message {{ $resultTone }}">{{ $resultMessage }}</p>
             </section>
         </section>
+
+
+        <section class="co-panel co-alerts-panel co-alerts-collapsible" x-data="{ open: false }">
+            <button type="button" class="co-alerts-toggle" @click="open = ! open" :aria-expanded="open.toString()">
+                <span class="co-alerts-toggle-icon" :class="{ 'is-open': open }">
+                    <i class="bi" :class="open ? 'bi-dash-lg' : 'bi-plus-lg'"></i>
+                </span>
+                <span class="co-alerts-toggle-text">
+                    <strong>Alertas Inteligentes</strong>
+                    <small>Clique para visualizar alertas críticos, importantes, atenção e informativos.</small>
+                </span>
+                <span class="co-alerts-toggle-count">
+                    {{ number_format(collect($alertasInteligentes ?? [])->sum(fn ($group) => count($group['items'] ?? [])), 0, ',', '.') }} alertas
+                </span>
+            </button>
+
+            <div class="co-alerts-collapse" x-show="open" x-cloak>
+                <header class="co-panel-header compact">
+                    <div class="co-heading-with-icon">
+                        <span class="co-section-icon red"><i class="bi bi-broadcast-pin"></i></span>
+                        <h2>Alertas Inteligentes</h2>
+                    </div>
+                    <span class="co-panel-subtitle">Crítico, importante, atenção e informativo</span>
+                </header>
+
+                <div class="co-alerts-grid">
+                    @foreach ($alertasInteligentes as $alertKey => $group)
+                        @php $items = collect($group['items'] ?? [])->take(4)->values(); @endphp
+                        <article class="co-alert-column {{ $group['tone'] ?? 'info' }}">
+                            <header>
+                                <span><i class="bi {{ $group['icon'] ?? 'bi-info-circle' }}"></i>{{ $group['label'] ?? 'Alerta' }}</span>
+                                <b>{{ $items->count() }}</b>
+                            </header>
+                            <p>{{ $group['description'] ?? '' }}</p>
+
+                            <div class="co-alert-list">
+                                @forelse ($items as $alert)
+                                    <a href="{{ $alert['url'] }}" class="co-alert-row {{ $alert['tone'] ?? ($group['tone'] ?? 'info') }}">
+                                        <i class="bi {{ $alert['icon'] ?? ($group['icon'] ?? 'bi-info-circle') }}"></i>
+                                        <span>
+                                            <strong>{{ $alert['summary'] ?? $alert['title'] ?? 'Item operacional' }}</strong>
+                                            <small>{{ $alert['reason'] ?? '' }} • {{ $alert['due_human'] ?? 'Sem prazo' }}</small>
+                                        </span>
+                                    </a>
+                                @empty
+                                    <div class="co-alert-empty">
+                                        <i class="bi bi-check2-circle"></i>
+                                        <span>Nenhum alerta nesta camada.</span>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
 
 
         @if($detailModalOpen)

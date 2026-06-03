@@ -172,33 +172,49 @@ class CentroOperacionalService
             'alertas_inteligentes' => $alertasInteligentes,
             'cards' => [
                 [
+                    'key' => 'risk',
                     'label' => 'Em Risco de Multa',
                     'value' => $totalRisco,
                     'tone' => $totalRisco > 0 ? 'danger' : 'success',
-                    'hint' => 'Clientes com prazo crítico, bloqueio ou correção parada.',
+                    'icon' => 'bi-exclamation-octagon-fill',
+                    'shortcut' => 'risk',
+                    'hint' => 'Clientes com prazo crítico, bloqueio ou correção parada.'
                 ],
                 [
+                    'key' => 'today',
                     'label' => 'Vencem Hoje',
                     'value' => $totalVencemHoje,
                     'tone' => $totalVencemHoje > 0 ? 'warning' : 'success',
+                    'icon' => 'bi-calendar2-event-fill',
+                    'shortcut' => 'all',
+                    'deadline_period' => 'today',
                     'hint' => 'Obrigações que ainda podem ser resolvidas hoje.',
                 ],
                 [
+                    'key' => 'late',
                     'label' => 'Vencidas',
                     'value' => $totalVencidas,
                     'tone' => $totalVencidas > 0 ? 'danger' : 'success',
+                    'icon' => 'bi-alarm-fill',
+                    'shortcut' => 'late',
                     'hint' => 'Itens fora do prazo e com prioridade máxima.',
                 ],
                 [
+                    'key' => 'approval',
                     'label' => 'Aprovações',
                     'value' => $totalAprovacao,
                     'tone' => $totalAprovacao > 0 ? 'warning' : 'success',
+                    'icon' => 'bi-file-earmark-check-fill',
+                    'shortcut' => 'approval',
                     'hint' => 'Itens aguardando decisão para seguir o fluxo.',
                 ],
                 [
+                    'key' => 'financial',
                     'label' => 'Pendências Financeiras',
                     'value' => $totalFinanceiro,
                     'tone' => $totalFinanceiro > 0 ? 'warning' : 'success',
+                    'icon' => 'bi-cash-coin',
+                    'shortcut' => 'financial',
                     'hint' => 'Entregas finalizadas ainda sem faturamento/pagamento.',
                 ],
             ],
@@ -457,7 +473,7 @@ class CentroOperacionalService
             return 'Alta';
         }
 
-        if ($item->data_vencimento && $item->data_vencimento->isBetween(now()->startOfDay(), now()->addDays(3)->endOfDay())) {
+        if ($item->data_vencimento && $item->data_vencimento->copy()->startOfDay()->between(now()->startOfDay(), now()->addDays(3)->startOfDay())) {
             return 'Média';
         }
 
@@ -488,7 +504,7 @@ class CentroOperacionalService
             return 'Amanhã';
         }
 
-        if ($item->data_vencimento->isPast()) {
+        if ($item->data_vencimento->copy()->startOfDay()->lessThan(now()->startOfDay())) {
             return 'Vencido há ' . $item->data_vencimento->diffInDays(now()) . ' dia(s)';
         }
 
@@ -542,7 +558,7 @@ class CentroOperacionalService
     {
         if (
             $item->data_vencimento
-            && $item->data_vencimento->isPast()
+            && $item->data_vencimento->copy()->startOfDay()->lessThan(now()->startOfDay())
             && ! in_array($item->status, ['concluido', 'aprovado', 'cancelado'], true)
         ) {
             return 'danger';
@@ -631,7 +647,8 @@ class CentroOperacionalService
                 'value' => $totalRisco,
                 'tone' => $totalRisco > 0 ? 'danger' : 'success',
                 'icon' => 'bi-exclamation-octagon-fill',
-                'hint' => 'Obrigação vencida, bloqueio, correção ou aprovação parada.',
+                'shortcut' => 'risk',
+                'hint' => 'Obrigação vencida, bloqueio, correção ou aprovação parada.'
             ],
             [
                 'key' => 'today',
@@ -639,6 +656,7 @@ class CentroOperacionalService
                 'value' => $totalVencemHoje,
                 'tone' => $totalVencemHoje > 0 ? 'warning' : 'success',
                 'icon' => 'bi-calendar2-event-fill',
+                'shortcut' => 'all',
                 'hint' => 'Prazos que precisam ser concluídos ainda hoje.',
             ],
             [
@@ -647,6 +665,7 @@ class CentroOperacionalService
                 'value' => $totalSemResponsavel,
                 'tone' => $totalSemResponsavel > 0 ? 'attention' : 'success',
                 'icon' => 'bi-person-x-fill',
+                'shortcut' => 'no_owner',
                 'hint' => 'Itens abertos sem dono operacional definido.',
             ],
             [
@@ -655,6 +674,7 @@ class CentroOperacionalService
                 'value' => $totalBloqueados,
                 'tone' => $totalBloqueados > 0 ? 'danger' : 'success',
                 'icon' => 'bi-shield-lock-fill',
+                'shortcut' => 'blocked',
                 'hint' => 'Bloqueios operacionais ou dependências impeditivas.',
             ],
         ];
@@ -1094,7 +1114,7 @@ class CentroOperacionalService
             return $prefix . ' • bloqueio ativo';
         }
 
-        if ($item->data_vencimento && $item->data_vencimento->isPast()) {
+        if ($item->data_vencimento && $item->data_vencimento->copy()->startOfDay()->lessThan(now()->startOfDay())) {
             return $prefix . ' • prazo vencido';
         }
 
@@ -1150,23 +1170,49 @@ class CentroOperacionalService
         $department = (string) ($filters['department'] ?? 'all');
 
         if ($dateRange !== 'all') {
-            $query->where(function (Builder $query) use ($dateRange): void {
+            $query->where(function (Builder $query) use ($dateRange, $filters): void {
                 $query->whereNull('data_vencimento');
 
                 if ($dateRange === 'today') {
                     $query->orWhereDate('data_vencimento', '<=', now()->toDateString());
-                } elseif ($dateRange === 'seven_days') {
-                    $query->orWhereDate('data_vencimento', '<=', now()->addDays(7)->toDateString());
-                } elseif ($dateRange === 'fifteen_days') {
-                    $query->orWhereDate('data_vencimento', '<=', now()->addDays(15)->toDateString());
-                } elseif ($dateRange === 'month') {
-                    $query->orWhereBetween('data_vencimento', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()]);
+                } elseif ($dateRange === 'yesterday') {
+                    $query->orWhereDate('data_vencimento', now()->subDay()->toDateString());
+                } elseif ($dateRange === 'last_7_days') {
+                    $query->orWhereBetween('data_vencimento', [now()->subDays(6)->toDateString(), now()->toDateString()]);
+                } elseif ($dateRange === 'last_30_days') {
+                    $query->orWhereBetween('data_vencimento', [now()->subDays(29)->toDateString(), now()->toDateString()]);
+                } elseif ($dateRange === 'custom') {
+                    $startDate = filled($filters['custom_start_date'] ?? null)
+                        ? Carbon::parse($filters['custom_start_date'])->toDateString()
+                        : now()->subDays(7)->toDateString();
+                    $endDate = filled($filters['custom_end_date'] ?? null)
+                        ? Carbon::parse($filters['custom_end_date'])->toDateString()
+                        : now()->toDateString();
+
+                    if ($startDate > $endDate) {
+                        [$startDate, $endDate] = [$endDate, $startDate];
+                    }
+
+                    $query->orWhereBetween('data_vencimento', [$startDate, $endDate]);
                 }
             });
         }
 
         if ($status !== 'all') {
-            if ($status === 'late') {
+            if ($status === 'risk') {
+                $blockColumns = $this->blockColumns();
+                $query->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
+                    ->where(function (Builder $query) use ($blockColumns): void {
+                        $query->where(function (Builder $query): void {
+                            $query->whereNotNull('data_vencimento')
+                                ->whereDate('data_vencimento', '<=', now()->toDateString());
+                        })->orWhereIn('status', ['correcao_necessaria', 'reprovado']);
+
+                        foreach ($blockColumns as $column) {
+                            $query->orWhere($column, true);
+                        }
+                    });
+            } elseif ($status === 'late') {
                 $query->whereNotIn('status', ['concluido', 'aprovado', 'cancelado'])
                     ->whereNotNull('data_vencimento')
                     ->whereDate('data_vencimento', '<', now()->toDateString());
@@ -1227,6 +1273,7 @@ class CentroOperacionalService
     {
         return [
             'all' => 'Todos os status',
+            'risk' => 'Risco operacional',
             'late' => 'Vencidas',
             'approval' => 'Aprovações',
             'correction' => 'Correção necessária',
@@ -1254,10 +1301,12 @@ class CentroOperacionalService
     protected function dateRangeOptions(): array
     {
         return [
+            'all' => 'Todos',
             'today' => 'Hoje',
-            'seven_days' => 'Próximos 7 dias',
-            'fifteen_days' => 'Próximos 15 dias',
-            'month' => 'Este mês',
+            'yesterday' => 'Ontem',
+            'last_7_days' => 'Últimos 7 dias',
+            'last_30_days' => 'Últimos 30 dias',
+            'custom' => 'Personalizado',
         ];
     }
 
