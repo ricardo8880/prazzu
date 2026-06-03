@@ -1261,419 +1261,829 @@ svg[class*="heroicon"] {
     }
 }
 
-/* Lote 5 - refinamento dos componentes da página Criar Item de Controle.
-   Mantém os ajustes dentro do CSS padrão do sistema e não altera a coluna lateral global. */
-.prazzu-create-item-controle-page .prazzu-summary-section {
-    align-self: start !important;
-    position: sticky;
-    top: 1rem;
-    border-color: rgba(219, 234, 254, .95) !important;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
-    box-shadow: 0 18px 42px rgba(15, 23, 42, .06) !important;
+/* LOTE 7 - Reestruturação real do layout da página Criar Item de Controle.
+   Mantém a coluna lateral principal do sistema intacta e atua somente no conteúdo da página. */
+.prazzu-create-item-controle-page form.fi-form {
+    align-items: start !important;
 }
 
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-header {
-    min-height: auto !important;
-    padding: 1.1rem 1.25rem .85rem !important;
-    border-bottom: 1px solid rgba(226, 232, 240, .78) !important;
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page form.fi-form {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(320px, .82fr) !important;
+        column-gap: 1.15rem !important;
+        row-gap: 1rem !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-main-info-section,
+    .prazzu-create-item-controle-page .prazzu-left-flow-section,
+    .prazzu-create-item-controle-page .prazzu-contract-section,
+    .prazzu-create-item-controle-page .prazzu-checklist-section,
+    .prazzu-create-item-controle-page .prazzu-attachments-section,
+    .prazzu-create-item-controle-page .prazzu-advanced-section {
+        grid-column: 1 / 3 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-summary-section,
+    .prazzu-create-item-controle-page .prazzu-tip-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-flow-section,
+    .prazzu-create-item-controle-page .prazzu-quick-tips-section {
+        grid-column: 3 / 4 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-summary-section {
+        grid-row: 2 / span 1 !important;
+        align-self: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-risk-section {
+        grid-row: 3 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-tip-section {
+        grid-row: 3 !important;
+        align-self: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-contract-section {
+        grid-row: 4 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-quick-tips-section {
+        grid-row: 4 / span 2 !important;
+        align-self: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-checklist-section {
+        grid-row: 5 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-attachments-section {
+        grid-row: 6 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-advanced-section {
+        grid-row: 7 !important;
+    }
+}
+
+.prazzu-create-item-controle-page form.fi-form::before {
+    content: '' !important;
+    position: relative;
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+    min-height: 74px;
+    padding: 1rem 1.2rem !important;
+    background:
+        linear-gradient(90deg, transparent 0 14%, rgba(37, 99, 235, .18) 14% 50%, transparent 50% 51%, rgba(226, 232, 240, .95) 51% 86%, transparent 86%),
+        #ffffff !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form::after {
+    content: '1  Informações principais      2  Detalhes adicionais      3  Revisão';
+    grid-column: 1 / -1;
+    display: block;
+    margin-top: -5.75rem;
+    margin-bottom: 1.05rem;
+    padding: 1.45rem 1.35rem 1.35rem;
+    pointer-events: none;
+    color: #1e293b;
+    font-size: .9rem;
+    font-weight: 850;
+    letter-spacing: .005em;
+    white-space: pre;
+}
+
+.prazzu-create-item-controle-page .prazzu-main-info-section {
+    border-bottom-left-radius: .4rem !important;
+    border-bottom-right-radius: .4rem !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .055) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section {
+    margin-top: -.35rem !important;
+    border-top-left-radius: .4rem !important;
+    border-top-right-radius: .4rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-header {
+    min-height: 3.75rem !important;
+    padding-top: .95rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-content {
+    padding-bottom: 1rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section,
+.prazzu-create-item-controle-page .prazzu-checklist-section,
+.prazzu-create-item-controle-page .prazzu-attachments-section,
+.prazzu-create-item-controle-page .prazzu-advanced-section {
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .045) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-header {
+    min-height: 4.15rem !important;
+    padding-block: .95rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section,
+.prazzu-create-item-controle-page .prazzu-tip-section,
+.prazzu-create-item-controle-page .prazzu-quick-tips-section {
+    height: fit-content !important;
 }
 
 .prazzu-create-item-controle-page .prazzu-summary-section .fi-section-content {
-    display: grid !important;
-    gap: .15rem !important;
-    padding: .85rem 1.25rem 1.1rem !important;
+    padding-top: .95rem !important;
+    padding-bottom: 1rem !important;
 }
 
 .prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder {
-    position: relative;
-    min-height: 2.85rem;
-    padding: .62rem .4rem .62rem 2.35rem !important;
-    border-bottom: 1px solid rgba(226, 232, 240, .72);
+    padding: .4rem 0 !important;
+    border-bottom: 1px solid rgba(226, 232, 240, .75);
 }
 
 .prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:last-child {
     border-bottom: 0;
 }
 
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder::before {
-    position: absolute;
-    left: .1rem;
-    top: .68rem;
-    display: inline-grid;
-    width: 1.55rem;
-    height: 1.55rem;
-    place-items: center;
-    border-radius: .55rem;
-    background: #eff6ff;
-    color: #2563eb;
-    font-size: .8rem;
-    font-weight: 900;
+.prazzu-create-item-controle-page .prazzu-quick-tips-section {
+    background: #ffffff !important;
 }
 
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(1)::before { content: 'T'; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(2)::before { content: 'C'; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(3)::before { content: 'R'; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(4)::before { content: 'V'; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(5)::before { content: 'P'; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(6)::before { content: 'U'; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(7)::before { content: '!'; color: #dc2626; background: #fef2f2; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(8)::before { content: '$'; color: #16a34a; background: #f0fdf4; }
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(9)::before { content: 'S'; }
-
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label,
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label label,
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label span {
-    color: #64748b !important;
-    font-size: .72rem !important;
-    font-weight: 850 !important;
-    letter-spacing: .02em !important;
-    text-transform: uppercase !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder .fi-fo-placeholder-content,
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder div:not([class*='label']) {
-    color: #0f172a !important;
-    font-size: .88rem !important;
-    font-weight: 800 !important;
+.prazzu-create-item-controle-page .prazzu-quick-tips-section .fi-section-header {
+    min-height: 4.05rem !important;
 }
 
 .prazzu-create-item-controle-page .prazzu-tip-section {
-    align-self: start !important;
-    border-color: #bbf7d0 !important;
-    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%) !important;
-    box-shadow: 0 14px 32px rgba(22, 163, 74, .08) !important;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
 }
 
 .prazzu-create-item-controle-page .prazzu-tip-section .fi-section-header {
     padding: 1rem 1.15rem !important;
 }
 
-.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-heading {
-    color: #166534 !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-description {
-    color: #15803d !important;
-    line-height: 1.45 !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-sidebar-section,
-.prazzu-create-item-controle-page .prazzu-quick-tips-section {
-    align-self: start !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-quick-tips-section .fi-section-header {
-    min-height: auto !important;
-    padding: 1rem 1.15rem .7rem !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-quick-tips-section .fi-section-content {
-    padding: .35rem 1.15rem 1.1rem !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-quick-tips li {
-    padding: .5rem .65rem .5rem 1.75rem;
-    border-radius: .75rem;
-    background: #f8fafc;
-    border: 1px solid rgba(226, 232, 240, .82);
-}
-
-.prazzu-create-item-controle-page .prazzu-quick-tips li::before {
-    left: .65rem;
-    top: .5rem;
-    color: #2563eb;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section {
-    box-shadow: 0 10px 26px rgba(15, 23, 42, .045) !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-header {
-    min-height: 4.1rem !important;
-    padding: 1rem 1.25rem !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section.fi-collapsed,
-.prazzu-create-item-controle-page .prazzu-compact-section:has(.fi-section-content-ctn[style*='display: none']) {
-    min-height: 4.5rem !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-heading {
-    font-size: .96rem !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-description {
-    font-size: .79rem !important;
-}
-
-.prazzu-create-item-controle-page .pz-status-pill {
-    background: #dbeafe !important;
-    color: #1d4ed8 !important;
-    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .12);
-}
-
-.prazzu-create-item-controle-page .fi-form-actions::before {
-    content: 'Atalho: Você pode pressionar Ctrl + S para salvar rapidamente';
-    margin-right: auto;
-    color: #64748b;
-    font-size: .84rem;
-    font-weight: 700;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-primary {
-    min-height: 2.55rem;
-    padding-inline: 1.15rem !important;
-    background: #2563eb !important;
-    color: #fff !important;
-    box-shadow: 0 12px 24px rgba(37, 99, 235, .22) !important;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-gray {
-    min-height: 2.55rem;
-    padding-inline: 1.05rem !important;
-    background: #ffffff !important;
-    color: #334155 !important;
-    border: 1px solid #cbd5e1 !important;
-}
-
 @media (max-width: 1279px) {
-    .prazzu-create-item-controle-page .prazzu-summary-section {
-        position: static;
-    }
-}
-
-@media (max-width: 767px) {
-    .prazzu-create-item-controle-page .fi-form-actions::before {
-        width: 100%;
-        margin-right: 0;
-        margin-bottom: .5rem;
-        text-align: center;
-    }
-}
-
-
-/* Lote 6 - acabamento final da página Criar Item de Controle.
-   Ajustes restritos à classe da página para não interferir na coluna lateral/menu. */
-.prazzu-create-item-controle-page {
-    background: #f6f8fb !important;
-}
-
-.prazzu-create-item-controle-page .fi-main,
-.prazzu-create-item-controle-page .fi-page,
-.prazzu-create-item-controle-page .fi-page-content {
-    background: #f6f8fb !important;
-}
-
-.prazzu-create-item-controle-page .fi-page {
-    --prazzu-create-blue: #2563eb;
-    --prazzu-create-blue-dark: #1d4ed8;
-    --prazzu-create-border: #e2e8f0;
-    --prazzu-create-text: #0f172a;
-    --prazzu-create-muted: #64748b;
-}
-
-.prazzu-create-item-controle-page .fi-page-header {
-    align-items: flex-start !important;
-    gap: 1rem !important;
-    margin-bottom: 1rem !important;
-}
-
-.prazzu-create-item-controle-page .fi-page-header-heading {
-    color: var(--prazzu-create-text) !important;
-    font-size: 1.8rem !important;
-    line-height: 1.15 !important;
-    letter-spacing: -.035em !important;
-    font-weight: 900 !important;
-}
-
-.prazzu-create-item-controle-page .fi-page-header-subheading {
-    max-width: 44rem !important;
-    color: var(--prazzu-create-muted) !important;
-    font-size: .93rem !important;
-    line-height: 1.45 !important;
-}
-
-.prazzu-create-item-controle-page .fi-page-header-actions {
-    gap: .65rem !important;
-}
-
-.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn {
-    min-height: 2.45rem !important;
-    padding-inline: 1.05rem !important;
-    border-radius: .72rem !important;
-}
-
-.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn-color-primary {
-    background: var(--prazzu-create-blue) !important;
-    box-shadow: 0 12px 24px rgba(37, 99, 235, .2) !important;
-}
-
-.prazzu-create-item-controle-page form.fi-form {
-    align-items: start !important;
-}
-
-.prazzu-create-item-controle-page form.fi-form::before {
-    content: '' !important;
-    min-height: 4.65rem !important;
-    padding: 0 !important;
-    background:
-        linear-gradient(#fff, #fff) padding-box,
-        linear-gradient(90deg, rgba(37,99,235,.25), rgba(226,232,240,.9)) border-box !important;
-    border: 1px solid transparent !important;
-    border-radius: 1.15rem !important;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, .045) !important;
-}
-
-.prazzu-create-item-controle-page form.fi-form::after {
-    content: '1  Informações principais     2  Detalhes adicionais     3  Revisão' !important;
-    grid-column: 1 / -1;
-    order: -1;
-    display: flex !important;
-    align-items: center !important;
-    min-height: 4.65rem !important;
-    margin-top: -5.65rem !important;
-    padding: 0 1.55rem !important;
-    color: #334155 !important;
-    font-size: .92rem !important;
-    font-weight: 900 !important;
-    letter-spacing: -.005em !important;
-    pointer-events: none !important;
-}
-
-.prazzu-create-item-controle-page .fi-section {
-    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease !important;
-}
-
-.prazzu-create-item-controle-page .fi-section:hover {
-    border-color: rgba(191, 219, 254, .95) !important;
-    box-shadow: 0 20px 48px rgba(15, 23, 42, .075) !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-risk-section {
-    border-left: 4px solid #ef4444 !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-heading {
-    color: #991b1b !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-risk-section .fi-input-wrp:focus-within {
-    border-color: #ef4444 !important;
-    box-shadow: 0 0 0 4px rgba(239, 68, 68, .1) !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-summary-section {
-    top: 1.25rem !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-heading::after {
-    content: 'Prévia';
-    display: inline-flex;
-    align-items: center;
-    margin-left: .55rem;
-    padding: .16rem .48rem;
-    border-radius: 999px;
-    background: #eff6ff;
-    color: var(--prazzu-create-blue-dark);
-    font-size: .66rem;
-    font-weight: 900;
-    letter-spacing: .02em;
-    text-transform: uppercase;
-    vertical-align: middle;
-}
-
-.prazzu-create-item-controle-page .prazzu-tip-section {
-    border-left: 4px solid #22c55e !important;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-header {
-    cursor: pointer;
-}
-
-.prazzu-create-item-controle-page .prazzu-compact-section .fi-icon-btn {
-    border-radius: .65rem !important;
-    background: #f8fafc !important;
-    border: 1px solid rgba(226, 232, 240, .85) !important;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions {
-    gap: .65rem !important;
-    border-radius: 1.05rem 1.05rem 0 0 !important;
-    margin-bottom: -1rem !important;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions .fi-btn {
-    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease !important;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions .fi-btn:hover,
-.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn:hover {
-    transform: translateY(-1px) !important;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-primary:hover,
-.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn-color-primary:hover {
-    background: var(--prazzu-create-blue-dark) !important;
-    box-shadow: 0 16px 28px rgba(37, 99, 235, .27) !important;
-}
-
-.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-gray:hover,
-.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn-color-gray:hover {
-    background: #f8fafc !important;
-}
-
-.prazzu-create-item-controle-page .fi-breadcrumbs,
-.prazzu-create-item-controle-page .fi-breadcrumbs a,
-.prazzu-create-item-controle-page .fi-breadcrumbs span {
-    color: #64748b !important;
-    font-size: .82rem !important;
-    font-weight: 750 !important;
-}
-
-.prazzu-create-item-controle-page .fi-breadcrumbs a:hover {
-    color: var(--prazzu-create-blue) !important;
-}
-
-@media (min-width: 1280px) {
-    .prazzu-create-item-controle-page .fi-page-content,
-    .prazzu-create-item-controle-page .fi-page-header {
-        max-width: 1480px !important;
-        margin-inline: auto !important;
-    }
-}
-
-@media (max-width: 1279px) {
-    .prazzu-create-item-controle-page form.fi-form::after {
-        content: '1 Informações principais   2 Detalhes adicionais   3 Revisão' !important;
-        font-size: .82rem !important;
-        padding-inline: 1rem !important;
-        overflow-x: auto !important;
-        white-space: nowrap !important;
-    }
-}
-
-@media (max-width: 767px) {
-    .prazzu-create-item-controle-page .fi-page-header-heading {
-        font-size: 1.45rem !important;
-    }
-
-    .prazzu-create-item-controle-page .fi-page-header-actions {
-        width: 100% !important;
-        justify-content: stretch !important;
-    }
-
-    .prazzu-create-item-controle-page .fi-page-header-actions .fi-btn {
-        flex: 1 1 0 !important;
-        justify-content: center !important;
-    }
-
-    .prazzu-create-item-controle-page form.fi-form::before,
     .prazzu-create-item-controle-page form.fi-form::after {
         display: none !important;
     }
 
-    .prazzu-create-item-controle-page .fi-form-actions {
-        border-radius: 1rem !important;
-        margin-bottom: 0 !important;
+    .prazzu-create-item-controle-page form.fi-form::before {
+        content: '1 Informações principais   2 Detalhes adicionais   3 Revisão' !important;
+        display: block !important;
+        min-height: auto !important;
+        margin-bottom: .75rem !important;
+        white-space: nowrap;
+    }
+}
+
+/* Correção final do Lote 7: a régua de etapas permanece no topo do grid do formulário. */
+.prazzu-create-item-controle-page form.fi-form::after {
+    display: none !important;
+    content: none !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form::before {
+    content: '1  Informações principais        2  Detalhes adicionais        3  Revisão' !important;
+    grid-column: 1 / -1 !important;
+    display: block !important;
+    min-height: auto !important;
+    margin: 0 0 .15rem 0 !important;
+    padding: 1.15rem 1.45rem !important;
+    border: 1px solid rgba(226, 232, 240, .95) !important;
+    border-radius: 1rem !important;
+    background: linear-gradient(90deg, #eff6ff 0%, #ffffff 42%, #ffffff 100%) !important;
+    color: #1e293b !important;
+    font-size: .9rem !important;
+    font-weight: 850 !important;
+    letter-spacing: .005em !important;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .045) !important;
+    white-space: nowrap !important;
+    overflow-x: auto !important;
+}
+
+/* LOTE 8 - Estrutura dos blocos inferiores no padrão do modelo.
+   Compacta Detalhes, Checklist, Anexos e Configurações e mantém a leitura em lista vertical. */
+.prazzu-create-item-controle-page .prazzu-contract-section,
+.prazzu-create-item-controle-page .prazzu-checklist-section,
+.prazzu-create-item-controle-page .prazzu-attachments-section,
+.prazzu-create-item-controle-page .prazzu-advanced-section {
+    overflow: hidden !important;
+    border: 1px solid rgba(226, 232, 240, .92) !important;
+    border-radius: 1rem !important;
+    background: #ffffff !important;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .035) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-header {
+    min-height: 68px !important;
+    padding: .9rem 1.1rem !important;
+    background: #ffffff !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-header-icon,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-header-icon,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-header-icon,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-header-icon {
+    width: 2.35rem !important;
+    height: 2.35rem !important;
+    padding: .55rem !important;
+    border-radius: .85rem !important;
+    background: #eff6ff !important;
+    color: #2563eb !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-header-heading,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-header-heading,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-header-heading,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-header-heading {
+    color: #0f172a !important;
+    font-size: .96rem !important;
+    font-weight: 800 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-header-description,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-header-description,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-header-description,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-header-description {
+    color: #64748b !important;
+    font-size: .8rem !important;
+    line-height: 1.25rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-content,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-content,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-content,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-content {
+    padding: 1rem 1.1rem 1.15rem !important;
+    border-top: 1px solid rgba(226, 232, 240, .72) !important;
+    background: #fbfdff !important;
+}
+
+/* Quando o Filament renderizar a seção recolhida, ela deve parecer uma linha do modelo. */
+.prazzu-create-item-controle-page .prazzu-contract-section:has(.fi-section-content[hidden]),
+.prazzu-create-item-controle-page .prazzu-checklist-section:has(.fi-section-content[hidden]),
+.prazzu-create-item-controle-page .prazzu-attachments-section:has(.fi-section-content[hidden]),
+.prazzu-create-item-controle-page .prazzu-advanced-section:has(.fi-section-content[hidden]) {
+    min-height: 68px !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section:has(.fi-section-content[hidden]) .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-checklist-section:has(.fi-section-content[hidden]) .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-attachments-section:has(.fi-section-content[hidden]) .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-advanced-section:has(.fi-section-content[hidden]) .fi-section-header {
+    border-bottom: 0 !important;
+}
+
+/* Fallback para navegadores/markup onde o hidden não aparece como atributo no DOM. */
+.prazzu-create-item-controle-page .prazzu-contract-section.fi-collapsed .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-checklist-section.fi-collapsed .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-attachments-section.fi-collapsed .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-advanced-section.fi-collapsed .fi-section-header {
+    border-bottom: 0 !important;
+}
+
+/* A coluna esquerda deve ficar em sequência compacta, sem o efeito de cards espalhados. */
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page .prazzu-contract-section,
+    .prazzu-create-item-controle-page .prazzu-checklist-section,
+    .prazzu-create-item-controle-page .prazzu-attachments-section,
+    .prazzu-create-item-controle-page .prazzu-advanced-section {
+        margin-top: -.1rem !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-contract-section {
+        grid-row: 4 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-checklist-section {
+        grid-row: 5 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-attachments-section {
+        grid-row: 6 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-advanced-section {
+        grid-row: 7 !important;
+    }
+}
+
+/* Mantém Anexos e Configurações com altura visual próxima do modelo mesmo quando abertos. */
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-fo-file-upload,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-fo-field-wrp,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-fo-repeater {
+    max-width: 100% !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-fo-repeater-item,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-fo-field-wrp,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-fo-field-wrp {
+    border-radius: .85rem !important;
+}
+
+/* Sidebar permanece alinhada e independente dos cards inferiores. */
+.prazzu-create-item-controle-page .prazzu-quick-tips-section {
+    position: relative !important;
+    margin-top: -.1rem !important;
+}
+
+/* LOTE 9 REFEITO - acabamento visual final sem alterar a coluna lateral global.
+   Este bloco atua somente dentro da página Criar Item de Controle. */
+.prazzu-create-item-controle-page {
+    --pz-model-blue: #2563eb;
+    --pz-model-blue-soft: #eff6ff;
+    --pz-model-border: rgba(226, 232, 240, .95);
+    --pz-model-text: #0f172a;
+    --pz-model-muted: #64748b;
+}
+
+.prazzu-create-item-controle-page .fi-page-header {
+    margin-bottom: 1rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-heading {
+    color: var(--pz-model-text) !important;
+    font-size: 1.55rem !important;
+    font-weight: 850 !important;
+    letter-spacing: -.025em !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-subheading {
+    color: var(--pz-model-muted) !important;
+    font-size: .92rem !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form::before {
+    position: relative !important;
+    border-radius: 1.05rem !important;
+    border-color: var(--pz-model-border) !important;
+    background:
+        linear-gradient(90deg, rgba(37, 99, 235, .08) 0%, rgba(37, 99, 235, .035) 31%, #ffffff 31%, #ffffff 100%) !important;
+    color: #1e293b !important;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .04) !important;
+}
+
+.prazzu-create-item-controle-page .fi-section {
+    border-color: var(--pz-model-border) !important;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .04) !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-header-heading {
+    color: var(--pz-model-text) !important;
+    font-size: 1rem !important;
+    font-weight: 850 !important;
+    letter-spacing: -.012em !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-header-description {
+    color: var(--pz-model-muted) !important;
+    font-size: .83rem !important;
+    line-height: 1.35rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-header-icon {
+    color: var(--pz-model-blue) !important;
+    background: var(--pz-model-blue-soft) !important;
+    border-radius: .9rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-main-info-section {
+    border-bottom-left-radius: .45rem !important;
+    border-bottom-right-radius: .45rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-main-info-section .fi-section-content {
+    padding-bottom: 1rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section {
+    margin-top: -.65rem !important;
+    border-color: rgba(254, 202, 202, .95) !important;
+    border-top-color: rgba(254, 202, 202, .75) !important;
+    background: linear-gradient(135deg, #fff1f2 0%, #fff7ed 100%) !important;
+    box-shadow: 0 8px 20px rgba(220, 38, 38, .035) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-content {
+    background: transparent !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-header-icon {
+    color: #dc2626 !important;
+    background: #fee2e2 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-header-heading {
+    color: #991b1b !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-input-wrp,
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-select-input-wrp,
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-toggle {
+    border-color: rgba(248, 113, 113, .34) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section {
+    border-radius: 1.1rem !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .055) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-header {
+    padding-bottom: .65rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-content {
+    padding: .75rem 1.15rem 1.1rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 1.65rem 1fr !important;
+    gap: .15rem .65rem !important;
+    align-items: center !important;
+    min-height: 2.45rem !important;
+    padding: .48rem 0 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder::before {
+    content: '' !important;
+    grid-row: 1 / span 2 !important;
+    width: 1.55rem !important;
+    height: 1.55rem !important;
+    border-radius: .55rem !important;
+    background: var(--pz-model-blue-soft) !important;
+    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .08) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label,
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder-label {
+    color: #64748b !important;
+    font-size: .72rem !important;
+    font-weight: 750 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder-content {
+    color: #0f172a !important;
+    font-size: .84rem !important;
+    font-weight: 700 !important;
+}
+
+.prazzu-create-item-controle-page .pz-status-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    min-height: 1.55rem !important;
+    padding: .18rem .6rem !important;
+    border-radius: 999px !important;
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    font-size: .72rem !important;
+    font-weight: 850 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section {
+    border-color: rgba(187, 247, 208, .95) !important;
+    background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%) !important;
+    box-shadow: 0 10px 24px rgba(22, 163, 74, .06) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-header-icon {
+    color: #16a34a !important;
+    background: #dcfce7 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-header-heading {
+    color: #166534 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips-section .fi-section-content {
+    padding-top: .75rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips {
+    display: grid !important;
+    gap: .55rem !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips li {
+    position: relative !important;
+    padding-left: 1.35rem !important;
+    color: #475569 !important;
+    font-size: .83rem !important;
+    line-height: 1.25rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips li::before {
+    content: '✓' !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    color: var(--pz-model-blue) !important;
+    font-weight: 900 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section,
+.prazzu-create-item-controle-page .prazzu-checklist-section,
+.prazzu-create-item-controle-page .prazzu-attachments-section,
+.prazzu-create-item-controle-page .prazzu-advanced-section {
+    border-radius: 1.05rem !important;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .035) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-contract-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-checklist-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-attachments-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-advanced-section .fi-section-header {
+    min-height: 64px !important;
+}
+
+.prazzu-create-item-controle-page .fi-input-wrp,
+.prazzu-create-item-controle-page .fi-select-input-wrp,
+.prazzu-create-item-controle-page .fi-textarea {
+    border-radius: .85rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-btn {
+    border-radius: .85rem !important;
+    font-weight: 800 !important;
+}
+
+.prazzu-create-item-controle-page .fi-btn-color-primary {
+    background: var(--pz-model-blue) !important;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, .22) !important;
+}
+
+.prazzu-create-item-controle-page .fi-btn-color-primary:hover {
+    background: #1d4ed8 !important;
+}
+
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page form.fi-form {
+        grid-template-columns: minmax(0, 2.55fr) minmax(300px, .95fr) !important;
+        gap: 1rem !important;
+        align-items: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-summary-section,
+    .prazzu-create-item-controle-page .prazzu-tip-section,
+    .prazzu-create-item-controle-page .prazzu-quick-tips-section {
+        grid-column: 2 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-main-info-section,
+    .prazzu-create-item-controle-page .prazzu-risk-section,
+    .prazzu-create-item-controle-page .prazzu-contract-section,
+    .prazzu-create-item-controle-page .prazzu-checklist-section,
+    .prazzu-create-item-controle-page .prazzu-attachments-section,
+    .prazzu-create-item-controle-page .prazzu-advanced-section {
+        grid-column: 1 !important;
+    }
+}
+
+@media (max-width: 1279px) {
+    .prazzu-create-item-controle-page form.fi-form::before {
+        font-size: .78rem !important;
+        padding: .9rem 1rem !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder {
+        grid-template-columns: 1.45rem 1fr !important;
+    }
+}
+
+/* AJUSTE SOLICITADO - Criar Item de Controle: equaliza a localização das caixas com o layout modelo.
+   O formulário passa a ter uma coluna principal contínua e uma sidebar contínua, evitando que Resumo/Dica/Dicas
+   sejam reposicionados pelo grid geral do Filament. */
+.prazzu-create-item-controle-page .prazzu-create-main-layout {
+    align-items: start !important;
+    width: 100% !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-left-column,
+.prazzu-create-item-controle-page .prazzu-sidebar-column {
+    align-content: start !important;
+}
+
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page form.fi-form {
+        gap: 1rem !important;
+        align-items: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout {
+        grid-column: 1 / -1 !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 2.58fr) minmax(320px, .95fr) !important;
+        column-gap: 1.55rem !important;
+        row-gap: 0 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-left-column {
+        grid-column: 1 !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 1rem !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-sidebar-column {
+        grid-column: 2 !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 1rem !important;
+        align-self: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-left-column .prazzu-main-info-section,
+    .prazzu-create-item-controle-page .prazzu-left-column .prazzu-risk-section,
+    .prazzu-create-item-controle-page .prazzu-left-column .prazzu-contract-section,
+    .prazzu-create-item-controle-page .prazzu-left-column .prazzu-checklist-section,
+    .prazzu-create-item-controle-page .prazzu-left-column .prazzu-attachments-section,
+    .prazzu-create-item-controle-page .prazzu-left-column .prazzu-advanced-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-summary-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-tip-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-quick-tips-section {
+        grid-column: 1 / -1 !important;
+        grid-row: auto !important;
+        align-self: start !important;
+        margin-top: 0 !important;
+        width: 100% !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-summary-section {
+        position: relative !important;
+        top: auto !important;
+    }
+}
+
+@media (max-width: 1279px) {
+    .prazzu-create-item-controle-page .prazzu-create-main-layout,
+    .prazzu-create-item-controle-page .prazzu-left-column,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 1rem !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-left-column .fi-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .fi-section {
+        grid-column: 1 / -1 !important;
+        grid-row: auto !important;
+        margin-top: 0 !important;
+    }
+}
+
+/* AJUSTE FINAL - Criar Item de Controle: ocupa 100% da área útil da tela.
+   Remove a limitação visual que deixava os cards concentrados no centro/esquerda e
+   expande a coluna principal para alinhar com o modelo de referência. */
+.prazzu-create-item-controle-page.fi-page,
+.prazzu-create-item-controle-page .fi-page,
+.prazzu-create-item-controle-page .fi-page-content,
+.prazzu-create-item-controle-page .fi-form,
+.prazzu-create-item-controle-page form.fi-form,
+.prazzu-create-item-controle-page .prazzu-create-main-layout {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.prazzu-create-item-controle-page .fi-main > .fi-page,
+.fi-main > .prazzu-create-item-controle-page.fi-page,
+.prazzu-create-item-controle-page.fi-page {
+    max-width: none !important;
+    margin-inline: 0 !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-content {
+    padding-inline: clamp(1.25rem, 2vw, 2rem) !important;
+}
+
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page .prazzu-create-main-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 430px) !important;
+        column-gap: 1.5rem !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-sidebar-column {
+        max-width: 430px !important;
+        justify-self: stretch !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-left-column {
+        min-width: 0 !important;
+    }
+}
+
+/* CORREÇÃO DEFINITIVA - Criar Item de Controle: impede que o columnSpan do Filament
+   crie colunas implícitas e deixe uma área vazia à direita. */
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page .prazzu-create-main-layout {
+        display: grid !important;
+        grid-template-columns: minmax(0, calc(100% - 454px)) 430px !important;
+        gap: 1.5rem !important;
+        width: 100% !important;
+        max-width: none !important;
+        align-items: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > * {
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > *:nth-child(1),
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > .prazzu-left-column {
+        grid-column: 1 / 2 !important;
+        width: 100% !important;
+        justify-self: stretch !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > *:nth-child(2),
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > .prazzu-sidebar-column {
+        grid-column: 2 / 3 !important;
+        width: 100% !important;
+        max-width: 430px !important;
+        justify-self: stretch !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-left-column,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        align-content: start !important;
+        gap: 1rem !important;
+    }
+}
+
+
+/* AJUSTE REAL - Criar Item de Controle: mantém as duas colunas lado a lado e ocupa 100% da área útil.
+   A classe prazzu-create-main-layout é aplicada no wrapper do Grid do Filament; os Groups ficam dentro
+   do .fi-sc interno. Por isso o alvo correto é o .fi-sc filho direto, não apenas o wrapper externo. */
+@media (min-width: 1024px) {
+    .prazzu-create-item-controle-page .prazzu-create-main-layout {
+        width: 100% !important;
+        max-width: none !important;
+        display: block !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > .fi-sc {
+        display: grid !important;
+        width: 100% !important;
+        max-width: none !important;
+        grid-template-columns: minmax(0, 1fr) minmax(360px, 430px) !important;
+        column-gap: 1.5rem !important;
+        row-gap: 1rem !important;
+        align-items: start !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > .fi-sc > .fi-grid-col:first-child {
+        grid-column: 1 / 2 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > .fi-sc > .fi-grid-col:nth-child(2) {
+        grid-column: 2 / 3 !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 430px !important;
+        justify-self: stretch !important;
+        align-self: start !important;
+        margin-top: 0 !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-left-column,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 1rem !important;
+        align-content: start !important;
+        width: 100% !important;
+    }
+
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-summary-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-tip-section,
+    .prazzu-create-item-controle-page .prazzu-sidebar-column .prazzu-quick-tips-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-top: 0 !important;
+    }
+}
+
+@media (max-width: 1023px) {
+    .prazzu-create-item-controle-page .prazzu-create-main-layout > .fi-sc {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 1rem !important;
     }
 }

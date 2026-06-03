@@ -20,6 +20,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use App\Support\CachedSchema as DatabaseSchema;
@@ -35,7 +37,12 @@ class ItemControleForm
 
         return $schema
             ->components([
-                Section::make('Informações principais')
+                Grid::make(12)
+                    ->extraAttributes(['class' => 'prazzu-create-main-layout'])
+                    ->schema([
+                        Group::make([
+                            Section::make('Informações principais')
+                    ->extraAttributes(['class' => 'prazzu-main-info-section'])
                     ->description('Preencha apenas o essencial para começar. Você pode complementar depois.')
                     ->icon('heroicon-o-clipboard-document-check')
                     ->schema([
@@ -201,72 +208,12 @@ class ItemControleForm
                             ->dehydrated(true),
                     ])
                     ->columns(12)
-                    ->columnSpan(['default' => 1, 'xl' => 2]),
+                    ->columnSpanFull(),
 
-                Section::make('Resumo do item')
-                    ->description('Veja como seu item será registrado.')
-                    ->icon('heroicon-o-clipboard-document-list')
-                    ->extraAttributes(['class' => 'prazzu-summary-section'])
-                    ->schema([
-                        Placeholder::make('resumo_titulo')
-                            ->label('Título')
-                            ->content(fn (callable $get): string => filled($get('titulo')) ? (string) $get('titulo') : '-'),
-
-                        Placeholder::make('resumo_categoria')
-                            ->label('Categoria')
-                            ->content(function (callable $get): string {
-                                $categoriaId = $get('categoria_id');
-
-                                if (! filled($categoriaId)) {
-                                    return '-';
-                                }
-
-                                return (string) (CategoriaItemControle::query()->whereKey($categoriaId)->value('nome') ?: '-');
-                            }),
-
-                        Placeholder::make('resumo_responsavel')
-                            ->label('Responsável')
-                            ->content(function (callable $get): string {
-                                $responsavelId = $get('responsavel_id');
-
-                                if (! filled($responsavelId)) {
-                                    return '-';
-                                }
-
-                                return (string) (Responsavel::query()->whereKey($responsavelId)->value('nome') ?: '-');
-                            }),
-
-                        Placeholder::make('resumo_vencimento')
-                            ->label('Vencimento')
-                            ->content(fn (callable $get): string => filled($get('data_vencimento')) ? date('d/m/Y', strtotime((string) $get('data_vencimento'))) : '-'),
-
-                        Placeholder::make('resumo_prioridade')
-                            ->label('Prioridade')
-                            ->content(fn (callable $get): string => self::getPrioridadeOptions()[$get('prioridade') ?: 'media'] ?? 'Média'),
-
-                        Placeholder::make('resumo_urgencia')
-                            ->label('Urgência')
-                            ->content(fn (callable $get): string => self::getUrgenciaOptions()[$get('urgencia') ?: 'media'] ?? '-'),
-
-                        Placeholder::make('resumo_risco')
-                            ->label('Risco de multa')
-                            ->content(fn (): string => 'Alto'),
-
-                        Placeholder::make('resumo_valor')
-                            ->label('Valor estimado')
-                            ->content(fn (callable $get): string => 'R$ ' . number_format((float) ($get('valor_tarefa') ?: 0), 2, ',', '.')),
-
-                        Placeholder::make('resumo_status')
-                            ->label('Status')
-                            ->content(fn (callable $get): HtmlString => new HtmlString('<span class="pz-status-pill">' . e(self::getStatusOptions()[$get('status') ?: 'pendente'] ?? 'Pendente') . '</span><small>Status padrão na criação.</small>')),
-                    ])
-                    ->columns(1)
-                    ->columnSpan(['default' => 1, 'xl' => 1]),
-
-                Section::make('Prazo, risco e impacto')
+                            Section::make('Prazo, risco e impacto')
                     ->description('Essas informações ajudam o sistema a te alertar e priorizar o que realmente importa.')
                     ->icon('heroicon-o-shield-exclamation')
-                    ->extraAttributes(['class' => 'prazzu-risk-section'])
+                    ->extraAttributes(['class' => 'prazzu-risk-section prazzu-left-flow-section'])
                     ->schema([
                         Select::make('urgencia')
                             ->label('Urgência')
@@ -309,19 +256,12 @@ class ItemControleForm
                             ->columnSpan(['default' => 12, 'lg' => 3]),
                     ])
                     ->columns(12)
-                    ->columnSpan(['default' => 1, 'xl' => 2]),
+                    ->columnSpanFull(),
 
-                Section::make('Dica')
-                    ->description('Após salvar, você poderá adicionar checklist, anexos e outras informações.')
-                    ->icon('heroicon-o-light-bulb')
-                    ->extraAttributes(['class' => 'prazzu-tip-section'])
-                    ->schema([])
-                    ->columnSpan(['default' => 1, 'xl' => 1]),
-
-                Section::make('Detalhes do contrato (opcional)')
+                            Section::make('Detalhes do contrato (opcional)')
+                    ->extraAttributes(['class' => 'prazzu-contract-section prazzu-left-flow-section'])
                     ->description('Vincule a um contrato, se necessário.')
                     ->icon('heroicon-o-document-text')
-                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-contract-section'])
                     ->schema([
                         TextInput::make('contrato_numero')
                             ->label('Número do contrato')
@@ -361,23 +301,13 @@ class ItemControleForm
                     ->columns(2)
                     ->collapsible()
                     ->collapsed()
-                    ->columnSpan(['default' => 1, 'xl' => 2])
-                    ->visible(fn (callable $get): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_CONTRATOS) && self::deveMostrarContrato($get)),
+                    ->columnSpanFull()
+                    ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_CONTRATOS)),
 
-                Section::make('Dicas rápidas')
-                    ->icon('heroicon-o-clipboard-document-check')
-                    ->extraAttributes(['class' => 'prazzu-quick-tips-section prazzu-sidebar-section'])
-                    ->schema([
-                        Placeholder::make('dicas_rapidas')
-                            ->label('')
-                            ->content(fn (): HtmlString => new HtmlString('<ul class="prazzu-quick-tips"><li>Use um título claro e objetivo</li><li>Defina a data de vencimento corretamente</li><li>Priorize itens com maior risco de multa</li><li>Checklist será sugerido automaticamente</li><li>Você pode editar tudo depois</li></ul>')),
-                    ])
-                    ->columnSpan(['default' => 1, 'xl' => 1]),
-
-                Section::make('Checklist (opcional)')
+                            Section::make('Checklist (opcional)')
+                    ->extraAttributes(['class' => 'prazzu-checklist-section prazzu-left-flow-section'])
                     ->description('Etapas sugeridas serão carregadas automaticamente.')
                     ->icon('heroicon-o-list-bullet')
-                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-checklist-section'])
                     ->schema([
                         Repeater::make('checklists')
                             ->label('Etapas')
@@ -427,13 +357,13 @@ class ItemControleForm
                     ->columns(1)
                     ->collapsible()
                     ->collapsed()
-                    ->columnSpan(['default' => 1, 'xl' => 2])
+                    ->columnSpanFull()
                     ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_CHECKLIST)),
 
-                Section::make('Anexos (opcional)')
+                            Section::make('Anexos (opcional)')
+                    ->extraAttributes(['class' => 'prazzu-attachments-section prazzu-left-flow-section'])
                     ->description('Adicione documentos ou arquivos relacionados.')
                     ->icon('heroicon-o-paper-clip')
-                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-attachment-section'])
                     ->schema([
                         FileUpload::make('arquivo')
                             ->label('Anexo principal')
@@ -449,12 +379,12 @@ class ItemControleForm
                     ->columns(1)
                     ->collapsible()
                     ->collapsed()
-                    ->columnSpan(['default' => 1, 'xl' => 2]),
+                    ->columnSpanFull(),
 
-                Section::make('Configurações avançadas (opcional)')
+                            Section::make('Configurações avançadas (opcional)')
+                    ->extraAttributes(['class' => 'prazzu-advanced-section prazzu-left-flow-section'])
                     ->description('Tags, portal do cliente e outras configurações.')
                     ->icon('heroicon-o-adjustments-horizontal')
-                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-settings-section'])
                     ->schema([
                         Select::make('status')
                             ->label('Status')
@@ -552,7 +482,95 @@ class ItemControleForm
                     ->columns(2)
                     ->collapsible()
                     ->collapsed()
-                    ->columnSpan(['default' => 1, 'xl' => 2]),
+                    ->columnSpanFull()
+                        ])
+                            ->extraAttributes(['class' => 'prazzu-left-column'])
+                            ->columns(1)
+                            ->columnSpan(['default' => 12, 'lg' => 8]),
+
+                        Group::make([
+                            Section::make('Resumo do item')
+                    ->extraAttributes(['class' => 'prazzu-summary-section'])
+                    ->description('Veja como seu item será registrado.')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->schema([
+                        Placeholder::make('resumo_titulo')
+                            ->label('Título')
+                            ->content(fn (callable $get): string => filled($get('titulo')) ? (string) $get('titulo') : '-'),
+
+                        Placeholder::make('resumo_categoria')
+                            ->label('Categoria')
+                            ->content(function (callable $get): string {
+                                $categoriaId = $get('categoria_id');
+
+                                if (! filled($categoriaId)) {
+                                    return '-';
+                                }
+
+                                return (string) (CategoriaItemControle::query()->whereKey($categoriaId)->value('nome') ?: '-');
+                            }),
+
+                        Placeholder::make('resumo_responsavel')
+                            ->label('Responsável')
+                            ->content(function (callable $get): string {
+                                $responsavelId = $get('responsavel_id');
+
+                                if (! filled($responsavelId)) {
+                                    return '-';
+                                }
+
+                                return (string) (Responsavel::query()->whereKey($responsavelId)->value('nome') ?: '-');
+                            }),
+
+                        Placeholder::make('resumo_vencimento')
+                            ->label('Vencimento')
+                            ->content(fn (callable $get): string => filled($get('data_vencimento')) ? date('d/m/Y', strtotime((string) $get('data_vencimento'))) : '-'),
+
+                        Placeholder::make('resumo_prioridade')
+                            ->label('Prioridade')
+                            ->content(fn (callable $get): string => self::getPrioridadeOptions()[$get('prioridade') ?: 'media'] ?? 'Média'),
+
+                        Placeholder::make('resumo_urgencia')
+                            ->label('Urgência')
+                            ->content(fn (callable $get): string => self::getUrgenciaOptions()[$get('urgencia') ?: 'media'] ?? '-'),
+
+                        Placeholder::make('resumo_risco')
+                            ->label('Risco de multa')
+                            ->content(fn (): string => 'Alto'),
+
+                        Placeholder::make('resumo_valor')
+                            ->label('Valor estimado')
+                            ->content(fn (callable $get): string => 'R$ ' . number_format((float) ($get('valor_tarefa') ?: 0), 2, ',', '.')),
+
+                        Placeholder::make('resumo_status')
+                            ->label('Status')
+                            ->content(fn (callable $get): HtmlString => new HtmlString('<span class="pz-status-pill">' . e(self::getStatusOptions()[$get('status') ?: 'pendente'] ?? 'Pendente') . '</span><small>Status padrão na criação.</small>')),
+                    ])
+                    ->columns(1)
+                    ->columnSpanFull(),
+
+                            Section::make('Dica')
+                    ->extraAttributes(['class' => 'prazzu-tip-section'])
+                    ->description('Após salvar, você poderá adicionar checklist, anexos e outras informações.')
+                    ->icon('heroicon-o-light-bulb')
+                    ->schema([])
+                    ->columnSpanFull(),
+
+                            Section::make('Dicas rápidas')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->extraAttributes(['class' => 'prazzu-quick-tips-section prazzu-sidebar-flow-section'])
+                    ->schema([
+                        Placeholder::make('dicas_rapidas')
+                            ->label('')
+                            ->content(fn (): HtmlString => new HtmlString('<ul class="prazzu-quick-tips"><li>Use um título claro e objetivo</li><li>Defina a data de vencimento corretamente</li><li>Priorize itens com maior risco de multa</li><li>Checklist será sugerido automaticamente</li><li>Você pode editar tudo depois</li></ul>')),
+                    ])
+                    ->columnSpanFull()
+                        ])
+                            ->extraAttributes(['class' => 'prazzu-sidebar-column'])
+                            ->columns(1)
+                            ->columnSpan(['default' => 12, 'lg' => 4]),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 
