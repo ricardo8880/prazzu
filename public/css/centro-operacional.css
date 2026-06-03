@@ -4087,3 +4087,59 @@
         font-size: 16px !important;
     }
 }
+
+
+/* Ajuste final mobile - botão X visível em todos os popups. */
+.co-modal-card {
+    position: relative;
+}
+
+.co-modal-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(148, 163, 184, .28);
+    border-radius: 999px;
+    color: #334155;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.co-modal-close-btn:hover,
+.co-modal-close-btn:focus-visible {
+    transform: translateY(-1px);
+    color: #0f172a;
+    background: #fff;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .18);
+    outline: none;
+}
+
+.co-modal-close-btn i {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.co-modal-card > header {
+    padding-right: 50px;
+}
+
+@media (max-width: 768px) {
+    .co-modal-close-btn {
+        top: 10px;
+        right: 10px;
+        width: 44px;
+        height: 44px;
+    }
+
+    .co-modal-card > header {
+        padding-right: 52px;
+    }
+}

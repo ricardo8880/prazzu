@@ -233,6 +233,9 @@
             <?php $detail = $this->selectedItemDetail(); ?>
             <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-operational-detail-title" wire:click.self="closeItemDetailModal">
                 <div class="co-modal-card co-detail-modal-card">
+                    <button type="button" class="co-modal-close-btn" wire:click="closeItemDetailModal" aria-label="Fechar popup">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail): ?>
                         <header>
                             <span class="co-section-icon blue"><i class="bi bi-file-earmark-check"></i></span>
@@ -327,6 +330,9 @@
             <?php $workloadDetail = $this->selectedWorkloadDetail(); ?>
             <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title" wire:click.self="closeWorkloadModal">
                 <div class="co-modal-card co-detail-modal-card co-workload-modal-card">
+                    <button type="button" class="co-modal-close-btn" wire:click="closeWorkloadModal" aria-label="Fechar popup">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadDetail['responsavel']): ?>
                         <header>
                             <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
@@ -418,6 +424,9 @@
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($delegateModalOpen): ?>
             <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-delegate-title" wire:click.self="cancelDelegateModal">
                 <div class="co-modal-card">
+                    <button type="button" class="co-modal-close-btn" wire:click="cancelDelegateModal" aria-label="Fechar popup">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
                     <header>
                         <span class="co-section-icon purple"><i class="bi bi-person-plus"></i></span>
                         <div>
