@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
+use Illuminate\Support\HtmlString;
 
 class CreateItemControle extends CreateRecord
 {
@@ -126,6 +127,65 @@ class CreateItemControle extends CreateRecord
 
             $this->halt();
         }
+    }
+
+
+    protected function afterCreate(): void
+    {
+        $state = $this->data ?? [];
+        $record = $this->record;
+
+        $responsavelNome = '-';
+        $responsavelId = $state['responsavel_id'] ?? $record?->responsavel_id ?? null;
+
+        if ($responsavelId) {
+            $responsavelNome = (string) (Responsavel::query()->whereKey($responsavelId)->value('nome') ?: '-');
+        }
+
+        $vencimento = $record?->data_vencimento ?? ($state['data_vencimento'] ?? null);
+        $vencimentoFormatado = filled($vencimento)
+            ? date('d/m/Y', strtotime((string) $vencimento))
+            : '-';
+
+        $risco = (string) ($state['risco_multa_visual'] ?? 'alto');
+        $riscoLabel = [
+            'nenhum' => 'Nenhum',
+            'baixo' => 'Baixo',
+            'medio' => 'Médio',
+            'alto' => 'Alto',
+            'critico' => 'Crítico',
+        ][$risco] ?? ucfirst($risco);
+
+        $checklistCount = 0;
+
+        try {
+            if ($record && method_exists($record, 'checklists')) {
+                $checklistCount = (int) $record->checklists()->count();
+            }
+        } catch (\Throwable) {
+            $checklistCount = 0;
+        }
+
+        if ($checklistCount === 0 && isset($state['checklists']) && is_array($state['checklists'])) {
+            $checklistCount = count($state['checklists']);
+        }
+
+        $checklistTexto = $checklistCount === 1
+            ? '1 etapa criada automaticamente'
+            : $checklistCount . ' etapas criadas automaticamente';
+
+        Notification::make()
+            ->title('Item criado com sucesso')
+            ->success()
+            ->body(new HtmlString(
+                '<div class="pz-create-success-notification">'
+                . '<div><strong>Responsável:</strong> ' . e($responsavelNome) . '</div>'
+                . '<div><strong>Vencimento:</strong> ' . e($vencimentoFormatado) . '</div>'
+                . '<div><strong>Risco:</strong> ' . e($riscoLabel) . '</div>'
+                . '<div><strong>Checklist:</strong> ' . e($checklistTexto) . '</div>'
+                . '</div>'
+            ))
+            ->send();
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

@@ -349,6 +349,11 @@ class ItemControleForm
                     ->description('Etapas sugeridas serão carregadas automaticamente.')
                     ->icon('heroicon-o-list-bullet')
                     ->schema([
+                        Placeholder::make('checklist_automatico_preview')
+                            ->label('Checklist automático')
+                            ->content(fn (callable $get): HtmlString => self::renderChecklistAutomaticoPreview($get))
+                            ->columnSpanFull(),
+
                         Repeater::make('checklists')
                             ->label('Etapas')
                             ->relationship('checklists')
@@ -405,6 +410,11 @@ class ItemControleForm
                     ->description('Adicione documentos ou arquivos relacionados.')
                     ->icon('heroicon-o-paper-clip')
                     ->schema([
+                        Placeholder::make('anexos_dropzone_preview')
+                            ->label('')
+                            ->content(fn (): HtmlString => self::renderAnexosDropzonePreview())
+                            ->columnSpanFull(),
+
                         FileUpload::make('arquivo')
                             ->label('Anexo principal')
                             ->directory('comprovantes-prazos')
@@ -414,7 +424,7 @@ class ItemControleForm
                             ->downloadable()
                             ->openable()
                             ->previewable(true)
-                            ->helperText('Arquivo principal do item. Envie PDF, Word, Excel, CSV, TXT ou imagem com até 10 MB. Anexos extras podem ser adicionados depois sem substituir este arquivo.'),
+                            ->helperText(new HtmlString('<strong>Arraste arquivos aqui</strong> ou clique para selecionar. PDF, Word, Excel, CSV, TXT e imagens com até 10 MB. Anexos extras podem ser adicionados depois sem substituir este arquivo.')),
                     ])
                     ->columns(1)
                     ->collapsible()
@@ -591,6 +601,28 @@ class ItemControleForm
                             ->content(fn (callable $get): HtmlString => new HtmlString('<span class="pz-status-pill">' . e(self::getStatusOptions()[$get('status') ?: 'pendente'] ?? 'Pendente') . '</span><small>Status padrão na criação.</small>')),
                     ])
                     ->columns(1)
+                    ->columnSpanFull(),
+
+                            Section::make('Pronto para criar')
+                    ->extraAttributes(['class' => 'prazzu-readiness-section'])
+                    ->description('Validação rápida antes de salvar.')
+                    ->icon('heroicon-o-check-circle')
+                    ->schema([
+                        Placeholder::make('pronto_para_criar')
+                            ->label('')
+                            ->content(fn (callable $get): HtmlString => self::renderProntoParaCriar($get)),
+                    ])
+                    ->columnSpanFull(),
+
+                            Section::make('Qualidade do cadastro')
+                    ->extraAttributes(['class' => 'prazzu-quality-section'])
+                    ->description('Quanto mais completo, maior a segurança operacional.')
+                    ->icon('heroicon-o-chart-bar')
+                    ->schema([
+                        Placeholder::make('qualidade_cadastro')
+                            ->label('')
+                            ->content(fn (callable $get): HtmlString => self::renderQualidadeCadastro($get)),
+                    ])
                     ->columnSpanFull(),
 
                             Section::make('Dica inteligente')
@@ -1020,6 +1052,76 @@ class ItemControleForm
         }
 
         return new HtmlString('<div class="pz-smart-tip pz-smart-tip-success"><strong>Cadastro objetivo.</strong><span>Após salvar, você poderá complementar com checklist, anexos e detalhes adicionais.</span></div>');
+    }
+
+    protected static function renderChecklistAutomaticoPreview(callable $get): HtmlString
+    {
+        $checklists = $get('checklists');
+        $total = is_array($checklists) ? count($checklists) : 0;
+
+        if ($total > 0) {
+            $textoEtapas = $total === 1 ? '1 etapa será criada automaticamente' : $total . ' etapas serão criadas automaticamente';
+
+            return new HtmlString('<div class="pz-checklist-preview pz-checklist-preview-success"><strong>✔ ' . e($textoEtapas) . '</strong><span>Você pode revisar, reordenar ou adicionar etapas antes de salvar.</span></div>');
+        }
+
+        return new HtmlString('<div class="pz-checklist-preview"><strong>Checklist pronto para receber etapas.</strong><span>Ao escolher uma categoria com modelo, as etapas serão carregadas automaticamente.</span></div>');
+    }
+
+    protected static function renderAnexosDropzonePreview(): HtmlString
+    {
+        return new HtmlString('<div class="pz-attachment-drop-preview"><div class="pz-attachment-drop-icon">📎</div><strong>Arraste arquivos aqui</strong><span>ou clique no campo abaixo para selecionar</span><small>PDF • Excel • Word • CSV • TXT • Imagens</small></div>');
+    }
+
+    protected static function renderProntoParaCriar(callable $get): HtmlString
+    {
+        $itens = [
+            ['ok' => filled($get('titulo')), 'texto' => 'Título definido'],
+            ['ok' => filled($get('categoria_id')), 'texto' => 'Categoria definida'],
+            ['ok' => filled($get('responsavel_id')), 'texto' => 'Responsável definido'],
+            ['ok' => filled($get('data_vencimento')), 'texto' => 'Prazo definido'],
+            ['ok' => filled($get('risco_multa_visual')), 'texto' => 'Risco avaliado'],
+        ];
+
+        $html = '<ul class="pz-readiness-list">';
+
+        foreach ($itens as $item) {
+            $classe = $item['ok'] ? 'is-ready' : 'is-pending';
+            $icone = $item['ok'] ? '✓' : '•';
+            $html .= '<li class="' . e($classe) . '"><span>' . e($icone) . '</span>' . e($item['texto']) . '</li>';
+        }
+
+        $html .= '</ul>';
+
+        return new HtmlString($html);
+    }
+
+    protected static function renderQualidadeCadastro(callable $get): HtmlString
+    {
+        $score = self::calcularQualidadeCadastro($get);
+        $classe = $score >= 85 ? 'success' : ($score >= 60 ? 'warning' : 'danger');
+        $mensagem = $score >= 85
+            ? 'Cadastro forte para acompanhamento operacional.'
+            : ($score >= 60
+                ? 'Cadastro bom, mas ainda pode ganhar contexto.'
+                : 'Preencha os campos principais para reduzir risco de erro.');
+
+        return new HtmlString('<div class="pz-quality-card pz-quality-' . e($classe) . '"><div class="pz-quality-head"><strong>' . e((string) $score) . '%</strong><span>' . e($mensagem) . '</span></div><div class="pz-quality-bar"><span style="width: ' . e((string) $score) . '%"></span></div></div>');
+    }
+
+    protected static function calcularQualidadeCadastro(callable $get): int
+    {
+        $score = 0;
+
+        $score += filled($get('titulo')) ? 18 : 0;
+        $score += filled($get('categoria_id')) ? 18 : 0;
+        $score += filled($get('responsavel_id')) ? 18 : 0;
+        $score += filled($get('data_vencimento')) ? 18 : 0;
+        $score += filled($get('risco_multa_visual')) ? 12 : 0;
+        $score += filled($get('descricao')) ? 8 : 0;
+        $score += is_array($get('checklists')) && count($get('checklists')) > 0 ? 8 : 0;
+
+        return min(100, max(0, $score));
     }
 
     protected static function getRiscoMultaOptions(): array
