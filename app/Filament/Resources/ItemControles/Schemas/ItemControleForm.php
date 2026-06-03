@@ -94,6 +94,10 @@ class ItemControleForm
                                     $set('tipo', 'documento');
                                 }
 
+                                if ($categoria) {
+                                    self::aplicarSugestaoOperacionalPorCategoria($categoria->nome, $set, $get);
+                                }
+
                                 $checklistsAtuais = $get('checklists');
 
                                 if (is_array($checklistsAtuais) && count($checklistsAtuais) > 0) {
@@ -180,7 +184,8 @@ class ItemControleForm
                             ->placeholder('dd/mm/aaaa')
                             ->required()
                             ->native(false)
-                            ->helperText('Data limite para conclusão.')
+                            ->live()
+                            ->helperText(fn (callable $get): HtmlString => self::renderPrazoVisual($get('data_vencimento')))
                             ->columnSpan(['default' => 12, 'lg' => 4]),
 
                         Select::make('prioridade')
@@ -189,7 +194,11 @@ class ItemControleForm
                             ->default('media')
                             ->options(self::getPrioridadeOptions())
                             ->native(false)
-                            ->helperText('Define a importância deste item.')
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                self::sincronizarRiscoOperacional($state, $get('urgencia'), $get('risco_multa_visual'), $get('bloqueado'), $set);
+                            })
+                            ->helperText(fn (callable $get): HtmlString => self::renderPrioridadeHelper($get('prioridade')))
                             ->columnSpan(['default' => 12, 'lg' => 2]),
 
                         Textarea::make('descricao')
@@ -221,39 +230,70 @@ class ItemControleForm
                             ->default('media')
                             ->options(self::getUrgenciaOptions())
                             ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                self::sincronizarRiscoOperacional($get('prioridade'), $state, $get('risco_multa_visual'), $get('bloqueado'), $set);
+                            })
+                            ->helperText(fn (callable $get): HtmlString => self::renderSugestaoOperacionalHelper($get))
                             ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'urgencia'))
                             ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'urgencia'))
                             ->columnSpan(['default' => 12, 'lg' => 3]),
 
                         Select::make('risco_multa_visual')
                             ->label('Risco de multa')
-                            ->helperText('Qual o risco de multa/penalidade?')
+                            ->helperText(fn (callable $get): HtmlString => self::renderRiscoHelper($get('risco_multa_visual') ?: 'alto'))
                             ->default('alto')
-                            ->options([
-                                'baixo' => 'Baixo',
-                                'medio' => 'Médio',
-                                'alto' => 'Alto',
-                            ])
+                            ->options(self::getRiscoMultaOptions())
                             ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                self::aplicarSugestaoPorRisco($state, $set, $get);
+                                self::sincronizarRiscoOperacional($get('prioridade'), $get('urgencia'), $state, $get('bloqueado'), $set);
+                            })
                             ->dehydrated(false)
                             ->columnSpan(['default' => 12, 'lg' => 3]),
+
+                        Hidden::make('risco_score')
+                            ->default(70)
+                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'risco_score')),
 
                         TextInput::make('valor_tarefa')
                             ->label('Valor estimado da multa')
                             ->numeric()
                             ->prefix('R$')
                             ->minValue(0)
-                            ->helperText('Valor aproximado do risco.')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                if ((float) ($state ?: 0) >= 5000 && in_array($get('risco_multa_visual'), [null, 'nenhum', 'baixo', 'medio'], true)) {
+                                    $set('risco_multa_visual', 'alto');
+                                }
+
+                                self::sincronizarRiscoOperacional($get('prioridade'), $get('urgencia'), $get('risco_multa_visual'), $get('bloqueado'), $set);
+                            })
+                            ->helperText(fn (callable $get): HtmlString => self::renderValorMultaHelper($get('valor_tarefa')))
                             ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'valor_tarefa'))
                             ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'valor_tarefa'))
                             ->columnSpan(['default' => 12, 'lg' => 3]),
 
                         Toggle::make('bloqueado')
                             ->label('Bloqueia outros processos?')
-                            ->helperText('Se este item atrasar, bloqueia outros?')
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                if ($state && ! in_array($get('urgencia'), ['alta', 'critica'], true)) {
+                                    $set('urgencia', 'alta');
+                                }
+
+                                self::sincronizarRiscoOperacional($get('prioridade'), $get('urgencia'), $get('risco_multa_visual'), $state, $set);
+                            })
+                            ->helperText(fn (callable $get): HtmlString => self::renderBloqueioHelper((bool) $get('bloqueado')))
                             ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'bloqueado'))
                             ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'bloqueado'))
                             ->columnSpan(['default' => 12, 'lg' => 3]),
+
+                        Placeholder::make('inteligencia_operacional')
+                            ->label('Inteligência operacional')
+                            ->content(fn (callable $get): HtmlString => self::renderInteligenciaOperacional($get))
+                            ->columnSpanFull(),
                     ])
                     ->columns(12)
                     ->columnSpanFull(),
@@ -528,19 +568,23 @@ class ItemControleForm
 
                         Placeholder::make('resumo_prioridade')
                             ->label('Prioridade')
-                            ->content(fn (callable $get): string => self::getPrioridadeOptions()[$get('prioridade') ?: 'media'] ?? 'Média'),
+                            ->content(fn (callable $get): HtmlString => self::renderBadgeResumo($get('prioridade') ?: 'media', self::getPrioridadeOptions()[$get('prioridade') ?: 'media'] ?? 'Média', 'prioridade')),
 
                         Placeholder::make('resumo_urgencia')
                             ->label('Urgência')
-                            ->content(fn (callable $get): string => self::getUrgenciaOptions()[$get('urgencia') ?: 'media'] ?? '-'),
+                            ->content(fn (callable $get): HtmlString => self::renderBadgeResumo($get('urgencia') ?: 'media', self::getUrgenciaOptions()[$get('urgencia') ?: 'media'] ?? 'Média', 'urgencia')),
 
                         Placeholder::make('resumo_risco')
                             ->label('Risco de multa')
-                            ->content(fn (): string => 'Alto'),
+                            ->content(fn (callable $get): HtmlString => self::renderBadgeResumo($get('risco_multa_visual') ?: 'alto', self::getRiscoMultaOptions()[$get('risco_multa_visual') ?: 'alto'] ?? 'Alto', 'risco')),
 
                         Placeholder::make('resumo_valor')
                             ->label('Valor estimado')
-                            ->content(fn (callable $get): string => 'R$ ' . number_format((float) ($get('valor_tarefa') ?: 0), 2, ',', '.')),
+                            ->content(fn (callable $get): HtmlString => self::renderValorResumo($get('valor_tarefa'))),
+
+                        Placeholder::make('resumo_bloqueio')
+                            ->label('Bloqueia processos')
+                            ->content(fn (callable $get): HtmlString => self::renderBloqueioResumo((bool) $get('bloqueado'))),
 
                         Placeholder::make('resumo_status')
                             ->label('Status')
@@ -549,11 +593,15 @@ class ItemControleForm
                     ->columns(1)
                     ->columnSpanFull(),
 
-                            Section::make('Dica')
+                            Section::make('Dica inteligente')
                     ->extraAttributes(['class' => 'prazzu-tip-section'])
-                    ->description('Após salvar, você poderá adicionar checklist, anexos e outras informações.')
+                    ->description('Orientação automática conforme prazo, prioridade e risco.')
                     ->icon('heroicon-o-light-bulb')
-                    ->schema([])
+                    ->schema([
+                        Placeholder::make('dica_inteligente')
+                            ->label('')
+                            ->content(fn (callable $get): HtmlString => self::renderDicaInteligente($get)),
+                    ])
                     ->columnSpanFull(),
 
                             Section::make('Dicas rápidas')
@@ -692,6 +740,299 @@ class ItemControleForm
             ->toArray();
     }
 
+
+    protected static function aplicarSugestaoOperacionalPorCategoria(string $categoriaNome, callable $set, callable $get): void
+    {
+        $nome = Str::lower($categoriaNome);
+        $defaults = [
+            'risco' => 'medio',
+            'urgencia' => 'media',
+            'prioridade' => $get('prioridade') ?: 'media',
+        ];
+
+        if (Str::contains($nome, ['fiscal', 'tribut', 'imposto', 'dctf', 'sped', 'sefip', 'fgts', 'esocial'])) {
+            $defaults = ['risco' => 'alto', 'urgencia' => 'alta', 'prioridade' => 'alta'];
+        } elseif (Str::contains($nome, ['contrato', 'jurid', 'licença', 'licenca', 'certidão', 'certidao'])) {
+            $defaults = ['risco' => 'alto', 'urgencia' => 'media', 'prioridade' => 'alta'];
+        } elseif (Str::contains($nome, ['financeiro', 'boleto', 'pagamento', 'cobrança', 'cobranca'])) {
+            $defaults = ['risco' => 'medio', 'urgencia' => 'media', 'prioridade' => 'media'];
+        } elseif (Str::contains($nome, ['rh', 'folha', 'admiss', 'rescis', 'ponto'])) {
+            $defaults = ['risco' => 'medio', 'urgencia' => 'media', 'prioridade' => 'media'];
+        }
+
+        if (blank($get('risco_multa_visual')) || in_array($get('risco_multa_visual'), ['nenhum', 'baixo', 'medio'], true)) {
+            $set('risco_multa_visual', $defaults['risco']);
+        }
+
+        if (blank($get('urgencia')) || $get('urgencia') === 'media') {
+            $set('urgencia', $defaults['urgencia']);
+        }
+
+        if (blank($get('prioridade')) || $get('prioridade') === 'media') {
+            $set('prioridade', $defaults['prioridade']);
+        }
+
+        self::sincronizarRiscoOperacional($get('prioridade') ?: $defaults['prioridade'], $get('urgencia') ?: $defaults['urgencia'], $get('risco_multa_visual') ?: $defaults['risco'], $get('bloqueado'), $set);
+    }
+
+    protected static function aplicarSugestaoPorRisco($risco, callable $set, callable $get): void
+    {
+        $risco = (string) ($risco ?: 'medio');
+
+        if ($risco === 'critico') {
+            if (! in_array($get('urgencia'), ['alta', 'critica'], true)) {
+                $set('urgencia', 'critica');
+            }
+
+            if (! in_array($get('prioridade'), ['alta', 'urgente'], true)) {
+                $set('prioridade', 'urgente');
+            }
+
+            return;
+        }
+
+        if ($risco === 'alto') {
+            if (! in_array($get('urgencia'), ['alta', 'critica'], true)) {
+                $set('urgencia', 'alta');
+            }
+
+            if (! in_array($get('prioridade'), ['alta', 'urgente'], true)) {
+                $set('prioridade', 'alta');
+            }
+        }
+    }
+
+    protected static function sincronizarRiscoOperacional($prioridade, $urgencia, $risco, $bloqueado, callable $set): void
+    {
+        $score = self::calcularRiscoScore($prioridade, $urgencia, $risco, (bool) $bloqueado);
+        $set('risco_score', $score);
+    }
+
+    protected static function calcularRiscoScore($prioridade, $urgencia, $risco, bool $bloqueado = false): int
+    {
+        $score = 0;
+
+        $score += match ((string) ($prioridade ?: 'media')) {
+            'baixa' => 10,
+            'alta' => 30,
+            'urgente' => 40,
+            default => 20,
+        };
+
+        $score += match ((string) ($urgencia ?: 'media')) {
+            'baixa' => 10,
+            'alta' => 25,
+            'critica' => 35,
+            default => 18,
+        };
+
+        $score += match ((string) ($risco ?: 'medio')) {
+            'nenhum' => 0,
+            'baixo' => 10,
+            'alto' => 30,
+            'critico' => 40,
+            default => 20,
+        };
+
+        if ($bloqueado) {
+            $score += 15;
+        }
+
+        return min(100, max(0, $score));
+    }
+
+    protected static function renderSugestaoOperacionalHelper(callable $get): HtmlString
+    {
+        $risco = (string) ($get('risco_multa_visual') ?: 'medio');
+        $bloqueado = (bool) $get('bloqueado');
+
+        if ($bloqueado) {
+            return new HtmlString('<span class="pz-operational-helper pz-operational-helper-danger">Processos bloqueados elevam a urgência automaticamente.</span>');
+        }
+
+        if (in_array($risco, ['alto', 'critico'], true)) {
+            return new HtmlString('<span class="pz-operational-helper pz-operational-helper-warning">Risco alto pede acompanhamento mais próximo.</span>');
+        }
+
+        return new HtmlString('<span class="pz-operational-helper">Define posição na fila e alertas internos.</span>');
+    }
+
+    protected static function renderRiscoHelper(string $risco): HtmlString
+    {
+        $score = self::calcularRiscoScore(null, null, $risco);
+        $classe = in_array($risco, ['alto', 'critico'], true) ? 'danger' : (in_array($risco, ['medio'], true) ? 'warning' : 'success');
+
+        return new HtmlString('<span class="pz-operational-helper pz-operational-helper-' . e($classe) . '">Impacta alertas, prioridade no dashboard e score operacional base: ' . e((string) $score) . '.</span>');
+    }
+
+    protected static function renderValorMultaHelper($valor): HtmlString
+    {
+        $valorFloat = (float) ($valor ?: 0);
+
+        if ($valorFloat <= 0) {
+            return new HtmlString('<span class="pz-operational-helper">Opcional. Use quando houver risco financeiro estimado.</span>');
+        }
+
+        $classe = $valorFloat >= 5000 ? 'danger' : 'warning';
+
+        return new HtmlString('<span class="pz-operational-helper pz-operational-helper-' . e($classe) . '">Peso financeiro informado: R$ ' . e(number_format($valorFloat, 2, ',', '.')) . '.</span>');
+    }
+
+    protected static function renderBloqueioHelper(bool $bloqueado): HtmlString
+    {
+        if ($bloqueado) {
+            return new HtmlString('<span class="pz-operational-helper pz-operational-helper-danger">SIM: este item será tratado como dependência crítica.</span>');
+        }
+
+        return new HtmlString('<span class="pz-operational-helper">NÃO: este item não bloqueia outros fluxos.</span>');
+    }
+
+    protected static function renderInteligenciaOperacional(callable $get): HtmlString
+    {
+        $score = self::calcularRiscoScore($get('prioridade'), $get('urgencia'), $get('risco_multa_visual'), (bool) $get('bloqueado'));
+        $valor = (float) ($get('valor_tarefa') ?: 0);
+        $classe = $score >= 80 ? 'danger' : ($score >= 55 ? 'warning' : 'success');
+        $titulo = $score >= 80 ? 'Atenção máxima recomendada' : ($score >= 55 ? 'Acompanhamento recomendado' : 'Risco operacional controlado');
+        $mensagem = $score >= 80
+            ? 'Este item combina risco, urgência ou dependência. Priorize a execução e acompanhe no dashboard.'
+            : ($score >= 55
+                ? 'O item merece acompanhamento, principalmente se houver dependências ou valor financeiro envolvido.'
+                : 'O item pode seguir o fluxo normal, mantendo responsável e vencimento claros.');
+
+        $valorHtml = $valor > 0
+            ? '<span class="pz-operational-card-value">Impacto financeiro: R$ ' . e(number_format($valor, 2, ',', '.')) . '</span>'
+            : '<span class="pz-operational-card-value">Sem valor financeiro informado.</span>';
+
+        return new HtmlString('<div class="pz-operational-card pz-operational-card-' . e($classe) . '"><div><strong>' . e($titulo) . '</strong><span>Score operacional: ' . e((string) $score) . '/100</span></div><p>' . e($mensagem) . '</p>' . $valorHtml . '</div>');
+    }
+
+    protected static function renderValorResumo($valor): HtmlString
+    {
+        $valorFloat = (float) ($valor ?: 0);
+
+        if ($valorFloat <= 0) {
+            return new HtmlString('<span class="pz-muted-summary">Não informado</span>');
+        }
+
+        $classe = $valorFloat >= 5000 ? 'critico' : 'alto';
+
+        return new HtmlString('<span class="pz-smart-badge pz-smart-badge-' . e($classe) . '">R$ ' . e(number_format($valorFloat, 2, ',', '.')) . '</span>');
+    }
+
+    protected static function renderBloqueioResumo(bool $bloqueado): HtmlString
+    {
+        return new HtmlString($bloqueado
+            ? '<span class="pz-smart-badge pz-smart-badge-critico">Sim</span>'
+            : '<span class="pz-smart-badge pz-smart-badge-nenhum">Não</span>');
+    }
+
+
+    protected static function renderPrazoVisual($dataVencimento): HtmlString
+    {
+        if (! filled($dataVencimento)) {
+            return new HtmlString('<span class="pz-deadline-hint pz-deadline-muted">📅 Selecione a data para visualizar o prazo.</span>');
+        }
+
+        try {
+            $data = \Carbon\Carbon::parse((string) $dataVencimento)->startOfDay();
+            $hoje = now()->startOfDay();
+            $dias = $hoje->diffInDays($data, false);
+        } catch (\Throwable) {
+            return new HtmlString('<span class="pz-deadline-hint pz-deadline-muted">📅 Data selecionada.</span>');
+        }
+
+        if ($dias < 0) {
+            $texto = '🚨 Prazo vencido há ' . abs((int) $dias) . ' dia' . (abs((int) $dias) === 1 ? '' : 's');
+            $classe = 'danger';
+        } elseif ($dias === 0) {
+            $texto = '🚨 Vence hoje — prazo crítico';
+            $classe = 'danger';
+        } elseif ($dias === 1) {
+            $texto = '⚠️ Vence amanhã';
+            $classe = 'warning';
+        } elseif ($dias <= 7) {
+            $texto = '⚠️ Faltam ' . (int) $dias . ' dias — atenção ao prazo';
+            $classe = 'warning';
+        } else {
+            $texto = '📅 Faltam ' . (int) $dias . ' dias';
+            $classe = 'success';
+        }
+
+        return new HtmlString('<span class="pz-deadline-hint pz-deadline-' . e($classe) . '">' . e($texto) . '</span>');
+    }
+
+    protected static function renderPrioridadeHelper($prioridade): HtmlString
+    {
+        $prioridade = $prioridade ?: 'media';
+        $labels = self::getPrioridadeOptions();
+
+        return self::renderBadgeResumo($prioridade, $labels[$prioridade] ?? 'Média', 'prioridade');
+    }
+
+    protected static function renderBadgeResumo(string $valor, string $label, string $tipo): HtmlString
+    {
+        $valorSeguro = preg_replace('/[^a-z0-9_-]/i', '', $valor) ?: 'neutro';
+
+        return new HtmlString('<span class="pz-smart-badge pz-smart-badge-' . e($tipo) . ' pz-smart-badge-' . e($valorSeguro) . '">' . e($label) . '</span>');
+    }
+
+    protected static function renderDicaInteligente(callable $get): HtmlString
+    {
+        $risco = (string) ($get('risco_multa_visual') ?: 'alto');
+        $prioridade = (string) ($get('prioridade') ?: 'media');
+        $urgencia = (string) ($get('urgencia') ?: 'media');
+        $bloqueado = (bool) $get('bloqueado');
+        $valor = (float) ($get('valor_tarefa') ?: 0);
+        $dataVencimento = $get('data_vencimento');
+
+        $dias = null;
+
+        if (filled($dataVencimento)) {
+            try {
+                $dias = now()->startOfDay()->diffInDays(\Carbon\Carbon::parse((string) $dataVencimento)->startOfDay(), false);
+            } catch (\Throwable) {
+                $dias = null;
+            }
+        }
+
+        if ($bloqueado) {
+            return new HtmlString('<div class="pz-smart-tip pz-smart-tip-danger"><strong>Dependência crítica.</strong><span>Como este item bloqueia outros processos, o sistema elevou a atenção operacional para evitar efeito cascata.</span></div>');
+        }
+
+        if ($valor >= 5000) {
+            return new HtmlString('<div class="pz-smart-tip pz-smart-tip-danger"><strong>Impacto financeiro relevante.</strong><span>Existe valor de multa estimado. Considere acompanhar antes do vencimento e manter evidências anexadas.</span></div>');
+        }
+
+        if (in_array($risco, ['alto', 'critico'], true)) {
+            return new HtmlString('<div class="pz-smart-tip pz-smart-tip-danger"><strong>Risco importante de multa.</strong><span>Considere definir uma data interna anterior ao vencimento e acompanhar este item com prioridade.</span></div>');
+        }
+
+        if ($dias !== null && $dias <= 1) {
+            return new HtmlString('<div class="pz-smart-tip pz-smart-tip-danger"><strong>Prazo crítico.</strong><span>Este item vence hoje ou amanhã. Vale revisar responsável, anexos e checklist antes de salvar.</span></div>');
+        }
+
+        if ($dias !== null && $dias <= 7) {
+            return new HtmlString('<div class="pz-smart-tip pz-smart-tip-warning"><strong>Prazo curto.</strong><span>Faltam poucos dias. Se houver dependências, mantenha a urgência alta.</span></div>');
+        }
+
+        if (in_array($prioridade, ['alta', 'urgente'], true) || in_array($urgencia, ['alta', 'critica'], true)) {
+            return new HtmlString('<div class="pz-smart-tip pz-smart-tip-info"><strong>Item sensível.</strong><span>Boa escolha destacar prioridade e urgência. O resumo ao lado ajuda a validar antes de salvar.</span></div>');
+        }
+
+        return new HtmlString('<div class="pz-smart-tip pz-smart-tip-success"><strong>Cadastro objetivo.</strong><span>Após salvar, você poderá complementar com checklist, anexos e detalhes adicionais.</span></div>');
+    }
+
+    protected static function getRiscoMultaOptions(): array
+    {
+        return [
+            'nenhum' => '⚪ Nenhum',
+            'baixo' => '🟢 Baixo',
+            'medio' => '🟡 Médio',
+            'alto' => '🟠 Alto',
+            'critico' => '🔴 Crítico',
+        ];
+    }
+
     protected static function getStatusOptions(): array
     {
         return [
@@ -714,20 +1055,20 @@ class ItemControleForm
     protected static function getPrioridadeOptions(): array
     {
         return [
-            'baixa' => 'Baixa',
-            'media' => 'Média',
-            'alta' => 'Alta',
-            'urgente' => 'Urgente',
+            'baixa' => '🟢 Baixa',
+            'media' => '🟡 Média',
+            'alta' => '🟠 Alta',
+            'urgente' => '🔴 Crítica',
         ];
     }
 
     protected static function getUrgenciaOptions(): array
     {
         return [
-            'baixa' => 'Baixa',
-            'media' => 'Média',
-            'alta' => 'Alta',
-            'critica' => 'Crítica',
+            'baixa' => '🟢 Baixa',
+            'media' => '🟡 Média',
+            'alta' => '🟠 Alta',
+            'critica' => '🔴 Crítica',
         ];
     }
 
