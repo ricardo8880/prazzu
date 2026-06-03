@@ -3809,7 +3809,9 @@
 
     .co-workload-panel .co-workload-detail-list,
     .co-workload-panel .co-workload-list-model {
-        max-height: min(38vh, 190px) !important;
+        /* Altura ajustada para exibir 1 responsável completo no mobile,
+           mantendo os botões Detalhes/Redistribuir/Abrir tarefas visíveis. */
+        max-height: min(58vh, 344px) !important;
         overflow-y: auto !important;
         overflow-x: hidden !important;
         padding-right: 6px !important;
@@ -3844,7 +3846,14 @@
     }
 
     .co-workload-panel .co-workload-model-row {
-        min-height: 168px;
+        min-height: 0;
+    }
+
+    .co-workload-panel .co-workload-actions {
+        display: grid !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-top: 10px !important;
     }
 }
 
@@ -3855,6 +3864,226 @@
 
     .co-workload-panel .co-workload-detail-list,
     .co-workload-panel .co-workload-list-model {
-        max-height: 178px !important;
+        max-height: 330px !important;
+    }
+}
+
+/* Correção final - Mobile Workload: 1 card visível com rolagem interna, sem quebrar os botões.
+   Mantém a Operação Interna normal, com leitura clara e ações acessíveis dentro de cada item. */
+@media (max-width: 768px) {
+    .co-workload-panel .co-workload-detail-list,
+    .co-workload-panel .co-workload-list-model {
+        max-height: 268px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-right: 7px !important;
+        gap: 12px !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: y proximity;
+    }
+
+    .co-workload-panel .co-workload-detail-list .co-workload-model-row,
+    .co-workload-panel .co-workload-list-model .co-workload-model-row {
+        display: grid !important;
+        grid-template-columns: 48px minmax(0, 1fr) auto !important;
+        grid-template-areas:
+            "avatar info percent"
+            "progress progress progress"
+            "actions actions actions" !important;
+        align-items: center !important;
+        gap: 10px 12px !important;
+        width: 100% !important;
+        min-height: auto !important;
+        padding: 14px !important;
+        overflow: visible !important;
+        border-radius: 20px !important;
+        background: #fff !important;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, .06) !important;
+        scroll-snap-align: start;
+    }
+
+    .co-workload-panel .co-person-avatar {
+        grid-area: avatar !important;
+        display: flex !important;
+        width: 48px !important;
+        height: 48px !important;
+        margin: 0 !important;
+        position: static !important;
+        flex: 0 0 48px !important;
+    }
+
+    .co-workload-panel .co-person-info {
+        grid-area: info !important;
+        min-width: 0 !important;
+        width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    .co-workload-panel .co-person-info strong {
+        display: block !important;
+        max-width: 100% !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 14px !important;
+        line-height: 1.2 !important;
+    }
+
+    .co-workload-panel .co-person-info small {
+        display: block !important;
+        margin-top: 4px !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        font-size: 11px !important;
+        line-height: 1.25 !important;
+    }
+
+    .co-workload-panel .co-progress {
+        grid-area: progress !important;
+        display: block !important;
+        width: 100% !important;
+        height: 10px !important;
+        margin: 2px 0 4px !important;
+        position: static !important;
+        z-index: auto !important;
+    }
+
+    .co-workload-panel .co-workload-model-row > b {
+        grid-area: percent !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-width: 48px !important;
+        padding: 5px 8px !important;
+        border-radius: 999px !important;
+        background: #eef2ff !important;
+        color: #233053 !important;
+        font-size: 13px !important;
+        line-height: 1 !important;
+        text-align: center !important;
+        white-space: nowrap !important;
+    }
+
+    .co-workload-panel .co-workload-model-row.danger > b {
+        background: #fff1f2 !important;
+        color: #ef334e !important;
+    }
+
+    .co-workload-panel .co-workload-model-row.warning > b {
+        background: #fff7ed !important;
+        color: #f97316 !important;
+    }
+
+    .co-workload-panel .co-workload-actions {
+        grid-area: actions !important;
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        margin-top: 2px !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    .co-workload-panel .co-workload-actions .co-mini-action {
+        width: 100% !important;
+        min-height: 36px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        padding: 8px 10px !important;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 420px) {
+    .co-workload-panel .co-workload-detail-list,
+    .co-workload-panel .co-workload-list-model {
+        max-height: 258px !important;
+    }
+}
+
+/* Ajuste final mobile - Operação Interna: indicadores financeiros compactos e detalhes antes da aprovação. */
+@media (max-width: 768px) {
+    .co-operational-detail-page .co-financial-detail-grid,
+    .co-operational-detail-page .co-financial-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .co-operational-detail-page .co-financial-card {
+        min-height: 0 !important;
+        padding: 12px !important;
+        border-radius: 18px !important;
+        display: flex !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+    }
+
+    .co-operational-detail-page .co-financial-card > i {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        font-size: 14px !important;
+        border-radius: 12px !important;
+    }
+
+    .co-operational-detail-page .co-financial-card-copy {
+        min-width: 0 !important;
+        gap: 2px !important;
+    }
+
+    .co-operational-detail-page .co-financial-card-copy span {
+        font-size: 10px !important;
+        line-height: 1.15 !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden !important;
+    }
+
+    .co-operational-detail-page .co-financial-card-copy strong {
+        font-size: 18px !important;
+        line-height: 1.05 !important;
+    }
+
+    .co-operational-detail-page .co-financial-card-copy small,
+    .co-operational-detail-page .co-financial-card-copy em {
+        font-size: 9px !important;
+        line-height: 1.2 !important;
+        white-space: normal !important;
+    }
+
+    .co-operational-detail-page .co-approval-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    .co-operational-detail-page .co-approval-actions .co-mini-action {
+        width: 100% !important;
+        justify-content: center !important;
+        min-height: 36px !important;
+        padding: 8px 10px !important;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 380px) {
+    .co-operational-detail-page .co-financial-detail-grid,
+    .co-operational-detail-page .co-financial-grid {
+        gap: 8px !important;
+    }
+
+    .co-operational-detail-page .co-financial-card {
+        padding: 10px !important;
+    }
+
+    .co-operational-detail-page .co-financial-card-copy strong {
+        font-size: 16px !important;
     }
 }

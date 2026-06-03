@@ -148,6 +148,9 @@
                                 </div>
                             </a>
                             <div class="co-approval-actions">
+                                <button type="button" class="co-mini-action dark" wire:click="openItemDetailModal({{ $item['id'] }}, 'resolver')" wire:loading.attr="disabled" wire:target="openItemDetailModal({{ $item['id'] }}, 'resolver')">
+                                    <i class="bi bi-eye"></i>Detalhes
+                                </button>
                                 @if($canApprove)
                                     <button type="button" class="co-mini-action success" wire:click="aprovar({{ $item['id'] }})" wire:loading.attr="disabled"><i class="bi bi-check2"></i>Aprovar</button>
                                     <button type="button" class="co-mini-action danger" wire:click="reprovar({{ $item['id'] }})" wire:loading.attr="disabled"><i class="bi bi-x-lg"></i>Reprovar</button>
@@ -213,6 +216,100 @@
                     @endforelse
                 </div>
             </section>
+        @endif
+
+        @if($detailModalOpen)
+            @php $detail = $this->selectedItemDetail(); @endphp
+            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-operational-detail-title" wire:click.self="closeItemDetailModal">
+                <div class="co-modal-card co-detail-modal-card">
+                    @if($detail)
+                        <header>
+                            <span class="co-section-icon blue"><i class="bi bi-file-earmark-check"></i></span>
+                            <div>
+                                <h3 id="co-operational-detail-title">Detalhes do item operacional</h3>
+                                <p>{{ $detail['empresa'] }} • {{ $detail['categoria'] }}</p>
+                            </div>
+                        </header>
+
+                        <div class="co-detail-modal-body">
+                            <div class="co-detail-main-info">
+                                <span class="co-priority-badge warning">{{ $detail['prioridade'] }}</span>
+                                <h4>{{ $detail['title'] }}</h4>
+                                <p>{{ $detail['descricao'] }}</p>
+                            </div>
+
+                            <div class="co-decision-box {{ $detail['suggestion']['tone'] ?? 'info' }}">
+                                <div>
+                                    <small>Sugestão operacional</small>
+                                    <strong>{{ $detail['suggestion']['title'] ?? 'Avaliar item antes de decidir' }}</strong>
+                                    <p>{{ $detail['suggestion']['text'] ?? 'Confira status, responsável, vencimento, histórico e checklist antes de aprovar, reprovar ou solicitar correção.' }}</p>
+                                </div>
+                                <span>{{ $detail['suggestion']['primary_action'] ?? 'Decidir com contexto' }}</span>
+                            </div>
+
+                            <div class="co-detail-grid">
+                                <div><small>Status</small><strong>{{ $detail['status'] }}</strong></div>
+                                <div><small>Responsável</small><strong>{{ $detail['responsavel'] }}</strong></div>
+                                <div><small>Vencimento</small><strong>{{ $detail['vencimento'] }}</strong><em>{{ $detail['dias_prazo'] ?? '' }}</em></div>
+                                <div><small>Valor/Impacto</small><strong>{{ $detail['valor'] }}</strong></div>
+                                <div><small>Conclusão</small><strong>{{ $detail['conclusao'] }}</strong></div>
+                                <div><small>Origem</small><strong>Operação Interna</strong></div>
+                            </div>
+
+                            <div class="co-detail-insights-grid">
+                                <section class="co-detail-insight-card">
+                                    <h4><i class="bi bi-clock-history"></i>Últimas movimentações</h4>
+                                    @forelse(($detail['timeline'] ?? []) as $entry)
+                                        <article>
+                                            <strong>{{ $entry['titulo'] }}</strong>
+                                            <span>{{ $entry['tipo'] }} • {{ $entry['data'] }}</span>
+                                            <p>{{ $entry['descricao'] }}</p>
+                                        </article>
+                                    @empty
+                                        <div class="co-empty clean small"><strong>Sem histórico operacional ainda.</strong></div>
+                                    @endforelse
+                                </section>
+
+                                <section class="co-detail-insight-card">
+                                    <h4><i class="bi bi-check2-square"></i>Checklist / próximas etapas</h4>
+                                    @forelse(($detail['checklist'] ?? []) as $check)
+                                        <article class="co-checkline {{ $check['concluido'] ? 'done' : '' }}">
+                                            <i class="bi {{ $check['concluido'] ? 'bi-check-circle-fill' : 'bi-circle' }}"></i>
+                                            <strong>{{ $check['titulo'] }}</strong>
+                                        </article>
+                                    @empty
+                                        <div class="co-empty clean small"><strong>Nenhum checklist cadastrado.</strong></div>
+                                    @endforelse
+                                </section>
+                            </div>
+                        </div>
+
+                        <footer class="co-detail-footer-actions">
+                            <button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button>
+                            <a class="co-action-btn info" href="{{ $detail['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir cadastro</a>
+                            @if(($detail['actions']['approve'] ?? false))
+                                <button type="button" class="co-action-btn success" wire:click="aprovar({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-check2-circle"></i>Aprovar</button>
+                                <button type="button" class="co-action-btn danger" wire:click="reprovar({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-x-lg"></i>Reprovar</button>
+                            @endif
+                            @if(($detail['actions']['correct'] ?? false) && ! $detail['is_closed'])
+                                <button type="button" class="co-action-btn warning" wire:click="enviarParaCorrecao({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-tools"></i>Solicitar correção</button>
+                            @endif
+                            @if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed'])
+                                <button type="button" class="co-action-btn purple" wire:click="openDelegateModal({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-person-plus"></i>Delegar</button>
+                            @endif
+                        </footer>
+                    @else
+                        <header>
+                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                            <div>
+                                <h3 id="co-operational-detail-title">Item não encontrado</h3>
+                                <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
+                            </div>
+                        </header>
+                        <footer><button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button></footer>
+                    @endif
+                </div>
+            </div>
         @endif
 
         @if($workloadModalOpen)
