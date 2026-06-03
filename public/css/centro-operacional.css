@@ -3771,3 +3771,90 @@
         grid-template-columns: 1fr 1fr !important;
     }
 }
+
+/* Ajuste final solicitado - Mobile: listas operacionais com rolagem interna
+   Mantém todas as funcionalidades, mas evita que Resolver Agora e Workload alonguem o scroll principal. */
+@media (max-width: 768px) {
+    .co-page.co-model.co-operational-detail-page {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .co-operational-detail-page .co-operational-detail-hero { order: 1; }
+    .co-operational-detail-page .co-main-cluster {
+        order: 2;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    .co-operational-detail-page .co-state-card { order: 3; }
+    .co-operational-detail-page .co-workload-panel,
+    .co-operational-detail-page .co-approvals-panel,
+    .co-operational-detail-page .co-financial-panel {
+        order: 4;
+    }
+
+    .co-resolve-panel .co-action-list-v2 {
+        max-height: min(44vh, 318px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-right: 6px !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: y proximity;
+    }
+
+    .co-resolve-panel .co-action-card-v2 {
+        scroll-snap-align: start;
+    }
+
+    .co-workload-panel .co-workload-detail-list,
+    .co-workload-panel .co-workload-list-model {
+        max-height: min(38vh, 190px) !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        padding-right: 6px !important;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: y proximity;
+    }
+
+    .co-workload-panel .co-workload-detail-list .co-workload-model-row,
+    .co-workload-panel .co-workload-list-model .co-workload-model-row {
+        scroll-snap-align: start;
+    }
+
+    .co-resolve-panel .co-action-list-v2::-webkit-scrollbar,
+    .co-workload-panel .co-workload-detail-list::-webkit-scrollbar,
+    .co-workload-panel .co-workload-list-model::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .co-resolve-panel .co-action-list-v2::-webkit-scrollbar-track,
+    .co-workload-panel .co-workload-detail-list::-webkit-scrollbar-track,
+    .co-workload-panel .co-workload-list-model::-webkit-scrollbar-track {
+        background: #eef2f7;
+        border-radius: 999px;
+    }
+
+    .co-resolve-panel .co-action-list-v2::-webkit-scrollbar-thumb,
+    .co-workload-panel .co-workload-detail-list::-webkit-scrollbar-thumb,
+    .co-workload-panel .co-workload-list-model::-webkit-scrollbar-thumb {
+        background: #b8c4d6;
+        border-radius: 999px;
+    }
+
+    .co-workload-panel .co-workload-model-row {
+        min-height: 168px;
+    }
+}
+
+@media (max-width: 420px) {
+    .co-resolve-panel .co-action-list-v2 {
+        max-height: 304px !important;
+    }
+
+    .co-workload-panel .co-workload-detail-list,
+    .co-workload-panel .co-workload-list-model {
+        max-height: 178px !important;
+    }
+}
