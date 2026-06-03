@@ -14,6 +14,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -22,6 +23,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use App\Support\CachedSchema as DatabaseSchema;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class ItemControleForm
@@ -33,21 +35,22 @@ class ItemControleForm
 
         return $schema
             ->components([
-                Section::make('Dados do Item')
+                Section::make('Informações principais')
+                    ->description('Preencha apenas o essencial para começar. Você pode complementar depois.')
+                    ->icon('heroicon-o-clipboard-document-check')
                     ->schema([
                         TextInput::make('titulo')
-                            ->label('Titulo')
+                            ->label('Título do Item')
+                            ->placeholder('Ex.: Envio da DCTFWeb - Mensal')
                             ->required()
                             ->maxLength(255)
-                            ->trim(),
-
-                        Textarea::make('descricao')
-                            ->label('Descricao')
-                            ->rows(4)
-                            ->columnSpanFull(),
+                            ->trim()
+                            ->live(onBlur: true)
+                            ->columnSpan(['default' => 12, 'lg' => 6]),
 
                         Select::make('categoria_id')
                             ->label('Categoria')
+                            ->placeholder('Selecione uma categoria')
                             ->required()
                             ->searchable()
                             ->native(false)
@@ -114,131 +117,17 @@ class ItemControleForm
                                     $set('checklists', $templates);
                                 }
                             })
-                            ->helperText('Se a categoria tiver template, o checklist sera carregado automaticamente.'),
-
-                        Select::make('tags')
-                            ->label('Tags')
-                            ->relationship('tags', 'nome')
-                            ->multiple()
-                            ->searchable()
-                            ->preload()
-                            ->getSearchResultsUsing(function (string $search) use ($user): array {
-                                return ItemControleTag::query()
-                                    ->visibleForUser($user)
-                                    ->where('ativo', true)
-                                    ->where('nome', 'like', "%{$search}%")
-                                    ->orderBy('nome')
-                                    ->limit(50)
-                                    ->pluck('nome', 'id')
-                                    ->toArray();
-                            })
-                            ->getOptionLabelsUsing(function (array $values): array {
-                                return ItemControleTag::query()
-                                    ->whereIn('id', $values)
-                                    ->pluck('nome', 'id')
-                                    ->toArray();
-                            }),
-
-                        Hidden::make('tipo')
-                            ->default('documento')
-                            ->dehydrated(true),
-
-                        Select::make('status')
-                            ->label('Status')
-                            ->required()
-                            ->default('pendente')
-                            ->options(self::getStatusOptions())
-                            ->native(false)
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
-                                if ($state === 'concluido') {
-                                    if (blank($get('data_conclusao'))) {
-                                        $set('data_conclusao', now()->format('Y-m-d'));
-                                    }
-
-                                    return;
-                                }
-
-                                if ($get('data_conclusao') && $state !== 'concluido') {
-                                    $set('data_conclusao', null);
-                                }
-                            }),
-
-                        Select::make('prioridade')
-                            ->label('Prioridade')
-                            ->required()
-                            ->default('media')
-                            ->options(self::getPrioridadeOptions())
-                            ->native(false),
-
-                        Select::make('urgencia')
-                            ->label('Urgência operacional')
-                            ->helperText('Campo usado pelo Centro Operacional para ordenar o que precisa atenção primeiro.')
-                            ->default('media')
-                            ->options(self::getUrgenciaOptions())
-                            ->native(false)
-                            ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'urgencia'))
-                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'urgencia')),
-
-                        TextInput::make('valor_tarefa')
-                            ->label('Valor da tarefa')
-                            ->numeric()
-                            ->prefix('R$')
-                            ->minValue(0)
-                            ->helperText('Valor usado na fila 💰 Pendente de Cobrança.')
-                            ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'valor_tarefa'))
-                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'valor_tarefa')),
-
-                        Toggle::make('bloqueado')
-                            ->label('Bloqueado por dependência externa')
-                            ->helperText('Quando ativo, o item aparece na lista de bloqueados do Centro Operacional.')
-                            ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'bloqueado'))
-                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'bloqueado')),
-
-                        DatePicker::make('data_vencimento')
-                            ->label('Data de Vencimento')
-                            ->required()
-                            ->native(false),
-
-                        DatePicker::make('data_conclusao')
-                            ->label('Data de Conclusao')
-                            ->native(false)
-                            ->visible(fn (callable $get): bool => $get('status') === 'concluido'),
-
-                        Select::make('empresa_id')
-                            ->label('Empresa')
-                            ->required()
-                            ->searchable()
-                            ->native(false)
-                            ->live()
-                            ->default(fn (): ?int => ItemControleResource::getDefaultEmpresaIdForUser($user))
-                            ->disabled(fn (): bool => $user?->isSuperAdmin() !== true)
-                            ->dehydrated(true)
-                            ->getSearchResultsUsing(fn (string $search): array => self::getEmpresaSearchResults($search, $user))
-                            ->getOptionLabelUsing(fn ($value): ?string => blank($value)
-                                ? null
-                                : Empresa::query()->whereKey($value)->value('razao_social')
-                            )
-                            ->afterStateUpdated(function ($state, callable $set) use ($user): void {
-                                if ($user?->isSuperAdmin()) {
-                                    $set('responsavel_id', null);
-                                    $set('categoria_id', null);
-                                    $set('checklists', []);
-                                    $set('tags', []);
-                                }
-                            }),
+                            ->helperText('A categoria define o checklist e os prazos.')
+                            ->columnSpan(['default' => 12, 'lg' => 6]),
 
                         Select::make('responsavel_id')
-                            ->label('Responsavel')
+                            ->label('Responsável')
+                            ->placeholder('Selecione o responsável')
                             ->required()
                             ->searchable()
                             ->native(false)
                             ->getSearchResultsUsing(function (string $search, callable $get) use ($user): array {
-                                $empresaId = filled($get('empresa_id'))
-                                    ? (int) $get('empresa_id')
-                                    : null;
-
-                                return self::getResponsavelSearchResults($search, $user, $empresaId);
+                                return self::getResponsavelSearchResults($search, $user, null);
                             })
                             ->getOptionLabelUsing(fn ($value): ?string => blank($value)
                                 ? null
@@ -247,82 +136,195 @@ class ItemControleForm
                             ->default(fn (): ?int => ItemControleResource::getDefaultResponsavelIdForUser($user))
                             ->disabled(fn (): bool => $user?->isUser() === true)
                             ->dehydrated(true)
-                            ->helperText(function () use ($user, $responsavelIdDoUsuario): ?string {
-                                if (! $user) {
-                                    return null;
-                                }
-
-                                if ($user->isSuperAdmin()) {
-                                    return 'O super admin pode vincular o item a responsaveis de qualquer empresa.';
-                                }
-
-                                if ($user->isAdminEmpresa()) {
-                                    return 'O administrador pode vincular o item a qualquer responsavel da propria empresa.';
-                                }
-
-                                if ($user->isGestor()) {
-                                    return 'O gestor pode vincular o item apenas aos responsaveis da equipe dele.';
-                                }
-
-                                if (! $responsavelIdDoUsuario) {
-                                    return 'Seu usuario ainda nao esta vinculado a um responsavel. Vincule o user_id na tabela responsaveis para poder criar itens.';
-                                }
-
-                                return 'Usuario comum so pode criar e editar itens vinculados a si mesmo.';
-                            })
+                            ->helperText('Quem será responsável por executar este item.')
                             ->rules([
                                 function () use ($user) {
                                     return function (string $attribute, $value, \Closure $fail) use ($user): void {
                                         if (! $user) {
-                                            $fail('Usuario nao autenticado.');
+                                            $fail('Usuário não autenticado.');
                                             return;
                                         }
 
                                         if (! filled($value)) {
-                                            $fail('O responsavel e obrigatorio.');
+                                            $fail('O responsável é obrigatório.');
                                             return;
                                         }
 
                                         if (! ItemControleResource::canUserAssignResponsavel($user, (int) $value)) {
                                             if ($user->isGestor()) {
-                                                $fail('Voce so pode vincular o item a responsaveis da sua equipe.');
+                                                $fail('Você só pode vincular o item a responsáveis da sua equipe.');
                                                 return;
                                             }
 
                                             if ($user->isUser()) {
-                                                $fail('Voce so pode vincular o item ao seu proprio responsavel.');
+                                                $fail('Você só pode vincular o item ao seu próprio responsável.');
                                                 return;
                                             }
 
-                                            $fail('Voce nao tem permissao para vincular este responsavel.');
+                                            $fail('Você não tem permissão para vincular este responsável.');
                                         }
                                     };
                                 },
-                            ]),
+                            ])
+                            ->columnSpan(['default' => 12, 'lg' => 6]),
 
-                        FileUpload::make('arquivo')
-                            ->label('Anexo principal')
-                            ->directory('comprovantes-prazos')
-                            ->disk('public')
-                            ->acceptedFileTypes(ItemControleAnexoUploader::ALLOWED_MIME_TYPES)
-                            ->maxSize(ItemControleAnexoUploader::MAX_SIZE_KB)
-                            ->downloadable()
-                            ->openable()
-                            ->previewable(true)
-                            ->helperText('Arquivo principal do item. Envie PDF, Word, Excel, CSV, TXT ou imagem com até 10 MB. Anexos extras podem ser adicionados depois sem substituir este arquivo.'),
+                        DatePicker::make('data_vencimento')
+                            ->label('Data de vencimento')
+                            ->placeholder('dd/mm/aaaa')
+                            ->required()
+                            ->native(false)
+                            ->helperText('Data limite para conclusão.')
+                            ->columnSpan(['default' => 12, 'lg' => 4]),
 
-                        Textarea::make('observacao')
-                            ->label('Observacao')
+                        Select::make('prioridade')
+                            ->label('Prioridade')
+                            ->required()
+                            ->default('media')
+                            ->options(self::getPrioridadeOptions())
+                            ->native(false)
+                            ->helperText('Define a importância deste item.')
+                            ->columnSpan(['default' => 12, 'lg' => 2]),
+
+                        Textarea::make('descricao')
+                            ->label('Descrição / Observações')
+                            ->placeholder('Descreva os detalhes importantes, instruções ou observações...')
+                            ->helperText('Informações adicionais que ajudam na execução.')
                             ->rows(4)
                             ->columnSpanFull(),
-                    ])
-                    ->columns(2),
 
-                Section::make('Dados do Contrato')
-                    ->description('Preencha estas informacoes quando o item for um contrato.')
+                        Hidden::make('tipo')
+                            ->default('documento')
+                            ->dehydrated(true),
+
+                        Hidden::make('empresa_id')
+                            ->default(fn (): ?int => ItemControleResource::getDefaultEmpresaIdForUser($user))
+                            ->dehydrated(true),
+                    ])
+                    ->columns(12)
+                    ->columnSpan(['default' => 1, 'xl' => 2]),
+
+                Section::make('Resumo do item')
+                    ->description('Veja como seu item será registrado.')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->extraAttributes(['class' => 'prazzu-summary-section'])
+                    ->schema([
+                        Placeholder::make('resumo_titulo')
+                            ->label('Título')
+                            ->content(fn (callable $get): string => filled($get('titulo')) ? (string) $get('titulo') : '-'),
+
+                        Placeholder::make('resumo_categoria')
+                            ->label('Categoria')
+                            ->content(function (callable $get): string {
+                                $categoriaId = $get('categoria_id');
+
+                                if (! filled($categoriaId)) {
+                                    return '-';
+                                }
+
+                                return (string) (CategoriaItemControle::query()->whereKey($categoriaId)->value('nome') ?: '-');
+                            }),
+
+                        Placeholder::make('resumo_responsavel')
+                            ->label('Responsável')
+                            ->content(function (callable $get): string {
+                                $responsavelId = $get('responsavel_id');
+
+                                if (! filled($responsavelId)) {
+                                    return '-';
+                                }
+
+                                return (string) (Responsavel::query()->whereKey($responsavelId)->value('nome') ?: '-');
+                            }),
+
+                        Placeholder::make('resumo_vencimento')
+                            ->label('Vencimento')
+                            ->content(fn (callable $get): string => filled($get('data_vencimento')) ? date('d/m/Y', strtotime((string) $get('data_vencimento'))) : '-'),
+
+                        Placeholder::make('resumo_prioridade')
+                            ->label('Prioridade')
+                            ->content(fn (callable $get): string => self::getPrioridadeOptions()[$get('prioridade') ?: 'media'] ?? 'Média'),
+
+                        Placeholder::make('resumo_urgencia')
+                            ->label('Urgência')
+                            ->content(fn (callable $get): string => self::getUrgenciaOptions()[$get('urgencia') ?: 'media'] ?? '-'),
+
+                        Placeholder::make('resumo_risco')
+                            ->label('Risco de multa')
+                            ->content(fn (): string => 'Alto'),
+
+                        Placeholder::make('resumo_valor')
+                            ->label('Valor estimado')
+                            ->content(fn (callable $get): string => 'R$ ' . number_format((float) ($get('valor_tarefa') ?: 0), 2, ',', '.')),
+
+                        Placeholder::make('resumo_status')
+                            ->label('Status')
+                            ->content(fn (callable $get): HtmlString => new HtmlString('<span class="pz-status-pill">' . e(self::getStatusOptions()[$get('status') ?: 'pendente'] ?? 'Pendente') . '</span><small>Status padrão na criação.</small>')),
+                    ])
+                    ->columns(1)
+                    ->columnSpan(['default' => 1, 'xl' => 1]),
+
+                Section::make('Prazo, risco e impacto')
+                    ->description('Essas informações ajudam o sistema a te alertar e priorizar o que realmente importa.')
+                    ->icon('heroicon-o-shield-exclamation')
+                    ->extraAttributes(['class' => 'prazzu-risk-section'])
+                    ->schema([
+                        Select::make('urgencia')
+                            ->label('Urgência')
+                            ->helperText('Quão urgente é a execução?')
+                            ->default('media')
+                            ->options(self::getUrgenciaOptions())
+                            ->native(false)
+                            ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'urgencia'))
+                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'urgencia'))
+                            ->columnSpan(['default' => 12, 'lg' => 3]),
+
+                        Select::make('risco_multa_visual')
+                            ->label('Risco de multa')
+                            ->helperText('Qual o risco de multa/penalidade?')
+                            ->default('alto')
+                            ->options([
+                                'baixo' => 'Baixo',
+                                'medio' => 'Médio',
+                                'alto' => 'Alto',
+                            ])
+                            ->native(false)
+                            ->dehydrated(false)
+                            ->columnSpan(['default' => 12, 'lg' => 3]),
+
+                        TextInput::make('valor_tarefa')
+                            ->label('Valor estimado da multa')
+                            ->numeric()
+                            ->prefix('R$')
+                            ->minValue(0)
+                            ->helperText('Valor aproximado do risco.')
+                            ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'valor_tarefa'))
+                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'valor_tarefa'))
+                            ->columnSpan(['default' => 12, 'lg' => 3]),
+
+                        Toggle::make('bloqueado')
+                            ->label('Bloqueia outros processos?')
+                            ->helperText('Se este item atrasar, bloqueia outros?')
+                            ->visible(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'bloqueado'))
+                            ->dehydrated(fn (): bool => DatabaseSchema::hasColumn('item_controles', 'bloqueado'))
+                            ->columnSpan(['default' => 12, 'lg' => 3]),
+                    ])
+                    ->columns(12)
+                    ->columnSpan(['default' => 1, 'xl' => 2]),
+
+                Section::make('Dica')
+                    ->description('Após salvar, você poderá adicionar checklist, anexos e outras informações.')
+                    ->icon('heroicon-o-light-bulb')
+                    ->extraAttributes(['class' => 'prazzu-tip-section'])
+                    ->schema([])
+                    ->columnSpan(['default' => 1, 'xl' => 1]),
+
+                Section::make('Detalhes do contrato (opcional)')
+                    ->description('Vincule a um contrato, se necessário.')
+                    ->icon('heroicon-o-document-text')
+                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-contract-section'])
                     ->schema([
                         TextInput::make('contrato_numero')
-                            ->label('Numero do contrato')
+                            ->label('Número do contrato')
                             ->maxLength(100)
                             ->trim(),
 
@@ -343,7 +345,7 @@ class ItemControleForm
                             ->minValue(0),
 
                         DatePicker::make('contrato_inicio_em')
-                            ->label('Inicio')
+                            ->label('Início')
                             ->native(false),
 
                         DatePicker::make('contrato_fim_em')
@@ -357,51 +359,25 @@ class ItemControleForm
                             ->default('rascunho'),
                     ])
                     ->columns(2)
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpan(['default' => 1, 'xl' => 2])
                     ->visible(fn (callable $get): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_CONTRATOS) && self::deveMostrarContrato($get)),
 
-                Section::make('Portal do Cliente')
-                    ->description('Gere um link externo para o cliente acompanhar este item sem acessar o painel interno.')
+                Section::make('Dicas rápidas')
+                    ->icon('heroicon-o-clipboard-document-check')
+                    ->extraAttributes(['class' => 'prazzu-quick-tips-section prazzu-sidebar-section'])
                     ->schema([
-                        Toggle::make('portal_ativo')
-                            ->label('Ativar portal do cliente')
-                            ->default(false)
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
-                                if (! $state) {
-                                    return;
-                                }
-
-                                if (blank($get('portal_token'))) {
-                                    $set('portal_token', Str::random(64));
-                                }
-                            })
-                            ->columnSpanFull(),
-
-                        TextInput::make('portal_cliente_nome')
-                            ->label('Nome do cliente')
-                            ->maxLength(255)
-                            ->trim(),
-
-                        TextInput::make('portal_cliente_email')
-                            ->label('E-mail do cliente')
-                            ->email()
-                            ->maxLength(255)
-                            ->trim(),
-
-                        DateTimePicker::make('portal_expira_em')
-                            ->label('Link expira em')
-                            ->native(false)
-                            ->seconds(false)
-                            ->helperText('Deixe vazio para nao expirar.'),
-
-                        Hidden::make('portal_token')
-                            ->default(fn (): string => Str::random(64)),
+                        Placeholder::make('dicas_rapidas')
+                            ->label('')
+                            ->content(fn (): HtmlString => new HtmlString('<ul class="prazzu-quick-tips"><li>Use um título claro e objetivo</li><li>Defina a data de vencimento corretamente</li><li>Priorize itens com maior risco de multa</li><li>Checklist será sugerido automaticamente</li><li>Você pode editar tudo depois</li></ul>')),
                     ])
-                    ->columns(2)
-                    ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_PORTAL_CLIENTE)),
+                    ->columnSpan(['default' => 1, 'xl' => 1]),
 
-                Section::make('Checklist do Item')
-                    ->description('Cadastre etapas internas para acompanhar a execucao deste item.')
+                Section::make('Checklist (opcional)')
+                    ->description('Etapas sugeridas serão carregadas automaticamente.')
+                    ->icon('heroicon-o-list-bullet')
+                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-checklist-section'])
                     ->schema([
                         Repeater::make('checklists')
                             ->label('Etapas')
@@ -422,7 +398,7 @@ class ItemControleForm
                                     ->columnSpan(2),
 
                                 Toggle::make('concluido')
-                                    ->label('Concluido')
+                                    ->label('Concluído')
                                     ->default(false)
                                     ->live()
                                     ->afterStateUpdated(function ($state, callable $set): void {
@@ -449,7 +425,134 @@ class ItemControleForm
                             ->itemLabel(fn (array $state): ?string => $state['titulo'] ?? 'Nova etapa'),
                     ])
                     ->columns(1)
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpan(['default' => 1, 'xl' => 2])
                     ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_CHECKLIST)),
+
+                Section::make('Anexos (opcional)')
+                    ->description('Adicione documentos ou arquivos relacionados.')
+                    ->icon('heroicon-o-paper-clip')
+                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-attachment-section'])
+                    ->schema([
+                        FileUpload::make('arquivo')
+                            ->label('Anexo principal')
+                            ->directory('comprovantes-prazos')
+                            ->disk('public')
+                            ->acceptedFileTypes(ItemControleAnexoUploader::ALLOWED_MIME_TYPES)
+                            ->maxSize(ItemControleAnexoUploader::MAX_SIZE_KB)
+                            ->downloadable()
+                            ->openable()
+                            ->previewable(true)
+                            ->helperText('Arquivo principal do item. Envie PDF, Word, Excel, CSV, TXT ou imagem com até 10 MB. Anexos extras podem ser adicionados depois sem substituir este arquivo.'),
+                    ])
+                    ->columns(1)
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpan(['default' => 1, 'xl' => 2]),
+
+                Section::make('Configurações avançadas (opcional)')
+                    ->description('Tags, portal do cliente e outras configurações.')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->extraAttributes(['class' => 'prazzu-compact-section prazzu-settings-section'])
+                    ->schema([
+                        Select::make('status')
+                            ->label('Status')
+                            ->required()
+                            ->default('pendente')
+                            ->options(self::getStatusOptions())
+                            ->native(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                if ($state === 'concluido') {
+                                    if (blank($get('data_conclusao'))) {
+                                        $set('data_conclusao', now()->format('Y-m-d'));
+                                    }
+
+                                    return;
+                                }
+
+                                if ($get('data_conclusao') && $state !== 'concluido') {
+                                    $set('data_conclusao', null);
+                                }
+                            }),
+
+                        DatePicker::make('data_conclusao')
+                            ->label('Data de conclusão')
+                            ->native(false)
+                            ->visible(fn (callable $get): bool => $get('status') === 'concluido'),
+
+                        Select::make('tags')
+                            ->label('Tags')
+                            ->relationship('tags', 'nome')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->getSearchResultsUsing(function (string $search) use ($user): array {
+                                return ItemControleTag::query()
+                                    ->visibleForUser($user)
+                                    ->where('ativo', true)
+                                    ->where('nome', 'like', "%{$search}%")
+                                    ->orderBy('nome')
+                                    ->limit(50)
+                                    ->pluck('nome', 'id')
+                                    ->toArray();
+                            })
+                            ->getOptionLabelsUsing(function (array $values): array {
+                                return ItemControleTag::query()
+                                    ->whereIn('id', $values)
+                                    ->pluck('nome', 'id')
+                                    ->toArray();
+                            }),
+
+                        Textarea::make('observacao')
+                            ->label('Observação interna')
+                            ->rows(4)
+                            ->columnSpanFull(),
+
+                        Toggle::make('portal_ativo')
+                            ->label('Ativar portal do cliente')
+                            ->default(false)
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, callable $get): void {
+                                if (! $state) {
+                                    return;
+                                }
+
+                                if (blank($get('portal_token'))) {
+                                    $set('portal_token', Str::random(64));
+                                }
+                            })
+                            ->columnSpanFull()
+                            ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_PORTAL_CLIENTE)),
+
+                        TextInput::make('portal_cliente_nome')
+                            ->label('Nome do cliente')
+                            ->maxLength(255)
+                            ->trim()
+                            ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_PORTAL_CLIENTE)),
+
+                        TextInput::make('portal_cliente_email')
+                            ->label('E-mail do cliente')
+                            ->email()
+                            ->maxLength(255)
+                            ->trim()
+                            ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_PORTAL_CLIENTE)),
+
+                        DateTimePicker::make('portal_expira_em')
+                            ->label('Link expira em')
+                            ->native(false)
+                            ->seconds(false)
+                            ->helperText('Deixe vazio para não expirar.')
+                            ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_PORTAL_CLIENTE)),
+
+                        Hidden::make('portal_token')
+                            ->default(null),
+                    ])
+                    ->columns(2)
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpan(['default' => 1, 'xl' => 2]),
             ]);
     }
 

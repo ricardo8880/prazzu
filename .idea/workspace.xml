@@ -6,9 +6,11 @@
   <component name="ChangeListManager">
     <list default="true" id="aadc4c9d-64b4-4461-b082-cc5e3ef21cdb" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/css/centro-operacional.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/css/centro-operacional.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/centro-operacional-gestao.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/centro-operacional-gestao.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/00/48/0048fc35cc5aa214d7e66624d8005ff3962f35e2" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/00/48/0048fc35cc5aa214d7e66624d8005ff3962f35e2" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d0/1e/d01e8c05bce15e332f85d49c71ed6e61a6ea48d8" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d0/1e/d01e8c05bce15e332f85d49c71ed6e61a6ea48d8" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/9ffe9eda-bd48-4204-99e6-e38327f74006.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/Centro Operacional.docx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

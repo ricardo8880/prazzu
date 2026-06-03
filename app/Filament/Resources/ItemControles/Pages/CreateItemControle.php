@@ -6,11 +6,74 @@ use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\Responsavel;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\CreateRecord;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\Width;
 
 class CreateItemControle extends CreateRecord
 {
     protected static string $resource = ItemControleResource::class;
+
+    protected static bool $canCreateAnother = false;
+
+    protected array $extraBodyAttributes = [
+        'class' => 'prazzu-create-item-controle-page',
+    ];
+
+    public function getTitle(): string
+    {
+        return 'Criar Item de Controle';
+    }
+
+    public function getHeading(): string
+    {
+        return 'Criar Item de Controle';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Cadastre um novo item para controlar prazos, evitar multas e garantir a execução correta.';
+    }
+
+    public function getMaxContentWidth(): Width | string | null
+    {
+        return Width::Full;
+    }
+
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('cancelar_criacao')
+                ->label('Cancelar')
+                ->color('gray')
+                ->url(static::getResource()::getUrl('index')),
+
+            Action::make('salvar_item_topo')
+                ->label('Salvar Item')
+                ->color('primary')
+                ->action(fn (): mixed => $this->create()),
+        ];
+    }
+
+    public function defaultForm(Schema $schema): Schema
+    {
+        return parent::defaultForm($schema)
+            ->columns(['default' => 1, 'xl' => 3]);
+    }
+
+    protected function getCreateFormAction(): Action
+    {
+        return parent::getCreateFormAction()
+            ->label('Salvar Item');
+    }
+
+    protected function getCancelFormAction(): Action
+    {
+        return parent::getCancelFormAction()
+            ->label('Cancelar');
+    }
 
     protected function beforeCreate(): void
     {

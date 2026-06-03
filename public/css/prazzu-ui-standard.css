@@ -1026,3 +1026,654 @@ svg[class*="heroicon"] {
         border-spacing: 0 .7rem !important;
     }
 }
+
+/* Página: Criar Item de Controle
+   Ajustes aplicados no CSS padrão existente do sistema, sem criar arquivo CSS novo. */
+.prazzu-create-item-controle-page .fi-main,
+.prazzu-create-item-controle-page .fi-page {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, .07), transparent 34rem),
+        linear-gradient(180deg, #fbfdff 0%, #f8fafc 48%, #f3f7fb 100%) !important;
+}
+
+.prazzu-create-item-controle-page .fi-main-ctn {
+    overflow-x: hidden;
+}
+
+.prazzu-create-item-controle-page .fi-main {
+    padding-top: 1.25rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header {
+    margin-bottom: 1.45rem !important;
+    padding-bottom: 1rem !important;
+    border-bottom: 1px solid rgba(226, 232, 240, .88) !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-heading {
+    color: #0f172a !important;
+    font-size: clamp(1.75rem, 2.2vw, 2.2rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: -.045em !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-subheading {
+    color: #475569 !important;
+    font-size: .93rem !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form {
+    gap: 1rem !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form::before {
+    content: '1  Informações principais          2  Detalhes adicionais          3  Revisão';
+    grid-column: 1 / -1;
+    display: block;
+    margin-bottom: .35rem;
+    padding: 1.15rem 1.6rem;
+    border: 1px solid rgba(226, 232, 240, .9);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, .78);
+    color: #334155;
+    font-size: .92rem;
+    font-weight: 850;
+    letter-spacing: .01em;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, .04);
+}
+
+.prazzu-create-item-controle-page .fi-section {
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, .95) !important;
+    border-radius: 1.05rem !important;
+    background: rgba(255, 255, 255, .96) !important;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, .065) !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-header {
+    min-height: 4.7rem;
+    padding: 1.15rem 1.35rem !important;
+    border-bottom: 1px solid rgba(226, 232, 240, .9) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%) !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-heading {
+    color: #0f172a !important;
+    font-size: 1rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -.015em !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-description,
+.prazzu-create-item-controle-page .fi-fo-field-wrp-helper-text {
+    color: #64748b !important;
+    font-size: .82rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-section-content {
+    padding: 1.2rem 1.35rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-fo-field-wrp-label label,
+.prazzu-create-item-controle-page .fi-fo-field-wrp-label span {
+    color: #172033 !important;
+    font-size: .84rem !important;
+    font-weight: 850 !important;
+}
+
+.prazzu-create-item-controle-page .fi-input-wrp,
+.prazzu-create-item-controle-page input,
+.prazzu-create-item-controle-page textarea,
+.prazzu-create-item-controle-page select,
+.prazzu-create-item-controle-page .fi-select-input {
+    border-radius: .68rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-input-wrp {
+    border-color: #cfd8e3 !important;
+    background: #fff !important;
+    box-shadow: 0 1px 0 rgba(15, 23, 42, .02) !important;
+}
+
+.prazzu-create-item-controle-page .fi-input-wrp:focus-within {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, .11) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section {
+    border-color: #fecaca !important;
+    background: linear-gradient(90deg, rgba(254, 242, 242, .96), rgba(255, 247, 247, .9)) !important;
+    box-shadow: 0 16px 38px rgba(239, 68, 68, .07) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-header,
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-content {
+    background: transparent !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-header {
+    min-height: 4.25rem;
+    border-bottom: 0 !important;
+    padding-bottom: .45rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-content {
+    padding-top: .45rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section {
+    border-color: #bbf7d0 !important;
+    background: linear-gradient(135deg, #f0fdf4, #ecfdf5) !important;
+    box-shadow: 0 14px 32px rgba(22, 163, 74, .08) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-header {
+    min-height: auto;
+    border-bottom: 0 !important;
+    background: transparent !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-content {
+    display: none !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips {
+    display: grid;
+    gap: .72rem;
+    margin: 0;
+    padding: 0;
+    color: #475569;
+    font-size: .84rem;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips li {
+    position: relative;
+    padding-left: 1.25rem;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: #64748b;
+    font-weight: 900;
+}
+
+.prazzu-create-item-controle-page .pz-status-pill {
+    display: inline-flex;
+    align-items: center;
+    width: max-content;
+    margin-bottom: .25rem;
+    padding: .22rem .58rem;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: .78rem;
+    font-weight: 900;
+}
+
+.prazzu-create-item-controle-page .pz-status-pill + small {
+    display: block;
+    color: #64748b;
+    font-size: .78rem;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    grid-column: 1 / -1;
+    justify-content: flex-end !important;
+    margin-top: .85rem;
+    padding: 1rem 1.25rem !important;
+    border: 1px solid rgba(226, 232, 240, .92);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 -12px 40px rgba(15, 23, 42, .08);
+    backdrop-filter: blur(14px);
+}
+
+.prazzu-create-item-controle-page .fi-btn {
+    border-radius: .72rem !important;
+    font-weight: 850 !important;
+}
+
+@media (max-width: 1279px) {
+    .prazzu-create-item-controle-page form.fi-form::before {
+        content: '1 Informações principais   2 Detalhes adicionais   3 Revisão';
+        padding-inline: 1rem;
+        font-size: .82rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .prazzu-create-item-controle-page .fi-main {
+        padding-inline: .8rem !important;
+    }
+
+    .prazzu-create-item-controle-page form.fi-form::before {
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .prazzu-create-item-controle-page .fi-form-actions {
+        position: static;
+    }
+}
+
+/* Lote 5 - refinamento dos componentes da página Criar Item de Controle.
+   Mantém os ajustes dentro do CSS padrão do sistema e não altera a coluna lateral global. */
+.prazzu-create-item-controle-page .prazzu-summary-section {
+    align-self: start !important;
+    position: sticky;
+    top: 1rem;
+    border-color: rgba(219, 234, 254, .95) !important;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%) !important;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .06) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-header {
+    min-height: auto !important;
+    padding: 1.1rem 1.25rem .85rem !important;
+    border-bottom: 1px solid rgba(226, 232, 240, .78) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-content {
+    display: grid !important;
+    gap: .15rem !important;
+    padding: .85rem 1.25rem 1.1rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder {
+    position: relative;
+    min-height: 2.85rem;
+    padding: .62rem .4rem .62rem 2.35rem !important;
+    border-bottom: 1px solid rgba(226, 232, 240, .72);
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:last-child {
+    border-bottom: 0;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder::before {
+    position: absolute;
+    left: .1rem;
+    top: .68rem;
+    display: inline-grid;
+    width: 1.55rem;
+    height: 1.55rem;
+    place-items: center;
+    border-radius: .55rem;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: .8rem;
+    font-weight: 900;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(1)::before { content: 'T'; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(2)::before { content: 'C'; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(3)::before { content: 'R'; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(4)::before { content: 'V'; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(5)::before { content: 'P'; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(6)::before { content: 'U'; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(7)::before { content: '!'; color: #dc2626; background: #fef2f2; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(8)::before { content: '$'; color: #16a34a; background: #f0fdf4; }
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder:nth-child(9)::before { content: 'S'; }
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label,
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label label,
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-field-wrp-label span {
+    color: #64748b !important;
+    font-size: .72rem !important;
+    font-weight: 850 !important;
+    letter-spacing: .02em !important;
+    text-transform: uppercase !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder .fi-fo-placeholder-content,
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-fo-placeholder div:not([class*='label']) {
+    color: #0f172a !important;
+    font-size: .88rem !important;
+    font-weight: 800 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section {
+    align-self: start !important;
+    border-color: #bbf7d0 !important;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%) !important;
+    box-shadow: 0 14px 32px rgba(22, 163, 74, .08) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-header {
+    padding: 1rem 1.15rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-heading {
+    color: #166534 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section .fi-section-description {
+    color: #15803d !important;
+    line-height: 1.45 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-sidebar-section,
+.prazzu-create-item-controle-page .prazzu-quick-tips-section {
+    align-self: start !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips-section .fi-section-header {
+    min-height: auto !important;
+    padding: 1rem 1.15rem .7rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips-section .fi-section-content {
+    padding: .35rem 1.15rem 1.1rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips li {
+    padding: .5rem .65rem .5rem 1.75rem;
+    border-radius: .75rem;
+    background: #f8fafc;
+    border: 1px solid rgba(226, 232, 240, .82);
+}
+
+.prazzu-create-item-controle-page .prazzu-quick-tips li::before {
+    left: .65rem;
+    top: .5rem;
+    color: #2563eb;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section {
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .045) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-header {
+    min-height: 4.1rem !important;
+    padding: 1rem 1.25rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section.fi-collapsed,
+.prazzu-create-item-controle-page .prazzu-compact-section:has(.fi-section-content-ctn[style*='display: none']) {
+    min-height: 4.5rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-heading {
+    font-size: .96rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-description {
+    font-size: .79rem !important;
+}
+
+.prazzu-create-item-controle-page .pz-status-pill {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .12);
+}
+
+.prazzu-create-item-controle-page .fi-form-actions::before {
+    content: 'Atalho: Você pode pressionar Ctrl + S para salvar rapidamente';
+    margin-right: auto;
+    color: #64748b;
+    font-size: .84rem;
+    font-weight: 700;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-primary {
+    min-height: 2.55rem;
+    padding-inline: 1.15rem !important;
+    background: #2563eb !important;
+    color: #fff !important;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, .22) !important;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-gray {
+    min-height: 2.55rem;
+    padding-inline: 1.05rem !important;
+    background: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+@media (max-width: 1279px) {
+    .prazzu-create-item-controle-page .prazzu-summary-section {
+        position: static;
+    }
+}
+
+@media (max-width: 767px) {
+    .prazzu-create-item-controle-page .fi-form-actions::before {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: .5rem;
+        text-align: center;
+    }
+}
+
+
+/* Lote 6 - acabamento final da página Criar Item de Controle.
+   Ajustes restritos à classe da página para não interferir na coluna lateral/menu. */
+.prazzu-create-item-controle-page {
+    background: #f6f8fb !important;
+}
+
+.prazzu-create-item-controle-page .fi-main,
+.prazzu-create-item-controle-page .fi-page,
+.prazzu-create-item-controle-page .fi-page-content {
+    background: #f6f8fb !important;
+}
+
+.prazzu-create-item-controle-page .fi-page {
+    --prazzu-create-blue: #2563eb;
+    --prazzu-create-blue-dark: #1d4ed8;
+    --prazzu-create-border: #e2e8f0;
+    --prazzu-create-text: #0f172a;
+    --prazzu-create-muted: #64748b;
+}
+
+.prazzu-create-item-controle-page .fi-page-header {
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-heading {
+    color: var(--prazzu-create-text) !important;
+    font-size: 1.8rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: -.035em !important;
+    font-weight: 900 !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-subheading {
+    max-width: 44rem !important;
+    color: var(--prazzu-create-muted) !important;
+    font-size: .93rem !important;
+    line-height: 1.45 !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-actions {
+    gap: .65rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn {
+    min-height: 2.45rem !important;
+    padding-inline: 1.05rem !important;
+    border-radius: .72rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn-color-primary {
+    background: var(--prazzu-create-blue) !important;
+    box-shadow: 0 12px 24px rgba(37, 99, 235, .2) !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form {
+    align-items: start !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form::before {
+    content: '' !important;
+    min-height: 4.65rem !important;
+    padding: 0 !important;
+    background:
+        linear-gradient(#fff, #fff) padding-box,
+        linear-gradient(90deg, rgba(37,99,235,.25), rgba(226,232,240,.9)) border-box !important;
+    border: 1px solid transparent !important;
+    border-radius: 1.15rem !important;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .045) !important;
+}
+
+.prazzu-create-item-controle-page form.fi-form::after {
+    content: '1  Informações principais     2  Detalhes adicionais     3  Revisão' !important;
+    grid-column: 1 / -1;
+    order: -1;
+    display: flex !important;
+    align-items: center !important;
+    min-height: 4.65rem !important;
+    margin-top: -5.65rem !important;
+    padding: 0 1.55rem !important;
+    color: #334155 !important;
+    font-size: .92rem !important;
+    font-weight: 900 !important;
+    letter-spacing: -.005em !important;
+    pointer-events: none !important;
+}
+
+.prazzu-create-item-controle-page .fi-section {
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease !important;
+}
+
+.prazzu-create-item-controle-page .fi-section:hover {
+    border-color: rgba(191, 219, 254, .95) !important;
+    box-shadow: 0 20px 48px rgba(15, 23, 42, .075) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section {
+    border-left: 4px solid #ef4444 !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-section-heading {
+    color: #991b1b !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-risk-section .fi-input-wrp:focus-within {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, .1) !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section {
+    top: 1.25rem !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-summary-section .fi-section-heading::after {
+    content: 'Prévia';
+    display: inline-flex;
+    align-items: center;
+    margin-left: .55rem;
+    padding: .16rem .48rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: var(--prazzu-create-blue-dark);
+    font-size: .66rem;
+    font-weight: 900;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.prazzu-create-item-controle-page .prazzu-tip-section {
+    border-left: 4px solid #22c55e !important;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section .fi-section-header {
+    cursor: pointer;
+}
+
+.prazzu-create-item-controle-page .prazzu-compact-section .fi-icon-btn {
+    border-radius: .65rem !important;
+    background: #f8fafc !important;
+    border: 1px solid rgba(226, 232, 240, .85) !important;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions {
+    gap: .65rem !important;
+    border-radius: 1.05rem 1.05rem 0 0 !important;
+    margin-bottom: -1rem !important;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions .fi-btn {
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease !important;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions .fi-btn:hover,
+.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn:hover {
+    transform: translateY(-1px) !important;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-primary:hover,
+.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn-color-primary:hover {
+    background: var(--prazzu-create-blue-dark) !important;
+    box-shadow: 0 16px 28px rgba(37, 99, 235, .27) !important;
+}
+
+.prazzu-create-item-controle-page .fi-form-actions .fi-btn-color-gray:hover,
+.prazzu-create-item-controle-page .fi-page-header-actions .fi-btn-color-gray:hover {
+    background: #f8fafc !important;
+}
+
+.prazzu-create-item-controle-page .fi-breadcrumbs,
+.prazzu-create-item-controle-page .fi-breadcrumbs a,
+.prazzu-create-item-controle-page .fi-breadcrumbs span {
+    color: #64748b !important;
+    font-size: .82rem !important;
+    font-weight: 750 !important;
+}
+
+.prazzu-create-item-controle-page .fi-breadcrumbs a:hover {
+    color: var(--prazzu-create-blue) !important;
+}
+
+@media (min-width: 1280px) {
+    .prazzu-create-item-controle-page .fi-page-content,
+    .prazzu-create-item-controle-page .fi-page-header {
+        max-width: 1480px !important;
+        margin-inline: auto !important;
+    }
+}
+
+@media (max-width: 1279px) {
+    .prazzu-create-item-controle-page form.fi-form::after {
+        content: '1 Informações principais   2 Detalhes adicionais   3 Revisão' !important;
+        font-size: .82rem !important;
+        padding-inline: 1rem !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .prazzu-create-item-controle-page .fi-page-header-heading {
+        font-size: 1.45rem !important;
+    }
+
+    .prazzu-create-item-controle-page .fi-page-header-actions {
+        width: 100% !important;
+        justify-content: stretch !important;
+    }
+
+    .prazzu-create-item-controle-page .fi-page-header-actions .fi-btn {
+        flex: 1 1 0 !important;
+        justify-content: center !important;
+    }
+
+    .prazzu-create-item-controle-page form.fi-form::before,
+    .prazzu-create-item-controle-page form.fi-form::after {
+        display: none !important;
+    }
+
+    .prazzu-create-item-controle-page .fi-form-actions {
+        border-radius: 1rem !important;
+        margin-bottom: 0 !important;
+    }
+}
