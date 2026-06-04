@@ -1,0 +1,653 @@
+Analise este relatório do meu SaaS.
+
+CONTEXTO DO PRODUTO:
+Meu produto é um sistema operacional leve para empresas, com foco em controle de prazos, prevenção de multas, execução correta de tarefas críticas, menos cliques, menos complexidade, menos configuração inicial e mais produtividade. Eu ainda não quero instalar IA no sistema; estou usando este relatório interno para receber recomendações.
+
+PAPEL QUE VOCÊ DEVE ASSUMIR:
+Atue como Product Manager, UX Specialist, Growth Specialist, Analista de Mercado e Estrategista de SaaS. Quero recomendações práticas, priorizadas e diretas.
+
+OBJETIVO DA ANÁLISE:
+1. Identificar os problemas mais importantes.
+2. Identificar as dores reais por trás dos comentários.
+3. Identificar pontos fortes que eu devo preservar.
+4. Encontrar contradições nos comentários para evitar decisões erradas.
+5. Encontrar oportunidades de UX, SEO, marketing e posicionamento.
+6. Dizer o que devo melhorar primeiro.
+7. Dizer o que devo ignorar, simplificar, remover ou não implementar.
+8. Gerar um plano de ação priorizado do maior impacto para o menor impacto.
+
+=========================
+RESUMO EXECUTIVO GERADO PELO SISTEMA
+=========================
+{
+    "problemas_detectados": 9,
+    "pontos_fortes_detectados": 4,
+    "aprendizados_gerados": 13,
+    "fontes_analisadas": 1,
+    "contradicoes_detectadas": 1,
+    "itens_roadmap": 9,
+    "oportunidades_detectadas": 13,
+    "problemas_criticos": 6,
+    "maior_problema": "Prazos / risco / multas",
+    "maior_dor_real": "Medo de prejuízo, multa, retrabalho e falha operacional com cliente.",
+    "maior_aprendizado": "A dor mais vendável não é organizar tarefas, é evitar prejuízo operacional."
+}
+
+=========================
+PRINCIPAIS PROBLEMAS DETECTADOS - LISTA COMPLETA
+=========================
+1. Problema: Prazos / risco / multas
+Ocorrências: 19
+Negativos: 9
+Confiança: média
+Prioridade: 295
+Impacto: 10
+Gravidade: 10
+Dor real: Medo de prejuízo, multa, retrabalho e falha operacional com cliente.
+Insight: Controle de prazo tem valor financeiro direto quando evita multa e retrabalho.
+Aprendizado do mercado: A dor mais vendável não é organizar tarefas, é evitar prejuízo operacional.
+O que fazer: Criar dashboard de risco operacional por cliente, prazo e impacto.
+O que NÃO fazer: Não tratar vencimentos como tarefas comuns; prazos críticos precisam de hierarquia visual própria.
+Oportunidade: Posicionar como sistema de prevenção de prejuízo operacional para tarefas críticas.
+Ação recomendada: Criar dashboard de risco operacional por cliente, prazo e impacto.
+Fontes: Importação manual (19)
+Palavras-chave SEO:
+  - sistema para evitar multas
+  - controle de prazos contábeis
+  - gestão de obrigações
+  - controle de vencimentos de clientes
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Qualidade do produto e atendimento
+A fase de negociação e venda é ótima, prometem mundos e fundos, tudo é possível ser personalizado e modificado de acordo com a necessidade do cliente. No entanto, o pós vendas é péssimo, há total descaso por parte dos atendentes, os prazos não são cumpridos e não há comprometimento das áreas envolvidas.
+Dentre os problemas que enfrentamos desd...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Sistema não é seguro, apresenta milhares de falhas e suporte não resolve
+Contratei o sistema legal one, com a promessa de que o sistema é líder no segmento e apresenta todas as soluções para o acompanhamento processual. Porém o sistema apresenta inúmeros erros e o sistema de consulta de andamentos é absolutamente instável e não é confiável. O suporte demora semanas pra tentar r...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Precisamos de uma posição mais concreta por parte da Thomson Reuters para que possamos dar continuidade ao nosso contrato de prestação de serviços, tendo em vista que iniciamos os trabalhos dessa folha complementar (CCT) em meados do mês de outubro e o prazo para entrega das obrigações acessórias e o pagamento das diferenças salariais, de acordo com a Convenção Coletiva era 06/...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Melhorias no Gestta Processos
+No momento temos uma grande insatisfação junto a equipe de suporte da Thomson Reuters, pois estou abrindo chamados de situações que o sistema está atrapalhando o uso do Gestta Processos na Peres & Baticioto e o suporte não está dando a devida atenção para os nossos problemas junto a ferramenta. Tenho chamados em aberto sob número 2965065, 2811988,...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Indisponibilidade e Banco de Dados Corrompido
+A cerca de 3 meses atrás tivemos um problema no banco de dados do DominioWeb onde precisou ser refeito, houve demora na solução do problema e na ocasião ficamos cerca de 1 dia e meio sem conseguir utilizar.
+Na sexta feira 04/02/******* ocorreu o mesmo problema novamente e após longa conversa por telefone autorizamos novamente a reco...
+
+-------------------------
+
+2. Problema: Lentidão / performance
+Ocorrências: 18
+Negativos: 14
+Confiança: média
+Prioridade: 262
+Impacto: 10
+Gravidade: 9
+Dor real: Frustração, perda de produtividade e sensação de ferramenta pesada.
+Insight: Usuários abandonam ou evitam ferramentas que parecem pesadas no dia a dia.
+Aprendizado do mercado: Velocidade percebida é parte do valor do produto, não apenas detalhe técnico.
+O que fazer: Medir carregamento das telas principais e priorizar uma experiência rápida nas ações mais repetidas.
+O que NÃO fazer: Não adicionar componentes pesados, dashboards poluídos ou recursos que aumentem tempo de carregamento sem gerar valor claro.
+Oportunidade: Posicionar o SaaS como uma alternativa leve, rápida e sem travamentos.
+Ação recomendada: Auditar páginas lentas, reduzir queries, otimizar carregamento inicial e medir tempo por tela.
+Fontes: Importação manual (18)
+Palavras-chave SEO:
+  - alternativa leve ao ClickUp
+  - software de gestão rápido
+  - sistema de tarefas sem travar
+  - gestão de projetos leve
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Consulta de andamentos processuais ineficiente
+Após diversos contatos da Thomson Reuters para migrarmos do CP-PRO para o novo e moderno sistema,Legal One, aceitamos a proposta. Todavia, desde o início tivemos somente decepções. A principal funcionalidade do sistema, não funciona!! Contratamos o legal one para continuarmos tento acesso aos andamentos dos processos. Todavia, o ca...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Sistema não é seguro, apresenta milhares de falhas e suporte não resolve
+Contratei o sistema legal one, com a promessa de que o sistema é líder no segmento e apresenta todas as soluções para o acompanhamento processual. Porém o sistema apresenta inúmeros erros e o sistema de consulta de andamentos é absolutamente instável e não é confiável. O suporte demora semanas pra tentar r...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Indisponibilidade e Banco de Dados Corrompido
+A cerca de 3 meses atrás tivemos um problema no banco de dados do DominioWeb onde precisou ser refeito, houve demora na solução do problema e na ocasião ficamos cerca de 1 dia e meio sem conseguir utilizar.
+Na sexta feira 04/02/******* ocorreu o mesmo problema novamente e após longa conversa por telefone autorizamos novamente a reco...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Já temos decorridos 18 meses da situação e até o momento nada de correção. Já conversei com "N" pessoas na domínio, me prometeram prazos para a resolução da situação, indicaram paliativos que em vezes não funcionam e me obrigam a fechar o sistema todo e abrir novamente para poder prosseguir com o trabalho (Quem usa Domínio WEB sabe que é demorado acessar o sismtema).
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: SISTEMA NÃO FUNCIONA
+Adquiri a licença do sistema e foi instalado em nosso escritório, porém o sistema não funcionou por problemas técnicos da empresa, paguei a instalação e mensalidade durante 7 meses e agora ainda me cobraram a multa de rescisão de contrato, sendo que o problema foi da empresa e não nosso, gostaria de reaver todos os valores pagos até agora!!
+
+-------------------------
+
+3. Problema: Falta de funcionalidades importantes
+Ocorrências: 20
+Negativos: 9
+Confiança: média
+Prioridade: 226
+Impacto: 6
+Gravidade: 6
+Dor real: Usuário sente que precisa recorrer a outras ferramentas para concluir o trabalho.
+Insight: Nem toda falta de funcionalidade merece desenvolvimento; algumas indicam nicho errado ou expectativa desalinhada.
+Aprendizado do mercado: Pedidos de funcionalidade precisam ser filtrados por repetição, nicho e impacto real.
+O que fazer: Agrupar pedidos por resultado esperado e desenvolver apenas o que reduzir dor recorrente do nicho escolhido.
+O que NÃO fazer: Não criar funcionalidades isoladas baseadas em pedidos raros ou sem ligação com a proposta central.
+Oportunidade: Separar pedidos recorrentes de desejos isolados para evitar crescimento desordenado do produto.
+Ação recomendada: Validar se o pedido aparece em múltiplas fontes antes de colocar no roadmap.
+Fontes: Importação manual (20)
+Palavras-chave SEO:
+  - sistema completo sem complicar
+  - software com funções essenciais
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Queda absurda de qualidade na prestação de serviços
+Como usuário mais antigo do sistema, ou pelo menos um dos primeiros, quero relatar a minha indignação com a falta de confiabilidade e atendimento do Legalone nos ultimos meses. Por exemplo, faz mais de dez dias e mesmo após diversas ligações, o sistema permanece sem o datacloud (cadastramento de andamentos de processos) relati...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Falta de Solução para erro do software - Legal One
+Desde o dia 09/09/******* verifiquei a ocorrência de um problema no módulo financeiro do software Legal One da Thomson Reuters consistente no travamento de um dos filtros (de recorrência), ou seja, o próprio sistema inseriu um número que nos impede de fazer qualquer outro tipo de pesquisa dos movimentos financeiros.
+É a segunda...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: "Analisamos seu atendimento, compreendemos a importância e concluímos que será necessário realizar uma correção em nosso sistema para solucionar. No momento não temos solução paliativa para a situação, mas estamos trabalhando na solução. Este tipo de correção entra automaticamente em nossa lista de prioridades.
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: "Analisamos seu atendimento, compreendemos a importância e concluímos que será necessário realizar uma alteração em nosso sistema para atendê-lo de forma completa. No momento não temos solução paliativa para a situação, mas entendemos a necessidade e por isso estamos analisando a possibilidade de desenvolvimento.
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: SUPORTE DA DOMINIO NÃO RESOLVE OS PROBLEMAS E AINDA DESLIGA NA CARA
+A Domínio usa como propaganda na hora da venda que possui como diferencial perante os concorrentes o fato de o suporte de atendimento ser rápido para atender, em poucos minutos ( menos de 5 minutos) atendem a ligação para iniciar o suporte ao cliente. Isso inclusive me foi dito no momento em que eu estava fecha...
+
+-------------------------
+
+4. Problema: Integrações / automações
+Ocorrências: 5
+Negativos: 2
+Confiança: média
+Prioridade: 67
+Impacto: 7
+Gravidade: 7
+Dor real: Trabalho manual repetitivo por falta de conexão entre ferramentas.
+Insight: Integração só é diferencial quando reduz trabalho real no nicho escolhido.
+Aprendizado do mercado: Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo.
+O que fazer: Mapear integrações que economizam tempo real e priorizar as que eliminam retrabalho operacional.
+O que NÃO fazer: Não adicionar integrações apenas para parecer completo se elas não reduzem esforço do usuário.
+Oportunidade: Priorizar integrações que reduzem trabalho manual nos nichos escolhidos.
+Ação recomendada: Mapear integrações que economizam tempo real e não adicionar integrações apenas por parecer completo.
+Fontes: Importação manual (5)
+Palavras-chave SEO:
+  - sistema com automação de prazos
+  - gestão operacional automatizada
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: SUPORTE DA DOMINIO NÃO RESOLVE OS PROBLEMAS E AINDA DESLIGA NA CARA
+A Domínio usa como propaganda na hora da venda que possui como diferencial perante os concorrentes o fato de o suporte de atendimento ser rápido para atender, em poucos minutos ( menos de 5 minutos) atendem a ligação para iniciar o suporte ao cliente. Isso inclusive me foi dito no momento em que eu estava fecha...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Emissão de boletos pelo sistema
+Boa tarde, abri um protocolo de ******* sobre Integração com banco INTER para emissão de boletos, até o momento esta sem atualização desde 11/06/******* e essa solicitação é uma demanda antiga dos clientes onde consta ******* pedidos(Criar uma opção no sistema para que seja possível realizar a emissão de boletos junto ao banco Inter através de AP...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Erro no Captcha do Domínio Web - Empresa nega problema
+Estou enfrentando um problema grave com o sistema Domínio Web da Domínio Sistemas. Ao tentar acessar o sistema, o Captcha não funciona corretamente, impedindo o login. Mesmo após reiniciar a internet e seguir todas as recomendações da empresa, o erro persiste. Gravei um vídeo demonstrando o problema, mas a Domínio Sistemas...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Módulo honorários, não tem nenhuma conexão para gerar boleto por API com nenhum banco. Ainda é arquivo remessa.
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: ONVIO MESSENGER - THOMSON REUTERS
+Propaganda enganosa. Desde o início de *******, nossa empresa, um escritório de contabilidade, adquiriu a ferramenta ONVIO MESSENGER com o intuito de facilitar a comunicação com nossos clientes por meio do WhatsApp. No entanto, enfrentamos problemas significativos na utilização desta plataforma.
+
+Problemas Persistentes:
+Desempenho lento: As sol...
+
+-------------------------
+
+5. Problema: Preço / valor percebido
+Ocorrências: 3
+Negativos: 2
+Confiança: baixa
+Prioridade: 40
+Impacto: 7
+Gravidade: 6
+Dor real: Cliente não enxerga retorno claro para justificar a assinatura.
+Insight: Preço dói menos quando o produto é vendido pelo prejuízo evitado.
+Aprendizado do mercado: Empresas pagam melhor quando entendem o custo de não resolver o problema.
+O que fazer: Melhorar posicionamento, mostrando prejuízo evitado, multas prevenidas e retrabalho reduzido.
+O que NÃO fazer: Não vender apenas lista de funcionalidades; vender resultado operacional e risco reduzido.
+Oportunidade: Vender pelo prejuízo evitado e não por quantidade de funcionalidades.
+Ação recomendada: Melhorar posicionamento, mostrando prejuízo evitado, multas prevenidas e retrabalho reduzido.
+Fontes: Importação manual (3)
+Palavras-chave SEO:
+  - software que evita multas
+  - sistema para reduzir retrabalho
+  - gestão de prazos para empresas
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Sistema não é seguro, apresenta milhares de falhas e suporte não resolve
+Contratei o sistema legal one, com a promessa de que o sistema é líder no segmento e apresenta todas as soluções para o acompanhamento processual. Porém o sistema apresenta inúmeros erros e o sistema de consulta de andamentos é absolutamente instável e não é confiável. O suporte demora semanas pra tentar r...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: ONVIO fora do AR - Sempre !
+Constantemente temos problemas com a Domínio, de vários tipos inclusive. Uma vez por semana e principalmente no início do mês o ONVIO Portal do cliente fica fora. Hoje 16/0/******* o sistema está fora desde ontem e tudo que o suporte diz é: "a matriz está avaliando Sr." Para um escritório com centenas de clientes isso é o CAOS. Não conseguimos acompa...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: IMPORTAÇÃO DE NOTAS
+O SISTEMA ESTÁ TRAVANDO NA HORA DE IMPORTAS AS NOTAS DE ENTRADA E SAÍDA,
+JÁ ABRIRMOS VARIOS SUPORTES, PEGARAM VARIAS VEZES O BANCO DE DADOS, E NÃO RESOLVEM NADA!
+E UM DOS SISTEMAS MAIS CARO E ESTÁ DEIXANO MEU ESCRITÓRIO NA MÃO
+
+-------------------------
+
+6. Problema: Notificações ruins / alertas ignorados
+Ocorrências: 2
+Negativos: 2
+Confiança: baixa
+Prioridade: 37
+Impacto: 9
+Gravidade: 9
+Dor real: Falta de confiança nos avisos e risco de perder prazos importantes.
+Insight: Alertas só têm valor quando ajudam o usuário a agir antes do prejuízo.
+Aprendizado do mercado: Notificação demais vira ruído; notificação crítica precisa parecer impossível de ignorar.
+O que fazer: Separar alertas críticos de informativos e destacar risco, prazo, multa e bloqueios obrigatórios.
+O que NÃO fazer: Não mandar várias notificações iguais sem contexto, prioridade ou próxima ação clara.
+Oportunidade: Criar alertas críticos orientados a risco, prazo, multa e bloqueios obrigatórios.
+Ação recomendada: Separar alertas críticos de informativos e destacar risco financeiro/prazo.
+Fontes: Importação manual (2)
+Palavras-chave SEO:
+  - controle de vencimentos
+  - sistema para não perder prazo
+  - alerta de tarefas críticas
+  - evitar multas por atraso
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Definimos sua solicitação como uma notificação de erro, pois a rotina que está disponível não está funcionando corretamente.
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: SISTEMA APRESENTANDO DIVERSAS FALHAS
+Temos os sistemas da Thomson Reuters (DOMÍNIO E ONVIO), frequentemente ambos estão fora do ar, e apresentando falhas que afetam os nossos clientes. atualmente o sistema Onvio, está passando por estabilidade a pelo menos 20 dias e não envia os e-mails de notificação para os clientes, e isso tem gerado um grande transtorno. O Domínio cai const...
+
+-------------------------
+
+7. Problema: Onboarding complexo / muitas decisões iniciais
+Ocorrências: 1
+Negativos: 1
+Confiança: baixa
+Prioridade: 25
+Impacto: 10
+Gravidade: 10
+Dor real: Sobrecarga cognitiva antes do usuário enxergar valor no produto.
+Insight: Usuários querem produzir antes de aprender a arquitetura do sistema.
+Aprendizado do mercado: O primeiro valor precisa aparecer antes da primeira configuração complexa.
+O que fazer: Criar primeiro acesso guiado por nicho, com template automático e primeira tarefa pronta.
+O que NÃO fazer: Não exigir que o usuário entenda espaços, pastas, listas, tipos ou configurações antes de fazer algo útil.
+Oportunidade: Esconder a arquitetura e entregar valor em menos de 60 segundos com templates prontos por nicho.
+Ação recomendada: Criar primeiro acesso guiado por nicho, com template automático e primeira tarefa pronta.
+Fontes: Importação manual (1)
+Palavras-chave SEO:
+  - sistema pronto para contabilidade
+  - software simples para começar rápido
+  - alternativa simples ao ClickUp
+  - onboarding rápido para equipes
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: LEGAL ONE - NÃO CUMPRE O PROMETIDO
+Contratei há um mês o Legal One para o escritório, porém o sistema não tem funcionado desde que foi implantado. Durante os treinamentos o sistema rodou perfeitamente, depois que se finaliza o treinamento começaram os problemas: Não há retorno adequado de suporte, após o treinamento, pois publicações do dia só consegui resolver a situação no di...
+
+-------------------------
+
+8. Problema: Muitos cliques / fluxo burocrático
+Ocorrências: 1
+Negativos: 0
+Confiança: baixa
+Prioridade: 24
+Impacto: 9
+Gravidade: 10
+Dor real: Perda de tempo em tarefas simples e sensação de burocracia.
+Insight: Usuários valorizam resolver tarefas críticas sem navegar por várias telas.
+Aprendizado do mercado: Menos cliques pode ser um diferencial competitivo maior que ter mais funcionalidades.
+O que fazer: Transformar ações repetidas em atalhos, edição lateral, ações rápidas e conclusão sem sair da tela.
+O que NÃO fazer: Não criar novos passos, modais encadeados ou menus extras para ações simples.
+Oportunidade: Criar fluxos em tela única, ações rápidas e conclusão sem sair do contexto.
+Ação recomendada: Criar ações rápidas, edição lateral e conclusão de tarefa em uma única tela.
+Fontes: Importação manual (1)
+Palavras-chave SEO:
+  - gestão com menos cliques
+  - sistema simples de tarefas
+  - produtividade em uma tela
+  - software fácil de usar
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Legal One: serviços ruim, suporte sofrível
+Sou cliente há alguns anos do Legal One, fornecido pela Thomson.
+Optei pelo sistema para facilitar a migração do banco de dados do escritório anterior, mesmo achando o sistema burocrático e pouco eficiente.
+Ao longo dos anos o sistema vem piorando, com atualizações que o tornaram ainda menos prático. Contudo, o alto custo - humano, esp...
+
+-------------------------
+
+9. Problema: Interface confusa / excesso visual
+Ocorrências: 1
+Negativos: 0
+Confiança: baixa
+Prioridade: 21
+Impacto: 8
+Gravidade: 8
+Dor real: Usuário se sente perdido e evita usar o sistema por medo de errar.
+Insight: Quando tudo parece importante, nada guia o usuário para a próxima ação.
+Aprendizado do mercado: Clareza visual reduz suporte, aumenta ativação e melhora retenção.
+O que fazer: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+O que NÃO fazer: Não colocar todas as funcionalidades visíveis na mesma tela apenas para parecer completo.
+Oportunidade: Simplificar telas principais, reduzir botões visíveis e priorizar tarefas críticas.
+Ação recomendada: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+Fontes: Importação manual (1)
+Palavras-chave SEO:
+  - software de gestão intuitivo
+  - sistema de tarefas simples
+  - gestão operacional fácil
+  - alternativa simples ao Asana
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Qualidade do produto e atendimento
+A fase de negociação e venda é ótima, prometem mundos e fundos, tudo é possível ser personalizado e modificado de acordo com a necessidade do cliente. No entanto, o pós vendas é péssimo, há total descaso por parte dos atendentes, os prazos não são cumpridos e não há comprometimento das áreas envolvidas.
+Dentre os problemas que enfrentamos desd...
+
+=========================
+PONTOS FORTES DETECTADOS - LISTA COMPLETA
+=========================
+1. Ponto forte: Ponto forte: facilidade de uso
+Ocorrências: 14
+Confiança: média
+Insight: Usuários elogiam quando conseguem entender e executar sem treinamento pesado.
+Aprendizado do mercado: Facilidade de uso deve ser tratada como diferencial central, não como detalhe visual.
+O que preservar/fazer: Preservar fluxos simples e usar esse ponto forte como referência para qualquer nova tela.
+O que NÃO fazer: Não sacrificar simplicidade para adicionar recursos avançados que poucos usam.
+Fontes: Importação manual (14)
+
+-------------------------
+
+2. Ponto forte: Ponto forte: satisfação geral / confiança
+Ocorrências: 10
+Confiança: média
+Insight: Usuários satisfeitos tendem a valorizar confiabilidade, estabilidade e sensação de boa escolha.
+Aprendizado do mercado: Comentários positivos mostram o que o mercado considera obrigatório preservar ao criar uma alternativa.
+O que preservar/fazer: Preservar confiabilidade, estabilidade e clareza de valor antes de adicionar complexidade.
+O que NÃO fazer: Não interpretar elogios gerais como autorização para copiar todas as funcionalidades do concorrente.
+Fontes: Importação manual (10)
+
+-------------------------
+
+3. Ponto forte: Ponto forte: rapidez / leveza
+Ocorrências: 1
+Confiança: baixa
+Insight: Usuários percebem velocidade como sinal de qualidade e confiabilidade.
+Aprendizado do mercado: Leveza pode virar posicionamento comercial contra ferramentas grandes e lentas.
+O que preservar/fazer: Manter carregamento rápido como requisito de produto em telas críticas.
+O que NÃO fazer: Não adicionar gráficos, scripts ou componentes que comprometam a sensação de velocidade.
+Fontes: Importação manual (1)
+
+-------------------------
+
+4. Ponto forte: Ponto forte: centralização / tudo em um útil
+Ocorrências: 1
+Confiança: baixa
+Insight: Usuários valorizam centralizar trabalho quando isso não aumenta complexidade.
+Aprendizado do mercado: Centralização é vantagem para usuários avançados, mas precisa ser escondida dos iniciantes.
+O que preservar/fazer: Oferecer visão centralizada sem obrigar novos usuários a configurar toda a estrutura antes de usar.
+O que NÃO fazer: Não transformar centralização em excesso de menus, níveis e decisões iniciais.
+Fontes: Importação manual (1)
+
+=========================
+APRENDIZADOS DO MERCADO
+=========================
+1. Prazos / risco / multas (problema, confiança média)
+Aprendizado: A dor mais vendável não é organizar tarefas, é evitar prejuízo operacional.
+Insight: Controle de prazo tem valor financeiro direto quando evita multa e retrabalho.
+Evidência: 19 ocorrência(s), 9 negativa(s), 10 mista(s), confiança média.
+Fazer: Criar dashboard de risco operacional por cliente, prazo e impacto.
+Não fazer: Não tratar vencimentos como tarefas comuns; prazos críticos precisam de hierarquia visual própria.
+
+2. Lentidão / performance (problema, confiança média)
+Aprendizado: Velocidade percebida é parte do valor do produto, não apenas detalhe técnico.
+Insight: Usuários abandonam ou evitam ferramentas que parecem pesadas no dia a dia.
+Evidência: 18 ocorrência(s), 14 negativa(s), 4 mista(s), confiança média.
+Fazer: Medir carregamento das telas principais e priorizar uma experiência rápida nas ações mais repetidas.
+Não fazer: Não adicionar componentes pesados, dashboards poluídos ou recursos que aumentem tempo de carregamento sem gerar valor claro.
+
+3. Falta de funcionalidades importantes (problema, confiança média)
+Aprendizado: Pedidos de funcionalidade precisam ser filtrados por repetição, nicho e impacto real.
+Insight: Nem toda falta de funcionalidade merece desenvolvimento; algumas indicam nicho errado ou expectativa desalinhada.
+Evidência: 20 ocorrência(s), 9 negativa(s), 11 mista(s), confiança média.
+Fazer: Agrupar pedidos por resultado esperado e desenvolver apenas o que reduzir dor recorrente do nicho escolhido.
+Não fazer: Não criar funcionalidades isoladas baseadas em pedidos raros ou sem ligação com a proposta central.
+
+4. Ponto forte: facilidade de uso (ponto_forte, confiança média)
+Aprendizado: Facilidade de uso deve ser tratada como diferencial central, não como detalhe visual.
+Insight: Usuários elogiam quando conseguem entender e executar sem treinamento pesado.
+Evidência: 14 ocorrência(s) positiva(s), confiança média.
+Fazer: Preservar fluxos simples e usar esse ponto forte como referência para qualquer nova tela.
+Não fazer: Não sacrificar simplicidade para adicionar recursos avançados que poucos usam.
+
+5. Ponto forte: satisfação geral / confiança (ponto_forte, confiança média)
+Aprendizado: Comentários positivos mostram o que o mercado considera obrigatório preservar ao criar uma alternativa.
+Insight: Usuários satisfeitos tendem a valorizar confiabilidade, estabilidade e sensação de boa escolha.
+Evidência: 10 ocorrência(s) positiva(s), confiança média.
+Fazer: Preservar confiabilidade, estabilidade e clareza de valor antes de adicionar complexidade.
+Não fazer: Não interpretar elogios gerais como autorização para copiar todas as funcionalidades do concorrente.
+
+6. Integrações / automações (problema, confiança média)
+Aprendizado: Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo.
+Insight: Integração só é diferencial quando reduz trabalho real no nicho escolhido.
+Evidência: 5 ocorrência(s), 2 negativa(s), 3 mista(s), confiança média.
+Fazer: Mapear integrações que economizam tempo real e priorizar as que eliminam retrabalho operacional.
+Não fazer: Não adicionar integrações apenas para parecer completo se elas não reduzem esforço do usuário.
+
+7. Preço / valor percebido (problema, confiança baixa)
+Aprendizado: Empresas pagam melhor quando entendem o custo de não resolver o problema.
+Insight: Preço dói menos quando o produto é vendido pelo prejuízo evitado.
+Evidência: 3 ocorrência(s), 2 negativa(s), 1 mista(s), confiança baixa.
+Fazer: Melhorar posicionamento, mostrando prejuízo evitado, multas prevenidas e retrabalho reduzido.
+Não fazer: Não vender apenas lista de funcionalidades; vender resultado operacional e risco reduzido.
+
+8. Notificações ruins / alertas ignorados (problema, confiança baixa)
+Aprendizado: Notificação demais vira ruído; notificação crítica precisa parecer impossível de ignorar.
+Insight: Alertas só têm valor quando ajudam o usuário a agir antes do prejuízo.
+Evidência: 2 ocorrência(s), 2 negativa(s), 0 mista(s), confiança baixa.
+Fazer: Separar alertas críticos de informativos e destacar risco, prazo, multa e bloqueios obrigatórios.
+Não fazer: Não mandar várias notificações iguais sem contexto, prioridade ou próxima ação clara.
+
+9. Onboarding complexo / muitas decisões iniciais (problema, confiança baixa)
+Aprendizado: O primeiro valor precisa aparecer antes da primeira configuração complexa.
+Insight: Usuários querem produzir antes de aprender a arquitetura do sistema.
+Evidência: 1 ocorrência(s), 1 negativa(s), 0 mista(s), confiança baixa.
+Fazer: Criar primeiro acesso guiado por nicho, com template automático e primeira tarefa pronta.
+Não fazer: Não exigir que o usuário entenda espaços, pastas, listas, tipos ou configurações antes de fazer algo útil.
+
+10. Muitos cliques / fluxo burocrático (problema, confiança baixa)
+Aprendizado: Menos cliques pode ser um diferencial competitivo maior que ter mais funcionalidades.
+Insight: Usuários valorizam resolver tarefas críticas sem navegar por várias telas.
+Evidência: 1 ocorrência(s), 0 negativa(s), 1 mista(s), confiança baixa.
+Fazer: Transformar ações repetidas em atalhos, edição lateral, ações rápidas e conclusão sem sair da tela.
+Não fazer: Não criar novos passos, modais encadeados ou menus extras para ações simples.
+
+11. Interface confusa / excesso visual (problema, confiança baixa)
+Aprendizado: Clareza visual reduz suporte, aumenta ativação e melhora retenção.
+Insight: Quando tudo parece importante, nada guia o usuário para a próxima ação.
+Evidência: 1 ocorrência(s), 0 negativa(s), 1 mista(s), confiança baixa.
+Fazer: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+Não fazer: Não colocar todas as funcionalidades visíveis na mesma tela apenas para parecer completo.
+
+12. Ponto forte: rapidez / leveza (ponto_forte, confiança baixa)
+Aprendizado: Leveza pode virar posicionamento comercial contra ferramentas grandes e lentas.
+Insight: Usuários percebem velocidade como sinal de qualidade e confiabilidade.
+Evidência: 1 ocorrência(s) positiva(s), confiança baixa.
+Fazer: Manter carregamento rápido como requisito de produto em telas críticas.
+Não fazer: Não adicionar gráficos, scripts ou componentes que comprometam a sensação de velocidade.
+
+13. Ponto forte: centralização / tudo em um útil (ponto_forte, confiança baixa)
+Aprendizado: Centralização é vantagem para usuários avançados, mas precisa ser escondida dos iniciantes.
+Insight: Usuários valorizam centralizar trabalho quando isso não aumenta complexidade.
+Evidência: 1 ocorrência(s) positiva(s), confiança baixa.
+Fazer: Oferecer visão centralizada sem obrigar novos usuários a configurar toda a estrutura antes de usar.
+Não fazer: Não transformar centralização em excesso de menus, níveis e decisões iniciais.
+
+=========================
+FREQUÊNCIA POR FONTE
+=========================
+1. Importação manual (reddit)
+Total: 99 | Negativos: 31 | Positivos: 16 | Mistos: 20 | Neutros: 32
+Principais categorias: Não classificado: 34; Prazos / risco / multas: 16; Lentidão / performance: 16; Ponto forte: satisfação geral / confiança: 10; Falta de funcionalidades importantes: 10
+
+=========================
+CONTRADIÇÕES DETECTADAS
+=========================
+1. O produto é valorizado quando funciona bem, mas rejeitado quando fica lento
+Resumo: Há 10 evidência(s) de valor/confiança e 18 reclamação(ões) ligadas a performance.
+Risco: Adicionar recursos ou copiar concorrentes sem cuidar da velocidade pode transformar valor percebido em frustração.
+Decisão sugerida: Priorizar velocidade percebida, estabilidade e tarefas críticas antes de aumentar complexidade ou adicionar recursos pesados.
+Confiança: alta
+
+=========================
+OPORTUNIDADES DE SEO DETECTADAS
+=========================
+- sistema para evitar multas | Origem: Prazos / risco / multas | Ângulo: Focar em prevenção de prejuízo, multa e retrabalho.
+- controle de prazos contábeis | Origem: Prazos / risco / multas | Ângulo: Focar em prevenção de prejuízo, multa e retrabalho.
+- gestão de obrigações | Origem: Prazos / risco / multas | Ângulo: Focar em prevenção de prejuízo, multa e retrabalho.
+- controle de vencimentos de clientes | Origem: Prazos / risco / multas | Ângulo: Focar em prevenção de prejuízo, multa e retrabalho.
+- alternativa leve ao ClickUp | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- software de gestão rápido | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- sistema de tarefas sem travar | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- gestão de projetos leve | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- sistema completo sem complicar | Origem: Falta de funcionalidades importantes | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- software com funções essenciais | Origem: Falta de funcionalidades importantes | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- software fácil de usar | Origem: Ponto forte: facilidade de uso | Ângulo: Explorar facilidade, clareza e baixa curva de aprendizado.
+- sistema simples para equipes | Origem: Ponto forte: facilidade de uso | Ângulo: Explorar facilidade, clareza e baixa curva de aprendizado.
+- gestão intuitiva | Origem: Ponto forte: facilidade de uso | Ângulo: Explorar facilidade, clareza e baixa curva de aprendizado.
+- software confiável de gestão | Origem: Ponto forte: satisfação geral / confiança | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema de gestão estável | Origem: Ponto forte: satisfação geral / confiança | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alternativa confiável ao ClickUp | Origem: Ponto forte: satisfação geral / confiança | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema com automação de prazos | Origem: Integrações / automações | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- gestão operacional automatizada | Origem: Integrações / automações | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- software que evita multas | Origem: Preço / valor percebido | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema para reduzir retrabalho | Origem: Preço / valor percebido | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- gestão de prazos para empresas | Origem: Preço / valor percebido | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- controle de vencimentos | Origem: Notificações ruins / alertas ignorados | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema para não perder prazo | Origem: Notificações ruins / alertas ignorados | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alerta de tarefas críticas | Origem: Notificações ruins / alertas ignorados | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- evitar multas por atraso | Origem: Notificações ruins / alertas ignorados | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema pronto para contabilidade | Origem: Onboarding complexo / muitas decisões iniciais | Ângulo: Prometer começar a trabalhar rápido sem configurar arquitetura complexa.
+- software simples para começar rápido | Origem: Onboarding complexo / muitas decisões iniciais | Ângulo: Prometer começar a trabalhar rápido sem configurar arquitetura complexa.
+- alternativa simples ao ClickUp | Origem: Onboarding complexo / muitas decisões iniciais | Ângulo: Prometer começar a trabalhar rápido sem configurar arquitetura complexa.
+- onboarding rápido para equipes | Origem: Onboarding complexo / muitas decisões iniciais | Ângulo: Prometer começar a trabalhar rápido sem configurar arquitetura complexa.
+- gestão com menos cliques | Origem: Muitos cliques / fluxo burocrático | Ângulo: Prometer resolução em menos etapas e menos telas.
+- sistema simples de tarefas | Origem: Muitos cliques / fluxo burocrático | Ângulo: Prometer resolução em menos etapas e menos telas.
+- produtividade em uma tela | Origem: Muitos cliques / fluxo burocrático | Ângulo: Prometer resolução em menos etapas e menos telas.
+- software de gestão intuitivo | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema de tarefas simples | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- gestão operacional fácil | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alternativa simples ao Asana | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alternativa rápida ao ClickUp | Origem: Ponto forte: rapidez / leveza | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- software de gestão leve | Origem: Ponto forte: rapidez / leveza | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- sistema rápido para tarefas | Origem: Ponto forte: rapidez / leveza | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- sistema centralizado para empresas | Origem: Ponto forte: centralização / tudo em um útil | Ângulo: Explorar centralização sem complexidade.
+
+=========================
+ROADMAP SUGERIDO - LISTA COMPLETA
+=========================
+1. Item: Prazos / risco / multas
+Prioridade: crítica | Confiança: média | Complexidade: média/alta
+Dor real: Medo de prejuízo, multa, retrabalho e falha operacional com cliente.
+Aprendizado: A dor mais vendável não é organizar tarefas, é evitar prejuízo operacional.
+Motivo: Apareceu em 19 comentário(s), com 9 negativo(s), confiança média.
+Fazer: Criar dashboard de risco operacional por cliente, prazo e impacto.
+Não fazer: Não tratar vencimentos como tarefas comuns; prazos críticos precisam de hierarquia visual própria.
+Ação recomendada: Criar dashboard de risco operacional por cliente, prazo e impacto.
+
+-------------------------
+
+2. Item: Lentidão / performance
+Prioridade: crítica | Confiança: média | Complexidade: média
+Dor real: Frustração, perda de produtividade e sensação de ferramenta pesada.
+Aprendizado: Velocidade percebida é parte do valor do produto, não apenas detalhe técnico.
+Motivo: Apareceu em 18 comentário(s), com 14 negativo(s), confiança média.
+Fazer: Medir carregamento das telas principais e priorizar uma experiência rápida nas ações mais repetidas.
+Não fazer: Não adicionar componentes pesados, dashboards poluídos ou recursos que aumentem tempo de carregamento sem gerar valor claro.
+Ação recomendada: Auditar páginas lentas, reduzir queries, otimizar carregamento inicial e medir tempo por tela.
+
+-------------------------
+
+3. Item: Falta de funcionalidades importantes
+Prioridade: crítica | Confiança: média | Complexidade: variável
+Dor real: Usuário sente que precisa recorrer a outras ferramentas para concluir o trabalho.
+Aprendizado: Pedidos de funcionalidade precisam ser filtrados por repetição, nicho e impacto real.
+Motivo: Apareceu em 20 comentário(s), com 9 negativo(s), confiança média.
+Fazer: Agrupar pedidos por resultado esperado e desenvolver apenas o que reduzir dor recorrente do nicho escolhido.
+Não fazer: Não criar funcionalidades isoladas baseadas em pedidos raros ou sem ligação com a proposta central.
+Ação recomendada: Validar se o pedido aparece em múltiplas fontes antes de colocar no roadmap.
+
+-------------------------
+
+4. Item: Integrações / automações
+Prioridade: alta | Confiança: média | Complexidade: média/alta
+Dor real: Trabalho manual repetitivo por falta de conexão entre ferramentas.
+Aprendizado: Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo.
+Motivo: Apareceu em 5 comentário(s), com 2 negativo(s), confiança média.
+Fazer: Mapear integrações que economizam tempo real e priorizar as que eliminam retrabalho operacional.
+Não fazer: Não adicionar integrações apenas para parecer completo se elas não reduzem esforço do usuário.
+Ação recomendada: Mapear integrações que economizam tempo real e não adicionar integrações apenas por parecer completo.
+
+-------------------------
+
+5. Item: Preço / valor percebido
+Prioridade: alta | Confiança: baixa | Complexidade: baixa
+Dor real: Cliente não enxerga retorno claro para justificar a assinatura.
+Aprendizado: Empresas pagam melhor quando entendem o custo de não resolver o problema.
+Motivo: Apareceu em 3 comentário(s), com 2 negativo(s), confiança baixa.
+Fazer: Melhorar posicionamento, mostrando prejuízo evitado, multas prevenidas e retrabalho reduzido.
+Não fazer: Não vender apenas lista de funcionalidades; vender resultado operacional e risco reduzido.
+Ação recomendada: Melhorar posicionamento, mostrando prejuízo evitado, multas prevenidas e retrabalho reduzido.
+
+-------------------------
+
+6. Item: Notificações ruins / alertas ignorados
+Prioridade: crítica | Confiança: baixa | Complexidade: média
+Dor real: Falta de confiança nos avisos e risco de perder prazos importantes.
+Aprendizado: Notificação demais vira ruído; notificação crítica precisa parecer impossível de ignorar.
+Motivo: Apareceu em 2 comentário(s), com 2 negativo(s), confiança baixa.
+Fazer: Separar alertas críticos de informativos e destacar risco, prazo, multa e bloqueios obrigatórios.
+Não fazer: Não mandar várias notificações iguais sem contexto, prioridade ou próxima ação clara.
+Ação recomendada: Separar alertas críticos de informativos e destacar risco financeiro/prazo.
+
+-------------------------
+
+7. Item: Onboarding complexo / muitas decisões iniciais
+Prioridade: crítica | Confiança: baixa | Complexidade: baixa/média
+Dor real: Sobrecarga cognitiva antes do usuário enxergar valor no produto.
+Aprendizado: O primeiro valor precisa aparecer antes da primeira configuração complexa.
+Motivo: Apareceu em 1 comentário(s), com 1 negativo(s), confiança baixa.
+Fazer: Criar primeiro acesso guiado por nicho, com template automático e primeira tarefa pronta.
+Não fazer: Não exigir que o usuário entenda espaços, pastas, listas, tipos ou configurações antes de fazer algo útil.
+Ação recomendada: Criar primeiro acesso guiado por nicho, com template automático e primeira tarefa pronta.
+
+-------------------------
+
+8. Item: Muitos cliques / fluxo burocrático
+Prioridade: crítica | Confiança: baixa | Complexidade: média
+Dor real: Perda de tempo em tarefas simples e sensação de burocracia.
+Aprendizado: Menos cliques pode ser um diferencial competitivo maior que ter mais funcionalidades.
+Motivo: Apareceu em 1 comentário(s), com 0 negativo(s), confiança baixa.
+Fazer: Transformar ações repetidas em atalhos, edição lateral, ações rápidas e conclusão sem sair da tela.
+Não fazer: Não criar novos passos, modais encadeados ou menus extras para ações simples.
+Ação recomendada: Criar ações rápidas, edição lateral e conclusão de tarefa em uma única tela.
+
+-------------------------
+
+9. Item: Interface confusa / excesso visual
+Prioridade: média | Confiança: baixa | Complexidade: baixa
+Dor real: Usuário se sente perdido e evita usar o sistema por medo de errar.
+Aprendizado: Clareza visual reduz suporte, aumenta ativação e melhora retenção.
+Motivo: Apareceu em 1 comentário(s), com 0 negativo(s), confiança baixa.
+Fazer: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+Não fazer: Não colocar todas as funcionalidades visíveis na mesma tela apenas para parecer completo.
+Ação recomendada: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+
+=========================
+PERGUNTAS QUE VOCÊ DEVE RESPONDER
+=========================
+1. Qual é o principal problema detectado?
+2. Qual é a principal dor dos usuários?
+3. Qual ponto forte do mercado eu devo preservar no meu SaaS?
+4. Existe alguma contradição nos comentários? Como devo agir?
+5. O que devo corrigir primeiro?
+6. O que devo ignorar?
+7. O que devo remover ou simplificar?
+8. Qual funcionalidade tem maior retorno?
+9. Qual funcionalidade tem menor retorno?
+10. Quais oportunidades de SEO devo atacar primeiro?
+11. Quais oportunidades de marketing existem?
+12. O que os concorrentes estão errando?
+13. Como posso usar esses erros para diferenciar meu SaaS?
+14. Gere um plano de ação priorizado do maior impacto para o menor impacto.
