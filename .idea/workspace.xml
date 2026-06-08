@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="aadc4c9d-64b4-4461-b082-cc5e3ef21cdb" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/00/48/0048fc35cc5aa214d7e66624d8005ff3962f35e2" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/00/48/0048fc35cc5aa214d7e66624d8005ff3962f35e2" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d0/1e/d01e8c05bce15e332f85d49c71ed6e61a6ea48d8" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d0/1e/d01e8c05bce15e332f85d49c71ed6e61a6ea48d8" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tarefas/9ffe9eda-bd48-4204-99e6-e38327f74006.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tarefas/Centro Operacional.docx" beforeDir="false" />
-    </list>
+    <list default="true" id="aadc4c9d-64b4-4461-b082-cc5e3ef21cdb" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -277,7 +270,7 @@
       <workItem from="1780325191046" duration="595000" />
       <workItem from="1780336699714" duration="1826000" />
       <workItem from="1780398662864" duration="5486000" />
-      <workItem from="1780485191058" duration="2257000" />
+      <workItem from="1780485191058" duration="2258000" />
     </task>
     <servers />
   </component>

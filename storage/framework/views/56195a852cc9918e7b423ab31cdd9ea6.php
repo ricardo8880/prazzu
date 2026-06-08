@@ -10,758 +10,692 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <link rel="stylesheet" href="<?php echo e(asset('css/home-classica.css')); ?>?v=20260520-sidebar-logo-final">
-    <link rel="stylesheet" href="<?php echo e(asset('css/home-operacional.css')); ?>?v=20260520-sidebar-logo-final">
-    <link rel="stylesheet" href="<?php echo e(asset('css/trabalho-pages.css')); ?>?v=20260507-home-kanban">
-    <link rel="stylesheet" href="<?php echo e(asset('css/prazzu-ux-essentials.css')); ?>?v=<?php echo e(file_exists(public_path('css/prazzu-ux-essentials.css')) ? filemtime(public_path('css/prazzu-ux-essentials.css')) : time()); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/home-operacional.css')); ?>?v=<?php echo e(file_exists(public_path('css/home-operacional.css')) ? filemtime(public_path('css/home-operacional.css')) : time()); ?>">
 
     <?php
-        $trabalhoCssPath = public_path('css/trabalho-pages.css');
-
-        $kpis = $dashboard['kpis'] ?? [];
-        $tarefas = $dashboard['tarefas'] ?? ['tabs' => [], 'itens' => []];
-        $kanban = $dashboard['kanban'] ?? [];
-        $prazos = $dashboard['prazos'] ?? [];
-        $sla = $dashboard['sla'] ?? [];
-        $documentos = $dashboard['documentos'] ?? [];
-        $financeiro = $dashboard['financeiro'] ?? [];
-        $portal = $dashboard['portal'] ?? [];
-        $compliance = $dashboard['compliance'] ?? [];
-        $atividades = $dashboard['atividades'] ?? [];
-        $assistente = $dashboard['assistente'] ?? [];
         $urls = $dashboard['urls'] ?? [];
         $usuario = explode(' ', $dashboard['usuario'] ?? 'Usuário')[0];
-
         $resumoHoje = $dashboard['resumoHoje'] ?? [];
         $minhasPendencias = $dashboard['minhasPendencias'] ?? [];
         $vencimentosProximos = $dashboard['vencimentosProximos'] ?? [];
         $aprovacoesAguardando = $dashboard['aprovacoesAguardando'] ?? [];
         $itensAtrasados = $dashboard['itensAtrasados'] ?? [];
-        $ultimosComentarios = $dashboard['ultimosComentarios'] ?? [];
-        $atalhosRapidos = $dashboard['atalhosRapidos'] ?? [];
         $resumoEmpresas = $dashboard['resumoEmpresas'] ?? [];
-        $fluxoOperacional = $dashboard['fluxoOperacional'] ?? [];
         $notificacoes = $dashboard['notificacoes'] ?? [];
-        $whiteLabel = \App\Support\WhiteLabelSettings::make();
-        $assistantName = $whiteLabel->assistantName();
-        $brandName = $whiteLabel->displayName();
+        $documentosVencidos = $dashboard['documentosVencidos'] ?? [];
+        $documentosVencendo = $dashboard['documentosVencendo'] ?? [];
+
+        $resumoHojePorLabel = collect($resumoHoje)->keyBy('label');
+        $obrigacoesVencidas = $resumoHojePorLabel->get('Atrasados', []);
+        $vencimentosSemana = $resumoHojePorLabel->get('Vencem em 7 dias', []);
+        $aprovacoesPendentes = $resumoHojePorLabel->get('Aprovações', []);
+        $pendenciasResumo = $resumoHojePorLabel->get('Pendências', []);
+        $clientesEmRisco = collect($resumoEmpresas)->filter(fn ($empresa) => in_array($empresa['tone'] ?? '', ['danger', 'warning'], true))->count();
+        $centralDiaData = now()->locale('pt_BR')->translatedFormat('d \d\e F \d\e Y');
+        $centralDiaSemana = now()->locale('pt_BR')->translatedFormat('l');
+        $centralDiaNotificacoes = count($notificacoes ?? []);
+
+        $centralDiaCards = [
+            ['label' => 'Obrigações vencidas', 'value' => $obrigacoesVencidas['value'] ?? 0, 'hint' => 'Risco de multa', 'tone' => 'danger', 'icon' => 'calendar-alert', 'url' => $obrigacoesVencidas['url'] ?? ($urls['prazos'] ?? '#')],
+            ['label' => 'Vencem hoje', 'value' => $vencimentosSemana['value'] ?? 0, 'hint' => 'Vencimento hoje', 'tone' => 'orange', 'icon' => 'calendar-check', 'url' => $vencimentosSemana['url'] ?? ($urls['prazos'] ?? '#')],
+            ['label' => 'Clientes sem enviar documentos', 'value' => count($documentosVencidos) + count($documentosVencendo), 'hint' => 'Podem gerar atraso', 'tone' => 'amber', 'icon' => 'users-alert', 'url' => $urls['documentos'] ?? '#'],
+            ['label' => 'Pendências paradas há muitos dias', 'value' => count($minhasPendencias), 'hint' => 'Acima de 5 dias', 'tone' => 'purple', 'icon' => 'clock', 'url' => $urls['minhasPendencias'] ?? '#'],
+            ['label' => 'Aprovações travadas', 'value' => $aprovacoesPendentes['value'] ?? count($aprovacoesAguardando), 'hint' => 'Aguardando ação', 'tone' => 'blue', 'icon' => 'approval', 'url' => $aprovacoesPendentes['url'] ?? ($urls['centralAprovacoes'] ?? '#')],
+            ['label' => 'Tarefas sem responsável', 'value' => collect($minhasPendencias)->filter(fn ($item) => empty($item['responsavel']) || $item['responsavel'] === 'Sem responsável')->count(), 'hint' => 'Risco de não execução', 'tone' => 'teal', 'icon' => 'user-search', 'url' => $urls['tarefas'] ?? '#'],
+            ['label' => 'Clientes em risco', 'value' => $clientesEmRisco, 'hint' => 'Alto risco de atraso', 'tone' => 'danger', 'icon' => 'shield-alert', 'url' => $urls['tarefas'] ?? '#'],
+        ];
+
+        $filaPrioridade = collect();
+
+        foreach ($itensAtrasados as $item) {
+            $filaPrioridade->push(['peso' => 10, 'prioridade' => 'Crítico', 'badge' => 'danger', 'tipo' => 'Obrigação vencida', 'descricao' => $item['titulo'] ?? 'Item atrasado', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? ($item['tempo'] ?? '-'), 'atraso' => $item['tempo'] ?? 'Atrasado', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#')]);
+        }
+
+        foreach ($vencimentosProximos as $item) {
+            $filaPrioridade->push(['peso' => 8, 'prioridade' => 'Alto', 'badge' => 'warning', 'tipo' => 'Vence hoje', 'descricao' => $item['titulo'] ?? 'Vencimento próximo', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Hoje', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#')]);
+        }
+
+        foreach ($documentosVencidos as $item) {
+            $filaPrioridade->push(['peso' => 7, 'prioridade' => 'Alto', 'badge' => 'warning', 'tipo' => 'Sem documentos', 'descricao' => $item['titulo'] ?? 'Documento pendente', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Pendente', 'url' => $item['url'] ?? ($urls['documentos'] ?? '#')]);
+        }
+
+        foreach ($minhasPendencias as $item) {
+            $filaPrioridade->push(['peso' => 5, 'prioridade' => ($item['badge'] ?? '') === 'danger' ? 'Crítico' : 'Médio', 'badge' => $item['badge'] ?? 'info', 'tipo' => 'Pendência parada', 'descricao' => $item['titulo'] ?? 'Pendência operacional', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['status'] ?? ($item['responsavel'] ?? '-'), 'url' => $item['url'] ?? ($urls['minhasPendencias'] ?? '#')]);
+        }
+
+        foreach ($aprovacoesAguardando as $aprovacao) {
+            $filaPrioridade->push(['peso' => 4, 'prioridade' => 'Médio', 'badge' => 'info', 'tipo' => 'Aprovação travada', 'descricao' => $aprovacao['titulo'] ?? 'Aprovação aguardando', 'cliente' => $aprovacao['empresa'] ?? 'Sem empresa', 'vencimento' => '-', 'atraso' => $aprovacao['tempo'] ?? 'Aguardando', 'url' => $aprovacao['url'] ?? ($urls['centralAprovacoes'] ?? '#')]);
+        }
+
+        $filaPrioridadeTotal = $filaPrioridade->count();
+        $filaPrioridade = $filaPrioridade->sortByDesc('peso')->take(7)->values();
+
+        $clientesMaiorRisco = collect($resumoEmpresas ?? [])->map(function ($empresa) use ($urls) {
+            $atrasados = (int) ($empresa['atrasados'] ?? 0);
+            $vencendo = (int) ($empresa['vencendo'] ?? 0);
+            $total = (int) ($empresa['total'] ?? 0);
+            $score = ($atrasados * 3) + ($vencendo * 2) + $total;
+            $riscoLabel = $empresa['risco'] ?? 'Baixo';
+            $riscoTone = $empresa['tone'] ?? 'success';
+
+            if ($atrasados >= 5 || $score >= 18) {
+                $riscoLabel = 'Muito alto';
+                $riscoTone = 'danger';
+            } elseif ($atrasados >= 2 || $score >= 10) {
+                $riscoLabel = 'Alto';
+                $riscoTone = 'warning';
+            } elseif ($atrasados >= 1 || $vencendo >= 2 || $score >= 5) {
+                $riscoLabel = 'Médio';
+                $riscoTone = 'info';
+            }
+
+            $problemas = [];
+            if ($atrasados > 0) $problemas[] = $atrasados . ' ' . ($atrasados === 1 ? 'item atrasado' : 'itens atrasados');
+            if ($vencendo > 0) $problemas[] = $vencendo . ' ' . ($vencendo === 1 ? 'vencendo hoje/próximo' : 'vencendo hoje/próximos');
+            if (empty($problemas)) $problemas[] = $total > 0 ? $total . ' ' . ($total === 1 ? 'item aberto' : 'itens abertos') : 'Sem pendências críticas';
+
+            return ['score' => $score, 'empresa' => $empresa['empresa'] ?? 'Sem empresa', 'risco' => $riscoLabel, 'tone' => $riscoTone, 'problemas' => implode(', ', $problemas), 'ultima_atividade' => $empresa['ultima_atividade'] ?? ($empresa['atualizado_em'] ?? ($empresa['data'] ?? '-')), 'url' => $empresa['url'] ?? ($urls['tarefas'] ?? '#')];
+        })->sortByDesc('score')->take(5)->values();
+
+        $calendarioHoje = collect();
+        foreach ($vencimentosProximos as $item) {
+            $calendarioHoje->push(['hora' => $item['hora'] ?? '09:00', 'titulo' => $item['titulo'] ?? 'Vencimento operacional', 'descricao' => $item['empresa'] ?? 'Sem empresa', 'tone' => 'danger', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#')]);
+        }
+        foreach ($aprovacoesAguardando as $item) {
+            $calendarioHoje->push(['hora' => $item['hora'] ?? '14:00', 'titulo' => $item['titulo'] ?? 'Aprovação pendente', 'descricao' => $item['empresa'] ?? 'Sem empresa', 'tone' => 'info', 'url' => $item['url'] ?? ($urls['centralAprovacoes'] ?? '#')]);
+        }
+        $calendarioHoje = $calendarioHoje->take(4)->values();
+
+        $totalClientesAtivos = collect($resumoEmpresas)->count();
+        $totalObrigacoesMes = (int) (($pendenciasResumo['value'] ?? 0) + ($obrigacoesVencidas['value'] ?? 0) + ($vencimentosSemana['value'] ?? 0));
+        $totalConcluidasReferencia = max(0, $totalObrigacoesMes - (int) ($obrigacoesVencidas['value'] ?? 0));
+        $percentualConcluido = $totalObrigacoesMes > 0 ? min(100, max(0, (int) round(($totalConcluidasReferencia / $totalObrigacoesMes) * 100))) : 0;
+        $emRiscoAtraso = count($itensAtrasados) + count($documentosVencidos) + $clientesEmRisco;
     ?>
 
-
-    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(file_exists($trabalhoCssPath)): ?>
-        <style>
-            <?php echo file_get_contents($trabalhoCssPath); ?>
-
-        </style>
-    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-    <style>
-        .pz-home-kanban-section {
-            margin-top: 24px;
-            width: 100%;
-        }
-
-        .pz-home-kanban-card {
-            overflow: hidden;
-        }
-
-        .pz-home-kanban-wrap {
-            margin-top: 16px;
-            overflow-x: auto;
-            padding-bottom: 4px;
-        }
-
-        .pz-home-tp-kanban {
-            grid-template-columns: repeat(3, minmax(260px, 1fr));
-            gap: 16px;
-            min-width: 820px;
-        }
-
-        .pz-home-tp-kanban .tp-kanban-column {
-            min-height: 320px;
-        }
-
-        .pz-home-tp-kanban .tp-kanban-card {
-            min-height: auto;
-            text-decoration: none;
-        }
-
-        .pz-home-tp-kanban .tp-kanban-card-top strong {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .pz-home-kanban-link {
-            margin-top: 14px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .pz-home-kanban-link a {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 999px;
-            padding: 10px 16px;
-            background: #f4f0ff;
-            color: #5b2fbf;
-            font-size: 13px;
-            font-weight: 800;
-            text-decoration: none;
-        }
-
-        @media (max-width: 920px) {
-            .pz-home-tp-kanban {
-                min-width: 760px;
-            }
-        }
-    </style>
-
-
-    <section class="pz-ux-toolbar">
-        <div>
-            <strong>Comece por aqui</strong>
-            <span>Revise pendências críticas, documentos e aprovações antes de abrir telas detalhadas.</span>
-        </div>
-        <div class="pz-ux-actions">
-            <a class="pz-ux-action primary" href="<?php echo e($urls['novaTarefa'] ?? '#'); ?>">Nova tarefa</a>
-            <a class="pz-ux-action" href="<?php echo e($urls['enviarDocumento'] ?? '#'); ?>">Enviar documento</a>
-            <a class="pz-ux-action subtle" href="<?php echo e($urls['prazos'] ?? '#'); ?>">Ver prazos</a>
-        </div>
-    </section>
-
-    <section class="pz-ux-block soft">
-        <div class="pz-ux-head">
-            <div>
-                <span class="pz-ux-kicker">Orientação rápida</span>
-                <h2>O que fazer primeiro hoje</h2>
-                <p>Use os atalhos abaixo para trabalhar em ordem de impacto e reduzir cliques desnecessários.</p>
-            </div>
-        </div>
-        <div class="pz-ux-grid three">
-            <article class="pz-ux-guide-card"><span class="pz-ux-guide-icon">1</span><div><strong>Resolver atrasos</strong><span>Priorize itens vencidos e aprovações travadas antes das tarefas novas.</span></div></article>
-            <article class="pz-ux-guide-card"><span class="pz-ux-guide-icon">2</span><div><strong>Concluir pendências</strong><span>Abra sua fila operacional e finalize o que depende de responsável interno.</span></div></article>
-            <article class="pz-ux-guide-card"><span class="pz-ux-guide-icon">3</span><div><strong>Atualizar documentos</strong><span>Envie anexos faltantes e revise documentos que vão aparecer no portal.</span></div></article>
-        </div>
-    </section>
-
-    <section class="pz-layout-switcher" data-home-layout-switcher>
-        <div>
-            <strong data-home-layout-title>Home clássica</strong>
-            <small data-home-layout-description>Você está vendo a Home antiga, com todos os indicadores originais preservados.</small>
-        </div>
-        <button type="button" class="pz-layout-toggle-btn" data-home-layout-toggle>Ver Home operacional</button>
-    </section>
-
-    <div data-home-layout="classic">
-    <div class="pz-home-shell">
-        <main class="pz-main-column">
-            <section class="pz-hero-row">
+    <div data-home-layout="operational" class="pz-central-page" x-data="pzHomeResolutionModal()" x-on:keydown.escape.window="closeResolutionModal()">
+        <section class="pz-central-topbar">
+            <div class="pz-central-title-group">
+                <span class="pz-central-shield" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.7-3 8.8-7 10-4-1.2-7-5.3-7-10V6l7-3z" stroke="currentColor" stroke-width="1.9"/><path d="M12 8v5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M12 16h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                </span>
                 <div>
-                    <h1>Olá, <?php echo e($usuario); ?>! <span>👋</span></h1>
-                    <p>Aqui está o resumo da sua operação hoje.</p>
+                    <h1>Central do Dia</h1>
+                    <p>Priorize o que pode gerar atraso, multa ou retrabalho hoje.</p>
                 </div>
-
-                <div class="pz-quick-actions">
-                    <a href="<?php echo e($urls['novaTarefa'] ?? '#'); ?>" class="pz-btn pz-btn-primary">＋ Nova Tarefa</a>
-                    <a href="<?php echo e($urls['enviarDocumento'] ?? '#'); ?>" class="pz-btn">↥ Enviar Documento</a>
-                    <a href="<?php echo e($urls['novoCliente'] ?? '#'); ?>" class="pz-btn">♙ Novo Cliente</a>
-                </div>
-            </section>
-
-            <section class="pz-kpi-grid">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $kpis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $kpi): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <article class="pz-card pz-kpi-card pz-tone-<?php echo e($kpi['tone'] ?? 'purple'); ?>">
-                        <div class="pz-kpi-top">
-                            <span><?php echo e($kpi['label'] ?? '-'); ?></span>
-                            <b><?php echo e($kpi['icon'] ?? '•'); ?></b>
-                        </div>
-
-                        <strong><?php echo e($kpi['value'] ?? '-'); ?></strong>
-                        <small><?php echo e($kpi['trend'] ?? '-'); ?></small>
-
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($kpi['spark'])): ?>
-                            <div class="pz-sparkline">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $kpi['spark']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $point): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <i style="height: <?php echo e(max(18, min(94, (int) $point * 3))); ?>%"></i>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                            </div>
-                        <?php else: ?>
-                            <div class="pz-risk-pill"><?php echo e($kpi['trend'] ?? 'Acompanhar'); ?></div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                    </article>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-            </section>
-
-            <section class="pz-grid-top">
-                <article class="pz-card pz-tasks-card">
-                    <div class="pz-card-head">
-                        <h2>Minhas tarefas</h2>
-                        <a href="<?php echo e($urls['tarefas'] ?? '#'); ?>">Ver todas</a>
-                    </div>
-
-                    <div class="pz-tabs">
-                        <span class="is-active">Pendentes <b><?php echo e($tarefas['tabs']['pendentes'] ?? 0); ?></b></span>
-                        <span>Em andamento <b><?php echo e($tarefas['tabs']['em_andamento'] ?? 0); ?></b></span>
-                        <span>Concluídas <b><?php echo e($tarefas['tabs']['concluidas'] ?? 0); ?></b></span>
-                    </div>
-
-                    <div class="pz-task-list">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $tarefas['itens'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <a href="<?php echo e($item['url'] ?? '#'); ?>" class="pz-task-row">
-                                <span class="pz-checkbox"></span>
-                                <strong><?php echo e($item['titulo'] ?? '-'); ?></strong>
-                                <em class="pz-badge pz-badge-<?php echo e($item['prioridade']['class'] ?? 'warning'); ?>">
-                                    <?php echo e($item['prioridade']['label'] ?? 'Média'); ?>
-
-                                </em>
-                                <small><?php echo e($item['data'] ?? '-'); ?></small>
-                            </a>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                            <div class="pz-empty"><strong>Nenhuma tarefa pendente.</strong><br>Quando houver algo para você executar, aparecerá aqui com prioridade e prazo.</div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                    </div>
-
-                    <a href="<?php echo e($urls['novaTarefa'] ?? '#'); ?>" class="pz-add-link">＋ Adicionar tarefa</a>
-                </article>
-
-                <article class="pz-card pz-deadlines-card">
-                    <div class="pz-card-head">
-                        <h2>Próximos prazos</h2>
-                        <a href="<?php echo e($urls['prazos'] ?? '#'); ?>">Ver todos</a>
-                    </div>
-
-                    <div class="pz-deadline-list">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $prazos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prazo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <a href="<?php echo e($prazo['url'] ?? '#'); ?>" class="pz-deadline-row">
-                                <span>▣</span>
-                                <div>
-                                    <strong><?php echo e($prazo['titulo'] ?? '-'); ?></strong>
-                                    <small><?php echo e($prazo['empresa'] ?? '-'); ?> • <?php echo e($prazo['data'] ?? '-'); ?></small>
-                                </div>
-                                <em><?php echo e($prazo['status'] ?? '-'); ?></em>
-                            </a>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                            <div class="pz-empty"><strong>Nenhum prazo próximo.</strong><br>Documentos e tarefas com vencimento serão destacados automaticamente.</div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                    </div>
-                </article>
-            
-            </section>
-
-            <section class="pz-kanban-full pz-home-kanban-section">
-                <article class="pz-card pz-kanban-card pz-home-kanban-card">
-                    <div class="pz-card-head">
-                        <h2>Visão Kanban</h2>
-                        <a href="<?php echo e($urls['kanban'] ?? '#'); ?>">Ver quadro completo</a>
-                    </div>
-
-                    <div class="pz-home-kanban-wrap">
-                        <div class="tp-kanban pz-home-tp-kanban">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $kanban; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $coluna): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                <div class="tp-kanban-column tp-kanban-<?php echo e($coluna['key'] ?? 'pendente'); ?>">
-                                    <div class="tp-kanban-header">
-                                        <div>
-                                            <strong><?php echo e($coluna['label'] ?? '-'); ?></strong>
-                                            <small><?php echo e($coluna['total'] ?? 0); ?> item(ns)</small>
-                                        </div>
-                                        <span><?php echo e($coluna['total'] ?? 0); ?></span>
-                                    </div>
-
-                                    <div class="tp-kanban-cards">
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($coluna['itens'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                            <?php
-                                                $prioridadeClasse = $item['prioridade']['class'] ?? 'warning';
-                                                $prioridadeBadge = match ($prioridadeClasse) {
-                                                    'danger' => 'tp-mini-danger',
-                                                    'success' => 'tp-mini-success',
-                                                    default => '',
-                                                };
-                                            ?>
-
-                                            <a href="<?php echo e($item['url'] ?? '#'); ?>" class="tp-kanban-card">
-                                                <div class="tp-kanban-card-top">
-                                                    <strong><?php echo e($item['titulo'] ?? '-'); ?></strong>
-                                                    <span class="tp-mini-badge <?php echo e($prioridadeBadge); ?>">
-                                                        <?php echo e($item['prioridade']['label'] ?? 'Média'); ?>
-
-                                                    </span>
-                                                </div>
-
-                                                <span><?php echo e($item['empresa'] ?? 'Sem empresa'); ?></span>
-
-                                                <div class="tp-kanban-meta">
-                                                    <span>Resumo da Home</span>
-                                                    <span>Abrir item</span>
-                                                </div>
-                                            </a>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                            <div class="tp-empty">Nenhum item nesta coluna.</div>
-                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        </div>
-                    </div>
-                </article>
-            </section>
-
-            <section class="pz-grid-bottom">
-                <article class="pz-card pz-sla-card">
-                    <div class="pz-card-head">
-                        <h2>SLA e Prazos</h2>
-                        <a href="<?php echo e($urls['prazos'] ?? '#'); ?>">Ver todos</a>
-                    </div>
-
-                    <div class="pz-sla-content">
-                        <div class="pz-donut">
-                            <b><?php echo e($sla['total'] ?? 0); ?></b>
-                            <span>Total</span>
-                        </div>
-
-                        <div class="pz-sla-legend">
-                            <p><i class="ok"></i> No prazo <strong><?php echo e($sla['noPrazo'] ?? 0); ?> (<?php echo e($sla['percentuais']['noPrazo'] ?? 0); ?>%)</strong></p>
-                            <p><i class="warn"></i> Atenção <strong><?php echo e($sla['atencao'] ?? 0); ?> (<?php echo e($sla['percentuais']['atencao'] ?? 0); ?>%)</strong></p>
-                            <p><i class="late"></i> Vencidos <strong><?php echo e($sla['vencidos'] ?? 0); ?> (<?php echo e($sla['percentuais']['vencidos'] ?? 0); ?>%)</strong></p>
-                        </div>
-                    </div>
-                </article>
-
-                <article class="pz-card pz-docs-card">
-                    <div class="pz-card-head">
-                        <h2>Documentos recentes</h2>
-                        <a href="<?php echo e($urls['documentos'] ?? '#'); ?>">Ver todos</a>
-                    </div>
-
-                    <div class="pz-doc-list">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $documentos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $doc): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <a href="<?php echo e($doc['url'] ?? '#'); ?>" class="pz-doc-row">
-                                <span>▧</span>
-                                <div>
-                                    <strong><?php echo e($doc['titulo'] ?? '-'); ?></strong>
-                                    <small><?php echo e($doc['meta'] ?? '-'); ?></small>
-                                </div>
-                                <em class="pz-badge pz-badge-<?php echo e($doc['status']['class'] ?? 'success'); ?>">
-                                    <?php echo e($doc['status']['label'] ?? 'Válido'); ?>
-
-                                </em>
-                            </a>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                            <div class="pz-empty">Nenhum documento recente.</div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                    </div>
-                </article>
-
-                <article class="pz-card pz-finance-card">
-                    <div class="pz-card-head">
-                        <h2>Faturamento</h2>
-                        <a href="<?php echo e($urls['financeiro'] ?? '#'); ?>">Este mês⌄</a>
-                    </div>
-
-                    <strong class="pz-money">R$ <?php echo e(number_format($financeiro['total'] ?? 0, 2, ',', '.')); ?></strong>
-                    <small class="pz-positive">+32% vs mês anterior</small>
-
-                    <div class="pz-finance-line">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($financeiro['series'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $point): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <i style="height: <?php echo e(max(18, min(95, (int) $point * 3))); ?>%"></i>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </div>
-
-                    <div class="pz-finance-boxes">
-                        <div>
-                            <span>Recebido</span>
-                            <strong>R$ <?php echo e(number_format($financeiro['recebido'] ?? 0, 2, ',', '.')); ?></strong>
-                        </div>
-                        <div>
-                            <span>A receber</span>
-                            <strong>R$ <?php echo e(number_format($financeiro['aReceber'] ?? 0, 2, ',', '.')); ?></strong>
-                        </div>
-                    </div>
-                </article>
-            </section>
-
-            <section class="pz-footer-grid">
-                <article class="pz-card pz-portal-card">
-                    <div class="pz-card-head">
-                        <h2>Portal do Cliente</h2>
-                        <a href="<?php echo e($urls['clientes'] ?? '#'); ?>">Ver portal</a>
-                    </div>
-
-                    <div class="pz-portal-items">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $portal; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <a href="<?php echo e($item['url'] ?? '#'); ?>">
-                                <b>◈</b>
-                                <strong><?php echo e($item['label'] ?? '-'); ?></strong>
-                                <small><?php echo e($item['value'] ?? 0); ?> <?php echo e($item['hint'] ?? ''); ?></small>
-                            </a>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </div>
-                </article>
-
-                <article class="pz-card pz-compliance-card">
-                    <div class="pz-card-head">
-                        <h2>Compliance</h2>
-                        <a href="<?php echo e($urls['prazos'] ?? '#'); ?>">Ver painel</a>
-                    </div>
-
-                    <div class="pz-compliance-items">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $compliance; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <div>
-                                <span><?php echo e($item['label'] ?? '-'); ?></span>
-                                <strong><?php echo e($item['value'] ?? 0); ?></strong>
-                                <small><?php echo e($item['hint'] ?? ''); ?></small>
-                            </div>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                    </div>
-                </article>
-            </section>
-        </main>
-
-        <aside class="pz-right-column">
-            <section class="pz-card pz-ai-card">
-                <div class="pz-ai-head">
-                    <span>✧</span>
-                    <strong><?php echo e($assistantName); ?> <b>BETA</b></strong>
-                    <em>×</em>
-                </div>
-
-                <h3>Olá, <?php echo e($usuario); ?>! 👋</h3>
-                <p>Como posso ajudar hoje?</p>
-
-                <div class="pz-ai-actions">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $assistente; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $acao): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <a href="<?php echo e($acao['url'] ?? '#'); ?>"><?php echo e($acao['texto'] ?? '-'); ?></a>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                </div>
-            </section>
-
-            <section class="pz-card pz-activity-card">
-                <div class="pz-card-head">
-                    <h2>Atividades recentes</h2>
-                    <a href="<?php echo e($urls['kanban'] ?? '#'); ?>">Ver todas</a>
-                </div>
-
-                <div class="pz-activity-list">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $atividades; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $atividade): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <div class="pz-activity-row">
-                            <span><?php echo e(strtoupper(mb_substr($atividade['usuario'] ?? 'S', 0, 1))); ?></span>
-                            <div>
-                                <strong><?php echo e($atividade['titulo'] ?? '-'); ?></strong>
-                                <p><?php echo e($atividade['descricao'] ?? '-'); ?></p>
-                                <small><?php echo e($atividade['quando'] ?? '-'); ?></small>
-                            </div>
-                        </div>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        <div class="pz-empty">Nenhuma atividade recente.</div>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                </div>
-            </section>
-
-            <section class="pz-card pz-upgrade-card">
-                <div class="pz-crown">♛</div>
-                <h2>Desbloqueie o poder do <?php echo e($brandName); ?></h2>
-                <p>Recursos avançados de IA, automações, relatórios personalizados e muito mais.</p>
-                <a href="<?php echo e($urls['financeiro'] ?? '#'); ?>">Upgrade do plano</a>
-            </section>
-        </aside>
-    </div>
-
-    </div>
-
-    <div data-home-layout="operational" class="is-hidden">
-        <div class="pz-home-shell">
-                <section class="pz-home-hero pz-panel">
-                    <div class="pz-hero-copy">
-                        <span class="pz-eyebrow">Painel operacional</span>
-                        <h1>Olá, <?php echo e($usuario); ?>. Veja o que precisa de atenção hoje.</h1>
-                        <p>Centralize pendências, vencimentos, aprovações, comentários e atalhos sem precisar navegar por várias telas.</p>
-                    </div>
-        
-                    <div class="pz-hero-actions">
-                        <a href="<?php echo e($urls['novaTarefa'] ?? '#'); ?>" class="pz-action-primary">＋ Nova tarefa</a>
-                        <a href="<?php echo e($urls['minhasPendencias'] ?? '#'); ?>" class="pz-action-secondary">✓ Pendências</a>
-                        <a href="<?php echo e($urls['centralNotificacoes'] ?? '#'); ?>" class="pz-action-secondary">◉ Notificações</a>
-                    </div>
-                </section>
-        
-                <section class="pz-summary-grid">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $resumoHoje; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $card): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <a href="<?php echo e($card['url'] ?? '#'); ?>" class="pz-summary-card pz-tone-<?php echo e($card['tone'] ?? 'slate'); ?>">
-                            <div>
-                                <span><?php echo e($card['label'] ?? '-'); ?></span>
-                                <strong><?php echo e($card['value'] ?? 0); ?></strong>
-                            </div>
-                            <small><?php echo e($card['hint'] ?? 'Acompanhar'); ?></small>
-                        </a>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        <div class="pz-empty pz-empty-wide">Ainda não existem dados operacionais para exibir na Home.</div>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                </section>
-        
-                <section class="pz-main-grid">
-                    <main class="pz-left-column">
-                        <section class="pz-panel pz-focus-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Prioridade do dia</span>
-                                    <h2>Pendências</h2>
-                                </div>
-                                <a href="<?php echo e($urls['minhasPendencias'] ?? '#'); ?>">Ver todas</a>
-                            </div>
-        
-                            <div class="pz-task-list">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $minhasPendencias; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <a href="<?php echo e($item['url'] ?? '#'); ?>" class="pz-task-row pz-row-<?php echo e($item['badge'] ?? 'info'); ?>">
-                                        <span class="pz-row-status"></span>
-                                        <div class="pz-row-main">
-                                            <strong><?php echo e($item['titulo'] ?? '-'); ?></strong>
-                                            <small><?php echo e($item['empresa'] ?? 'Sem empresa'); ?> • <?php echo e($item['responsavel'] ?? 'Sem responsável'); ?></small>
-                                        </div>
-                                        <div class="pz-row-meta">
-                                            <em><?php echo e($item['status'] ?? '-'); ?></em>
-                                            <span><?php echo e($item['data'] ?? '-'); ?></span>
-                                        </div>
-                                    </a>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <div class="pz-empty">Nenhuma pendência crítica encontrada.</div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </section>
-        
-                        <section class="pz-two-columns">
-                            <article class="pz-panel">
-                                <div class="pz-section-head">
-                                    <div>
-                                        <span class="pz-eyebrow">Calendário operacional</span>
-                                        <h2>Vencimentos próximos</h2>
-                                    </div>
-                                    <a href="<?php echo e($urls['prazos'] ?? '#'); ?>">Ver prazos</a>
-                                </div>
-        
-                                <div class="pz-compact-list">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $vencimentosProximos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                        <a href="<?php echo e($item['url'] ?? '#'); ?>" class="pz-compact-row">
-                                            <b class="pz-date-pill"><?php echo e($item['data'] ?? '-'); ?></b>
-                                            <div>
-                                                <strong><?php echo e($item['titulo'] ?? '-'); ?></strong>
-                                                <small><?php echo e($item['empresa'] ?? 'Sem empresa'); ?> • <?php echo e($item['tempo'] ?? '-'); ?></small>
-                                            </div>
-                                        </a>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                        <div class="pz-empty">Nenhum vencimento nos próximos dias.</div>
-                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                </div>
-                            </article>
-        
-                            <article class="pz-panel">
-                                <div class="pz-section-head">
-                                    <div>
-                                        <span class="pz-eyebrow">Risco imediato</span>
-                                        <h2>Itens atrasados</h2>
-                                    </div>
-                                    <a href="<?php echo e($urls['prazos'] ?? '#'); ?>">Corrigir</a>
-                                </div>
-        
-                                <div class="pz-compact-list">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $itensAtrasados; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                        <a href="<?php echo e($item['url'] ?? '#'); ?>" class="pz-compact-row pz-danger-row">
-                                            <b class="pz-alert-pill">!</b>
-                                            <div>
-                                                <strong><?php echo e($item['titulo'] ?? '-'); ?></strong>
-                                                <small><?php echo e($item['empresa'] ?? 'Sem empresa'); ?> • venceu <?php echo e($item['tempo'] ?? '-'); ?></small>
-                                            </div>
-                                        </a>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                        <div class="pz-empty">Nenhum item atrasado.</div>
-                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                </div>
-                            </article>
-                        </section>
-        
-                        <section class="pz-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Empresas / projetos</span>
-                                    <h2>Resumo operacional por empresa</h2>
-                                </div>
-                                <a href="<?php echo e($urls['tarefas'] ?? '#'); ?>">Abrir tarefas</a>
-                            </div>
-        
-                            <div class="pz-company-grid">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $resumoEmpresas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <a href="<?php echo e($empresa['url'] ?? '#'); ?>" class="pz-company-card pz-company-<?php echo e($empresa['tone'] ?? 'success'); ?>">
-                                        <div class="pz-company-top">
-                                            <strong><?php echo e($empresa['empresa'] ?? 'Sem empresa'); ?></strong>
-                                            <em><?php echo e($empresa['risco'] ?? 'Saudável'); ?></em>
-                                        </div>
-                                        <div class="pz-company-progress"><span style="width: <?php echo e(max(0, min(100, (int) ($empresa['progresso'] ?? 0)))); ?>%"></span></div>
-                                        <div class="pz-company-metrics">
-                                            <span><b><?php echo e($empresa['total'] ?? 0); ?></b> abertos</span>
-                                            <span><b><?php echo e($empresa['atrasados'] ?? 0); ?></b> atrasados</span>
-                                            <span><b><?php echo e($empresa['vencendo'] ?? 0); ?></b> vencendo</span>
-                                        </div>
-                                    </a>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <div class="pz-empty pz-empty-wide">Nenhuma empresa com itens abertos.</div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </section>
-                    </main>
-        
-                    <aside class="pz-right-column">
-                        <section class="pz-panel pz-shortcuts-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Acesso rápido</span>
-                                    <h2>Atalhos rápidos</h2>
-                                </div>
-                            </div>
-        
-                            <div class="pz-shortcuts-grid">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $atalhosRapidos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $atalho): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <a href="<?php echo e($atalho['url'] ?? '#'); ?>" class="pz-shortcut pz-shortcut-<?php echo e($atalho['tone'] ?? 'slate'); ?>">
-                                        <span><?php echo e($atalho['icon'] ?? '•'); ?></span>
-                                        <div>
-                                            <strong><?php echo e($atalho['label'] ?? '-'); ?></strong>
-                                            <small><?php echo e($atalho['hint'] ?? ''); ?></small>
-                                        </div>
-                                    </a>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                            </div>
-                        </section>
-        
-                        <section class="pz-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Decisões</span>
-                                    <h2>Aprovações aguardando</h2>
-                                </div>
-                                <a href="<?php echo e($urls['centralAprovacoes'] ?? '#'); ?>">Central</a>
-                            </div>
-        
-                            <div class="pz-approval-list">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $aprovacoesAguardando; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $aprovacao): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <a href="<?php echo e($aprovacao['url'] ?? '#'); ?>" class="pz-approval-row">
-                                        <span>☑</span>
-                                        <div>
-                                            <strong><?php echo e($aprovacao['titulo'] ?? '-'); ?></strong>
-                                            <small><?php echo e($aprovacao['empresa'] ?? 'Sem empresa'); ?> • <?php echo e($aprovacao['tempo'] ?? '-'); ?></small>
-                                        </div>
-                                    </a>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <div class="pz-empty">Nenhuma aprovação aguardando.</div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </section>
-        
-                        <section class="pz-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Conversas recentes</span>
-                                    <h2>Últimos comentários</h2>
-                                </div>
-                            </div>
-        
-                            <div class="pz-comment-list">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $ultimosComentarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $comentario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <a href="<?php echo e($comentario['url'] ?? '#'); ?>" class="pz-comment-row">
-                                        <span><?php echo e(strtoupper(mb_substr($comentario['usuario'] ?? 'U', 0, 1))); ?></span>
-                                        <div>
-                                            <strong><?php echo e($comentario['titulo'] ?? '-'); ?></strong>
-                                            <p><?php echo e($comentario['comentario'] ?? '-'); ?></p>
-                                            <small><?php echo e($comentario['empresa'] ?? 'Operação'); ?> • <?php echo e($comentario['quando'] ?? '-'); ?></small>
-                                        </div>
-                                    </a>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <div class="pz-empty">Nenhum comentário recente.</div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </section>
-        
-                        <section class="pz-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Fluxo</span>
-                                    <h2>Saúde da operação</h2>
-                                </div>
-                                <a href="<?php echo e($urls['kanban'] ?? '#'); ?>">Kanban</a>
-                            </div>
-        
-                            <div class="pz-flow-list">
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $fluxoOperacional; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $etapa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <div class="pz-flow-row pz-flow-<?php echo e($etapa['tone'] ?? 'slate'); ?>">
-                                        <span><?php echo e($etapa['label'] ?? '-'); ?></span>
-                                        <strong><?php echo e($etapa['value'] ?? 0); ?></strong>
-                                    </div>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <div class="pz-empty">Sem dados do fluxo operacional.</div>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        </section>
-        
-                        <section class="pz-panel pz-finance-panel">
-                            <div class="pz-section-head">
-                                <div>
-                                    <span class="pz-eyebrow">Financeiro</span>
-                                    <h2>Resumo do mês</h2>
-                                </div>
-                                <a href="<?php echo e($urls['financeiro'] ?? '#'); ?>">Abrir</a>
-                            </div>
-        
-                            <div class="pz-finance-total">R$ <?php echo e(number_format($financeiro['total'] ?? 0, 2, ',', '.')); ?></div>
-                            <div class="pz-finance-split">
-                                <span>Recebido <b>R$ <?php echo e(number_format($financeiro['recebido'] ?? 0, 2, ',', '.')); ?></b></span>
-                                <span>A receber <b>R$ <?php echo e(number_format($financeiro['aReceber'] ?? 0, 2, ',', '.')); ?></b></span>
-                            </div>
-                        </section>
-                    </aside>
-                </section>
             </div>
+
+            <div class="pz-central-actions">
+                <a href="<?php echo e($urls['centralNotificacoes'] ?? '#'); ?>" class="pz-central-bell" aria-label="Ver notificações">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 17H5a2 2 0 0 1 1.5-1.94V10a5.5 5.5 0 0 1 11 0v5.06A2 2 0 0 1 19 17h-4z" stroke="currentColor" stroke-width="1.8"/><path d="M10 20a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($centralDiaNotificacoes > 0): ?><b><?php echo e($centralDiaNotificacoes > 99 ? '99+' : $centralDiaNotificacoes); ?></b><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </a>
+                <div class="pz-central-user">
+                    <div class="pz-central-avatar"><?php echo e(strtoupper(mb_substr($usuario ?? 'U', 0, 1))); ?></div>
+                    <div><strong><?php echo e($usuario); ?></strong><small>Administrador</small></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pz-central-date-row">
+            <div></div>
+            <div class="pz-central-date-actions">
+                <div class="pz-central-date-card"><span aria-hidden="true">▣</span><div><strong><?php echo e($centralDiaData); ?></strong><small><?php echo e(ucfirst($centralDiaSemana)); ?></small></div></div>
+                <a href="<?php echo e(request()->fullUrl()); ?>" class="pz-refresh-btn">↻ Atualizar</a>
+            </div>
+        </section>
+
+        <section class="pz-central-day-grid" aria-label="Resumo crítico da Central do Dia">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $centralDiaCards; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $card): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <a href="<?php echo e($card['url'] ?? '#'); ?>" class="pz-central-day-card pz-tone-<?php echo e($card['tone'] ?? 'slate'); ?>">
+                    <span class="pz-central-day-icon" aria-hidden="true"><i class="pz-icon-<?php echo e($card['icon'] ?? 'dot'); ?>"></i></span>
+                    <span class="pz-card-label"><?php echo e($card['label'] ?? '-'); ?></span>
+                    <strong><?php echo e($card['value'] ?? 0); ?></strong>
+                    <small><?php echo e($card['hint'] ?? 'Acompanhar'); ?></small>
+                    <em>Ver detalhes →</em>
+                </a>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+        </section>
+
+        <section class="pz-content-grid">
+            <main class="pz-main-column">
+                <section class="pz-panel pz-priority-panel">
+                    <div class="pz-section-head">
+                        <div><h2>Fila de Prioridade</h2><p>O que atacar primeiro hoje (ordenado por criticidade)</p></div>
+                        <a href="<?php echo e($urls['minhasPendencias'] ?? '#'); ?>">Ver todas (<?php echo e($filaPrioridadeTotal); ?>)</a>
+                    </div>
+                    <div class="pz-table-wrap">
+                        <table class="pz-priority-table">
+                            <thead><tr><th>Prioridade</th><th>Tipo</th><th>Descrição</th><th>Cliente</th><th>Vencimento / Data</th><th>Dias em atraso</th></tr></thead>
+                            <tbody>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $filaPrioridade; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <tr class="pz-clickable-row" @click="openPriority(<?php echo e(\Illuminate\Support\Js::from($item)); ?>)">
+                                        <td><span class="pz-priority-badge pz-priority-<?php echo e($item['badge'] ?? 'info'); ?>"><?php echo e($item['prioridade'] ?? 'Médio'); ?></span></td>
+                                        <td><?php echo e($item['tipo'] ?? '-'); ?></td>
+                                        <td><strong><?php echo e($item['descricao'] ?? '-'); ?></strong></td>
+                                        <td><?php echo e($item['cliente'] ?? 'Sem empresa'); ?></td>
+                                        <td><strong><?php echo e($item['vencimento'] ?? '-'); ?></strong></td>
+                                        <td class="pz-delay-cell"><?php echo e($item['atraso'] ?? '-'); ?></td>
+                                    </tr>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    <tr><td colspan="6" class="pz-empty-cell">Nenhuma prioridade crítica encontrada para hoje.</td></tr>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="pz-panel pz-risk-clients-panel">
+                    <div class="pz-section-head">
+                        <div><h2>Clientes em Maior Risco</h2><p>Risco calculado com base em atrasos, pendências e documentos</p></div>
+                        <a href="<?php echo e($urls['tarefas'] ?? '#'); ?>">Ver todos</a>
+                    </div>
+                    <div class="pz-table-wrap">
+                        <table class="pz-risk-clients-table">
+                            <thead><tr><th>Cliente</th><th>Risco</th><th>Principais problemas</th><th>Última atividade</th></tr></thead>
+                            <tbody>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $clientesMaiorRisco; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <tr class="pz-clickable-row" @click="openClient(<?php echo e(\Illuminate\Support\Js::from($cliente)); ?>)">
+                                        <td><strong><?php echo e($cliente['empresa'] ?? 'Sem empresa'); ?></strong></td>
+                                        <td><span class="pz-risk-badge pz-risk-<?php echo e($cliente['tone'] ?? 'success'); ?>"><?php echo e($cliente['risco'] ?? 'Baixo'); ?></span></td>
+                                        <td><?php echo e($cliente['problemas'] ?? '-'); ?></td>
+                                        <td><?php echo e($cliente['ultima_atividade'] ?? '-'); ?></td>
+                                    </tr>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    <tr><td colspan="4" class="pz-empty-cell">Nenhum cliente em risco encontrado.</td></tr>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </main>
+
+            <aside class="pz-side-column">
+                <section class="pz-panel pz-calendar-panel">
+                    <div class="pz-section-head"><div><h2>Calendário de Hoje</h2></div><a href="<?php echo e($urls['prazos'] ?? '#'); ?>">Ver calendário</a></div>
+                    <div class="pz-timeline">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $calendarioHoje; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $evento): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <a href="<?php echo e($evento['url'] ?? '#'); ?>" class="pz-timeline-event pz-event-<?php echo e($evento['tone'] ?? 'slate'); ?>">
+                                <span class="pz-event-time"><?php echo e($evento['hora'] ?? '--:--'); ?></span><span class="pz-event-line"></span>
+                                <span><strong><?php echo e($evento['titulo'] ?? '-'); ?></strong><small><?php echo e($evento['descricao'] ?? 'Operação'); ?></small></span>
+                            </a>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="pz-empty-side">Nenhum evento crítico para hoje.</div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </div>
+                    <a href="<?php echo e($urls['prazos'] ?? '#'); ?>" class="pz-side-link">Ver todas as obrigações do dia →</a>
+                </section>
+
+                <section class="pz-panel pz-summary-panel">
+                    <div class="pz-section-head"><div><h2>Resumo do Dia</h2></div></div>
+                    <div class="pz-summary-list">
+                        <div><span>Total de clientes ativos</span><strong><?php echo e($totalClientesAtivos); ?></strong></div>
+                        <div><span>Obrigações este mês</span><strong class="is-green"><?php echo e($totalObrigacoesMes); ?></strong></div>
+                        <div><span>Concluídas</span><strong class="is-green"><?php echo e($percentualConcluido); ?>%</strong></div>
+                        <div class="pz-progress-track"><span style="width: <?php echo e($percentualConcluido); ?>%"></span></div>
+                        <div><span>Em risco de atraso</span><strong class="is-red"><?php echo e($emRiscoAtraso); ?></strong></div>
+                    </div>
+                    <a href="<?php echo e($urls['relatorios'] ?? ($urls['tarefas'] ?? '#')); ?>" class="pz-side-link">Ver relatório completo →</a>
+                </section>
+            </aside>
+        </section>
+
+        <div class="pz-resolution-modal" x-show="resolutionOpen" x-cloak>
+            <div class="pz-resolution-backdrop" @click="closeResolutionModal()"></div>
+            <article class="pz-resolution-shell pz-resolution-shell-v2" role="dialog" aria-modal="true" aria-labelledby="pz-resolution-title" @click.stop>
+                <button type="button" class="pz-resolution-x" @click="closeResolutionModal()" aria-label="Fechar">×</button>
+
+                <header class="pz-resolution-v2-head">
+                    <div class="pz-resolution-v2-title-area">
+                        <div class="pz-resolution-breadcrumb">
+                            <span x-text="resolutionType === 'client' ? 'Clientes em Maior Risco' : 'Fila de Prioridade'"></span>
+                            <b>›</b>
+                            <span x-text="resolutionType === 'client' ? 'Cliente em risco' : (selectedPriority.tipo || 'Item prioritário')"></span>
+                        </div>
+
+                        <div class="pz-resolution-v2-title-row">
+                            <span class="pz-resolution-alert-icon" :class="resolutionType === 'client' ? 'is-client' : 'is-danger'" aria-hidden="true">
+                                <template x-if="resolutionType === 'client'"><span>◆</span></template>
+                                <template x-if="resolutionType !== 'client'"><span>!</span></template>
+                            </span>
+                            <h2 id="pz-resolution-title" x-text="modalTitle()"></h2>
+                            <span class="pz-resolution-severity" :class="severityClass()" x-text="severityLabel()"></span>
+                        </div>
+
+                        <div class="pz-resolution-meta-row">
+                            <span><b>Cliente:</b> <em x-text="modalClientName()"></em></span>
+                            <span><b>Responsável:</b> <em x-text="responsibleName()"></em></span>
+                            <span><b>Tipo:</b> <em x-text="modalType()"></em></span>
+                            <span><b>Área:</b> <em x-text="areaName()"></em></span>
+                            <span><b>ID:</b> <em x-text="modalId()"></em></span>
+                        </div>
+                    </div>
+
+                    <div class="pz-resolution-v2-actions">
+                        <a class="pz-resolution-secondary-btn" :href="currentUrl()">Ir para o cadastro ↗</a>
+                        <button type="button" class="pz-resolution-primary-btn" @click="copyCompletionMessage()">✓ Preparar conclusão</button>
+                        <button type="button" class="pz-resolution-menu-btn" @click="copyResolutionText()">⋮</button>
+                    </div>
+                </header>
+
+                <div class="pz-resolution-v2-body">
+                    <section class="pz-resolution-top-grid">
+                        <div class="pz-resolution-risk-card" :class="severityClass()">
+                            <span class="pz-resolution-risk-label" x-text="riskHeadline()"></span>
+                            <strong x-text="mainRiskNumber()"></strong>
+                            <p x-text="riskDescription()"></p>
+                            <div class="pz-resolution-risk-money">
+                                <span x-text="resolutionType === 'client' ? 'Risco operacional' : 'Impacto estimado'"></span>
+                                <b x-text="financialImpactText()"></b>
+                            </div>
+                        </div>
+
+                        <div class="pz-resolution-impact-card">
+                            <h3>Impacto</h3>
+                            <div class="pz-resolution-impact-line"><span>SLA interno</span><b :class="isCritical() ? 'is-red' : ''" x-text="slaText()"></b></div>
+                            <div class="pz-resolution-impact-line"><span>Risco financeiro</span><b :class="isCritical() ? 'is-red' : ''" x-text="financialRiskLevel()"></b></div>
+                            <div class="pz-resolution-impact-line"><span>Probabilidade de atraso</span><b :class="isCritical() ? 'is-red' : ''" x-text="delayProbability()"></b></div>
+                            <div class="pz-resolution-impact-line"><span>Impacto no cliente</span><b :class="isCritical() ? 'is-red' : ''" x-text="clientImpactLevel()"></b></div>
+                        </div>
+
+                        <div class="pz-resolution-progress-card">
+                            <div class="pz-resolution-progress-head">
+                                <h3>Progresso de resolução</h3>
+                                <a :href="currentUrl()">Ver dados</a>
+                            </div>
+                            <div class="pz-resolution-steps" :style="`--pz-progress:${progressPercent()}%`">
+                                <template x-for="(step, index) in progressSteps()" :key="step">
+                                    <div class="pz-resolution-step" :class="index < activeStepIndex() ? 'is-done' : (index === activeStepIndex() ? 'is-active' : '')">
+                                        <span x-text="index + 1"></span>
+                                        <b x-text="step"></b>
+                                    </div>
+                                </template>
+                            </div>
+                            <small><span x-text="progressPercent()"></span>% concluído</small>
+                        </div>
+
+                        <div class="pz-resolution-deadline-card" :class="severityClass()">
+                            <h3>Prazo final recomendado</h3>
+                            <strong x-text="deadlineRecommendation()"></strong>
+                            <p x-text="deadlineReason()"></p>
+                            <div class="pz-resolution-countdown">
+                                <span><b x-text="countdownParts().h"></b><small>h</small></span>
+                                <i>:</i>
+                                <span><b x-text="countdownParts().m"></b><small>min</small></span>
+                                <i>:</i>
+                                <span><b x-text="countdownParts().s"></b><small>seg</small></span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="pz-resolution-action-grid">
+                        <div class="pz-resolution-next-action-card">
+                            <span>PRÓXIMA AÇÃO RECOMENDADA</span>
+                            <h3 x-text="nextActionTitle()"></h3>
+                            <p x-text="nextActionDescription()"></p>
+                            <div class="pz-resolution-next-action-meta">
+                                <div><small>Origem da pendência</small><b x-text="blockOrigin()"></b></div>
+                                <div><small>Prioridade</small><b class="is-red" x-text="severityLabel()"></b></div>
+                                <div><small>Bloqueia transmissão</small><b class="is-red" x-text="blocksTransmission()"></b></div>
+                            </div>
+                            <button type="button" class="pz-resolution-primary-btn" @click="copyRecommendedAction()">⚡ Resolver agora</button>
+                        </div>
+
+                        <div class="pz-resolution-quick-card">
+                            <h3>Ações rápidas</h3>
+                            <div class="pz-resolution-quick-grid">
+                                <button type="button" @click="copyWhatsAppMessage()"><span>☘</span><b>Cobrar cliente</b><small>WhatsApp</small></button>
+                                <button type="button" @click="copyEmailMessage()"><span>✉</span><b>Enviar e-mail</b><small>Cobrança</small></button>
+                                <button type="button" @click="copyDocumentRequest()"><span>▤</span><b>Solicitar documento</b><small>Do cliente</small></button>
+                                <button type="button" @click="copyReceivedMessage()"><span>✓</span><b>Marcar como recebido</b><small>Mensagem pronta</small></button>
+                                <button type="button" @click="copyDelegationMessage()"><span>♙</span><b>Delegar tarefa</b><small>Outro responsável</small></button>
+                                <button type="button" @click="copyRescheduleMessage()"><span>◷</span><b>Reagendar prazo</b><small>Nova data</small></button>
+                                <button type="button" @click="copyCompletionMessage()"><span>✓</span><b>Concluir obrigação</b><small>Finalizar</small></button>
+                                <a :href="currentUrl()"><span>☊</span><b>Abrir cadastro</b><small>Editar dados</small></a>
+                            </div>
+                            <small class="pz-resolution-copy-feedback" x-show="copied" x-text="copied"></small>
+                        </div>
+                    </section>
+
+                    <section class="pz-resolution-tabs">
+                        <button type="button" class="is-active">Checklist de resolução</button>
+                        <button type="button" @click="copyDocumentRequest()">Documentos</button>
+                        <button type="button" @click="copyPendingSummary()">Pendências</button>
+                        <button type="button" @click="copyActivitySummary()">Histórico</button>
+                        <button type="button" @click="copyResolutionText()">Comentários</button>
+                    </section>
+
+                    <section class="pz-resolution-content-grid">
+                        <div class="pz-resolution-card pz-resolution-checklist-card">
+                            <h3>Checklist de resolução</h3>
+                            <p>Execute os passos e conclua com o mínimo de troca de tela.</p>
+                            <div class="pz-resolution-checklist-v2">
+                                <template x-for="(step, index) in resolutionChecklist()" :key="step.title">
+                                    <label :class="index === 0 ? 'is-current' : ''">
+                                        <input type="checkbox">
+                                        <span x-text="index + 1"></span>
+                                        <b x-text="step.title"></b>
+                                        <small x-text="step.subtitle"></small>
+                                        <em x-text="index === 0 ? 'Agora' : 'Pendente'"></em>
+                                    </label>
+                                </template>
+                            </div>
+                            <button type="button" class="pz-resolution-outline-full" @click="copyChecklistDoneMessage()">✓ Marcar etapa como concluída</button>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-finance-card">
+                            <h3>Informações financeiras</h3>
+                            <div class="pz-resolution-money-list">
+                                <div><span>Multa mínima</span><b x-text="minimumPenaltyText()"></b></div>
+                                <div><span>Multa estimada</span><b class="is-red" x-text="estimatedPenaltyText()"></b></div>
+                                <div><span>Juros diários</span><b x-text="dailyInterestText()"></b></div>
+                                <div><span>Risco financeiro total</span><b class="is-red" x-text="totalFinancialRiskText()"></b></div>
+                            </div>
+                            <div class="pz-resolution-warning-box">⚠ Quanto antes resolver, menor o prejuízo e o retrabalho.</div>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-client-card">
+                            <div class="pz-resolution-card-head-link"><h3>Cliente</h3><a :href="currentUrl()">Ver dados</a></div>
+                            <div class="pz-resolution-client-main">
+                                <span x-text="clientInitials()"></span>
+                                <div><strong x-text="modalClientName()"></strong><small x-text="clientStatusText()"></small></div>
+                            </div>
+                            <div class="pz-resolution-client-kpis">
+                                <div><span>Obrigações em atraso</span><b class="is-red" x-text="clientDelayedCount()"></b></div>
+                                <div><span>Pendências abertas</span><b class="is-orange" x-text="clientPendingCount()"></b></div>
+                                <div><span>Risco do cliente</span><b class="is-red" x-text="clientRiskText()"></b></div>
+                            </div>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-owner-card">
+                            <h3>Responsável</h3>
+                            <div class="pz-resolution-owner-main">
+                                <span x-text="responsibleInitials()"></span>
+                                <div><strong x-text="responsibleName()"></strong><small x-text="areaName()"></small></div>
+                            </div>
+                            <div class="pz-resolution-contact-row">
+                                <button type="button" @click="copyWhatsAppMessage()">☘</button>
+                                <button type="button" @click="copyEmailMessage()">✉</button>
+                                <button type="button" @click="copyResolutionText()">☷</button>
+                                <button type="button" @click="copyDelegationMessage()">↗</button>
+                            </div>
+                            <button type="button" class="pz-resolution-outline-full" @click="copyDelegationMessage()">Alterar responsável</button>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-docs-card">
+                            <h3>Documentos necessários</h3>
+                            <div class="pz-resolution-list-v2">
+                                <template x-for="doc in documentsList()" :key="doc.name">
+                                    <div><b x-text="doc.name"></b><span :class="doc.statusClass" x-text="doc.status"></span><button type="button" @click="copyDocumentRequest(doc.name)">Solicitar</button></div>
+                                </template>
+                            </div>
+                            <a :href="currentUrl()">Ver todos documentos</a>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-pending-card">
+                            <h3>Pendências relacionadas</h3>
+                            <div class="pz-resolution-list-v2">
+                                <template x-for="pending in pendingList()" :key="pending.name">
+                                    <div><b x-text="pending.name"></b><span :class="pending.statusClass" x-text="pending.status"></span><button type="button" @click="copyPendingSummary(pending.name)">Resolver</button></div>
+                                </template>
+                            </div>
+                            <a :href="currentUrl()">Ver todas pendências</a>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-activities-card">
+                            <h3>Atividades recentes</h3>
+                            <div class="pz-resolution-timeline-v2">
+                                <template x-for="activity in activitiesList()" :key="activity.text + activity.time">
+                                    <div><span></span><b x-text="activity.time"></b><p x-text="activity.text"></p></div>
+                                </template>
+                            </div>
+                            <a :href="currentUrl()">Ver todas atividades</a>
+                        </div>
+
+                        <div class="pz-resolution-card pz-resolution-help-card">
+                            <h3>Precisa de ajuda?</h3>
+                            <p>Use o resumo abaixo para chamar suporte ou encaminhar internamente com contexto completo.</p>
+                            <div class="pz-resolution-help-actions">
+                                <button type="button" @click="copySupportMessage()">Abrir chamado →</button>
+                                <button type="button" @click="copyResolutionText()">Copiar contexto →</button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <footer class="pz-resolution-footer">
+                    <span>Atalho rápido: <b>Ctrl + Enter</b> preparar conclusão</span>
+                    <div>
+                        <button type="button" class="pz-resolution-secondary-btn" @click="copyResolutionText()">Salvar rascunho</button>
+                        <button type="button" class="pz-resolution-primary-btn" @click="copyCompletionMessage()">✓ Preparar conclusão</button>
+                    </div>
+                </footer>
+            </article>
+        </div>
+
+        <script>
+            function pzHomeResolutionModal() {
+                return {
+                    resolutionOpen: false,
+                    resolutionType: 'priority',
+                    selectedPriority: {},
+                    selectedClient: {},
+                    copied: '',
+                    priorityItems: <?php echo \Illuminate\Support\Js::from($filaPrioridade->values())->toHtml() ?>,
+                    openPriority(item) {
+                        this.selectedPriority = item || {};
+                        this.selectedClient = {};
+                        this.resolutionType = 'priority';
+                        this.copied = '';
+                        this.resolutionOpen = true;
+                    },
+                    openClient(client) {
+                        this.selectedClient = client || {};
+                        this.selectedPriority = {};
+                        this.resolutionType = 'client';
+                        this.copied = '';
+                        this.resolutionOpen = true;
+                    },
+                    closeResolutionModal() { this.resolutionOpen = false; },
+                    currentUrl() { return this.resolutionType === 'client' ? (this.selectedClient.url || '#') : (this.selectedPriority.url || '#'); },
+                    modalTitle() { return this.resolutionType === 'client' ? (this.selectedClient.empresa || 'Cliente em risco') : (this.selectedPriority.descricao || 'Item prioritário'); },
+                    modalClientName() { return this.resolutionType === 'client' ? (this.selectedClient.empresa || 'Cliente') : (this.selectedPriority.cliente || 'Sem empresa'); },
+                    modalType() { return this.resolutionType === 'client' ? 'Cliente em risco' : (this.selectedPriority.tipo || 'Item operacional'); },
+                    modalId() { return this.resolutionType === 'client' ? this.slugId(this.selectedClient.empresa || 'cliente') : this.slugId(this.selectedPriority.descricao || 'item'); },
+                    areaName() {
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return 'Documentos';
+                        if (type.includes('aprovação')) return 'Aprovações';
+                        if (type.includes('obrigação') || type.includes('vence')) return 'Fiscal';
+                        return 'Operacional';
+                    },
+                    responsibleName() { return 'Responsável interno'; },
+                    responsibleInitials() { return this.initials(this.responsibleName()); },
+                    clientInitials() { return this.initials(this.modalClientName()); },
+                    initials(text) { return (text || 'PR').split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase(); },
+                    slugId(text) { return '#' + (text || 'item').toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '').toUpperCase().slice(0, 18); },
+                    severityLabel() {
+                        if (this.resolutionType === 'client') return this.selectedClient.risco || 'Risco';
+                        return this.selectedPriority.prioridade || 'Prioridade';
+                    },
+                    severityClass() {
+                        const label = this.severityLabel().toLowerCase();
+                        if (label.includes('crítico') || label.includes('critico') || label.includes('muito')) return 'is-critical';
+                        if (label.includes('alto')) return 'is-high';
+                        if (label.includes('médio') || label.includes('medio')) return 'is-medium';
+                        return 'is-low';
+                    },
+                    isCritical() { return ['is-critical', 'is-high'].includes(this.severityClass()); },
+                    extractNumber(text) {
+                        const found = String(text || '').match(/\d+/);
+                        return found ? parseInt(found[0], 10) : 0;
+                    },
+                    relatedClientItems() {
+                        const cliente = (this.selectedClient.empresa || '').toString().toLowerCase();
+                        if (!cliente) return [];
+                        return (this.priorityItems || []).filter((item) => (item.cliente || '').toString().toLowerCase() === cliente).slice(0, 8);
+                    },
+                    clientDelayedCount() {
+                        if (this.resolutionType !== 'client') return this.extractNumber(this.selectedPriority.atraso || '');
+                        const items = this.relatedClientItems();
+                        return items.filter((item) => (item.tipo || '').toLowerCase().includes('venc') || (item.atraso || '').toLowerCase().includes('atr')).length || this.extractNumber(this.selectedClient.problemas || '0');
+                    },
+                    clientPendingCount() {
+                        if (this.resolutionType !== 'client') return (this.modalType().toLowerCase().includes('document') || this.modalType().toLowerCase().includes('pend')) ? 1 : 0;
+                        const items = this.relatedClientItems();
+                        return items.filter((item) => !(item.tipo || '').toLowerCase().includes('venc')).length || this.extractNumber(this.selectedClient.problemas || '0');
+                    },
+                    clientRiskText() { return this.resolutionType === 'client' ? (this.selectedClient.risco || 'Em análise') : this.severityLabel(); },
+                    clientStatusText() { return this.isCritical() ? 'Atenção necessária hoje' : 'Em acompanhamento'; },
+                    riskHeadline() { return this.resolutionType === 'client' ? 'RISCO DO CLIENTE' : (this.isCritical() ? 'RISCO CRÍTICO' : 'RISCO OPERACIONAL'); },
+                    mainRiskNumber() {
+                        if (this.resolutionType === 'client') return this.selectedClient.risco || 'Em risco';
+                        const atraso = this.selectedPriority.atraso || this.selectedPriority.vencimento || '-';
+                        return atraso;
+                    },
+                    riskDescription() {
+                        if (this.resolutionType === 'client') return this.selectedClient.problemas || 'Cliente possui pendências que podem gerar atraso.';
+                        return `${this.selectedPriority.tipo || 'Item'} · ${this.selectedPriority.vencimento || 'Sem data informada'}`;
+                    },
+                    financialImpactText() { return this.isCritical() ? 'Verificar multa/impacto' : 'Acompanhar'; },
+                    financialRiskLevel() { return this.isCritical() ? 'Alto' : 'Médio'; },
+                    delayProbability() { return this.isCritical() ? 'Alta' : 'Moderada'; },
+                    clientImpactLevel() { return this.isCritical() ? 'Alto' : 'Médio'; },
+                    slaText() { return this.isCritical() ? 'Atenção hoje' : 'Dentro do acompanhamento'; },
+                    deadlineRecommendation() { return this.isCritical() ? 'Resolver hoje' : 'Resolver na próxima janela'; },
+                    deadlineReason() { return this.isCritical() ? 'para evitar multa, atraso ou retrabalho' : 'para manter o fluxo sem acúmulo'; },
+                    countdownParts() { return this.isCritical() ? {h: '06', m: '00', s: '00'} : {h: '--', m: '--', s: '--'}; },
+                    progressSteps() {
+                        if (this.resolutionType === 'client') return ['Mapear', 'Cobrar', 'Executar', 'Validar', 'Concluir'];
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return ['Solicitar', 'Receber', 'Validar', 'Anexar', 'Concluir'];
+                        if (type.includes('aprovação')) return ['Abrir', 'Acionar', 'Revisar', 'Aprovar', 'Concluir'];
+                        return ['Iniciar', 'Coletar docs', 'Preparar', 'Transmitir', 'Concluir'];
+                    },
+                    activeStepIndex() {
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return 0;
+                        if (type.includes('aprovação')) return 1;
+                        if ((this.selectedPriority.atraso || '').toLowerCase().includes('há')) return 2;
+                        return 1;
+                    },
+                    progressPercent() { return Math.max(15, Math.min(85, this.activeStepIndex() * 20 + 15)); },
+                    nextActionTitle() {
+                        if (this.resolutionType === 'client') return 'Resolver primeiro os itens vencidos deste cliente';
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return 'Solicitar documento ao cliente';
+                        if (type.includes('aprovação')) return 'Acionar o aprovador responsável';
+                        if (type.includes('obrigação') || type.includes('vence')) return 'Regularizar obrigação e conferir documentos';
+                        return 'Definir responsável e próximo passo';
+                    },
+                    nextActionDescription() {
+                        if (this.resolutionType === 'client') return 'Centralize cobrança, execução e validação dos bloqueios do cliente sem sair desta tela.';
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return 'Sem o documento, o fluxo pode ficar bloqueado e virar atraso operacional.';
+                        if (type.includes('aprovação')) return 'Sem aprovação, a equipe não consegue avançar para conclusão.';
+                        if (type.includes('obrigação') || type.includes('vence')) return 'Priorize a execução para evitar multa, retrabalho ou reclamação do cliente.';
+                        return 'Registre contexto, cobre o responsável e acompanhe até destravar.';
+                    },
+                    blockOrigin() {
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return 'Cliente';
+                        if (type.includes('aprovação')) return 'Interno';
+                        return this.resolutionType === 'client' ? 'Múltiplas origens' : 'Operação';
+                    },
+                    blocksTransmission() {
+                        const type = this.modalType().toLowerCase();
+                        return (type.includes('document') || type.includes('obrigação') || type.includes('vence')) ? 'Sim' : 'Pode bloquear';
+                    },
+                    resolutionChecklist() {
+                        if (this.resolutionType === 'client') return [
+                            {title: 'Listar itens críticos do cliente', subtitle: this.selectedClient.problemas || 'Verificar atrasos e pendências'},
+                            {title: 'Cobrar documentos pendentes', subtitle: 'Enviar mensagem com contexto completo'},
+                            {title: 'Acionar responsáveis internos', subtitle: 'Delegar pendências que dependem da equipe'},
+                            {title: 'Resolver obrigações vencidas', subtitle: 'Regularizar o que gera multa primeiro'},
+                            {title: 'Confirmar conclusão com o cliente', subtitle: 'Registrar evidência e arquivar'}
+                        ];
+                        const type = this.modalType().toLowerCase();
+                        if (type.includes('document')) return [
+                            {title: 'Solicitar documento ao cliente', subtitle: this.selectedPriority.descricao || 'Documento necessário'},
+                            {title: 'Aguardar envio do cliente', subtitle: 'Monitorar retorno'},
+                            {title: 'Validar documento recebido', subtitle: 'Conferir autenticidade e validade'},
+                            {title: 'Anexar documento ao item', subtitle: 'Registrar evidência'},
+                            {title: 'Concluir pendência documental', subtitle: 'Liberar fluxo operacional'}
+                        ];
+                        if (type.includes('aprovação')) return [
+                            {title: 'Acionar aprovador', subtitle: this.modalClientName()},
+                            {title: 'Enviar contexto da aprovação', subtitle: this.selectedPriority.descricao || 'Aprovação pendente'},
+                            {title: 'Acompanhar retorno', subtitle: 'Evitar paralisação do fluxo'},
+                            {title: 'Registrar decisão', subtitle: 'Aprovar ou devolver com motivo'},
+                            {title: 'Liberar próxima etapa', subtitle: 'Encaminhar para conclusão'}
+                        ];
+                        return [
+                            {title: 'Conferir dados da obrigação', subtitle: this.selectedPriority.descricao || 'Item operacional'},
+                            {title: 'Coletar documentos necessários', subtitle: 'Garantir que não há bloqueios'},
+                            {title: 'Preparar execução', subtitle: 'Validar informações e responsável'},
+                            {title: 'Transmitir ou concluir atividade', subtitle: 'Executar tarefa principal'},
+                            {title: 'Confirmar processamento', subtitle: 'Registrar evidência'},
+                            {title: 'Notificar cliente', subtitle: 'Informar conclusão e arquivar'}
+                        ];
+                    },
+                    documentsList() {
+                        const type = this.modalType().toLowerCase();
+                        const primary = type.includes('document') ? (this.selectedPriority.descricao || 'Documento pendente') : 'Documento principal do item';
+                        return [
+                            {name: primary, status: type.includes('document') ? 'Pendente' : 'Validar', statusClass: type.includes('document') ? 'is-pending' : 'is-validating'},
+                            {name: 'Comprovante ou evidência', status: 'Validar', statusClass: 'is-validating'},
+                            {name: 'Registro de conclusão', status: 'Pendente', statusClass: 'is-pending'},
+                        ];
+                    },
+                    pendingList() {
+                        if (this.resolutionType === 'client') {
+                            const related = this.relatedClientItems();
+                            if (related.length) return related.slice(0, 3).map((item) => ({name: item.descricao || item.tipo || 'Item relacionado', status: item.prioridade || item.atraso || 'Aberto', statusClass: (item.badge || '') === 'danger' ? 'is-critical' : 'is-pending'}));
+                        }
+                        return [
+                            {name: this.nextActionTitle(), status: this.severityLabel(), statusClass: this.isCritical() ? 'is-critical' : 'is-pending'},
+                            {name: 'Registrar andamento no item', status: 'Pendente', statusClass: 'is-pending'},
+                        ];
+                    },
+                    activitiesList() {
+                        return [
+                            {time: 'Agora', text: 'Item aberto na Central do Dia'},
+                            {time: this.selectedPriority.vencimento || this.selectedClient.ultima_atividade || '-', text: this.riskDescription()},
+                            {time: '-', text: 'Aguardando atualização operacional'}
+                        ];
+                    },
+                    minimumPenaltyText() { return 'Conforme regra do item'; },
+                    estimatedPenaltyText() { return this.isCritical() ? 'Verificar no cadastro' : 'Não identificado'; },
+                    dailyInterestText() { return 'Quando aplicável'; },
+                    totalFinancialRiskText() { return this.isCritical() ? 'Alto impacto potencial' : 'Em análise'; },
+                    copy(text, feedback) {
+                        if (navigator.clipboard) navigator.clipboard.writeText(text);
+                        this.copied = feedback || 'Conteúdo copiado.';
+                        setTimeout(() => this.copied = '', 2400);
+                    },
+                    baseMessage() {
+                        if (this.resolutionType === 'client') return `Cliente: ${this.modalClientName()}\nRisco: ${this.selectedClient.risco || '-'}\nProblemas: ${this.selectedClient.problemas || '-'}\nAção recomendada: ${this.nextActionTitle()}.`;
+                        return `Item: ${this.selectedPriority.descricao || '-'}\nCliente: ${this.modalClientName()}\nTipo: ${this.selectedPriority.tipo || '-'}\nPrazo/Situação: ${this.selectedPriority.vencimento || '-'} · ${this.selectedPriority.atraso || '-'}\nAção recomendada: ${this.nextActionTitle()}.`;
+                    },
+                    resolutionMessage() { return this.baseMessage(); },
+                    copyResolutionText() { this.copy(this.baseMessage(), 'Contexto copiado.'); },
+                    copyRecommendedAction() { this.copy(`${this.nextActionTitle()}\n\n${this.nextActionDescription()}\n\n${this.baseMessage()}`, 'Ação recomendada copiada.'); },
+                    copyWhatsAppMessage() { this.copy(`Olá! Precisamos resolver uma pendência para evitar atraso.\n\n${this.baseMessage()}\n\nPode nos retornar ainda hoje, por favor?`, 'Mensagem para WhatsApp copiada.'); },
+                    copyEmailMessage() { this.copy(`Assunto: Pendência para regularização - ${this.modalClientName()}\n\nOlá,\n\nIdentificamos uma pendência que precisa de atenção.\n\n${this.baseMessage()}\n\nFicamos no aguardo para concluir o processo.`, 'E-mail copiado.'); },
+                    copyDocumentRequest(doc) { this.copy(`Solicitação de documento\n\nCliente: ${this.modalClientName()}\nDocumento: ${doc || this.selectedPriority.descricao || 'Documento necessário'}\nMotivo: ${this.nextActionDescription()}\nPrazo recomendado: ${this.deadlineRecommendation()}.`, 'Solicitação de documento copiada.'); },
+                    copyReceivedMessage() { this.copy(`Documento recebido/validado para ${this.modalClientName()}.\n\n${this.baseMessage()}\n\nPróximo passo: seguir checklist de resolução.`, 'Mensagem de recebimento copiada.'); },
+                    copyDelegationMessage() { this.copy(`Delegação de tarefa\n\n${this.baseMessage()}\n\nResponsável sugerido: ${this.responsibleName()}\nPrazo recomendado: ${this.deadlineRecommendation()}.`, 'Delegação copiada.'); },
+                    copyRescheduleMessage() { this.copy(`Reagendamento necessário\n\n${this.baseMessage()}\n\nJustificativa: informar motivo e nova data no cadastro do item.`, 'Resumo para reagendamento copiado.'); },
+                    copyCompletionMessage() { this.copy(`Preparar conclusão\n\n${this.baseMessage()}\n\nChecklist: validar evidências, registrar andamento e concluir no cadastro do item.`, 'Conclusão preparada.'); },
+                    copyChecklistDoneMessage() { this.copy(`Etapa concluída\n\n${this.nextActionTitle()}\nCliente: ${this.modalClientName()}\nItem: ${this.modalTitle()}`, 'Etapa copiada como concluída.'); },
+                    copyPendingSummary(name) { this.copy(`Pendência: ${name || this.nextActionTitle()}\n\n${this.baseMessage()}\n\nPriorizar resolução ainda hoje.`, 'Pendência copiada.'); },
+                    copyActivitySummary() { this.copy(`Histórico/atividade\n\n${this.activitiesList().map((a) => `${a.time}: ${a.text}`).join('\n')}`, 'Histórico copiado.'); },
+                    copySupportMessage() { this.copy(`Solicitação de suporte\n\n${this.baseMessage()}\n\nImpacto: ${this.financialRiskLevel()}\nPrazo recomendado: ${this.deadlineRecommendation()}\nAjuda necessária: orientar resolução do bloqueio.`, 'Mensagem de suporte copiada.'); },
+                }
+            }
+        </script>
+
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const storageKey = 'prazzu.home.layout';
-            const classic = document.querySelector('[data-home-layout="classic"]');
-            const operational = document.querySelector('[data-home-layout="operational"]');
-            const button = document.querySelector('[data-home-layout-toggle]');
-            const title = document.querySelector('[data-home-layout-title]');
-            const description = document.querySelector('[data-home-layout-description]');
-
-            if (!classic || !operational || !button) {
-                return;
-            }
-
-            function applyLayout(layout) {
-                const isOperational = layout === 'operational';
-
-                classic.classList.toggle('is-hidden', isOperational);
-                operational.classList.toggle('is-hidden', !isOperational);
-
-                if (title) {
-                    title.textContent = isOperational ? 'Home operacional' : 'Home clássica';
-                }
-
-                if (description) {
-                    description.textContent = isOperational
-                        ? 'Modo ClickUp com pendências, vencimentos, aprovações, comentários e atalhos.'
-                        : 'Você está vendo a Home antiga, com todos os indicadores originais preservados.';
-                }
-
-                button.textContent = isOperational ? 'Voltar para Home clássica' : 'Ver Home operacional';
-                localStorage.setItem(storageKey, isOperational ? 'operational' : 'classic');
-            }
-
-            applyLayout(localStorage.getItem(storageKey) === 'operational' ? 'operational' : 'classic');
-
-            button.addEventListener('click', function () {
-                const current = localStorage.getItem(storageKey) === 'operational' ? 'operational' : 'classic';
-                applyLayout(current === 'operational' ? 'classic' : 'operational');
-            });
-        });
-    </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal166a02a7c5ef5a9331faf66fa665c256)): ?>
@@ -771,4 +705,5 @@
 <?php if (isset($__componentOriginal166a02a7c5ef5a9331faf66fa665c256)): ?>
 <?php $component = $__componentOriginal166a02a7c5ef5a9331faf66fa665c256; ?>
 <?php unset($__componentOriginal166a02a7c5ef5a9331faf66fa665c256); ?>
-<?php endif; ?><?php /**PATH C:\xampp\htdocs\prazzu\resources\views/filament/pages/home.blade.php ENDPATH**/ ?>
+<?php endif; ?>
+<?php /**PATH C:\xampp\htdocs\prazzu\resources\views/filament/pages/home.blade.php ENDPATH**/ ?>
