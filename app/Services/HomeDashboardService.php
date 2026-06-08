@@ -68,6 +68,7 @@ class HomeDashboardService
                 'resumoEmpresas' => $this->safeValue(fn () => $this->resumoEmpresas(), []),
                 'fluxoOperacional' => $this->safeValue(fn () => $this->fluxoOperacional(), []),
                 'notificacoes' => $this->safeValue(fn () => $this->notificacoes(), []),
+                'notificacoes_total' => $this->safeValue(fn () => $this->notificacoesTotal(), 0),
                 'documentosVencidos' => $this->safeValue(fn () => $this->documentosVencidos(), []),
                 'documentosVencendo' => $this->safeValue(fn () => $this->documentosVencendo(), []),
                 'problemasAcao' => $this->safeValue(fn () => $this->problemasAcao(), []),
@@ -125,6 +126,7 @@ class HomeDashboardService
             'resumoEmpresas' => [],
             'fluxoOperacional' => [],
             'notificacoes' => [],
+            'notificacoes_total' => 0,
             'documentosVencidos' => [],
             'documentosVencendo' => [],
             'problemasAcao' => [],
@@ -1133,6 +1135,29 @@ class HomeDashboardService
                 ->all();
         } catch (Throwable) {
             return [];
+        }
+    }
+
+
+    private function notificacoesTotal(): int
+    {
+        if (! CachedSchema::hasTable('notificacoes_internas')) {
+            return 0;
+        }
+
+        try {
+            $query = $this->baseNotificacoes();
+
+            if (CachedSchema::hasColumn('notificacoes_internas', 'lida')) {
+                $query->where(function (Builder $query): void {
+                    $query->where('lida', false)
+                        ->orWhereNull('lida');
+                });
+            }
+
+            return (int) $query->count();
+        } catch (Throwable) {
+            return 0;
         }
     }
 

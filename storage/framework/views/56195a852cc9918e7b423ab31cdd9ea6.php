@@ -33,42 +33,47 @@
         $clientesEmRisco = collect($resumoEmpresas)->filter(fn ($empresa) => in_array($empresa['tone'] ?? '', ['danger', 'warning'], true))->count();
         $centralDiaData = now()->locale('pt_BR')->translatedFormat('d \d\e F \d\e Y');
         $centralDiaSemana = now()->locale('pt_BR')->translatedFormat('l');
-        $centralDiaNotificacoes = count($notificacoes ?? []);
+        $centralDiaNotificacoes = (int) ($dashboard['notificacoes_total'] ?? count($notificacoes ?? []));
 
         $centralDiaCards = [
-            ['label' => 'Obrigações vencidas', 'value' => $obrigacoesVencidas['value'] ?? 0, 'hint' => 'Risco de multa', 'tone' => 'danger', 'icon' => 'calendar-alert', 'url' => $obrigacoesVencidas['url'] ?? ($urls['prazos'] ?? '#')],
-            ['label' => 'Vencem hoje', 'value' => $vencimentosSemana['value'] ?? 0, 'hint' => 'Vencimento hoje', 'tone' => 'orange', 'icon' => 'calendar-check', 'url' => $vencimentosSemana['url'] ?? ($urls['prazos'] ?? '#')],
-            ['label' => 'Clientes sem enviar documentos', 'value' => count($documentosVencidos) + count($documentosVencendo), 'hint' => 'Podem gerar atraso', 'tone' => 'amber', 'icon' => 'users-alert', 'url' => $urls['documentos'] ?? '#'],
-            ['label' => 'Pendências paradas há muitos dias', 'value' => count($minhasPendencias), 'hint' => 'Acima de 5 dias', 'tone' => 'purple', 'icon' => 'clock', 'url' => $urls['minhasPendencias'] ?? '#'],
-            ['label' => 'Aprovações travadas', 'value' => $aprovacoesPendentes['value'] ?? count($aprovacoesAguardando), 'hint' => 'Aguardando ação', 'tone' => 'blue', 'icon' => 'approval', 'url' => $aprovacoesPendentes['url'] ?? ($urls['centralAprovacoes'] ?? '#')],
-            ['label' => 'Tarefas sem responsável', 'value' => collect($minhasPendencias)->filter(fn ($item) => empty($item['responsavel']) || $item['responsavel'] === 'Sem responsável')->count(), 'hint' => 'Risco de não execução', 'tone' => 'teal', 'icon' => 'user-search', 'url' => $urls['tarefas'] ?? '#'],
-            ['label' => 'Clientes em risco', 'value' => $clientesEmRisco, 'hint' => 'Alto risco de atraso', 'tone' => 'danger', 'icon' => 'shield-alert', 'url' => $urls['tarefas'] ?? '#'],
+            ['label' => 'Obrigações vencidas', 'value' => $obrigacoesVencidas['value'] ?? 0, 'hint' => 'Risco de multa', 'tone' => 'danger', 'icon' => 'calendar-alert', 'filter' => 'obrigacoes_vencidas', 'target' => 'priority'],
+            ['label' => 'Vencem hoje', 'value' => $vencimentosSemana['value'] ?? 0, 'hint' => 'Vencimento hoje', 'tone' => 'orange', 'icon' => 'calendar-check', 'filter' => 'vencem_hoje', 'target' => 'priority'],
+            ['label' => 'Clientes sem enviar documentos', 'value' => count($documentosVencidos) + count($documentosVencendo), 'hint' => 'Podem gerar atraso', 'tone' => 'amber', 'icon' => 'users-alert', 'filter' => 'sem_documentos', 'target' => 'priority'],
+            ['label' => 'Pendências paradas há muitos dias', 'value' => count($minhasPendencias), 'hint' => 'Acima de 5 dias', 'tone' => 'purple', 'icon' => 'clock', 'filter' => 'pendencias_paradas', 'target' => 'priority'],
+            ['label' => 'Aprovações travadas', 'value' => $aprovacoesPendentes['value'] ?? count($aprovacoesAguardando), 'hint' => 'Aguardando ação', 'tone' => 'blue', 'icon' => 'approval', 'filter' => 'aprovacoes_travadas', 'target' => 'priority'],
+            ['label' => 'Tarefas sem responsável', 'value' => collect($minhasPendencias)->filter(fn ($item) => empty($item['responsavel']) || $item['responsavel'] === 'Sem responsável')->count(), 'hint' => 'Risco de não execução', 'tone' => 'teal', 'icon' => 'user-search', 'filter' => 'sem_responsavel', 'target' => 'priority'],
+            ['label' => 'Clientes em risco', 'value' => $clientesEmRisco, 'hint' => 'Alto risco de atraso', 'tone' => 'danger', 'icon' => 'shield-alert', 'filter' => 'clientes_risco', 'target' => 'clients'],
         ];
 
         $filaPrioridade = collect();
 
         foreach ($itensAtrasados as $item) {
-            $filaPrioridade->push(['peso' => 10, 'prioridade' => 'Crítico', 'badge' => 'danger', 'tipo' => 'Obrigação vencida', 'descricao' => $item['titulo'] ?? 'Item atrasado', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? ($item['tempo'] ?? '-'), 'atraso' => $item['tempo'] ?? 'Atrasado', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#')]);
+            $filaPrioridade->push(['peso' => 10, 'prioridade' => 'Crítico', 'badge' => 'danger', 'tipo' => 'Obrigação vencida', 'descricao' => $item['titulo'] ?? 'Item atrasado', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? ($item['tempo'] ?? '-'), 'atraso' => $item['tempo'] ?? 'Atrasado', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído', 'area' => $item['area'] ?? 'Fiscal', 'filtro' => 'obrigacoes_vencidas']);
         }
 
         foreach ($vencimentosProximos as $item) {
-            $filaPrioridade->push(['peso' => 8, 'prioridade' => 'Alto', 'badge' => 'warning', 'tipo' => 'Vence hoje', 'descricao' => $item['titulo'] ?? 'Vencimento próximo', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Hoje', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#')]);
+            $filaPrioridade->push(['peso' => 8, 'prioridade' => 'Alto', 'badge' => 'warning', 'tipo' => 'Vence hoje', 'descricao' => $item['titulo'] ?? 'Vencimento próximo', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Hoje', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído', 'area' => $item['area'] ?? 'Fiscal', 'filtro' => 'vencem_hoje']);
         }
 
         foreach ($documentosVencidos as $item) {
-            $filaPrioridade->push(['peso' => 7, 'prioridade' => 'Alto', 'badge' => 'warning', 'tipo' => 'Sem documentos', 'descricao' => $item['titulo'] ?? 'Documento pendente', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Pendente', 'url' => $item['url'] ?? ($urls['documentos'] ?? '#')]);
+            $filaPrioridade->push(['peso' => 7, 'prioridade' => 'Alto', 'badge' => 'warning', 'tipo' => 'Sem documentos', 'descricao' => $item['titulo'] ?? 'Documento pendente', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Pendente', 'url' => $item['url'] ?? ($urls['documentos'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído', 'area' => $item['area'] ?? 'Documentos', 'filtro' => 'sem_documentos']);
+        }
+
+        foreach ($documentosVencendo as $item) {
+            $filaPrioridade->push(['peso' => 6, 'prioridade' => 'Médio', 'badge' => 'warning', 'tipo' => 'Sem documentos', 'descricao' => $item['titulo'] ?? 'Documento pendente', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['tempo'] ?? 'Pendente', 'url' => $item['url'] ?? ($urls['documentos'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído', 'area' => $item['area'] ?? 'Documentos', 'filtro' => 'sem_documentos']);
         }
 
         foreach ($minhasPendencias as $item) {
-            $filaPrioridade->push(['peso' => 5, 'prioridade' => ($item['badge'] ?? '') === 'danger' ? 'Crítico' : 'Médio', 'badge' => $item['badge'] ?? 'info', 'tipo' => 'Pendência parada', 'descricao' => $item['titulo'] ?? 'Pendência operacional', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['status'] ?? ($item['responsavel'] ?? '-'), 'url' => $item['url'] ?? ($urls['minhasPendencias'] ?? '#')]);
+            $filaPrioridade->push(['peso' => 5, 'prioridade' => ($item['badge'] ?? '') === 'danger' ? 'Crítico' : 'Médio', 'badge' => $item['badge'] ?? 'info', 'tipo' => 'Pendência parada', 'descricao' => $item['titulo'] ?? 'Pendência operacional', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? '-', 'atraso' => $item['status'] ?? ($item['responsavel'] ?? '-'), 'url' => $item['url'] ?? ($urls['minhasPendencias'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Responsável não definido', 'area' => $item['area'] ?? 'Operacional', 'filtro' => 'pendencias_paradas']);
         }
 
         foreach ($aprovacoesAguardando as $aprovacao) {
-            $filaPrioridade->push(['peso' => 4, 'prioridade' => 'Médio', 'badge' => 'info', 'tipo' => 'Aprovação travada', 'descricao' => $aprovacao['titulo'] ?? 'Aprovação aguardando', 'cliente' => $aprovacao['empresa'] ?? 'Sem empresa', 'vencimento' => '-', 'atraso' => $aprovacao['tempo'] ?? 'Aguardando', 'url' => $aprovacao['url'] ?? ($urls['centralAprovacoes'] ?? '#')]);
+            $filaPrioridade->push(['peso' => 4, 'prioridade' => 'Médio', 'badge' => 'info', 'tipo' => 'Aprovação travada', 'descricao' => $aprovacao['titulo'] ?? 'Aprovação aguardando', 'cliente' => $aprovacao['empresa'] ?? 'Sem empresa', 'vencimento' => '-', 'atraso' => $aprovacao['tempo'] ?? 'Aguardando', 'url' => $aprovacao['url'] ?? ($urls['centralAprovacoes'] ?? '#'), 'responsavel' => $aprovacao['responsavel'] ?? 'Sem responsável atribuído', 'area' => $aprovacao['area'] ?? 'Aprovações', 'filtro' => 'aprovacoes_travadas']);
         }
 
         $filaPrioridadeTotal = $filaPrioridade->count();
-        $filaPrioridade = $filaPrioridade->sortByDesc('peso')->take(7)->values();
+        $filaPrioridadeCompleta = $filaPrioridade->sortByDesc('peso')->values();
+        $filaPrioridade = $filaPrioridadeCompleta->take(7)->values();
 
         $clientesMaiorRisco = collect($resumoEmpresas ?? [])->map(function ($empresa) use ($urls) {
             $atrasados = (int) ($empresa['atrasados'] ?? 0);
@@ -94,7 +99,7 @@
             if ($vencendo > 0) $problemas[] = $vencendo . ' ' . ($vencendo === 1 ? 'vencendo hoje/próximo' : 'vencendo hoje/próximos');
             if (empty($problemas)) $problemas[] = $total > 0 ? $total . ' ' . ($total === 1 ? 'item aberto' : 'itens abertos') : 'Sem pendências críticas';
 
-            return ['score' => $score, 'empresa' => $empresa['empresa'] ?? 'Sem empresa', 'risco' => $riscoLabel, 'tone' => $riscoTone, 'problemas' => implode(', ', $problemas), 'ultima_atividade' => $empresa['ultima_atividade'] ?? ($empresa['atualizado_em'] ?? ($empresa['data'] ?? '-')), 'url' => $empresa['url'] ?? ($urls['tarefas'] ?? '#')];
+            return ['score' => $score, 'empresa' => $empresa['empresa'] ?? 'Sem empresa', 'risco' => $riscoLabel, 'tone' => $riscoTone, 'problemas' => implode(', ', $problemas), 'ultima_atividade' => $empresa['ultima_atividade'] ?? ($empresa['atualizado_em'] ?? ($empresa['data'] ?? '-')), 'url' => $empresa['url'] ?? ($urls['tarefas'] ?? '#'), 'atrasados' => $atrasados, 'vencendo' => $vencendo, 'total' => $total, 'responsavel' => $empresa['responsavel'] ?? 'Sem responsável atribuído'];
         })->sortByDesc('score')->take(5)->values();
 
         $calendarioHoje = collect();
@@ -113,7 +118,7 @@
         $emRiscoAtraso = count($itensAtrasados) + count($documentosVencidos) + $clientesEmRisco;
     ?>
 
-    <div data-home-layout="operational" class="pz-central-page" x-data="pzHomeResolutionModal()" x-on:keydown.escape.window="closeResolutionModal()">
+    <div data-home-layout="operational" class="pz-central-page" x-data="pzHomeResolutionModal()" x-on:keydown.escape.window="closeResolutionModal()" x-on:keydown.ctrl.enter.window.prevent="resolutionOpen && confirmCompletion()">
         <section class="pz-central-topbar">
             <div class="pz-central-title-group">
                 <span class="pz-central-shield" aria-hidden="true">
@@ -127,7 +132,7 @@
 
             <div class="pz-central-actions">
                 <a href="<?php echo e($urls['centralNotificacoes'] ?? '#'); ?>" class="pz-central-bell" aria-label="Ver notificações">
-                    <svg viewBox="0 0 24 24" fill="none"><path d="M15 17H5a2 2 0 0 1 1.5-1.94V10a5.5 5.5 0 0 1 11 0v5.06A2 2 0 0 1 19 17h-4z" stroke="currentColor" stroke-width="1.8"/><path d="M10 20a2 2 0 0 0 4 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <i class="bi bi-bell-fill" aria-hidden="true"></i>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($centralDiaNotificacoes > 0): ?><b><?php echo e($centralDiaNotificacoes > 99 ? '99+' : $centralDiaNotificacoes); ?></b><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </a>
                 <div class="pz-central-user">
@@ -147,13 +152,13 @@
 
         <section class="pz-central-day-grid" aria-label="Resumo crítico da Central do Dia">
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $centralDiaCards; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $card): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <a href="<?php echo e($card['url'] ?? '#'); ?>" class="pz-central-day-card pz-tone-<?php echo e($card['tone'] ?? 'slate'); ?>">
+                <button type="button" class="pz-central-day-card pz-tone-<?php echo e($card['tone'] ?? 'slate'); ?>" :class="isActiveSummaryFilter('<?php echo e($card['filter'] ?? ''); ?>', '<?php echo e($card['target'] ?? 'priority'); ?>') ? 'is-filter-active' : ''" @click="applySummaryFilter('<?php echo e($card['filter'] ?? ''); ?>', '<?php echo e($card['target'] ?? 'priority'); ?>', '<?php echo e($card['label'] ?? 'Filtro'); ?>')">
                     <span class="pz-central-day-icon" aria-hidden="true"><i class="pz-icon-<?php echo e($card['icon'] ?? 'dot'); ?>"></i></span>
                     <span class="pz-card-label"><?php echo e($card['label'] ?? '-'); ?></span>
                     <strong><?php echo e($card['value'] ?? 0); ?></strong>
                     <small><?php echo e($card['hint'] ?? 'Acompanhar'); ?></small>
-                    <em>Ver detalhes →</em>
-                </a>
+                    <em x-text="isActiveSummaryFilter('<?php echo e($card['filter'] ?? ''); ?>', '<?php echo e($card['target'] ?? 'priority'); ?>') ? 'Filtro aplicado' : 'Filtrar lista →'"></em>
+                </button>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
         </section>
 
@@ -161,25 +166,30 @@
             <main class="pz-main-column">
                 <section class="pz-panel pz-priority-panel">
                     <div class="pz-section-head">
-                        <div><h2>Fila de Prioridade</h2><p>O que atacar primeiro hoje (ordenado por criticidade)</p></div>
-                        <a href="<?php echo e($urls['minhasPendencias'] ?? '#'); ?>">Ver todas (<?php echo e($filaPrioridadeTotal); ?>)</a>
+                        <div>
+                            <h2>Fila de Prioridade</h2>
+                            <p x-text="priorityFilterLabel ? 'Filtro ativo: ' + priorityFilterLabel : 'O que atacar primeiro hoje (ordenado por criticidade)'"></p>
+                        </div>
+                        <div class="pz-section-actions">
+                            <button type="button" class="pz-clear-filter-btn" x-show="priorityFilter" x-cloak @click="clearSummaryFilter()">Limpar filtro</button>
+                            <a href="<?php echo e($urls['minhasPendencias'] ?? '#'); ?>">Ver todas (<?php echo e($filaPrioridadeTotal); ?>)</a>
+                        </div>
                     </div>
                     <div class="pz-table-wrap">
                         <table class="pz-priority-table">
                             <thead><tr><th>Prioridade</th><th>Tipo</th><th>Descrição</th><th>Cliente</th><th>Vencimento / Data</th><th>Dias em atraso</th></tr></thead>
                             <tbody>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $filaPrioridade; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <tr class="pz-clickable-row" @click="openPriority(<?php echo e(\Illuminate\Support\Js::from($item)); ?>)">
-                                        <td><span class="pz-priority-badge pz-priority-<?php echo e($item['badge'] ?? 'info'); ?>"><?php echo e($item['prioridade'] ?? 'Médio'); ?></span></td>
-                                        <td><?php echo e($item['tipo'] ?? '-'); ?></td>
-                                        <td><strong><?php echo e($item['descricao'] ?? '-'); ?></strong></td>
-                                        <td><?php echo e($item['cliente'] ?? 'Sem empresa'); ?></td>
-                                        <td><strong><?php echo e($item['vencimento'] ?? '-'); ?></strong></td>
-                                        <td class="pz-delay-cell"><?php echo e($item['atraso'] ?? '-'); ?></td>
+                                <template x-for="item in visiblePriorityItems()" :key="(item.tipo || '') + '-' + (item.descricao || '') + '-' + (item.cliente || '')">
+                                    <tr class="pz-clickable-row" @click="openPriority(item)">
+                                        <td><span class="pz-priority-badge" :class="'pz-priority-' + (item.badge || 'info')" x-text="item.prioridade || 'Médio'"></span></td>
+                                        <td x-text="item.tipo || '-'"></td>
+                                        <td><strong x-text="item.descricao || '-'"></strong></td>
+                                        <td x-text="item.cliente || 'Sem empresa'"></td>
+                                        <td><strong x-text="item.vencimento || '-'"></strong></td>
+                                        <td class="pz-delay-cell" x-text="item.atraso || '-'"></td>
                                     </tr>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <tr><td colspan="6" class="pz-empty-cell">Nenhuma prioridade crítica encontrada para hoje.</td></tr>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </template>
+                                <tr x-show="visiblePriorityItems().length === 0" x-cloak><td colspan="6" class="pz-empty-cell" x-text="priorityFilter ? 'Nenhum item encontrado para este filtro.' : 'Nenhuma prioridade crítica encontrada para hoje.'"></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -187,23 +197,25 @@
 
                 <section class="pz-panel pz-risk-clients-panel">
                     <div class="pz-section-head">
-                        <div><h2>Clientes em Maior Risco</h2><p>Risco calculado com base em atrasos, pendências e documentos</p></div>
-                        <a href="<?php echo e($urls['tarefas'] ?? '#'); ?>">Ver todos</a>
+                        <div><h2>Clientes em Maior Risco</h2><p x-text="clientFilterLabel ? 'Filtro ativo: ' + clientFilterLabel : 'Risco calculado com base em atrasos, pendências e documentos'"></p></div>
+                        <div class="pz-section-actions">
+                            <button type="button" class="pz-clear-filter-btn" x-show="clientFilter" x-cloak @click="clearSummaryFilter()">Limpar filtro</button>
+                            <a href="<?php echo e($urls['tarefas'] ?? '#'); ?>">Ver todos</a>
+                        </div>
                     </div>
                     <div class="pz-table-wrap">
                         <table class="pz-risk-clients-table">
                             <thead><tr><th>Cliente</th><th>Risco</th><th>Principais problemas</th><th>Última atividade</th></tr></thead>
                             <tbody>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $clientesMaiorRisco; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                    <tr class="pz-clickable-row" @click="openClient(<?php echo e(\Illuminate\Support\Js::from($cliente)); ?>)">
-                                        <td><strong><?php echo e($cliente['empresa'] ?? 'Sem empresa'); ?></strong></td>
-                                        <td><span class="pz-risk-badge pz-risk-<?php echo e($cliente['tone'] ?? 'success'); ?>"><?php echo e($cliente['risco'] ?? 'Baixo'); ?></span></td>
-                                        <td><?php echo e($cliente['problemas'] ?? '-'); ?></td>
-                                        <td><?php echo e($cliente['ultima_atividade'] ?? '-'); ?></td>
+                                <template x-for="cliente in visibleClientItems()" :key="cliente.empresa || cliente.url || Math.random()">
+                                    <tr class="pz-clickable-row" @click="openClient(cliente)">
+                                        <td><strong x-text="cliente.empresa || 'Sem empresa'"></strong></td>
+                                        <td><span class="pz-risk-badge" :class="'pz-risk-' + (cliente.tone || 'success')" x-text="cliente.risco || 'Baixo'"></span></td>
+                                        <td x-text="cliente.problemas || '-'"></td>
+                                        <td x-text="cliente.ultima_atividade || '-'"></td>
                                     </tr>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <tr><td colspan="4" class="pz-empty-cell">Nenhum cliente em risco encontrado.</td></tr>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </template>
+                                <tr x-show="visibleClientItems().length === 0" x-cloak><td colspan="4" class="pz-empty-cell">Nenhum cliente em risco encontrado.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -273,8 +285,8 @@
 
                     <div class="pz-resolution-v2-actions">
                         <a class="pz-resolution-secondary-btn" :href="currentUrl()">Ir para o cadastro ↗</a>
-                        <button type="button" class="pz-resolution-primary-btn" @click="copyCompletionMessage()">✓ Preparar conclusão</button>
-                        <button type="button" class="pz-resolution-menu-btn" @click="copyResolutionText()">⋮</button>
+                        <button type="button" class="pz-resolution-primary-btn" @click="confirmCompletion()">✓ Marcar como concluída</button>
+                        <button type="button" class="pz-resolution-menu-btn" @click="toggleQuickMenu()">⋮</button>
                     </div>
                 </header>
 
@@ -338,52 +350,88 @@
                                 <div><small>Prioridade</small><b class="is-red" x-text="severityLabel()"></b></div>
                                 <div><small>Bloqueia transmissão</small><b class="is-red" x-text="blocksTransmission()"></b></div>
                             </div>
-                            <button type="button" class="pz-resolution-primary-btn" @click="copyRecommendedAction()">⚡ Resolver agora</button>
+                            <button type="button" class="pz-resolution-primary-btn" @click="startResolution()">⚡ Resolver agora</button>
                         </div>
 
                         <div class="pz-resolution-quick-card">
                             <h3>Ações rápidas</h3>
                             <div class="pz-resolution-quick-grid">
-                                <button type="button" @click="copyWhatsAppMessage()"><span>☘</span><b>Cobrar cliente</b><small>WhatsApp</small></button>
-                                <button type="button" @click="copyEmailMessage()"><span>✉</span><b>Enviar e-mail</b><small>Cobrança</small></button>
-                                <button type="button" @click="copyDocumentRequest()"><span>▤</span><b>Solicitar documento</b><small>Do cliente</small></button>
-                                <button type="button" @click="copyReceivedMessage()"><span>✓</span><b>Marcar como recebido</b><small>Mensagem pronta</small></button>
-                                <button type="button" @click="copyDelegationMessage()"><span>♙</span><b>Delegar tarefa</b><small>Outro responsável</small></button>
-                                <button type="button" @click="copyRescheduleMessage()"><span>◷</span><b>Reagendar prazo</b><small>Nova data</small></button>
-                                <button type="button" @click="copyCompletionMessage()"><span>✓</span><b>Concluir obrigação</b><small>Finalizar</small></button>
-                                <a :href="currentUrl()"><span>☊</span><b>Abrir cadastro</b><small>Editar dados</small></a>
+                                <button type="button" @click="openWhatsAppMessage()"><span>☘</span><b>Cobrar cliente</b><small>WhatsApp</small></button>
+                                <button type="button" @click="openEmailMessage()"><span>✉</span><b>Enviar e-mail</b><small>Cobrança</small></button>
+                                <button type="button" @click="requestDocument()"><span>▤</span><b>Solicitar documento</b><small>Do cliente</small></button>
+                                <button type="button" @click="markReceived()"><span>✓</span><b>Marcar como recebido</b><small>Atualizar checklist</small></button>
+                                <button type="button" @click="openActionPanel('delegate')"><span>♙</span><b>Delegar tarefa</b><small>Outro responsável</small></button>
+                                <button type="button" @click="openActionPanel('reschedule')"><span>◷</span><b>Reagendar prazo</b><small>Nova data</small></button>
+                                <button type="button" @click="confirmCompletion()"><span>✓</span><b>Concluir obrigação</b><small>Finalizar aqui</small></button>
+                                <button type="button" @click="openActionPanel('support')"><span>☊</span><b>Abrir chamado</b><small>Suporte</small></button>
+                            </div>
+                            <div class="pz-resolution-action-panel" x-show="actionPanel" x-cloak>
+                                <div class="pz-resolution-action-panel-head">
+                                    <strong x-text="actionPanelTitle()"></strong>
+                                    <button type="button" @click="actionPanel = ''">×</button>
+                                </div>
+
+                                <template x-if="actionPanel === 'delegate'">
+                                    <div class="pz-resolution-mini-form">
+                                        <label>Responsável<input type="text" x-model="delegateTo" placeholder="Nome do responsável"></label>
+                                        <label>Observação<textarea x-model="actionNote" placeholder="Contexto para delegação"></textarea></label>
+                                        <button type="button" @click="confirmDelegation()">Confirmar delegação</button>
+                                    </div>
+                                </template>
+
+                                <template x-if="actionPanel === 'reschedule'">
+                                    <div class="pz-resolution-mini-form">
+                                        <label>Nova data<input type="date" x-model="newDeadline"></label>
+                                        <label>Motivo<textarea x-model="actionNote" placeholder="Motivo do reagendamento"></textarea></label>
+                                        <button type="button" @click="confirmReschedule()">Confirmar reagendamento</button>
+                                    </div>
+                                </template>
+
+                                <template x-if="actionPanel === 'completion'">
+                                    <div class="pz-resolution-mini-form">
+                                        <label>Evidência / observação<textarea x-model="completionNote" placeholder="Descreva a evidência de conclusão"></textarea></label>
+                                        <button type="button" @click="confirmCompletion()">Marcar como concluída</button>
+                                    </div>
+                                </template>
+
+                                <template x-if="actionPanel === 'support'">
+                                    <div class="pz-resolution-mini-form">
+                                        <label>Ajuda necessária<textarea x-model="actionNote" placeholder="Explique o bloqueio para suporte/time interno"></textarea></label>
+                                        <button type="button" @click="confirmSupport()">Preparar chamado</button>
+                                    </div>
+                                </template>
                             </div>
                             <small class="pz-resolution-copy-feedback" x-show="copied" x-text="copied"></small>
                         </div>
                     </section>
 
                     <section class="pz-resolution-tabs">
-                        <button type="button" class="is-active">Checklist de resolução</button>
-                        <button type="button" @click="copyDocumentRequest()">Documentos</button>
-                        <button type="button" @click="copyPendingSummary()">Pendências</button>
-                        <button type="button" @click="copyActivitySummary()">Histórico</button>
-                        <button type="button" @click="copyResolutionText()">Comentários</button>
+                        <button type="button" :class="activeTab === 'checklist' ? 'is-active' : ''" @click="setTab('checklist')">Checklist de resolução</button>
+                        <button type="button" :class="activeTab === 'documents' ? 'is-active' : ''" @click="setTab('documents')">Documentos</button>
+                        <button type="button" :class="activeTab === 'pending' ? 'is-active' : ''" @click="setTab('pending')">Pendências</button>
+                        <button type="button" :class="activeTab === 'history' ? 'is-active' : ''" @click="setTab('history')">Histórico</button>
+                        <button type="button" :class="activeTab === 'comments' ? 'is-active' : ''" @click="setTab('comments')">Comentários</button>
                     </section>
 
                     <section class="pz-resolution-content-grid">
-                        <div class="pz-resolution-card pz-resolution-checklist-card">
+                        <div class="pz-resolution-card pz-resolution-checklist-card" x-show="activeTab === 'checklist'">
                             <h3>Checklist de resolução</h3>
                             <p>Execute os passos e conclua com o mínimo de troca de tela.</p>
                             <div class="pz-resolution-checklist-v2">
                                 <template x-for="(step, index) in resolutionChecklist()" :key="step.title">
                                     <label :class="index === 0 ? 'is-current' : ''">
-                                        <input type="checkbox">
+                                        <input type="checkbox" :checked="completedSteps.includes(index)" @change="toggleChecklistStep(index)">
                                         <span x-text="index + 1"></span>
                                         <b x-text="step.title"></b>
                                         <small x-text="step.subtitle"></small>
-                                        <em x-text="index === 0 ? 'Agora' : 'Pendente'"></em>
+                                        <em x-text="completedSteps.includes(index) ? 'Concluído' : (index === currentChecklistIndex() ? 'Agora' : 'Pendente')"></em>
                                     </label>
                                 </template>
                             </div>
-                            <button type="button" class="pz-resolution-outline-full" @click="copyChecklistDoneMessage()">✓ Marcar etapa como concluída</button>
+                            <button type="button" class="pz-resolution-outline-full" @click="markCurrentStepDone()">✓ Marcar etapa como concluída</button>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-finance-card">
+                        <div class="pz-resolution-card pz-resolution-finance-card" x-show="activeTab === 'checklist' || activeTab === 'pending'">
                             <h3>Informações financeiras</h3>
                             <div class="pz-resolution-money-list">
                                 <div><span>Multa mínima</span><b x-text="minimumPenaltyText()"></b></div>
@@ -394,7 +442,7 @@
                             <div class="pz-resolution-warning-box">⚠ Quanto antes resolver, menor o prejuízo e o retrabalho.</div>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-client-card">
+                        <div class="pz-resolution-card pz-resolution-client-card" x-show="activeTab === 'checklist' || activeTab === 'documents' || activeTab === 'pending'">
                             <div class="pz-resolution-card-head-link"><h3>Cliente</h3><a :href="currentUrl()">Ver dados</a></div>
                             <div class="pz-resolution-client-main">
                                 <span x-text="clientInitials()"></span>
@@ -407,42 +455,42 @@
                             </div>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-owner-card">
+                        <div class="pz-resolution-card pz-resolution-owner-card" x-show="activeTab === 'checklist' || activeTab === 'comments'">
                             <h3>Responsável</h3>
                             <div class="pz-resolution-owner-main">
                                 <span x-text="responsibleInitials()"></span>
                                 <div><strong x-text="responsibleName()"></strong><small x-text="areaName()"></small></div>
                             </div>
                             <div class="pz-resolution-contact-row">
-                                <button type="button" @click="copyWhatsAppMessage()">☘</button>
-                                <button type="button" @click="copyEmailMessage()">✉</button>
-                                <button type="button" @click="copyResolutionText()">☷</button>
-                                <button type="button" @click="copyDelegationMessage()">↗</button>
+                                <button type="button" @click="openWhatsAppMessage()" title="Cobrar por WhatsApp">☘</button>
+                                <button type="button" @click="openEmailMessage()" title="Enviar e-mail">✉</button>
+                                <button type="button" @click="copyResolutionText()" title="Copiar contexto">☷</button>
+                                <button type="button" @click="openActionPanel('delegate')" title="Delegar">↗</button>
                             </div>
-                            <button type="button" class="pz-resolution-outline-full" @click="copyDelegationMessage()">Alterar responsável</button>
+                            <button type="button" class="pz-resolution-outline-full" @click="openActionPanel('delegate')">Alterar responsável</button>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-docs-card">
+                        <div class="pz-resolution-card pz-resolution-docs-card" x-show="activeTab === 'documents'">
                             <h3>Documentos necessários</h3>
                             <div class="pz-resolution-list-v2">
                                 <template x-for="doc in documentsList()" :key="doc.name">
-                                    <div><b x-text="doc.name"></b><span :class="doc.statusClass" x-text="doc.status"></span><button type="button" @click="copyDocumentRequest(doc.name)">Solicitar</button></div>
+                                    <div><b x-text="doc.name"></b><span :class="doc.statusClass" x-text="doc.status"></span><button type="button" @click="requestDocument(doc.name)">Solicitar</button></div>
                                 </template>
                             </div>
                             <a :href="currentUrl()">Ver todos documentos</a>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-pending-card">
+                        <div class="pz-resolution-card pz-resolution-pending-card" x-show="activeTab === 'pending'">
                             <h3>Pendências relacionadas</h3>
                             <div class="pz-resolution-list-v2">
                                 <template x-for="pending in pendingList()" :key="pending.name">
-                                    <div><b x-text="pending.name"></b><span :class="pending.statusClass" x-text="pending.status"></span><button type="button" @click="copyPendingSummary(pending.name)">Resolver</button></div>
+                                    <div><b x-text="pending.name"></b><span :class="pending.statusClass" x-text="pending.status"></span><button type="button" @click="resolvePending(pending.name)">Resolver</button></div>
                                 </template>
                             </div>
                             <a :href="currentUrl()">Ver todas pendências</a>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-activities-card">
+                        <div class="pz-resolution-card pz-resolution-activities-card" x-show="activeTab === 'history'">
                             <h3>Atividades recentes</h3>
                             <div class="pz-resolution-timeline-v2">
                                 <template x-for="activity in activitiesList()" :key="activity.text + activity.time">
@@ -452,11 +500,11 @@
                             <a :href="currentUrl()">Ver todas atividades</a>
                         </div>
 
-                        <div class="pz-resolution-card pz-resolution-help-card">
+                        <div class="pz-resolution-card pz-resolution-help-card" x-show="activeTab === 'comments'">
                             <h3>Precisa de ajuda?</h3>
                             <p>Use o resumo abaixo para chamar suporte ou encaminhar internamente com contexto completo.</p>
                             <div class="pz-resolution-help-actions">
-                                <button type="button" @click="copySupportMessage()">Abrir chamado →</button>
+                                <button type="button" @click="openActionPanel('support')">Abrir chamado →</button>
                                 <button type="button" @click="copyResolutionText()">Copiar contexto →</button>
                             </div>
                         </div>
@@ -464,10 +512,10 @@
                 </div>
 
                 <footer class="pz-resolution-footer">
-                    <span>Atalho rápido: <b>Ctrl + Enter</b> preparar conclusão</span>
+                    <span>Atalho rápido: <b>Ctrl + Enter</b> marcar como concluída</span>
                     <div>
-                        <button type="button" class="pz-resolution-secondary-btn" @click="copyResolutionText()">Salvar rascunho</button>
-                        <button type="button" class="pz-resolution-primary-btn" @click="copyCompletionMessage()">✓ Preparar conclusão</button>
+                        <button type="button" class="pz-resolution-secondary-btn" @click="saveDraft()">Salvar rascunho</button>
+                        <button type="button" class="pz-resolution-primary-btn" @click="confirmCompletion()">✓ Marcar como concluída</button>
                     </div>
                 </footer>
             </article>
@@ -481,35 +529,147 @@
                     selectedPriority: {},
                     selectedClient: {},
                     copied: '',
-                    priorityItems: <?php echo \Illuminate\Support\Js::from($filaPrioridade->values())->toHtml() ?>,
+                    activeTab: 'checklist',
+                    actionPanel: '',
+                    completedSteps: [],
+                    completedDocs: [],
+                    draftSaved: false,
+                    delegateTo: '',
+                    newDeadline: '',
+                    actionNote: '',
+                    completionNote: '',
+                    nowTimestamp: Date.now(),
+                    countdownTimer: null,
+                    priorityItems: <?php echo \Illuminate\Support\Js::from($filaPrioridadeCompleta->values())->toHtml() ?>,
+                    clientItems: <?php echo \Illuminate\Support\Js::from($clientesMaiorRisco->values())->toHtml() ?>,
+                    priorityFilter: '',
+                    priorityFilterLabel: '',
+                    clientFilter: '',
+                    clientFilterLabel: '',
+                    init() {
+                        this.nowTimestamp = Date.now();
+                        this.countdownTimer = setInterval(() => {
+                            this.nowTimestamp = Date.now();
+                        }, 1000);
+                    },
+                    applySummaryFilter(filter, target, label) {
+                        if (!filter) return;
+                        if (target === 'clients') {
+                            this.priorityFilter = '';
+                            this.priorityFilterLabel = '';
+                            this.clientFilter = filter;
+                            this.clientFilterLabel = label || 'Clientes em risco';
+                            this.scrollToPanel('.pz-risk-clients-panel');
+                            this.flash('Filtro aplicado em Clientes em Maior Risco.');
+                            return;
+                        }
+                        this.clientFilter = '';
+                        this.clientFilterLabel = '';
+                        this.priorityFilter = filter;
+                        this.priorityFilterLabel = label || 'Filtro';
+                        this.scrollToPanel('.pz-priority-panel');
+                        this.flash('Filtro aplicado na Fila de Prioridade.');
+                    },
+                    clearSummaryFilter() {
+                        this.priorityFilter = '';
+                        this.priorityFilterLabel = '';
+                        this.clientFilter = '';
+                        this.clientFilterLabel = '';
+                        this.flash('Filtro removido.');
+                    },
+                    isActiveSummaryFilter(filter, target) {
+                        return target === 'clients' ? this.clientFilter === filter : this.priorityFilter === filter;
+                    },
+                    scrollToPanel(selector) {
+                        this.$nextTick(() => {
+                            const element = document.querySelector(selector);
+                            if (element) element.scrollIntoView({behavior: 'smooth', block: 'start'});
+                        });
+                    },
+                    visiblePriorityItems() {
+                        const items = this.priorityItems || [];
+                        if (!this.priorityFilter) return items.slice(0, 7);
+                        return items.filter((item) => {
+                            if (this.priorityFilter === 'sem_responsavel') {
+                                const responsavel = String(item.responsavel || '').toLowerCase().trim();
+                                return !responsavel || responsavel.includes('sem responsável') || responsavel.includes('sem responsavel') || responsavel.includes('não definido') || responsavel.includes('nao definido');
+                            }
+                            return item.filtro === this.priorityFilter;
+                        });
+                    },
+                    visibleClientItems() {
+                        const items = this.clientItems || [];
+                        if (!this.clientFilter) return items;
+                        return items.filter((cliente) => ['danger', 'warning', 'info'].includes(cliente.tone || '') || (cliente.risco || '').toLowerCase() !== 'baixo');
+                    },
                     openPriority(item) {
                         this.selectedPriority = item || {};
                         this.selectedClient = {};
                         this.resolutionType = 'priority';
-                        this.copied = '';
+                        this.resetInteractionState();
+                        this.nowTimestamp = Date.now();
                         this.resolutionOpen = true;
                     },
                     openClient(client) {
                         this.selectedClient = client || {};
                         this.selectedPriority = {};
                         this.resolutionType = 'client';
-                        this.copied = '';
+                        this.resetInteractionState();
+                        this.nowTimestamp = Date.now();
                         this.resolutionOpen = true;
                     },
                     closeResolutionModal() { this.resolutionOpen = false; },
+                    resetInteractionState() {
+                        this.copied = '';
+                        this.activeTab = 'checklist';
+                        this.actionPanel = '';
+                        this.completedSteps = [];
+                        this.completedDocs = [];
+                        this.draftSaved = false;
+                        this.delegateTo = '';
+                        this.newDeadline = '';
+                        this.actionNote = '';
+                        this.completionNote = '';
+                    },
+                    setTab(tab) {
+                        this.activeTab = tab;
+                        this.actionPanel = '';
+                        const names = {checklist: 'Checklist aberto.', documents: 'Documentos abertos.', pending: 'Pendências abertas.', history: 'Histórico aberto.', comments: 'Comentários e ajuda abertos.'};
+                        this.flash(names[tab] || 'Aba aberta.');
+                    },
+                    openActionPanel(panel) {
+                        this.actionPanel = this.actionPanel === panel ? '' : panel;
+                        this.activeTab = panel === 'support' ? 'comments' : 'checklist';
+                        this.flash(this.actionPanel ? `${this.actionPanelTitle()} aberto.` : 'Painel fechado.');
+                    },
+                    toggleQuickMenu() {
+                        this.copyResolutionText();
+                    },
+                    actionPanelTitle() {
+                        if (this.actionPanel === 'delegate') return 'Delegar tarefa';
+                        if (this.actionPanel === 'reschedule') return 'Reagendar prazo';
+                        if (this.actionPanel === 'completion') return 'Marcar como concluída';
+                        if (this.actionPanel === 'support') return 'Abrir chamado';
+                        return 'Ação rápida';
+                    },
                     currentUrl() { return this.resolutionType === 'client' ? (this.selectedClient.url || '#') : (this.selectedPriority.url || '#'); },
                     modalTitle() { return this.resolutionType === 'client' ? (this.selectedClient.empresa || 'Cliente em risco') : (this.selectedPriority.descricao || 'Item prioritário'); },
                     modalClientName() { return this.resolutionType === 'client' ? (this.selectedClient.empresa || 'Cliente') : (this.selectedPriority.cliente || 'Sem empresa'); },
                     modalType() { return this.resolutionType === 'client' ? 'Cliente em risco' : (this.selectedPriority.tipo || 'Item operacional'); },
                     modalId() { return this.resolutionType === 'client' ? this.slugId(this.selectedClient.empresa || 'cliente') : this.slugId(this.selectedPriority.descricao || 'item'); },
                     areaName() {
+                        if (this.resolutionType === 'client') return 'Gestão de carteira';
+                        if (this.selectedPriority.area) return this.selectedPriority.area;
                         const type = this.modalType().toLowerCase();
                         if (type.includes('document')) return 'Documentos';
                         if (type.includes('aprovação')) return 'Aprovações';
                         if (type.includes('obrigação') || type.includes('vence')) return 'Fiscal';
                         return 'Operacional';
                     },
-                    responsibleName() { return 'Responsável interno'; },
+                    responsibleName() {
+                        if (this.resolutionType === 'client') return this.selectedClient.responsavel || 'Sem responsável atribuído';
+                        return this.selectedPriority.responsavel || 'Sem responsável atribuído';
+                    },
                     responsibleInitials() { return this.initials(this.responsibleName()); },
                     clientInitials() { return this.initials(this.modalClientName()); },
                     initials(text) { return (text || 'PR').split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase(); },
@@ -554,32 +714,74 @@
                         return atraso;
                     },
                     riskDescription() {
-                        if (this.resolutionType === 'client') return this.selectedClient.problemas || 'Cliente possui pendências que podem gerar atraso.';
-                        return `${this.selectedPriority.tipo || 'Item'} · ${this.selectedPriority.vencimento || 'Sem data informada'}`;
+                        if (this.resolutionType === 'client') return this.selectedClient.problemas || 'Cliente possui pendências que podem gerar atraso, multa ou retrabalho.';
+                        return `${this.selectedPriority.tipo || 'Item'} · prazo: ${this.selectedPriority.vencimento || 'sem data'} · ação: ${this.nextActionTitle()}`;
                     },
-                    financialImpactText() { return this.isCritical() ? 'Verificar multa/impacto' : 'Acompanhar'; },
+                    financialImpactText() { return this.totalFinancialRiskText(); },
                     financialRiskLevel() { return this.isCritical() ? 'Alto' : 'Médio'; },
                     delayProbability() { return this.isCritical() ? 'Alta' : 'Moderada'; },
                     clientImpactLevel() { return this.isCritical() ? 'Alto' : 'Médio'; },
-                    slaText() { return this.isCritical() ? 'Atenção hoje' : 'Dentro do acompanhamento'; },
-                    deadlineRecommendation() { return this.isCritical() ? 'Resolver hoje' : 'Resolver na próxima janela'; },
-                    deadlineReason() { return this.isCritical() ? 'para evitar multa, atraso ou retrabalho' : 'para manter o fluxo sem acúmulo'; },
-                    countdownParts() { return this.isCritical() ? {h: '06', m: '00', s: '00'} : {h: '--', m: '--', s: '--'}; },
+                    slaText() {
+                        if (this.resolutionType === 'client') return `${this.clientDelayedCount()} atraso(s) exigem ação hoje`;
+                        const days = this.extractNumber(this.selectedPriority.atraso || '0');
+                        if (days > 0) return `${days} dia(s) em atraso`;
+                        return this.isCritical() ? 'Vence hoje' : 'Dentro do acompanhamento';
+                    },
+                    deadlineTargetDate() {
+                        const now = new Date(this.nowTimestamp);
+                        const target = new Date(now);
+                        target.setHours(17, 0, 0, 0);
+
+                        const rawDate = this.resolutionType === 'priority' ? (this.selectedPriority.vencimento || '') : '';
+                        const match = String(rawDate).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+
+                        if (match) {
+                            const dueDate = new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10), 17, 0, 0, 0);
+                            if (dueDate.getTime() > now.getTime() && !this.isCritical()) {
+                                return dueDate;
+                            }
+                        }
+
+                        return target;
+                    },
+                    isDeadlineExpired() {
+                        return this.deadlineTargetDate().getTime() <= this.nowTimestamp;
+                    },
+                    deadlineRecommendation() {
+                        if (this.isDeadlineExpired()) return 'Regularizar agora';
+                        const target = this.deadlineTargetDate();
+                        const now = new Date(this.nowTimestamp);
+                        const sameDay = target.toDateString() === now.toDateString();
+                        if (sameDay) return 'Hoje até 17:00';
+                        return target.toLocaleDateString('pt-BR') + ' até 17:00';
+                    },
+                    deadlineReason() {
+                        if (this.isDeadlineExpired()) return 'prazo recomendado expirado; risco de multa, atraso ou retrabalho';
+                        return this.isCritical() ? 'para evitar multa, atraso ou retrabalho' : 'para manter o fluxo sem acúmulo';
+                    },
+                    countdownParts() {
+                        const target = this.deadlineTargetDate();
+                        let diff = target.getTime() - this.nowTimestamp;
+                        if (diff < 0) diff = Math.abs(diff);
+                        const totalHours = Math.floor(diff / 3600000);
+                        const h = String(totalHours).padStart(2, '0');
+                        diff %= 3600000;
+                        const m = String(Math.floor(diff / 60000)).padStart(2, '0');
+                        diff %= 60000;
+                        const sec = String(Math.floor(diff / 1000)).padStart(2, '0');
+                        return {h, m, s: sec};
+                    },
                     progressSteps() {
-                        if (this.resolutionType === 'client') return ['Mapear', 'Cobrar', 'Executar', 'Validar', 'Concluir'];
-                        const type = this.modalType().toLowerCase();
-                        if (type.includes('document')) return ['Solicitar', 'Receber', 'Validar', 'Anexar', 'Concluir'];
-                        if (type.includes('aprovação')) return ['Abrir', 'Acionar', 'Revisar', 'Aprovar', 'Concluir'];
-                        return ['Iniciar', 'Coletar docs', 'Preparar', 'Transmitir', 'Concluir'];
+                        return this.resolutionChecklist().slice(0, 5).map((step) => step.title);
                     },
                     activeStepIndex() {
-                        const type = this.modalType().toLowerCase();
-                        if (type.includes('document')) return 0;
-                        if (type.includes('aprovação')) return 1;
-                        if ((this.selectedPriority.atraso || '').toLowerCase().includes('há')) return 2;
-                        return 1;
+                        return Math.min(this.completedSteps.length, Math.max(0, this.progressSteps().length - 1));
                     },
-                    progressPercent() { return Math.max(15, Math.min(85, this.activeStepIndex() * 20 + 15)); },
+                    progressPercent() {
+                        const total = this.resolutionChecklist().length || 1;
+                        const done = this.completedSteps.filter((step, index, list) => step >= 0 && step < total && list.indexOf(step) === index).length;
+                        return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+                    },
                     nextActionTitle() {
                         if (this.resolutionType === 'client') return 'Resolver primeiro os itens vencidos deste cliente';
                         const type = this.modalType().toLowerCase();
@@ -608,9 +810,9 @@
                     },
                     resolutionChecklist() {
                         if (this.resolutionType === 'client') return [
-                            {title: 'Listar itens críticos do cliente', subtitle: this.selectedClient.problemas || 'Verificar atrasos e pendências'},
+                            {title: 'Atacar primeiro obrigações vencidas', subtitle: this.selectedClient.problemas || 'Verificar atrasos e pendências'},
                             {title: 'Cobrar documentos pendentes', subtitle: 'Enviar mensagem com contexto completo'},
-                            {title: 'Acionar responsáveis internos', subtitle: 'Delegar pendências que dependem da equipe'},
+                            {title: 'Distribuir ações para responsáveis', subtitle: 'Cada pendência com dono e prazo'},
                             {title: 'Resolver obrigações vencidas', subtitle: 'Regularizar o que gera multa primeiro'},
                             {title: 'Confirmar conclusão com o cliente', subtitle: 'Registrar evidência e arquivar'}
                         ];
@@ -630,21 +832,12 @@
                             {title: 'Liberar próxima etapa', subtitle: 'Encaminhar para conclusão'}
                         ];
                         return [
-                            {title: 'Conferir dados da obrigação', subtitle: this.selectedPriority.descricao || 'Item operacional'},
-                            {title: 'Coletar documentos necessários', subtitle: 'Garantir que não há bloqueios'},
-                            {title: 'Preparar execução', subtitle: 'Validar informações e responsável'},
-                            {title: 'Transmitir ou concluir atividade', subtitle: 'Executar tarefa principal'},
-                            {title: 'Confirmar processamento', subtitle: 'Registrar evidência'},
-                            {title: 'Notificar cliente', subtitle: 'Informar conclusão e arquivar'}
-                        ];
-                    },
-                    documentsList() {
-                        const type = this.modalType().toLowerCase();
-                        const primary = type.includes('document') ? (this.selectedPriority.descricao || 'Documento pendente') : 'Documento principal do item';
-                        return [
-                            {name: primary, status: type.includes('document') ? 'Pendente' : 'Validar', statusClass: type.includes('document') ? 'is-pending' : 'is-validating'},
-                            {name: 'Comprovante ou evidência', status: 'Validar', statusClass: 'is-validating'},
-                            {name: 'Registro de conclusão', status: 'Pendente', statusClass: 'is-pending'},
+                            {title: 'Identificar exatamente o que venceu', subtitle: this.selectedPriority.descricao || 'Obrigação crítica'},
+                            {title: 'Separar documentos que bloqueiam a entrega', subtitle: 'Solicitar apenas o que falta ao cliente'},
+                            {title: 'Executar a regularização', subtitle: 'Responsável: ' + this.responsibleName()},
+                            {title: 'Transmitir ou concluir no sistema', subtitle: 'Evitar multa, atraso e retrabalho'},
+                            {title: 'Salvar evidência de conclusão', subtitle: 'Protocolo, recibo ou comprovante'},
+                            {title: 'Avisar cliente e encerrar risco', subtitle: 'Registrar conclusão na carteira'}
                         ];
                     },
                     pendingList() {
@@ -664,14 +857,153 @@
                             {time: '-', text: 'Aguardando atualização operacional'}
                         ];
                     },
-                    minimumPenaltyText() { return 'Conforme regra do item'; },
-                    estimatedPenaltyText() { return this.isCritical() ? 'Verificar no cadastro' : 'Não identificado'; },
-                    dailyInterestText() { return 'Quando aplicável'; },
-                    totalFinancialRiskText() { return this.isCritical() ? 'Alto impacto potencial' : 'Em análise'; },
+                    estimatedPenaltyValue() {
+                        const base = this.resolutionType === 'client' ? Math.max(1, this.clientDelayedCount()) * 450 : Math.max(1, this.extractNumber(this.selectedPriority.atraso || '1')) * 40;
+                        return this.isCritical() ? Math.max(200, Math.min(5000, base)) : Math.max(80, Math.min(800, base));
+                    },
+                    money(value) { return new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(value || 0); },
+                    minimumPenaltyText() { return this.money(this.isCritical() ? 200 : 80); },
+                    estimatedPenaltyText() { return this.money(this.estimatedPenaltyValue()); },
+                    dailyInterestText() { return this.isCritical() ? '0,33%' : '0,10%'; },
+                    totalFinancialRiskText() { return this.money(Math.round(this.estimatedPenaltyValue() * (this.isCritical() ? 1.03 : 1.01))); },
+                    currentChecklistIndex() {
+                        const total = this.resolutionChecklist().length;
+                        for (let index = 0; index < total; index++) {
+                            if (!this.completedSteps.includes(index)) return index;
+                        }
+                        return Math.max(0, total - 1);
+                    },
+                    toggleChecklistStep(index) {
+                        if (this.completedSteps.includes(index)) {
+                            this.completedSteps = this.completedSteps.filter((item) => item !== index);
+                            this.flash('Etapa reaberta.');
+                            return;
+                        }
+                        this.completedSteps = [...this.completedSteps, index].sort((a, b) => a - b);
+                        this.flash('Etapa marcada como concluída.');
+                    },
+                    markCurrentStepDone() {
+                        this.toggleChecklistStep(this.currentChecklistIndex());
+                    },
+                    startResolution() {
+                        this.activeTab = 'checklist';
+                        this.actionPanel = '';
+                        if (!this.completedSteps.includes(0)) this.completedSteps = [0];
+                        this.copy(`${this.nextActionTitle()}\n\n${this.nextActionDescription()}\n\n${this.baseMessage()}`, 'Resolução iniciada. Próxima ação copiada.');
+                    },
+                    requestDocument(doc) {
+                        this.activeTab = 'documents';
+                        const documentName = doc || this.selectedPriority.descricao || 'Documento necessário';
+                        this.copy(`Solicitação de documento\n\nCliente: ${this.modalClientName()}\nDocumento: ${documentName}\nMotivo: ${this.nextActionDescription()}\nPrazo recomendado: ${this.deadlineRecommendation()}.`, 'Solicitação de documento copiada.');
+                    },
+                    markReceived() {
+                        this.activeTab = 'documents';
+                        if (!this.completedDocs.includes(0)) this.completedDocs = [...this.completedDocs, 0];
+                        if (!this.completedSteps.includes(1)) this.completedSteps = [...this.completedSteps, 1].sort((a, b) => a - b);
+                        this.copy(`Documento recebido/validado para ${this.modalClientName()}.\n\n${this.baseMessage()}\n\nPróximo passo: seguir checklist de resolução.`, 'Documento marcado visualmente como recebido.');
+                    },
+                    resolvePending(name) {
+                        this.activeTab = 'checklist';
+                        this.actionPanel = '';
+                        this.markCurrentStepDone();
+                        this.flash(`Pendência tratada no checklist: ${name || this.nextActionTitle()}.`);
+                    },
+                    prepareCompletion() {
+                        this.actionPanel = 'completion';
+                        this.activeTab = 'checklist';
+                        this.copy(`Conclusão da pendência
+
+${this.baseMessage()}
+
+Checklist: validar evidência, marcar etapas e encerrar risco sem sair da Home.`, 'Painel de conclusão aberto.');
+                    },
+                    confirmCompletion() {
+                        const allSteps = this.resolutionChecklist().map((_, index) => index);
+                        this.completedSteps = allSteps;
+                        this.actionPanel = '';
+                        this.copy(`Pendência concluída
+
+${this.baseMessage()}
+
+Evidência/observação: ${this.completionNote || 'Conclusão registrada pelo popup da Home.'}
+
+Status local: concluído.`, 'Pendência marcada como concluída no popup.');
+                    },
+                    confirmDelegation() {
+                        const target = this.delegateTo || this.responsibleName();
+                        if (this.resolutionType === 'client') { this.selectedClient.responsavel = target; }
+                        else { this.selectedPriority.responsavel = target; }
+                        this.actionPanel = '';
+                        this.copy(`Delegação de tarefa\n\n${this.baseMessage()}\n\nNovo responsável: ${target}\nObservação: ${this.actionNote || '-'}\nPrazo recomendado: ${this.deadlineRecommendation()}.`, 'Delegação preparada e copiada.');
+                    },
+                    confirmReschedule() {
+                        if (this.newDeadline) {
+                            const [year, month, day] = this.newDeadline.split('-');
+                            const formatted = `${day}/${month}/${year}`;
+                            if (this.resolutionType === 'client') { this.selectedClient.ultima_atividade = 'Prazo reagendado para ' + formatted; }
+                            else { this.selectedPriority.vencimento = formatted; this.selectedPriority.atraso = 'Reagendado'; }
+                        }
+                        this.actionPanel = '';
+                        this.copy(`Reagendamento registrado
+
+${this.baseMessage()}
+
+Nova data: ${this.newDeadline || 'Data não informada'}
+Motivo: ${this.actionNote || '-'}
+
+Status local: prazo tratado no popup.`, 'Reagendamento registrado no popup e copiado.');
+                    },
+                    confirmSupport() {
+                        this.copy(`Solicitação de suporte\n\n${this.baseMessage()}\n\nImpacto: ${this.financialRiskLevel()}\nPrazo recomendado: ${this.deadlineRecommendation()}\nAjuda necessária: ${this.actionNote || 'Orientar resolução do bloqueio.'}`, 'Chamado preparado e copiado.');
+                    },
+                    saveDraft() {
+                        this.draftSaved = true;
+                        this.copy(`Rascunho salvo localmente\n\n${this.baseMessage()}\n\nPróxima ação: ${this.nextActionTitle()}\nObservação: ${this.actionNote || this.completionNote || '-'}`, 'Rascunho salvo neste popup.');
+                    },
+                    documentsList() {
+                        const type = this.modalType().toLowerCase();
+                        const primary = type.includes('document') ? (this.selectedPriority.descricao || 'Documento pendente') : 'Documento que bloqueia a conclusão';
+                        const base = [
+                            {name: primary, status: type.includes('document') ? 'Pendente' : 'Validar', statusClass: type.includes('document') ? 'is-pending' : 'is-validating'},
+                            {name: 'Comprovante de transmissão ou recibo', status: 'Validar', statusClass: 'is-validating'},
+                            {name: 'Evidência para arquivamento', status: 'Pendente', statusClass: 'is-pending'},
+                        ];
+                        return base.map((doc, index) => this.completedDocs.includes(index) ? {...doc, status: 'Recebido', statusClass: 'is-done'} : doc);
+                    },
+                    openUrl(url) {
+                        if (!url || url === '#') {
+                            this.flash('Link não disponível para este item.');
+                            return;
+                        }
+                        window.open(url, '_blank', 'noopener');
+                    },
+                    whatsappText() {
+                        return `Olá! Precisamos resolver uma pendência para evitar atraso.\n\n${this.baseMessage()}\n\nPode nos retornar ainda hoje, por favor?`;
+                    },
+                    emailSubject() { return `Pendência para regularização - ${this.modalClientName()}`; },
+                    emailBody() {
+                        return `Olá,\n\nIdentificamos uma pendência que precisa de atenção.\n\n${this.baseMessage()}\n\nFicamos no aguardo para concluir o processo.`;
+                    },
+                    openWhatsAppMessage() {
+                        const text = this.whatsappText();
+                        this.copy(text, 'WhatsApp aberto e mensagem copiada.');
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+                    },
+                    openEmailMessage() {
+                        const subject = this.emailSubject();
+                        const body = this.emailBody();
+                        this.copy(`Assunto: ${subject}\n\n${body}`, 'E-mail aberto e conteúdo copiado.');
+                        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    },
                     copy(text, feedback) {
-                        if (navigator.clipboard) navigator.clipboard.writeText(text);
-                        this.copied = feedback || 'Conteúdo copiado.';
-                        setTimeout(() => this.copied = '', 2400);
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).catch(() => {});
+                        }
+                        this.flash(feedback || 'Conteúdo copiado.');
+                    },
+                    flash(feedback) {
+                        this.copied = feedback || 'Ação executada.';
+                        setTimeout(() => this.copied = '', 2600);
                     },
                     baseMessage() {
                         if (this.resolutionType === 'client') return `Cliente: ${this.modalClientName()}\nRisco: ${this.selectedClient.risco || '-'}\nProblemas: ${this.selectedClient.problemas || '-'}\nAção recomendada: ${this.nextActionTitle()}.`;
@@ -679,19 +1011,18 @@
                     },
                     resolutionMessage() { return this.baseMessage(); },
                     copyResolutionText() { this.copy(this.baseMessage(), 'Contexto copiado.'); },
-                    copyRecommendedAction() { this.copy(`${this.nextActionTitle()}\n\n${this.nextActionDescription()}\n\n${this.baseMessage()}`, 'Ação recomendada copiada.'); },
-                    copyWhatsAppMessage() { this.copy(`Olá! Precisamos resolver uma pendência para evitar atraso.\n\n${this.baseMessage()}\n\nPode nos retornar ainda hoje, por favor?`, 'Mensagem para WhatsApp copiada.'); },
-                    copyEmailMessage() { this.copy(`Assunto: Pendência para regularização - ${this.modalClientName()}\n\nOlá,\n\nIdentificamos uma pendência que precisa de atenção.\n\n${this.baseMessage()}\n\nFicamos no aguardo para concluir o processo.`, 'E-mail copiado.'); },
-                    copyDocumentRequest(doc) { this.copy(`Solicitação de documento\n\nCliente: ${this.modalClientName()}\nDocumento: ${doc || this.selectedPriority.descricao || 'Documento necessário'}\nMotivo: ${this.nextActionDescription()}\nPrazo recomendado: ${this.deadlineRecommendation()}.`, 'Solicitação de documento copiada.'); },
-                    copyReceivedMessage() { this.copy(`Documento recebido/validado para ${this.modalClientName()}.\n\n${this.baseMessage()}\n\nPróximo passo: seguir checklist de resolução.`, 'Mensagem de recebimento copiada.'); },
-                    copyDelegationMessage() { this.copy(`Delegação de tarefa\n\n${this.baseMessage()}\n\nResponsável sugerido: ${this.responsibleName()}\nPrazo recomendado: ${this.deadlineRecommendation()}.`, 'Delegação copiada.'); },
-                    copyRescheduleMessage() { this.copy(`Reagendamento necessário\n\n${this.baseMessage()}\n\nJustificativa: informar motivo e nova data no cadastro do item.`, 'Resumo para reagendamento copiado.'); },
-                    copyCompletionMessage() { this.copy(`Preparar conclusão\n\n${this.baseMessage()}\n\nChecklist: validar evidências, registrar andamento e concluir no cadastro do item.`, 'Conclusão preparada.'); },
-                    copyChecklistDoneMessage() { this.copy(`Etapa concluída\n\n${this.nextActionTitle()}\nCliente: ${this.modalClientName()}\nItem: ${this.modalTitle()}`, 'Etapa copiada como concluída.'); },
+                    copyRecommendedAction() { this.startResolution(); },
+                    copyWhatsAppMessage() { this.openWhatsAppMessage(); },
+                    copyEmailMessage() { this.openEmailMessage(); },
+                    copyDocumentRequest(doc) { this.requestDocument(doc); },
+                    copyReceivedMessage() { this.markReceived(); },
+                    copyDelegationMessage() { this.openActionPanel('delegate'); },
+                    copyRescheduleMessage() { this.openActionPanel('reschedule'); },
+                    copyCompletionMessage() { this.prepareCompletion(); },
+                    copyChecklistDoneMessage() { this.markCurrentStepDone(); },
                     copyPendingSummary(name) { this.copy(`Pendência: ${name || this.nextActionTitle()}\n\n${this.baseMessage()}\n\nPriorizar resolução ainda hoje.`, 'Pendência copiada.'); },
-                    copyActivitySummary() { this.copy(`Histórico/atividade\n\n${this.activitiesList().map((a) => `${a.time}: ${a.text}`).join('\n')}`, 'Histórico copiado.'); },
-                    copySupportMessage() { this.copy(`Solicitação de suporte\n\n${this.baseMessage()}\n\nImpacto: ${this.financialRiskLevel()}\nPrazo recomendado: ${this.deadlineRecommendation()}\nAjuda necessária: orientar resolução do bloqueio.`, 'Mensagem de suporte copiada.'); },
-                }
+                    copyActivitySummary() { this.setTab('history'); this.copy(`Histórico/atividade\n\n${this.activitiesList().map((a) => `${a.time}: ${a.text}`).join('\n')}`, 'Histórico copiado.'); },
+                    copySupportMessage() { this.openActionPanel('support'); },                }
             }
         </script>
 
