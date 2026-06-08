@@ -727,42 +727,89 @@
                         if (days > 0) return `${days} dia(s) em atraso`;
                         return this.isCritical() ? 'Vence hoje' : 'Dentro do acompanhamento';
                     },
+                    parseBrazilianDate(value) {
+                        const match = String(value || '').match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+                        if (!match) return null;
+                        return new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10), 17, 0, 0, 0);
+                    },
+                    deadlineGraceDays() {
+                        return 7;
+                    },
+                    currentDueDate() {
+                        if (this.resolutionType !== 'priority') return null;
+                        return this.parseBrazilianDate(this.selectedPriority.vencimento || '');
+                    },
+                    isOverduePriority() {
+                        const dueDate = this.currentDueDate();
+                        if (!dueDate) return false;
+                        return dueDate.getTime() < this.nowTimestamp;
+                    },
                     deadlineTargetDate() {
                         const now = new Date(this.nowTimestamp);
-                        const target = new Date(now);
-                        target.setHours(17, 0, 0, 0);
-
-                        const rawDate = this.resolutionType === 'priority' ? (this.selectedPriority.vencimento || '') : '';
-                        const match = String(rawDate).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-
-                        if (match) {
-                            const dueDate = new Date(parseInt(match[3], 10), parseInt(match[2], 10) - 1, parseInt(match[1], 10), 17, 0, 0, 0);
-                            if (dueDate.getTime() > now.getTime() && !this.isCritical()) {
-                                return dueDate;
-                            }
+                        const fallback = new Date(now);
+                        fallback.setHours(17, 0, 0, 0);
+                        if (fallback.getTime() <= now.getTime()) {
+                            fallback.setDate(fallback.getDate() + 1);
                         }
 
-                        return target;
+                        const dueDate = this.currentDueDate();
+                        if (!dueDate) return fallback;
+
+                        if (dueDate.getTime() < this.nowTimestamp) {
+                            const graceLimit = new Date(dueDate);
+                            graceLimit.setDate(graceLimit.getDate() + this.deadlineGraceDays());
+                            graceLimit.setHours(17, 0, 0, 0);
+                            return graceLimit;
+                        }
+
+                        return dueDate;
                     },
                     isDeadlineExpired() {
                         return this.deadlineTargetDate().getTime() <= this.nowTimestamp;
                     },
+                    remainingTimeText() {
+                        let diff = this.deadlineTargetDate().getTime() - this.nowTimestamp;
+                        if (diff <= 0) return '';
+
+                        const days = Math.floor(diff / 86400000);
+                        diff %= 86400000;
+                        const hours = Math.floor(diff / 3600000);
+
+                        if (days > 1) return `${days} dias`;
+                        if (days === 1) return hours > 0 ? `1 dia e ${hours}h` : '1 dia';
+                        if (hours > 1) return `${hours} horas`;
+                        if (hours === 1) return '1 hora';
+                        const minutes = Math.max(1, Math.floor(diff / 60000));
+                        return `${minutes} min`;
+                    },
                     deadlineRecommendation() {
                         if (this.isDeadlineExpired()) return 'Regularizar agora';
+
+                        const remaining = this.remainingTimeText();
                         const target = this.deadlineTargetDate();
                         const now = new Date(this.nowTimestamp);
                         const sameDay = target.toDateString() === now.toDateString();
-                        if (sameDay) return 'Hoje até 17:00';
-                        return target.toLocaleDateString('pt-BR') + ' até 17:00';
+
+                        if (this.isOverduePriority()) {
+                            return remaining ? `${remaining} para evitar multa` : 'Regularizar antes da multa';
+                        }
+
+                        if (sameDay) return 'Regularizar hoje até 17:00';
+                        return remaining ? `${remaining} até o vencimento` : target.toLocaleDateString('pt-BR') + ' até 17:00';
                     },
                     deadlineReason() {
-                        if (this.isDeadlineExpired()) return 'prazo recomendado expirado; risco de multa, atraso ou retrabalho';
-                        return this.isCritical() ? 'para evitar multa, atraso ou retrabalho' : 'para manter o fluxo sem acúmulo';
+                        if (this.isDeadlineExpired()) return 'limite expirado; regularização imediata para reduzir multa, atraso ou retrabalho';
+
+                        const target = this.deadlineTargetDate().toLocaleDateString('pt-BR');
+                        if (this.isOverduePriority()) {
+                            return `obrigação já venceu; prazo de tolerância até ${target} às 17:00`;
+                        }
+
+                        return `contador acompanha o tempo restante até ${target} às 17:00`;
                     },
                     countdownParts() {
-                        const target = this.deadlineTargetDate();
-                        let diff = target.getTime() - this.nowTimestamp;
-                        if (diff < 0) diff = Math.abs(diff);
+                        let diff = this.deadlineTargetDate().getTime() - this.nowTimestamp;
+                        if (diff <= 0) diff = 0;
                         const totalHours = Math.floor(diff / 3600000);
                         const h = String(totalHours).padStart(2, '0');
                         diff %= 3600000;
