@@ -1052,21 +1052,34 @@
                                 <div><small>Total aberto</small><strong><?php echo e(number_format((int) ($workloadDetail['total'] ?? 0), 0, ',', '.')); ?></strong></div>
                                 <div><small>Críticos</small><strong><?php echo e(number_format((int) ($workloadDetail['critical'] ?? 0), 0, ',', '.')); ?></strong></div>
                                 <div><small>Atrasados</small><strong><?php echo e(number_format((int) ($workloadDetail['late'] ?? 0), 0, ',', '.')); ?></strong></div>
-                                <div><small>Ação</small><strong><?php echo e(!empty($workloadDetail['recommendation']) ? 'Redistribuir' : 'Monitorar'); ?></strong></div>
+                                <div><small>Decisão sugerida</small><strong><?php echo e($workloadDetail['bottleneck_summary']['action'] ?? (!empty($workloadDetail['recommendation']) ? 'Redistribuir' : 'Monitorar')); ?></strong></div>
                             </div>
 
-                            <div class="co-decision-box warning">
+                            <div class="co-decision-box <?php echo e($workloadDetail['bottleneck_summary']['tone'] ?? 'warning'); ?>">
                                 <div>
-                                    <small>Sugestão operacional</small>
-                                    <strong><?php echo e($workloadDetail['recommendation']['title'] ?? 'Avaliar redistribuição'); ?></strong>
-                                    <p><?php echo e($workloadDetail['recommendation']['text'] ?? 'Analise os itens abaixo e redistribua apenas o que estiver travando a operação.'); ?></p>
+                                    <small>Leitura operacional da carga</small>
+                                    <strong><?php echo e($workloadDetail['bottleneck_summary']['title'] ?? ($workloadDetail['recommendation']['title'] ?? 'Avaliar redistribuição')); ?></strong>
+                                    <p><?php echo e($workloadDetail['bottleneck_summary']['text'] ?? ($workloadDetail['recommendation']['text'] ?? 'Analise os itens abaixo e redistribua apenas o que estiver travando a operação.')); ?></p>
                                 </div>
-                                <span><?php echo e($workloadDetail['recommendation']['primary_action'] ?? 'Rebalancear carga'); ?></span>
+                                <span><?php echo e($workloadDetail['bottleneck_summary']['action'] ?? 'Rebalancear carga'); ?></span>
                             </div>
+
+                            <section class="co-detail-insight-card">
+                                <h4><i class="bi bi-activity"></i>Sinais de gargalo</h4>
+                                <div class="co-detail-grid">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($workloadDetail['workload_signals'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $signal): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div>
+                                            <small><?php echo e($signal['label']); ?></small>
+                                            <strong><?php echo e($signal['value']); ?></strong>
+                                            <em><?php echo e($signal['text']); ?></em>
+                                        </div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                </div>
+                            </section>
 
                             <div class="co-detail-insights-grid">
                                 <section class="co-detail-insight-card">
-                                    <h4><i class="bi bi-list-check"></i>Itens do responsável</h4>
+                                    <h4><i class="bi bi-list-check"></i>Itens que mais pesam na fila</h4>
                                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($workloadDetail['items'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                         <article>
                                             <div>

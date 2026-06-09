@@ -1039,21 +1039,34 @@
                                 <div><small>Total aberto</small><strong>{{ number_format((int) ($workloadDetail['total'] ?? 0), 0, ',', '.') }}</strong></div>
                                 <div><small>Críticos</small><strong>{{ number_format((int) ($workloadDetail['critical'] ?? 0), 0, ',', '.') }}</strong></div>
                                 <div><small>Atrasados</small><strong>{{ number_format((int) ($workloadDetail['late'] ?? 0), 0, ',', '.') }}</strong></div>
-                                <div><small>Ação</small><strong>{{ !empty($workloadDetail['recommendation']) ? 'Redistribuir' : 'Monitorar' }}</strong></div>
+                                <div><small>Decisão sugerida</small><strong>{{ $workloadDetail['bottleneck_summary']['action'] ?? (!empty($workloadDetail['recommendation']) ? 'Redistribuir' : 'Monitorar') }}</strong></div>
                             </div>
 
-                            <div class="co-decision-box warning">
+                            <div class="co-decision-box {{ $workloadDetail['bottleneck_summary']['tone'] ?? 'warning' }}">
                                 <div>
-                                    <small>Sugestão operacional</small>
-                                    <strong>{{ $workloadDetail['recommendation']['title'] ?? 'Avaliar redistribuição' }}</strong>
-                                    <p>{{ $workloadDetail['recommendation']['text'] ?? 'Analise os itens abaixo e redistribua apenas o que estiver travando a operação.' }}</p>
+                                    <small>Leitura operacional da carga</small>
+                                    <strong>{{ $workloadDetail['bottleneck_summary']['title'] ?? ($workloadDetail['recommendation']['title'] ?? 'Avaliar redistribuição') }}</strong>
+                                    <p>{{ $workloadDetail['bottleneck_summary']['text'] ?? ($workloadDetail['recommendation']['text'] ?? 'Analise os itens abaixo e redistribua apenas o que estiver travando a operação.') }}</p>
                                 </div>
-                                <span>{{ $workloadDetail['recommendation']['primary_action'] ?? 'Rebalancear carga' }}</span>
+                                <span>{{ $workloadDetail['bottleneck_summary']['action'] ?? 'Rebalancear carga' }}</span>
                             </div>
+
+                            <section class="co-detail-insight-card">
+                                <h4><i class="bi bi-activity"></i>Sinais de gargalo</h4>
+                                <div class="co-detail-grid">
+                                    @foreach(($workloadDetail['workload_signals'] ?? []) as $signal)
+                                        <div>
+                                            <small>{{ $signal['label'] }}</small>
+                                            <strong>{{ $signal['value'] }}</strong>
+                                            <em>{{ $signal['text'] }}</em>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </section>
 
                             <div class="co-detail-insights-grid">
                                 <section class="co-detail-insight-card">
-                                    <h4><i class="bi bi-list-check"></i>Itens do responsável</h4>
+                                    <h4><i class="bi bi-list-check"></i>Itens que mais pesam na fila</h4>
                                     @forelse(($workloadDetail['items'] ?? []) as $item)
                                         <article>
                                             <div>

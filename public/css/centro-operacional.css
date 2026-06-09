@@ -324,7 +324,6 @@
     display: grid;
     grid-template-columns: 46px minmax(0, 1fr) auto;
     align-items: center;
-    min-height: 85px;
     color: inherit;
     text-decoration: none;
 }
