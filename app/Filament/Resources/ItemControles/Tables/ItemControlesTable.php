@@ -5,12 +5,13 @@ namespace App\Filament\Resources\ItemControles\Tables;
 use App\Models\Empresa;
 use App\Models\ItemControleChecklist;
 use App\Models\ItemControleTimeline;
-use App\Models\Responsavel;
+use App\Models\Responsável;
 use App\Services\PlanoService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\Textarea;
@@ -39,12 +40,60 @@ class ItemControlesTable
     {
         return $table
             ->defaultSort('data_vencimento', 'asc')
-            ->defaultPaginationPageOption(5)
-            ->paginated([5, 10, 25])
+            ->defaultPaginationPageOption(10)
+            ->paginated([10, 25, 50, 100])
+            ->persistFiltersInSession()
+            ->persistSearchInSession()
+            ->persistSortInSession()
+            ->searchPlaceholder('Buscar por tarefa, empresa, responsável ou categoria')
+            ->emptyStateIcon('heroicon-o-clipboard-document-list')
+            ->emptyStateHeading('Nenhuma tarefa encontrada')
+            ->emptyStateDescription('Ajuste os filtros ou cadastre uma nova tarefa para começar a execução.')
             ->striped()
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount([
+                'checklists',
+                'checklists as checklists_concluidos_count' => fn (Builder $query): Builder => $query->where('concluido', true),
+            ]))
             ->columns(self::getColumnsForContext($context))
-            ->filters(self::getFiltersForContext($context), layout: FiltersLayout::AboveContent)
+            ->filters(self::getFiltersForContext($context), layout: FiltersLayout::AboveContentCollapsible)
+            ->filtersFormColumns(4)
             ->recordActions([
+                Action::make('concluir_rapido')
+                    ->label('Concluir')
+                    ->icon('heroicon-o-check')
+                    ->color('success')
+                    ->button()
+                    ->visible(fn ($record): bool => self::canConcluirRapido($record))
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record): string => 'Concluir tarefa - ' . $record->titulo)
+                    ->modalDescription('Esta tarefa será marcada como concluída sem abrir a tela de edição.')
+                    ->modalSubmitActionLabel('Concluir tarefa')
+                    ->tooltip('Concluir sem abrir a tela de edição')
+                    ->action(function ($record): void {
+                        self::concluirTarefa($record);
+                    }),
+
+                Action::make('assumir_rapido')
+                    ->label('Assumir')
+                    ->icon('heroicon-o-user-plus')
+                    ->color('info')
+                    ->button()
+                    ->visible(fn ($record): bool => self::canAssumirRapido($record))
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record): string => 'Assumir tarefa - ' . $record->titulo)
+                    ->modalDescription('A tarefa será vinculada ao seu responsável interno.')
+                    ->modalSubmitActionLabel('Assumir tarefa')
+                    ->tooltip('Assumir esta tarefa sem sair da listagem')
+                    ->action(function ($record): void {
+                        self::assumirTarefa($record);
+                    }),
+
+                EditAction::make()
+                    ->label('Editar')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('gray')
+                    ->tooltip('Editar os dados da tarefa'),
+
                 ActionGroup::make([
                     Action::make('checklist')
                     ->label('Checklist')
@@ -63,28 +112,6 @@ class ItemControlesTable
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Fechar')
                     ->schema(fn ($record): array => self::getTimelineModalSchema($record)),
-
-                Action::make('concluir')
-                    ->label('Concluir')
-                    ->icon('heroicon-o-check')
-                    ->color('success')
-                    ->visible(fn ($record): bool => $record && ! in_array((string) $record->status, ['concluido', 'cancelado'], true))
-                    ->action(function ($record): void {
-                        $record?->update([
-                            'status' => 'concluido',
-                            'data_conclusao' => now(),
-                        ]);
-
-                        if ($record && filled($record->sla_status) && ! $record->sla_concluido_em) {
-                            $record->concluirSla();
-                        }
-
-                        $record?->registrarTimeline(
-                            'atualizacao',
-                            'Item concluido',
-                            'O item foi marcado como concluido.'
-                        );
-                    }),
 
                     Action::make('pdf')
                         ->label('Exportar PDF')
@@ -204,14 +231,14 @@ class ItemControlesTable
                         }),
 
                     Action::make('solicitar_aprovacao')
-                        ->label('Solicitar aprovacao')
+                        ->label('Solicitar aprovação')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('warning')
                         ->visible(fn ($record): bool => $context === 'aprovacoes' && $record && self::empresaPossuiFeatureCached($record->empresa, PlanoService::FEATURE_APROVACOES) && $record->podeSolicitarAprovacao())
-                        ->modalHeading(fn ($record): string => 'Solicitar aprovacao - ' . $record->titulo)
+                        ->modalHeading(fn ($record): string => 'Solicitar aprovação - ' . $record->titulo)
                         ->schema([
                             Textarea::make('observacao')
-                                ->label('Observacao')
+                                ->label('Observação')
                                 ->rows(4)
                                 ->maxLength(2000)
                                 ->columnSpanFull(),
@@ -223,7 +250,7 @@ class ItemControlesTable
                             );
 
                             Notification::make()
-                                ->title('Aprovacao solicitada com sucesso.')
+                                ->title('Aprovação solicitada com sucesso.')
                                 ->success()
                                 ->send();
                         }),
@@ -237,10 +264,10 @@ class ItemControlesTable
                             && $record->possuiAprovacaoPendente()
                             && $record->canBeApprovedBy(Filament::auth()->user())
                         )
-                        ->modalHeading(fn ($record): string => 'Aprovar item - ' . $record->titulo)
+                        ->modalHeading(fn ($record): string => 'Aprovar tarefa - ' . $record->titulo)
                         ->schema([
                             Textarea::make('observacao')
-                                ->label('Observacao da aprovacao')
+                                ->label('Observação da aprovação')
                                 ->rows(4)
                                 ->maxLength(2000)
                                 ->columnSpanFull(),
@@ -252,7 +279,7 @@ class ItemControlesTable
                             );
 
                             Notification::make()
-                                ->title('Item aprovado com sucesso.')
+                                ->title('Tarefa aprovada com sucesso.')
                                 ->success()
                                 ->send();
                         }),
@@ -266,7 +293,7 @@ class ItemControlesTable
                             && $record->possuiAprovacaoPendente()
                             && $record->canBeApprovedBy(Filament::auth()->user())
                         )
-                        ->modalHeading(fn ($record): string => 'Reprovar item - ' . $record->titulo)
+                        ->modalHeading(fn ($record): string => 'Reprovar tarefa - ' . $record->titulo)
                         ->schema([
                             Textarea::make('observacao')
                                 ->label('Motivo da reprovacao')
@@ -282,7 +309,7 @@ class ItemControlesTable
                             );
 
                             Notification::make()
-                                ->title('Item reprovado.')
+                                ->title('Tarefa reprovada.')
                                 ->success()
                                 ->send();
                         }),
@@ -430,9 +457,10 @@ class ItemControlesTable
 
                     DeleteAction::make(),
                 ])
-                    ->label('Ações')
-                    ->icon('heroicon-o-bars-3-bottom-right')
-                    ->color('primary')
+                    ->label('Mais')
+                    ->tooltip('Ver ações adicionais da tarefa')
+                    ->icon('heroicon-m-ellipsis-vertical')
+                    ->color('gray')
                     ->button(),
             ])
             ->toolbarActions([
@@ -452,16 +480,235 @@ class ItemControlesTable
                     false
                 );
 
+                if ($dias < -15) {
+                    return 'border-l-4 border-danger-600 bg-danger-50/70 dark:bg-danger-950/30';
+                }
+
                 if ($dias < 0) {
-                    return 'border-l-4 border-danger-500';
+                    return 'border-l-4 border-danger-500 bg-danger-50/40 dark:bg-danger-950/20';
                 }
 
                 if ($dias <= 3) {
-                    return 'border-l-4 border-warning-500';
+                    return 'border-l-4 border-warning-500 bg-warning-50/40 dark:bg-warning-950/20';
                 }
 
                 return null;
             });
+    }
+
+
+    protected static function canConcluirRapido($record): bool
+    {
+        if (! $record) {
+            return false;
+        }
+
+        if (in_array((string) $record->status, ['concluido', 'cancelado'], true)) {
+            return false;
+        }
+
+        return method_exists($record, 'canBeModifiedBy')
+            ? $record->canBeModifiedBy(Filament::auth()->user())
+            : true;
+    }
+
+    protected static function concluirTarefa($record): void
+    {
+        if (! $record || ! self::canConcluirRapido($record)) {
+            return;
+        }
+
+        $record->update([
+            'status' => 'concluido',
+            'data_conclusao' => now(),
+        ]);
+
+        if (filled($record->sla_status) && ! $record->sla_concluido_em) {
+            $record->concluirSla();
+        }
+
+        $record->registrarTimeline(
+            'atualizacao',
+            'Tarefa concluída',
+            'A tarefa foi marcada como concluída pela ação rápida da listagem.'
+        );
+
+        Notification::make()
+            ->title('Tarefa concluída com sucesso.')
+            ->success()
+            ->send();
+    }
+
+    protected static function canAssumirRapido($record): bool
+    {
+        $user = Filament::auth()->user();
+
+        if (! $record || ! $user?->responsavel?->id) {
+            return false;
+        }
+
+        if (filled($record->responsavel_id)) {
+            return false;
+        }
+
+        if (in_array((string) $record->status, ['concluido', 'cancelado'], true)) {
+            return false;
+        }
+
+        return method_exists($record, 'canBeModifiedBy')
+            ? $record->canBeModifiedBy($user)
+            : true;
+    }
+
+    protected static function assumirTarefa($record): void
+    {
+        $user = Filament::auth()->user();
+
+        if (! $record || ! self::canAssumirRapido($record)) {
+            return;
+        }
+
+        $record->update([
+            'responsavel_id' => $user->responsavel->id,
+        ]);
+
+        $record->registrarTimeline(
+            'atualizacao',
+            'Tarefa assumida',
+            'A tarefa foi assumida por ' . ($user->name ?? 'usuário') . '.'
+        );
+
+        Notification::make()
+            ->title('Tarefa assumida com sucesso.')
+            ->success()
+            ->send();
+    }
+
+    protected static function getSituacaoPrazoLabel($record): string
+    {
+        if (! $record?->data_vencimento) {
+            return 'Sem prazo';
+        }
+
+        if (in_array((string) $record->status, ['concluido', 'cancelado'], true)) {
+            return $record->status === 'concluido' ? 'Concluída' : 'Cancelada';
+        }
+
+        $dias = now()->startOfDay()->diffInDays(
+            $record->data_vencimento->copy()->startOfDay(),
+            false
+        );
+
+        if ($dias < 0) {
+            $diasAtraso = abs($dias);
+
+            return $diasAtraso === 1
+                ? 'Atrasada 1 dia'
+                : 'Atrasada ' . $diasAtraso . ' dias';
+        }
+
+        if ($dias === 0) {
+            return 'Vence hoje';
+        }
+
+        if ($dias === 1) {
+            return 'Vence amanhã';
+        }
+
+        if ($dias <= 3) {
+            return 'Vence em ' . $dias . ' dias';
+        }
+
+        return 'No prazo';
+    }
+
+    protected static function getSituacaoPrazoColor($record): string
+    {
+        if (! $record?->data_vencimento) {
+            return 'gray';
+        }
+
+        if (in_array((string) $record->status, ['concluido', 'cancelado'], true)) {
+            return $record->status === 'concluido' ? 'success' : 'gray';
+        }
+
+        $dias = now()->startOfDay()->diffInDays(
+            $record->data_vencimento->copy()->startOfDay(),
+            false
+        );
+
+        if ($dias < 0) {
+            return 'danger';
+        }
+
+        if ($dias <= 1) {
+            return 'warning';
+        }
+
+        if ($dias <= 3) {
+            return 'info';
+        }
+
+        return 'success';
+    }
+
+    protected static function getTituloDescription($record): ?string
+    {
+        return $record?->empresa?->razao_social ?: null;
+    }
+
+    protected static function getChecklistAndamentoLabel($record): string
+    {
+        if (! $record || ! method_exists($record, 'getTotalChecklist')) {
+            return 'Sem checklist';
+        }
+
+        $total = $record->getTotalChecklist();
+
+        if ($total <= 0) {
+            return 'Sem checklist';
+        }
+
+        return $record->getChecklistResumo() . ' • ' . $record->getChecklistPercentual() . '%';
+    }
+
+    protected static function getChecklistAndamentoDescription($record): ?string
+    {
+        if (! $record || ! method_exists($record, 'getTotalChecklist')) {
+            return null;
+        }
+
+        $total = $record->getTotalChecklist();
+
+        if ($total <= 0) {
+            return 'Nenhuma etapa cadastrada';
+        }
+
+        $concluidos = $record->getChecklistConcluidos();
+        $pendentes = max($total - $concluidos, 0);
+
+        if ($pendentes === 0) {
+            return 'Todas as etapas concluídas';
+        }
+
+        return $pendentes === 1
+            ? '1 etapa pendente'
+            : $pendentes . ' etapas pendentes';
+    }
+
+    protected static function getChecklistAndamentoColor($record): string
+    {
+        if (! $record || ! method_exists($record, 'getTotalChecklist')) {
+            return 'gray';
+        }
+
+        $total = $record->getTotalChecklist();
+
+        if ($total <= 0) {
+            return 'gray';
+        }
+
+        return $record->getChecklistColor();
     }
 
 
@@ -506,19 +753,27 @@ class ItemControlesTable
                 ->tooltip(fn ($record): string => filled($record?->arquivo) ? 'Possui documento anexado' : 'Sem documento'),
 
             TextColumn::make('titulo')
-                ->label('Item')
+                ->label('Tarefa')
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::SemiBold)
-                ->description(fn ($record): ?string => $record?->empresa?->razao_social)
-                ->limit(45),
+                ->description(fn ($record): ?string => self::getTituloDescription($record))
+                ->limit(48)
+                ->tooltip(fn ($record): ?string => $record?->titulo),
+
+            TextColumn::make('responsavel.nome')
+                ->label('Responsável')
+                ->searchable()
+                ->sortable()
+                ->placeholder('Sem responsável')
+                ->description(fn ($record): ?string => blank($record?->responsavel?->nome) && self::canAssumirRapido($record) ? 'Clique em Assumir' : null),
 
             TextColumn::make('categoria.nome')
                 ->label('Categoria')
                 ->badge()
                 ->sortable()
                 ->getStateUsing(fn ($record): string => $record?->getTipoOuCategoria() ?? '-')
-                ->toggleable(),
+                ->toggleable(isToggledHiddenByDefault: true),
 
             TextColumn::make('status')
                 ->label('Status')
@@ -531,17 +786,26 @@ class ItemControlesTable
                 ->label('Prioridade')
                 ->badge()
                 ->sortable()
-                ->formatStateUsing(fn ($record): string => $record?->getPrioridadeExibicao() ?? 'Media')
+                ->formatStateUsing(fn ($record): string => $record?->getPrioridadeExibicao() ?? 'Média')
                 ->color(fn ($record): string => $record?->getPrioridadeColor() ?? 'info'),
+
+            TextColumn::make('checklist_andamento_visual')
+                ->label('Checklist')
+                ->badge()
+                ->getStateUsing(fn ($record): string => self::getChecklistAndamentoLabel($record))
+                ->description(fn ($record): ?string => self::getChecklistAndamentoDescription($record))
+                ->color(fn ($record): string => self::getChecklistAndamentoColor($record))
+                ->toggleable(),
         ];
 
         $contextColumns = match ($context) {
             'checklists' => [
-                TextColumn::make('checklist_resumo')
-                    ->label('Checklist')
+                TextColumn::make('checklist_status_detalhado')
+                    ->label('Andamento')
                     ->badge()
-                    ->getStateUsing(fn ($record): string => $record?->getChecklistResumo() ?? '-')
-                    ->color(fn ($record): string => $record?->getChecklistColor() ?? 'gray'),
+                    ->getStateUsing(fn ($record): string => self::getChecklistAndamentoLabel($record))
+                    ->description(fn ($record): ?string => self::getChecklistAndamentoDescription($record))
+                    ->color(fn ($record): string => self::getChecklistAndamentoColor($record)),
             ],
 
             'timelines' => [
@@ -562,15 +826,15 @@ class ItemControlesTable
                 TextColumn::make('assinatura')
                     ->label('Assinatura')
                     ->badge()
-                    ->getStateUsing(fn ($record): string => $record?->getAssinaturaResumo() ?? 'Nao assinado')
+                    ->getStateUsing(fn ($record): string => $record?->getAssinaturaResumo() ?? 'Não assinado')
                     ->color(fn ($record): string => $record?->getAssinaturaColor() ?? 'gray'),
             ],
 
             'aprovacoes' => [
                 TextColumn::make('aprovacao')
-                    ->label('Aprovacao')
+                    ->label('Aprovação')
                     ->badge()
-                    ->getStateUsing(fn ($record): string => $record?->getAprovacaoResumo() ?? 'Sem aprovacao')
+                    ->getStateUsing(fn ($record): string => $record?->getAprovacaoResumo() ?? 'Sem aprovação')
                     ->color(fn ($record): string => $record?->getAprovacaoColor() ?? 'gray'),
 
                 TextColumn::make('notificacoes_internas_count')
@@ -581,7 +845,7 @@ class ItemControlesTable
 
             'anexos' => [
                 TextColumn::make('comentarios_count')
-                    ->label('Comentarios')
+                    ->label('Comentários')
                     ->badge()
                     ->color('info'),
 
@@ -627,26 +891,98 @@ class ItemControlesTable
         return [
             ...$baseColumns,
             ...$contextColumns,
-            TextColumn::make('responsavel.nome')
-                ->label('Responsavel')
-                ->toggleable(isToggledHiddenByDefault: true),
+            TextColumn::make('situacao_prazo_visual')
+                ->label('Situação')
+                ->badge()
+                ->getStateUsing(fn ($record): string => self::getSituacaoPrazoLabel($record))
+                ->color(fn ($record): string => self::getSituacaoPrazoColor($record)),
 
             TextColumn::make('data_vencimento')
                 ->label('Vencimento')
                 ->date('d/m/Y')
-                ->sortable(),
+                ->sortable()
+                ->color(fn ($record): string => self::getSituacaoPrazoColor($record))
+                ->weight(fn ($record): FontWeight => self::getSituacaoPrazoColor($record) === 'danger' ? FontWeight::Bold : FontWeight::Medium),
 
             TextColumn::make('dias_restantes')
                 ->label('Prazo')
                 ->getStateUsing(fn ($record): string => (string) ($record?->getDiasRestantes() ?? '-'))
                 ->badge()
-                ->color(fn ($record): string => $record?->getDiasRestantesColor() ?? 'gray'),
+                ->color(fn ($record): string => $record?->getDiasRestantesColor() ?? 'gray')
+                ->toggleable(isToggledHiddenByDefault: true),
         ];
+    }
+
+    protected static function filtrarMinhasTarefas(Builder $query): Builder
+    {
+        $responsavelId = Filament::auth()->user()?->responsavel?->id;
+
+        if (! $responsavelId) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query
+            ->whereNotIn('status', ['concluido', 'cancelado'])
+            ->where('responsavel_id', $responsavelId);
     }
 
     protected static function getFiltersForContext(string $context): array
     {
         $filters = [
+            SelectFilter::make('atalho_operacional')
+                ->label('Visão rápida')
+                ->options([
+                    'minhas' => 'Minhas tarefas',
+                    'atrasadas' => 'Atrasadas',
+                    'hoje' => 'Vencem hoje',
+                    'semana' => 'Vencem esta semana',
+                    'sem_responsavel' => 'Sem responsável',
+                    'bloqueadas' => 'Bloqueadas',
+                    'alta_prioridade' => 'Alta prioridade',
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    $value = $data['value'] ?? null;
+
+                    if (blank($value)) {
+                        return $query;
+                    }
+
+                    $statusFinalizados = ['concluido', 'cancelado'];
+
+                    return match ($value) {
+                        'minhas' => self::filtrarMinhasTarefas($query),
+                        'atrasadas' => $query
+                            ->whereNotIn('status', $statusFinalizados)
+                            ->whereNotNull('data_vencimento')
+                            ->whereDate('data_vencimento', '<', now()->toDateString()),
+                        'hoje' => $query
+                            ->whereNotIn('status', $statusFinalizados)
+                            ->whereDate('data_vencimento', now()->toDateString()),
+                        'semana' => $query
+                            ->whereNotIn('status', $statusFinalizados)
+                            ->whereNotNull('data_vencimento')
+                            ->whereBetween('data_vencimento', [
+                                now()->startOfDay(),
+                                now()->endOfWeek()->endOfDay(),
+                            ]),
+                        'sem_responsavel' => $query
+                            ->whereNotIn('status', $statusFinalizados)
+                            ->whereNull('responsavel_id'),
+                        'bloqueadas' => $query
+                            ->whereNotIn('status', $statusFinalizados)
+                            ->where(function (Builder $query): void {
+                                $query->where('bloqueado', true)
+                                    ->orWhere('blocked_by_dependency', true)
+                                    ->orWhere('bloqueado_por_dependencia', true)
+                                    ->orWhere('status', 'bloqueado');
+                            }),
+                        'alta_prioridade' => $query
+                            ->whereNotIn('status', $statusFinalizados)
+                            ->whereIn('prioridade', ['alta', 'urgente']),
+                        default => $query,
+                    };
+                }),
+
             SelectFilter::make('categoria_id')
                 ->label('Categoria')
                 ->relationship('categoria', 'nome')
@@ -656,21 +992,21 @@ class ItemControlesTable
                 ->label('Prioridade')
                 ->options([
                     'baixa' => 'Baixa',
-                    'media' => 'Media',
+                    'media' => 'Média',
                     'alta' => 'Alta',
                     'urgente' => 'Urgente',
                 ]),
 
             SelectFilter::make('status')
-                ->label('Status do item')
+                ->label('Status da tarefa')
                 ->options([
                     'pendente' => 'Pendente',
-                    'em_aprovacao' => 'Em aprovacao',
+                    'em_aprovacao' => 'Em aprovação',
                     'aprovado' => 'Aprovado',
                     'reprovado' => 'Reprovado',
                     'em_andamento' => 'Em andamento',
                     'assinado' => 'Assinado',
-                    'concluido' => 'Concluido',
+                    'concluido' => 'Concluído',
                     'cancelado' => 'Cancelado',
                     'vencido' => 'Vencido',
                 ])
@@ -711,8 +1047,8 @@ class ItemControlesTable
                     'em_andamento' => 'Em andamento',
                     'atrasado' => 'Atrasado',
                     'vencido' => 'Vencido',
-                    'concluido_no_prazo' => 'Concluido no prazo',
-                    'concluido_atrasado' => 'Concluido com atraso',
+                    'concluido_no_prazo' => 'Concluído no prazo',
+                    'concluido_atrasado' => 'Concluído com atraso',
                     'sem_sla' => 'Sem SLA',
                 ])
                 ->query(function (Builder $query, array $data): Builder {
@@ -737,8 +1073,8 @@ class ItemControlesTable
             $filters[] = SelectFilter::make('assinatura_status')
                 ->label('Status da assinatura')
                 ->options([
-                    'assinado' => 'Assinados',
-                    'nao_assinado' => 'Nao assinados',
+                    'assinado' => 'Assinadas',
+                    'nao_assinado' => 'Não assinados',
                 ])
                 ->query(function (Builder $query, array $data): Builder {
                     $value = $data['value'] ?? null;
@@ -786,7 +1122,7 @@ class ItemControlesTable
             );
 
         $filters[] = SelectFilter::make('responsavel_id')
-            ->label('Responsavel')
+            ->label('Responsável')
             ->searchable()
             ->getSearchResultsUsing(fn (string $search): array => Responsavel::query()
                 ->select(['id', 'nome'])
@@ -814,7 +1150,7 @@ class ItemControlesTable
         if ($checklists->isEmpty()) {
             return [
                 Section::make('Checklist')
-                    ->description('Este item ainda nao possui etapas cadastradas. Use a acao "Adicionar etapa".')
+                    ->description('Esta tarefa ainda não possui etapas cadastradas. Use a ação "Adicionar etapa".')
                     ->schema([]),
             ];
         }
@@ -835,11 +1171,11 @@ class ItemControlesTable
                                             $user = Filament::auth()->user();
 
                                             if ($state) {
-                                                $checklist->marcarComoConcluido($user);
+                                                $checklist->marcarComoConcluído($user);
 
                                                 $checklist->itemControle?->registrarTimeline(
                                                     'checklist',
-                                                    'Etapa concluida',
+                                                    'Etapa concluída',
                                                     $checklist->titulo,
                                                     [
                                                         'checklist_id' => $checklist->id,
@@ -890,14 +1226,14 @@ class ItemControlesTable
         if ($timelines->isEmpty()) {
             return [
                 Section::make('Timeline')
-                    ->description('Nenhum evento registrado na timeline deste item.')
+                    ->description('Nenhum evento registrado na timeline desta tarefa.')
                     ->schema([]),
             ];
         }
 
         return [
-            Section::make('Ultimos eventos')
-                ->description('Exibindo os 30 eventos mais recentes deste item.')
+            Section::make('Últimos eventos')
+                ->description('Exibindo os 30 eventos mais recentes desta tarefa.')
                 ->schema(
                     $timelines
                         ->map(function (ItemControleTimeline $timeline) {
@@ -908,7 +1244,7 @@ class ItemControlesTable
                                 ->description($timeline->getTipoExibicao() . ' - ' . $usuario . ' - ' . $data)
                                 ->schema([
                                     Textarea::make('timeline_' . $timeline->id)
-                                        ->label('Descricao')
+                                        ->label('Descrição')
                                         ->default($timeline->descricao ?: '-')
                                         ->rows(2)
                                         ->readOnly()

@@ -1,0 +1,476 @@
+Analise este relatório do meu SaaS.
+
+CONTEXTO DO PRODUTO:
+Meu produto é um sistema operacional leve para empresas, com foco em controle de prazos, prevenção de multas, execução correta de tarefas críticas, menos cliques, menos complexidade, menos configuração inicial e mais produtividade. Eu ainda não quero instalar IA no sistema; estou usando este relatório interno para receber recomendações.
+
+PAPEL QUE VOCÊ DEVE ASSUMIR:
+Atue como Product Manager, UX Specialist, Growth Specialist, Analista de Mercado e Estrategista de SaaS. Quero recomendações práticas, priorizadas e diretas.
+
+OBJETIVO DA ANÁLISE:
+1. Identificar os problemas mais importantes.
+2. Identificar as dores reais por trás dos comentários.
+3. Identificar pontos fortes que eu devo preservar.
+4. Encontrar contradições nos comentários para evitar decisões erradas.
+5. Encontrar oportunidades de UX, SEO, marketing e posicionamento.
+6. Dizer o que devo melhorar primeiro.
+7. Dizer o que devo ignorar, simplificar, remover ou não implementar.
+8. Gerar um plano de ação priorizado do maior impacto para o menor impacto.
+
+=========================
+RESUMO EXECUTIVO GERADO PELO SISTEMA
+=========================
+{
+    "problemas_detectados": 5,
+    "pontos_fortes_detectados": 3,
+    "aprendizados_gerados": 8,
+    "fontes_analisadas": 1,
+    "contradicoes_detectadas": 3,
+    "itens_roadmap": 5,
+    "oportunidades_detectadas": 8,
+    "problemas_criticos": 5,
+    "maior_problema": "Integrações / automações",
+    "maior_dor_real": "Trabalho manual repetitivo por falta de conexão entre ferramentas.",
+    "maior_aprendizado": "Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo."
+}
+
+=========================
+PRINCIPAIS PROBLEMAS DETECTADOS - LISTA COMPLETA
+=========================
+1. Problema: Integrações / automações
+Ocorrências: 10
+Negativos: 0
+Confiança: média
+Prioridade: 127
+Impacto: 7
+Gravidade: 7
+Dor real: Trabalho manual repetitivo por falta de conexão entre ferramentas.
+Insight: Integração só é diferencial quando reduz trabalho real no nicho escolhido.
+Aprendizado do mercado: Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo.
+O que fazer: Mapear integrações que economizam tempo real e priorizar as que eliminam retrabalho operacional.
+O que NÃO fazer: Não adicionar integrações apenas para parecer completo se elas não reduzem esforço do usuário.
+Oportunidade: Priorizar integrações que reduzem trabalho manual nos nichos escolhidos.
+Ação recomendada: Mapear integrações que economizam tempo real e não adicionar integrações apenas por parecer completo.
+Fontes: Importação manual (10)
+Palavras-chave SEO:
+  - sistema com automação de prazos
+  - gestão operacional automatizada
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+
+-------------------------
+
+2. Problema: Excesso de funcionalidades / produto inchado
+Ocorrências: 9
+Negativos: 0
+Confiança: média
+Prioridade: 125
+Impacto: 8
+Gravidade: 8
+Dor real: Usuário sente que a ferramenta faz tudo, mas exige esforço demais para o básico.
+Insight: Produto completo demais pode virar obstáculo para quem só quer executar o trabalho.
+Aprendizado do mercado: Ser menor e mais claro pode vencer ser maior e mais confuso.
+O que fazer: Manter recursos avançados escondidos e priorizar caminhos simples para tarefas críticas.
+O que NÃO fazer: Não copiar recursos avançados dos concorrentes se eles aumentarem complexidade para novos usuários.
+Oportunidade: Vender simplicidade, foco no trabalho crítico e evitar copiar recursos que aumentam complexidade.
+Ação recomendada: Manter recursos avançados escondidos e priorizar caminhos simples para tarefas críticas.
+Fontes: Importação manual (9)
+Palavras-chave SEO:
+  - alternativa simples ao ClickUp
+  - sistema sem complexidade
+  - software operacional simples
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Pacote completo para contabilidade e folha de pagamento
+O que você mais gosta no curso de Ciências Contábeis?
+Adoro a combinação de recursos do ACS. Você pode processar a folha de pagamento, os formulários de impostos sobre a folha de pagamento, fazer conciliações bancárias e contabilidade, tudo em um só lugar.
+Análise compilada e hospedada em G2.com.
+
+O que você não gosta em C...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+
+-------------------------
+
+3. Problema: Falta de funcionalidades importantes
+Ocorrências: 10
+Negativos: 0
+Confiança: média
+Prioridade: 116
+Impacto: 6
+Gravidade: 6
+Dor real: Usuário sente que precisa recorrer a outras ferramentas para concluir o trabalho.
+Insight: Nem toda falta de funcionalidade merece desenvolvimento; algumas indicam nicho errado ou expectativa desalinhada.
+Aprendizado do mercado: Pedidos de funcionalidade precisam ser filtrados por repetição, nicho e impacto real.
+O que fazer: Agrupar pedidos por resultado esperado e desenvolver apenas o que reduzir dor recorrente do nicho escolhido.
+O que NÃO fazer: Não criar funcionalidades isoladas baseadas em pedidos raros ou sem ligação com a proposta central.
+Oportunidade: Separar pedidos recorrentes de desejos isolados para evitar crescimento desordenado do produto.
+Ação recomendada: Validar se o pedido aparece em múltiplas fontes antes de colocar no roadmap.
+Fontes: Importação manual (10)
+Palavras-chave SEO:
+  - sistema completo sem complicar
+  - software com funções essenciais
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Software de contabilidade completo para contadores
+O que você mais gosta no curso de Ciências Contábeis?
+O que mais gosto no Accounting CS é a personalização do software, que pode ser adaptada às necessidades específicas de cada cliente. Nem todas as empresas fazem tudo da mesma maneira, e o Accounting CS permite definir os parâmetros de acordo com o que o cliente já faz. O Acc...
+
+-------------------------
+
+4. Problema: Interface confusa / excesso visual
+Ocorrências: 7
+Negativos: 0
+Confiança: média
+Prioridade: 99
+Impacto: 8
+Gravidade: 8
+Dor real: Usuário se sente perdido e evita usar o sistema por medo de errar.
+Insight: Quando tudo parece importante, nada guia o usuário para a próxima ação.
+Aprendizado do mercado: Clareza visual reduz suporte, aumenta ativação e melhora retenção.
+O que fazer: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+O que NÃO fazer: Não colocar todas as funcionalidades visíveis na mesma tela apenas para parecer completo.
+Oportunidade: Simplificar telas principais, reduzir botões visíveis e priorizar tarefas críticas.
+Ação recomendada: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+Fontes: Importação manual (7)
+Palavras-chave SEO:
+  - software de gestão intuitivo
+  - sistema de tarefas simples
+  - gestão operacional fácil
+  - alternativa simples ao Asana
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Pacote completo para contabilidade e folha de pagamento
+O que você mais gosta no curso de Ciências Contábeis?
+Adoro a combinação de recursos do ACS. Você pode processar a folha de pagamento, os formulários de impostos sobre a folha de pagamento, fazer conciliações bancárias e contabilidade, tudo em um só lugar.
+Análise compilada e hospedada em G2.com.
+
+O que você não gosta em C...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Pacote completo para contabilidade e folha de pagamento
+O que você mais gosta no curso de Ciências Contábeis?
+Adoro a combinação de recursos do ACS. Você pode processar a folha de pagamento, os formulários de impostos sobre a folha de pagamento, fazer conciliações bancárias e contabilidade, tudo em um só lugar.
+Análise compilada e hospedada em G2.com.
+
+O que você não gosta em C...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+
+-------------------------
+
+5. Problema: Lentidão / performance
+Ocorrências: 4
+Negativos: 0
+Confiança: baixa
+Prioridade: 66
+Impacto: 10
+Gravidade: 9
+Dor real: Frustração, perda de produtividade e sensação de ferramenta pesada.
+Insight: Usuários abandonam ou evitam ferramentas que parecem pesadas no dia a dia.
+Aprendizado do mercado: Velocidade percebida é parte do valor do produto, não apenas detalhe técnico.
+O que fazer: Medir carregamento das telas principais e priorizar uma experiência rápida nas ações mais repetidas.
+O que NÃO fazer: Não adicionar componentes pesados, dashboards poluídos ou recursos que aumentem tempo de carregamento sem gerar valor claro.
+Oportunidade: Posicionar o SaaS como uma alternativa leve, rápida e sem travamentos.
+Ação recomendada: Auditar páginas lentas, reduzir queries, otimizar carregamento inicial e medir tempo por tela.
+Fontes: Importação manual (4)
+Palavras-chave SEO:
+  - alternativa leve ao ClickUp
+  - software de gestão rápido
+  - sistema de tarefas sem travar
+  - gestão de projetos leve
+Exemplos:
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+  - Não informado | Importação manual | Nota: sem nota
+    Comentário: Equilibrando as Contas: Uma Análise Detalhada da Contabilidade CS
+O que você mais gosta no curso de Ciências Contábeis?
+O Accounting CS é extremamente útil por oferecer uma interface intuitiva que facilita a navegação, mesmo para quem não tem muita familiaridade com tecnologia. O processo de implementação é simples, permitindo que as empresas comecem a usar o sistema rapidament...
+
+=========================
+PONTOS FORTES DETECTADOS - LISTA COMPLETA
+=========================
+1. Ponto forte: Ponto forte: automações úteis
+Ocorrências: 6
+Confiança: média
+Insight: Usuários elogiam automações quando elas eliminam trabalho repetitivo claramente.
+Aprendizado do mercado: Automação boa é a que economiza tempo e evita erro, não a que só parece sofisticada.
+O que preservar/fazer: Priorizar automações ligadas a prazos, documentos, aprovações e bloqueios de erro.
+O que NÃO fazer: Não criar automações difíceis de configurar ou sem benefício operacional imediato.
+Fontes: Importação manual (6)
+
+-------------------------
+
+2. Ponto forte: Ponto forte: facilidade de uso
+Ocorrências: 4
+Confiança: baixa
+Insight: Usuários elogiam quando conseguem entender e executar sem treinamento pesado.
+Aprendizado do mercado: Facilidade de uso deve ser tratada como diferencial central, não como detalhe visual.
+O que preservar/fazer: Preservar fluxos simples e usar esse ponto forte como referência para qualquer nova tela.
+O que NÃO fazer: Não sacrificar simplicidade para adicionar recursos avançados que poucos usam.
+Fontes: Importação manual (4)
+
+-------------------------
+
+3. Ponto forte: Ponto forte: centralização / tudo em um útil
+Ocorrências: 3
+Confiança: baixa
+Insight: Usuários valorizam centralizar trabalho quando isso não aumenta complexidade.
+Aprendizado do mercado: Centralização é vantagem para usuários avançados, mas precisa ser escondida dos iniciantes.
+O que preservar/fazer: Oferecer visão centralizada sem obrigar novos usuários a configurar toda a estrutura antes de usar.
+O que NÃO fazer: Não transformar centralização em excesso de menus, níveis e decisões iniciais.
+Fontes: Importação manual (3)
+
+=========================
+APRENDIZADOS DO MERCADO
+=========================
+1. Integrações / automações (problema, confiança média)
+Aprendizado: Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo.
+Insight: Integração só é diferencial quando reduz trabalho real no nicho escolhido.
+Evidência: 10 ocorrência(s), 0 negativa(s), 10 mista(s), confiança média.
+Fazer: Mapear integrações que economizam tempo real e priorizar as que eliminam retrabalho operacional.
+Não fazer: Não adicionar integrações apenas para parecer completo se elas não reduzem esforço do usuário.
+
+2. Excesso de funcionalidades / produto inchado (problema, confiança média)
+Aprendizado: Ser menor e mais claro pode vencer ser maior e mais confuso.
+Insight: Produto completo demais pode virar obstáculo para quem só quer executar o trabalho.
+Evidência: 9 ocorrência(s), 0 negativa(s), 9 mista(s), confiança média.
+Fazer: Manter recursos avançados escondidos e priorizar caminhos simples para tarefas críticas.
+Não fazer: Não copiar recursos avançados dos concorrentes se eles aumentarem complexidade para novos usuários.
+
+3. Falta de funcionalidades importantes (problema, confiança média)
+Aprendizado: Pedidos de funcionalidade precisam ser filtrados por repetição, nicho e impacto real.
+Insight: Nem toda falta de funcionalidade merece desenvolvimento; algumas indicam nicho errado ou expectativa desalinhada.
+Evidência: 10 ocorrência(s), 0 negativa(s), 10 mista(s), confiança média.
+Fazer: Agrupar pedidos por resultado esperado e desenvolver apenas o que reduzir dor recorrente do nicho escolhido.
+Não fazer: Não criar funcionalidades isoladas baseadas em pedidos raros ou sem ligação com a proposta central.
+
+4. Interface confusa / excesso visual (problema, confiança média)
+Aprendizado: Clareza visual reduz suporte, aumenta ativação e melhora retenção.
+Insight: Quando tudo parece importante, nada guia o usuário para a próxima ação.
+Evidência: 7 ocorrência(s), 0 negativa(s), 7 mista(s), confiança média.
+Fazer: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+Não fazer: Não colocar todas as funcionalidades visíveis na mesma tela apenas para parecer completo.
+
+5. Lentidão / performance (problema, confiança baixa)
+Aprendizado: Velocidade percebida é parte do valor do produto, não apenas detalhe técnico.
+Insight: Usuários abandonam ou evitam ferramentas que parecem pesadas no dia a dia.
+Evidência: 4 ocorrência(s), 0 negativa(s), 4 mista(s), confiança baixa.
+Fazer: Medir carregamento das telas principais e priorizar uma experiência rápida nas ações mais repetidas.
+Não fazer: Não adicionar componentes pesados, dashboards poluídos ou recursos que aumentem tempo de carregamento sem gerar valor claro.
+
+6. Ponto forte: automações úteis (ponto_forte, confiança média)
+Aprendizado: Automação boa é a que economiza tempo e evita erro, não a que só parece sofisticada.
+Insight: Usuários elogiam automações quando elas eliminam trabalho repetitivo claramente.
+Evidência: 6 ocorrência(s) positiva(s), confiança média.
+Fazer: Priorizar automações ligadas a prazos, documentos, aprovações e bloqueios de erro.
+Não fazer: Não criar automações difíceis de configurar ou sem benefício operacional imediato.
+
+7. Ponto forte: facilidade de uso (ponto_forte, confiança baixa)
+Aprendizado: Facilidade de uso deve ser tratada como diferencial central, não como detalhe visual.
+Insight: Usuários elogiam quando conseguem entender e executar sem treinamento pesado.
+Evidência: 4 ocorrência(s) positiva(s), confiança baixa.
+Fazer: Preservar fluxos simples e usar esse ponto forte como referência para qualquer nova tela.
+Não fazer: Não sacrificar simplicidade para adicionar recursos avançados que poucos usam.
+
+8. Ponto forte: centralização / tudo em um útil (ponto_forte, confiança baixa)
+Aprendizado: Centralização é vantagem para usuários avançados, mas precisa ser escondida dos iniciantes.
+Insight: Usuários valorizam centralizar trabalho quando isso não aumenta complexidade.
+Evidência: 3 ocorrência(s) positiva(s), confiança baixa.
+Fazer: Oferecer visão centralizada sem obrigar novos usuários a configurar toda a estrutura antes de usar.
+Não fazer: Não transformar centralização em excesso de menus, níveis e decisões iniciais.
+
+=========================
+FREQUÊNCIA POR FONTE
+=========================
+1. Importação manual (reddit)
+Total: 13 | Negativos: 0 | Positivos: 0 | Mistos: 13 | Neutros: 0
+Principais categorias: Integrações / automações: 6; Lentidão / performance: 4; Excesso de funcionalidades / produto inchado: 3
+
+=========================
+CONTRADIÇÕES DETECTADAS
+=========================
+1. Centralização é amada e odiada ao mesmo tempo
+Resumo: Há 3 elogio(s) sobre centralização e 9 reclamação(ões) sobre produto inchado.
+Risco: Copiar o all-in-one dos concorrentes pode atrair usuários avançados e afastar iniciantes.
+Decisão sugerida: Manter centralização como poder avançado, mas esconder complexidade no primeiro uso.
+Confiança: média
+
+2. O produto é valorizado quando funciona bem, mas rejeitado quando fica lento
+Resumo: Há 3 evidência(s) de valor/confiança e 4 reclamação(ões) ligadas a performance.
+Risco: Adicionar recursos ou copiar concorrentes sem cuidar da velocidade pode transformar valor percebido em frustração.
+Decisão sugerida: Priorizar velocidade percebida, estabilidade e tarefas críticas antes de aumentar complexidade ou adicionar recursos pesados.
+Confiança: média
+
+3. Alguns querem mais funções, outros querem menos complexidade
+Resumo: Há 10 pedido(s) de função e 9 reclamação(ões) sobre excesso.
+Risco: Adicionar tudo que pedem pode transformar o produto em uma ferramenta pesada.
+Decisão sugerida: Desenvolver apenas funcionalidades que reduzem esforço, prazo ou risco no nicho principal.
+Confiança: média
+
+=========================
+OPORTUNIDADES DE SEO DETECTADAS
+=========================
+- sistema com automação de prazos | Origem: Integrações / automações | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- gestão operacional automatizada | Origem: Integrações / automações | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alternativa simples ao ClickUp | Origem: Excesso de funcionalidades / produto inchado | Ângulo: Prometer foco, simplicidade e menos complexidade que ferramentas all-in-one.
+- sistema sem complexidade | Origem: Excesso de funcionalidades / produto inchado | Ângulo: Prometer foco, simplicidade e menos complexidade que ferramentas all-in-one.
+- software operacional simples | Origem: Excesso de funcionalidades / produto inchado | Ângulo: Prometer foco, simplicidade e menos complexidade que ferramentas all-in-one.
+- sistema completo sem complicar | Origem: Falta de funcionalidades importantes | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- software com funções essenciais | Origem: Falta de funcionalidades importantes | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- software de gestão intuitivo | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema de tarefas simples | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- gestão operacional fácil | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alternativa simples ao Asana | Origem: Interface confusa / excesso visual | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- alternativa leve ao ClickUp | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- software de gestão rápido | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- sistema de tarefas sem travar | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- gestão de projetos leve | Origem: Lentidão / performance | Ângulo: Comparar velocidade, simplicidade e leveza contra ferramentas pesadas.
+- automação de tarefas críticas | Origem: Ponto forte: automações úteis | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- sistema que automatiza prazos | Origem: Ponto forte: automações úteis | Ângulo: Transformar reclamação ou elogio comum em benefício claro e específico.
+- software fácil de usar | Origem: Ponto forte: facilidade de uso | Ângulo: Explorar facilidade, clareza e baixa curva de aprendizado.
+- sistema simples para equipes | Origem: Ponto forte: facilidade de uso | Ângulo: Explorar facilidade, clareza e baixa curva de aprendizado.
+- gestão intuitiva | Origem: Ponto forte: facilidade de uso | Ângulo: Explorar facilidade, clareza e baixa curva de aprendizado.
+- sistema centralizado para empresas | Origem: Ponto forte: centralização / tudo em um útil | Ângulo: Explorar centralização sem complexidade.
+- gestão operacional em um lugar | Origem: Ponto forte: centralização / tudo em um útil | Ângulo: Explorar centralização sem complexidade.
+
+=========================
+ROADMAP SUGERIDO - LISTA COMPLETA
+=========================
+1. Item: Integrações / automações
+Prioridade: crítica | Confiança: média | Complexidade: média/alta
+Dor real: Trabalho manual repetitivo por falta de conexão entre ferramentas.
+Aprendizado: Automações precisam economizar tempo, não apenas aumentar a sensação de produto completo.
+Motivo: Apareceu em 10 comentário(s), com 0 negativo(s), confiança média.
+Fazer: Mapear integrações que economizam tempo real e priorizar as que eliminam retrabalho operacional.
+Não fazer: Não adicionar integrações apenas para parecer completo se elas não reduzem esforço do usuário.
+Ação recomendada: Mapear integrações que economizam tempo real e não adicionar integrações apenas por parecer completo.
+
+-------------------------
+
+2. Item: Excesso de funcionalidades / produto inchado
+Prioridade: crítica | Confiança: média | Complexidade: baixa
+Dor real: Usuário sente que a ferramenta faz tudo, mas exige esforço demais para o básico.
+Aprendizado: Ser menor e mais claro pode vencer ser maior e mais confuso.
+Motivo: Apareceu em 9 comentário(s), com 0 negativo(s), confiança média.
+Fazer: Manter recursos avançados escondidos e priorizar caminhos simples para tarefas críticas.
+Não fazer: Não copiar recursos avançados dos concorrentes se eles aumentarem complexidade para novos usuários.
+Ação recomendada: Manter recursos avançados escondidos e priorizar caminhos simples para tarefas críticas.
+
+-------------------------
+
+3. Item: Falta de funcionalidades importantes
+Prioridade: crítica | Confiança: média | Complexidade: variável
+Dor real: Usuário sente que precisa recorrer a outras ferramentas para concluir o trabalho.
+Aprendizado: Pedidos de funcionalidade precisam ser filtrados por repetição, nicho e impacto real.
+Motivo: Apareceu em 10 comentário(s), com 0 negativo(s), confiança média.
+Fazer: Agrupar pedidos por resultado esperado e desenvolver apenas o que reduzir dor recorrente do nicho escolhido.
+Não fazer: Não criar funcionalidades isoladas baseadas em pedidos raros ou sem ligação com a proposta central.
+Ação recomendada: Validar se o pedido aparece em múltiplas fontes antes de colocar no roadmap.
+
+-------------------------
+
+4. Item: Interface confusa / excesso visual
+Prioridade: crítica | Confiança: média | Complexidade: baixa
+Dor real: Usuário se sente perdido e evita usar o sistema por medo de errar.
+Aprendizado: Clareza visual reduz suporte, aumenta ativação e melhora retenção.
+Motivo: Apareceu em 7 comentário(s), com 0 negativo(s), confiança média.
+Fazer: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+Não fazer: Não colocar todas as funcionalidades visíveis na mesma tela apenas para parecer completo.
+Ação recomendada: Reduzir botões visíveis, reorganizar hierarquia visual e destacar próximas ações críticas.
+
+-------------------------
+
+5. Item: Lentidão / performance
+Prioridade: crítica | Confiança: baixa | Complexidade: média
+Dor real: Frustração, perda de produtividade e sensação de ferramenta pesada.
+Aprendizado: Velocidade percebida é parte do valor do produto, não apenas detalhe técnico.
+Motivo: Apareceu em 4 comentário(s), com 0 negativo(s), confiança baixa.
+Fazer: Medir carregamento das telas principais e priorizar uma experiência rápida nas ações mais repetidas.
+Não fazer: Não adicionar componentes pesados, dashboards poluídos ou recursos que aumentem tempo de carregamento sem gerar valor claro.
+Ação recomendada: Auditar páginas lentas, reduzir queries, otimizar carregamento inicial e medir tempo por tela.
+
+=========================
+PERGUNTAS QUE VOCÊ DEVE RESPONDER
+=========================
+1. Qual é o principal problema detectado?
+2. Qual é a principal dor dos usuários?
+3. Qual ponto forte do mercado eu devo preservar no meu SaaS?
+4. Existe alguma contradição nos comentários? Como devo agir?
+5. O que devo corrigir primeiro?
+6. O que devo ignorar?
+7. O que devo remover ou simplificar?
+8. Qual funcionalidade tem maior retorno?
+9. Qual funcionalidade tem menor retorno?
+10. Quais oportunidades de SEO devo atacar primeiro?
+11. Quais oportunidades de marketing existem?
+12. O que os concorrentes estão errando?
+13. Como posso usar esses erros para diferenciar meu SaaS?
+14. Gere um plano de ação priorizado do maior impacto para o menor impacto.

@@ -1482,14 +1482,14 @@ class ItemControleForm
             $seguranca >= 85 => 'Seguro para iniciar',
             $seguranca >= 65 => 'Seguro com atenção',
             $seguranca >= 45 => 'Precisa de revisão',
-            default => 'Não recomendado salvar assim',
+            default => 'Cadastro em construção',
         };
 
         $classe = match (true) {
             $seguranca >= 85 => 'success',
             $seguranca >= 65 => 'info',
             $seguranca >= 45 => 'warning',
-            default => 'danger',
+            default => in_array($risco['classe'], ['danger'], true) && filled($get('data_vencimento')) ? 'danger' : 'warning',
         };
 
         $impactoCliente = $cliente !== ''
@@ -1532,7 +1532,7 @@ class ItemControleForm
 
         $html = '<div style="border:1px solid ' . e($border) . ';border-radius:18px;padding:14px;background:' . e($bg) . ';">';
         $html .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;">';
-        $html .= '<div><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:' . e($cor) . ';">🧭 Inteligência operacional</div><div style="font-size:20px;font-weight:950;color:' . e($cor) . ';margin-top:3px;">' . e($inteligencia['nivel']) . '</div></div>';
+        $html .= '<div><div style="font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:' . e($cor) . ';">🧭 Validação operacional</div><div style="font-size:20px;font-weight:950;color:' . e($cor) . ';margin-top:3px;">' . e($inteligencia['nivel']) . '</div></div>';
         $html .= '<div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:' . e($cor) . ';">Segurança</div><div style="font-size:24px;font-weight:950;color:' . e($cor) . ';">' . e((string) $inteligencia['seguranca']) . '%</div></div>';
         $html .= '</div>';
 
@@ -1545,7 +1545,7 @@ class ItemControleForm
         $html .= '</ul></div>';
 
         $html .= '<div style="border:1px solid ' . e($border) . ';border-radius:14px;background:#ffffff;padding:10px;margin-bottom:10px;">';
-        $html .= '<strong style="display:block;font-size:13px;color:#111827;margin-bottom:6px;">Ações recomendadas</strong>';
+        $html .= '<strong style="display:block;font-size:13px;color:#111827;margin-bottom:6px;">Próxima ação recomendada</strong>';
         $html .= '<ol style="display:grid;gap:6px;margin:0;padding-left:18px;">';
         foreach ($inteligencia['acoes'] as $acao) {
             $html .= '<li style="font-size:12px;color:#374151;font-weight:700;">' . e($acao) . '</li>';
@@ -1648,7 +1648,7 @@ class ItemControleForm
         $html .= '<div style="border:1px solid ' . e($border) . ';border-radius:18px;padding:16px;background:' . e($bg) . ';">';
         $html .= '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">';
         $html .= '<div><div style="font-size:12px;font-weight:900;color:' . e($cor) . ';text-transform:uppercase;letter-spacing:.04em;">' . e($risco['icone'] . ' Risco operacional') . '</div><div style="font-size:28px;line-height:1.1;font-weight:950;color:' . e($cor) . ';margin-top:4px;">' . e($risco['nivel']) . '</div></div>';
-        $html .= '<div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:' . e($cor) . ';">Score</div><div style="font-size:24px;font-weight:950;color:' . e($cor) . ';">' . e((string) $risco['score']) . '/100</div></div>';
+        $html .= '<div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:' . e($cor) . ';">Score</div><div style="font-size:24px;font-weight:950;color:' . e($cor) . ';">' . e((string) $risco['score']) . '/100</div><div style="font-size:11px;font-weight:800;color:' . e($cor) . ';background:#ffffff;border:1px solid ' . e($border) . ';border-radius:999px;padding:3px 7px;margin-top:4px;display:inline-block;">' . e($risco['nivel']) . '</div></div>';
         $html .= '</div>';
         $html .= '<p style="font-size:13px;color:#374151;margin:10px 0 0;">' . e($risco['mensagem']) . '</p>';
         $html .= '</div>';
@@ -1685,7 +1685,7 @@ class ItemControleForm
         $html .= '</div>';
 
         $html .= '<div style="border:1px solid #bfdbfe;border-radius:18px;padding:13px 14px;background:#eff6ff;color:#1e3a8a;font-size:13px;">';
-        $html .= '<strong style="display:block;margin-bottom:4px;">Próxima melhor ação</strong>' . e($inteligenciaLote5['proxima_acao']);
+        $html .= '<strong style="display:block;margin-bottom:4px;">Faça agora</strong>' . e($inteligenciaLote5['proxima_acao']);
         $html .= '</div>';
 
         $html .= '</div>';
