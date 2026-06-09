@@ -150,6 +150,7 @@ class CentroOperacionalService
         $globalSearchResults = $this->globalSearch($user, $globalSearchTerm);
 
         $healthScore = $this->healthScore($totalAbertas, $totalVencidas, $totalVencemHoje, $totalBloqueados, $totalCorrecao, $totalSemResponsavel);
+        $tendenciasOperacionais = $this->tendenciasOperacionais($user, $filters, $blockColumns);
         $riskCards = $this->riskCards($totalRisco, $totalVencemHoje, $totalSemResponsavel, $totalBloqueados);
         $alertasInteligentes = $this->alertasInteligentes(
             user: $user,
@@ -237,6 +238,7 @@ class CentroOperacionalService
             'departamentos' => $departamentos,
             'resultados_mes' => $resultadosMes,
             'health_score' => $healthScore,
+            'tendencias_operacionais' => $tendenciasOperacionais,
             'status_options' => $this->statusOptions(),
             'department_options' => $this->departmentOptions(),
             'date_range_options' => $this->dateRangeOptions(),
@@ -1085,6 +1087,103 @@ class CentroOperacionalService
             ['label' => 'Multas registradas', 'value' => $vencidosMes, 'hint' => 'risco operacional'],
             ['label' => 'Clientes atendidos', 'value' => ItemControle::query()->visibleForUser($user)->whereIn('status', ['concluido', 'aprovado', 'assinado'])->whereBetween('updated_at', [now()->startOfMonth(), now()->endOfMonth()])->distinct('empresa_id')->count('empresa_id'), 'hint' => 'no mês'],
             ['label' => 'SLA', 'value' => $sla . '%', 'hint' => 'estimado'],
+        ];
+    }
+
+    protected function tendenciasOperacionais(?User $user, array $filters = [], array $blockColumns = []): array
+    {
+        $today = now()->toDateString();
+        $yesterday = now()->subDay()->toDateString();
+
+        $openBase = $this->applyDashboardFilters(
+            ItemControle::query()->visibleForUser($user),
+            array_merge($filters, ['date_range' => 'all', 'status' => 'all'])
+        )->whereNotIn('status', ['concluido', 'aprovado', 'cancelado']);
+
+        $lateToday = (clone $openBase)
+            ->whereNotNull('data_vencimento')
+            ->whereDate('data_vencimento', '<', $today)
+            ->count();
+
+        $lateYesterdayReference = (clone $openBase)
+            ->whereNotNull('data_vencimento')
+            ->whereDate('data_vencimento', '<', $yesterday)
+            ->count();
+
+        $dueToday = (clone $openBase)
+            ->whereNotNull('data_vencimento')
+            ->whereDate('data_vencimento', $today)
+            ->count();
+
+        $dueTomorrow = (clone $openBase)
+            ->whereNotNull('data_vencimento')
+            ->whereDate('data_vencimento', now()->addDay()->toDateString())
+            ->count();
+
+        $completedToday = $this->applyDashboardFilters(
+            ItemControle::query()->visibleForUser($user),
+            array_merge($filters, ['date_range' => 'all', 'status' => 'all'])
+        )
+            ->whereIn('status', ['concluido', 'aprovado', 'assinado'])
+            ->where(function (Builder $query) use ($today): void {
+                $query->whereDate('data_conclusao', $today)
+                    ->orWhereDate('updated_at', $today);
+            })
+            ->count();
+
+        $completedYesterday = $this->applyDashboardFilters(
+            ItemControle::query()->visibleForUser($user),
+            array_merge($filters, ['date_range' => 'all', 'status' => 'all'])
+        )
+            ->whereIn('status', ['concluido', 'aprovado', 'assinado'])
+            ->where(function (Builder $query) use ($yesterday): void {
+                $query->whereDate('data_conclusao', $yesterday)
+                    ->orWhereDate('updated_at', $yesterday);
+            })
+            ->count();
+
+        $riskNow = (clone $openBase)
+            ->where(function (Builder $query) use ($today, $blockColumns): void {
+                $query->where(function (Builder $query) use ($today): void {
+                    $query->whereNotNull('data_vencimento')
+                        ->whereDate('data_vencimento', '<=', $today);
+                })->orWhereIn('status', ['correcao_necessaria', 'reprovado']);
+
+                foreach ($blockColumns as $column) {
+                    $query->orWhere($column, true);
+                }
+            })
+            ->count();
+
+        $riskReference = max(0, $lateYesterdayReference + $dueTomorrow);
+
+        return [
+            $this->trendPayload('Vencidas', $lateToday, $lateYesterdayReference, 'down', 'Itens atrasados comparados com a referência de ontem.'),
+            $this->trendPayload('Vencem hoje', $dueToday, $dueTomorrow, 'down', 'Pressão de hoje contra o próximo dia útil monitorado.'),
+            $this->trendPayload('Concluídas hoje', $completedToday, $completedYesterday, 'up', 'Entregas concluídas hoje comparadas com ontem.'),
+            $this->trendPayload('Risco operacional', $riskNow, $riskReference, 'down', 'Soma estimada de prazos críticos, correções e bloqueios.'),
+        ];
+    }
+
+    protected function trendPayload(string $label, int $current, int $previous, string $goodWhen, string $hint): array
+    {
+        $delta = $current - $previous;
+        $direction = $delta > 0 ? 'up' : ($delta < 0 ? 'down' : 'stable');
+        $isGood = $direction === 'stable' || $direction === $goodWhen;
+        $absDelta = abs($delta);
+
+        return [
+            'label' => $label,
+            'current' => $current,
+            'current_label' => number_format($current, 0, ',', '.'),
+            'previous' => $previous,
+            'delta' => $delta,
+            'direction' => $direction,
+            'tone' => $isGood ? 'success' : 'danger',
+            'delta_label' => $direction === 'stable'
+                ? 'estável'
+                : ($direction === 'up' ? '+' : '-') . number_format($absDelta, 0, ',', '.'),
+            'hint' => $hint,
         ];
     }
 
