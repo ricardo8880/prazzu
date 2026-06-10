@@ -6,11 +6,19 @@
   <component name="ChangeListManager">
     <list default="true" id="aadc4c9d-64b4-4461-b082-cc5e3ef21cdb" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/ItemControles/Schemas/ItemControleForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/ItemControles/Schemas/ItemControleForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/CentroOperacional.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/CentroOperacional.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/centro-operacional.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/css/centro-operacional.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/centro-operacional.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/centro-operacional.blade.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/ll4v1fN4YrxnNSTpthAqpdcv8IGc3MyfZWyomsCf" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/ll4v1fN4YrxnNSTpthAqpdcv8IGc3MyfZWyomsCf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/E8X96TE6VmjQyPvSanbzbExoZW0wjsN0FikUnlZr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/SsYVYFmKqzmbxV5gHUTi6iwefg3IkOJWC7a05O46" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/views/1bbbaf67313340ef5de2dbbd1f2b887f.php" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/views/1bbbaf67313340ef5de2dbbd1f2b887f.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/modulos tarefas/Home.php/2c7af2e1-b654-468a-8bfe-e8fc2fdefde1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/modulos tarefas/Home.php/Relatório de Especificações de UI - Home Central do Dia.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/modulos tarefas/Home.php/e677adaf-5466-4d35-ba18-7f2e90a497d0.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -281,6 +289,7 @@
       <workItem from="1780916940002" duration="2402000" />
       <workItem from="1780945203578" duration="2055000" />
       <workItem from="1781004090199" duration="1404000" />
+      <workItem from="1781090117480" duration="646000" />
     </task>
     <servers />
   </component>

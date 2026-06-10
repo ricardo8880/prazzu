@@ -319,13 +319,18 @@ class CentroOperacional extends Page
             'decision_summary' => $this->itemDecisionSummary($item, $value),
             'risk_signals' => $this->itemRiskSignals($item, $checklist, $timeline),
             'next_steps' => $this->itemNextSteps($item),
+            'executive_summary' => $this->itemExecutiveSummary($item, $value),
+            'why_here' => $this->itemWhyHere($item, $checklist, $timeline),
+            'operational_impact' => $this->itemOperationalImpact($item, $value, $relatedClientItems),
+            'stalled_info' => $this->itemStalledInfo($item, $timeline),
+            'ready_message' => $this->itemReadyMessage($item),
+            'blockers' => $this->itemBlockers($item, $checklist, $timeline),
+            'done_definition' => $this->itemDoneDefinition($item),
+            'urgency_score' => $this->itemUrgencyScore($item, $checklist, $timeline, $relatedClientItems),
+            'critical_client' => $this->itemCriticalClientInfo($item, $relatedClientItems),
             'timeline' => $timeline,
             'checklist' => $checklist,
             'related_client_items' => $relatedClientItems,
-            'operational_playbook' => $this->itemOperationalPlaybook($item, $checklist, $timeline),
-            'decision_questions' => $this->itemDecisionQuestions($item, $checklist, $timeline),
-            'communication_script' => $this->itemCommunicationScript($item),
-            'success_criteria' => $this->itemSuccessCriteria($item, $checklist),
         ];
     }
 
@@ -686,218 +691,222 @@ class CentroOperacional extends Page
     }
 
 
-    protected function itemOperationalPlaybook(ItemControle $item, array $checklist, array $timeline): array
+    protected function itemExecutiveSummary(ItemControle $item, ?float $value): string
     {
-        $status = (string) $item->status;
-        $priority = (string) ($item->prioridade ?: 'normal');
-        $company = $item->empresa?->razao_social ?: 'cliente';
-        $responsavel = $item->responsavel?->nome ?: 'responsável ainda não definido';
-        $openChecklist = collect($checklist)->where('concluido', false)->count();
-        $lastMove = collect($timeline)->first();
+        $company = $item->empresa?->razao_social ?: 'este cliente';
+        $deadline = $this->deadlineLabel($item);
+        $valueText = $value !== null ? ' e proteger R$ ' . number_format($value, 2, ',', '.') . ' de impacto financeiro' : '';
 
         if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
-            return [
-                [
-                    'label' => '1. Diagnóstico rápido',
-                    'text' => "O item já está fora do prazo. Antes de abrir novas demandas, confirme o impedimento real: pendência do cliente, falta de documento, aprovação parada ou responsável sem capacidade.",
-                ],
-                [
-                    'label' => '2. Ação de destravamento',
-                    'text' => "Acione {$responsavel}, registre o motivo do atraso e resolva o bloqueio principal. Se não houver resposta imediata, delegue para alguém disponível e mantenha histórico.",
-                ],
-                [
-                    'label' => '3. Proteção do cliente',
-                    'text' => "Avise {$company} somente com informação objetiva: o que falta, quem está tratando e qual é o próximo retorno. Isso reduz cobrança, retrabalho e sensação de abandono.",
-                ],
-            ];
-        }
-
-        if (in_array($status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
-            return [
-                [
-                    'label' => '1. Conferir antes de decidir',
-                    'text' => 'Revise descrição, checklist, histórico e anexos antes de aprovar. A aprovação sem conferência vira retrabalho quando o cliente ou financeiro questiona depois.',
-                ],
-                [
-                    'label' => '2. Decisão recomendada',
-                    'text' => $openChecklist > 0 ? "Há {$openChecklist} etapa(s) pendente(s). Solicite correção com orientação objetiva em vez de aprovar no escuro." : 'Se o checklist e o histórico estiverem coerentes, aprove agora para não bloquear a próxima etapa.',
-                ],
-                [
-                    'label' => '3. Registrar motivo',
-                    'text' => 'Ao aprovar, reprovar ou pedir correção, deixe o motivo claro. Isso cria rastreabilidade e evita que a equipe repita a mesma dúvida.',
-                ],
-            ];
-        }
-
-        if (in_array($status, ['correcao_necessaria', 'reprovado'], true)) {
-            return [
-                [
-                    'label' => '1. Localizar causa do retrabalho',
-                    'text' => 'Identifique exatamente o que foi reprovado: dado incorreto, documento ausente, prazo incompatível, informação do cliente ou etapa interna não cumprida.',
-                ],
-                [
-                    'label' => '2. Direcionar sem ambiguidade',
-                    'text' => "Envie para {$responsavel} com uma instrução que possa ser executada sem nova reunião. Correção genérica tende a voltar errada.",
-                ],
-                [
-                    'label' => '3. Fechar o ciclo',
-                    'text' => 'Depois da correção, confira se o mesmo erro não aparece no checklist ou em outros itens recentes do mesmo cliente.',
-                ],
-            ];
-        }
-
-        if (! $item->responsavel_id) {
-            return [
-                [
-                    'label' => '1. Definir dono',
-                    'text' => 'Este item está sem responsável. A primeira decisão útil é escolher quem responde pela próxima ação e pelo prazo.',
-                ],
-                [
-                    'label' => '2. Dar contexto mínimo',
-                    'text' => "Ao delegar, inclua objetivo, prazo, cliente e impedimento conhecido. Delegar sem contexto só transfere o problema.",
-                ],
-                [
-                    'label' => '3. Acompanhar retorno',
-                    'text' => 'Depois de delegar, valide se houve movimentação. Se continuar parado, trate como gargalo operacional.',
-                ],
-            ];
+            return "Resolva este item agora para tirar {$company} do atraso, reduzir cobrança do cliente{$valueText}.";
         }
 
         if ($item->data_vencimento?->isToday()) {
-            return [
-                [
-                    'label' => '1. Fechar o que vence hoje',
-                    'text' => 'Confirme se falta documento, aprovação, pagamento, assinatura ou execução técnica. Hoje não é dia de apenas monitorar.',
-                ],
-                [
-                    'label' => '2. Escolher saída segura',
-                    'text' => 'Concluir se estiver pronto, solicitar correção se houver erro ou delegar se o responsável não conseguir finalizar dentro do dia.',
-                ],
-                [
-                    'label' => '3. Evitar nova virada de prazo',
-                    'text' => 'Registre a decisão tomada para que amanhã o item não apareça como atraso sem explicação.',
-                ],
-            ];
-        }
-
-        return [
-            [
-                'label' => '1. Confirmar prioridade real',
-                'text' => in_array($priority, ['critica', 'urgente', 'alta'], true) ? 'A prioridade está elevada. Verifique se o risco é prazo, cliente, financeiro ou retrabalho.' : 'O item não parece crítico, mas entrou no radar. Confirme se existe algum bloqueio oculto.',
-            ],
-            [
-                'label' => '2. Usar histórico como evidência',
-                'text' => $lastMove ? "Última movimentação: {$lastMove['titulo']}. Use isso para decidir se acompanha, cobra ou redistribui." : 'Sem histórico recente. Abra o cadastro ou cobre atualização antes que a equipe perca contexto.',
-            ],
-            [
-                'label' => '3. Sair com uma próxima ação',
-                'text' => 'O modal deve terminar com decisão: aprovar, corrigir, delegar, abrir cadastro ou registrar acompanhamento. Não feche sem definir o próximo passo.',
-            ],
-        ];
-    }
-
-    protected function itemDecisionQuestions(ItemControle $item, array $checklist, array $timeline): array
-    {
-        $questions = [];
-
-        if (! $item->responsavel_id) {
-            $questions[] = 'Quem é o dono da próxima ação e até quando ele deve retornar?';
-        }
-
-        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
-            $questions[] = 'Qual foi o motivo real do atraso e ele já foi registrado?';
+            return "Trate este item ainda hoje para evitar que {$company} entre em atraso operacional{$valueText}.";
         }
 
         if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
-            $questions[] = 'Existe alguma etapa pendente que impede aprovação segura?';
+            return "Decida a aprovação deste item para destravar a próxima etapa de {$company}.";
         }
 
         if (in_array((string) $item->status, ['correcao_necessaria', 'reprovado'], true)) {
-            $questions[] = 'A correção solicitada explica exatamente o que precisa mudar?';
+            return "Direcione a correção com clareza para evitar retrabalho recorrente em {$company}.";
         }
 
-        if (collect($checklist)->where('concluido', false)->count() > 0) {
-            $questions[] = 'As pendências do checklist são obrigatórias ou podem ser replanejadas?';
+        return "Use este painel para decidir a próxima ação, manter dono definido e evitar que {$company} vire risco operacional.";
+    }
+
+    protected function itemWhyHere(ItemControle $item, array $checklist, array $timeline): array
+    {
+        $reasons = [];
+
+        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
+            $reasons[] = 'O prazo já venceu e precisa de regularização.';
+        } elseif ($item->data_vencimento?->isToday()) {
+            $reasons[] = 'O prazo vence hoje e precisa de decisão no mesmo dia.';
+        } elseif (! $item->data_vencimento) {
+            $reasons[] = 'Está sem prazo definido, o que aumenta o risco de perder prioridade.';
+        }
+
+        if (! $item->responsavel_id) {
+            $reasons[] = 'Não existe responsável claro pela próxima ação.';
+        }
+
+        if (in_array((string) $item->prioridade, ['critica', 'urgente', 'alta'], true)) {
+            $reasons[] = 'Foi marcado com prioridade elevada na operação.';
+        }
+
+        if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
+            $reasons[] = 'Está parado aguardando aprovação ou decisão.';
+        }
+
+        if (in_array((string) $item->status, ['correcao_necessaria', 'reprovado'], true)) {
+            $reasons[] = 'Existe correção/reprovação bloqueando o avanço.';
+        }
+
+        $openChecklist = collect($checklist)->where('concluido', false)->count();
+        if ($openChecklist > 0) {
+            $reasons[] = "Há {$openChecklist} etapa(s) do checklist pendente(s).";
         }
 
         if (empty($timeline)) {
-            $questions[] = 'Por que não há movimentação recente registrada?';
+            $reasons[] = 'Não há movimentação recente registrada.';
         }
 
-        $questions[] = 'Qual ação reduz mais risco agora: concluir, corrigir, delegar ou cobrar o cliente?';
-
-        return array_slice(array_values(array_unique($questions)), 0, 5);
+        return array_slice($reasons ?: ['Apareceu aqui para garantir acompanhamento antes de virar atraso, retrabalho ou reclamação.'], 0, 5);
     }
 
-    protected function itemCommunicationScript(ItemControle $item): array
+    protected function itemOperationalImpact(ItemControle $item, ?float $value, array $relatedClientItems): array
     {
-        $company = $item->empresa?->razao_social ?: 'cliente';
-        $title = $item->titulo ?: 'item operacional';
-        $responsavel = $item->responsavel?->nome ?: 'responsável da equipe';
-        $deadline = $item->data_vencimento?->format('d/m/Y') ?: 'sem prazo definido';
-
-        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
-            return [
-                'title' => 'Mensagem curta para reduzir cobrança',
-                'text' => "Olá, {$company}. Identificamos que {$title} está fora do prazo previsto ({$deadline}) e já estamos tratando com {$responsavel}. O próximo passo é confirmar o bloqueio e registrar a regularização ainda no fluxo do item.",
-            ];
-        }
-
-        if (in_array((string) $item->status, ['correcao_necessaria', 'reprovado'], true)) {
-            return [
-                'title' => 'Mensagem para solicitar correção sem retrabalho',
-                'text' => "Olá, {$responsavel}. O item {$title} precisa de correção. Por favor, revise o ponto indicado, atualize o registro e deixe no histórico o que foi ajustado para podermos validar sem nova rodada de dúvidas.",
-            ];
-        }
-
-        if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
-            return [
-                'title' => 'Mensagem para destravar aprovação',
-                'text' => "Olá, {$responsavel}. O item {$title} está aguardando aprovação. Confirme checklist, histórico e pendências. Se estiver correto, aprove; se faltar algo, solicite correção com o motivo objetivo.",
-            ];
-        }
-
-        if (! $item->responsavel_id) {
-            return [
-                'title' => 'Mensagem para delegar com contexto',
-                'text' => "Olá. Precisamos definir responsável para {$title}. Ao assumir, registre o próximo passo, prazo de retorno e qualquer bloqueio encontrado para evitar que o item fique invisível na operação.",
-            ];
-        }
+        $department = $item->categoria?->nome ?: ($item->getTipoOuCategoria() ?: 'Operacional');
+        $lateRelated = collect($relatedClientItems)->filter(fn (array $related): bool => str_contains(mb_strtolower((string) ($related['vencimento'] ?? '')), 'vencido'))->count();
 
         return [
-            'title' => 'Mensagem para manter tração',
-            'text' => "Olá, {$responsavel}. O item {$title} está no radar do Centro Operacional. Atualize o histórico com o próximo passo, impedimento atual ou previsão de conclusão para manter a equipe alinhada.",
+            ['label' => 'Cliente impactado', 'value' => $item->empresa?->razao_social ?: 'Sem empresa vinculada'],
+            ['label' => 'Departamento afetado', 'value' => $department],
+            ['label' => 'Impacto financeiro', 'value' => $value !== null ? 'R$ ' . number_format($value, 2, ',', '.') : 'Não informado; tratar pelo risco operacional'],
+            ['label' => 'Pendências recentes do cliente', 'value' => count($relatedClientItems) . ' item(ns)' . ($lateRelated > 0 ? " • {$lateRelated} com sinal de atraso" : '')],
         ];
     }
 
-    protected function itemSuccessCriteria(ItemControle $item, array $checklist): array
+    protected function itemStalledInfo(ItemControle $item, array $timeline): array
     {
-        $criteria = [];
+        $lastMove = collect($timeline)->first();
+        $lastDate = $item->updated_at ?: $item->created_at;
+        $days = $lastDate ? (int) $lastDate->copy()->startOfDay()->diffInDays(now()->startOfDay()) : null;
 
-        if (! $item->responsavel_id) {
-            $criteria[] = 'Responsável definido e visível no item.';
-        }
+        return [
+            'last_update' => $lastMove['data'] ?? ($lastDate?->format('d/m/Y H:i') ?: 'Sem data registrada'),
+            'days' => $days !== null ? ($days === 0 ? 'Movimentado hoje' : "Parado há {$days} dia(s)") : 'Sem histórico suficiente',
+            'owner' => $item->responsavel?->nome ?: 'Sem responsável',
+        ];
+    }
 
-        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
-            $criteria[] = 'Motivo do atraso registrado no histórico.';
-            $criteria[] = 'Nova ação ou regularização definida para impedir nova cobrança.';
-        }
+    protected function itemReadyMessage(ItemControle $item): string
+    {
+        $company = $item->empresa?->razao_social ?: 'cliente';
+        $title = $item->titulo ?: 'pendência operacional';
+        $deadline = $item->data_vencimento?->format('d/m/Y') ?: 'o quanto antes';
 
         if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
-            $criteria[] = 'Item aprovado, reprovado ou devolvido para correção com motivo claro.';
+            return "Olá. Precisamos de uma decisão sobre {$title} do cliente {$company}. Pode validar e aprovar ou apontar a correção necessária até {$deadline}?";
         }
 
         if (in_array((string) $item->status, ['correcao_necessaria', 'reprovado'], true)) {
-            $criteria[] = 'Correção enviada para a pessoa certa com instrução objetiva.';
+            return "Olá. A pendência {$title} do cliente {$company} precisa de correção para avançar. Pode ajustar e retornar ainda hoje, por favor?";
         }
 
-        if (collect($checklist)->where('concluido', false)->count() > 0) {
-            $criteria[] = 'Checklist pendente validado ou replanejado.';
+        return "Olá. Identificamos a pendência {$title} do cliente {$company}. Precisamos resolver até {$deadline} para evitar atraso, retrabalho ou cobrança do cliente. Pode verificar e retornar, por favor?";
+    }
+
+    protected function itemBlockers(ItemControle $item, array $checklist, array $timeline): array
+    {
+        $blockers = [];
+
+        if (! $item->responsavel_id) {
+            $blockers[] = 'Sem responsável definido.';
         }
 
-        $criteria[] = 'Próximo passo registrado para a equipe não perder contexto.';
+        if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
+            $blockers[] = 'Aguardando aprovação para avançar.';
+        }
 
-        return array_slice(array_values(array_unique($criteria)), 0, 5);
+        if (in_array((string) $item->status, ['correcao_necessaria', 'reprovado'], true)) {
+            $blockers[] = 'Correção/reprovação pendente de tratamento.';
+        }
+
+        foreach (collect($checklist)->where('concluido', false)->take(3) as $check) {
+            $blockers[] = 'Checklist pendente: ' . ($check['titulo'] ?? 'Etapa operacional');
+        }
+
+        if (empty($timeline)) {
+            $blockers[] = 'Sem histórico recente para explicar o andamento.';
+        }
+
+        return $blockers ?: ['Nenhum bloqueador claro encontrado. Abrir cadastro apenas se precisar validar dados técnicos.'];
+    }
+
+    protected function itemDoneDefinition(ItemControle $item): array
+    {
+        $status = (string) $item->status;
+
+        if (in_array($status, ['aguardando_aprovacao', 'em_aprovacao'], true)) {
+            return ['Aprovação registrada.', 'Correção solicitada quando houver erro.', 'Próxima etapa liberada com responsável definido.'];
+        }
+
+        if (in_array($status, ['correcao_necessaria', 'reprovado'], true)) {
+            return ['Correção realizada pelo responsável.', 'Checklist pendente revisado.', 'Status atualizado para andamento, aprovado ou concluído.'];
+        }
+
+        return ['Pendência tratada ou encaminhada.', 'Responsável e prazo confirmados.', 'Status atualizado para concluído/aprovado ou próxima ação documentada.'];
+    }
+
+    protected function itemUrgencyScore(ItemControle $item, array $checklist, array $timeline, array $relatedClientItems): array
+    {
+        $score = 20;
+        $reasons = [];
+
+        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
+            $score += 35;
+            $reasons[] = 'Prazo vencido +35';
+        } elseif ($item->data_vencimento?->isToday()) {
+            $score += 30;
+            $reasons[] = 'Vence hoje +30';
+        } elseif (! $item->data_vencimento) {
+            $score += 15;
+            $reasons[] = 'Sem prazo +15';
+        }
+
+        if (! $item->responsavel_id) {
+            $score += 20;
+            $reasons[] = 'Sem responsável +20';
+        }
+
+        if (in_array((string) $item->prioridade, ['critica', 'urgente', 'alta'], true)) {
+            $score += 20;
+            $reasons[] = 'Prioridade alta +20';
+        }
+
+        if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao', 'correcao_necessaria', 'reprovado'], true)) {
+            $score += 15;
+            $reasons[] = 'Status bloqueante +15';
+        }
+
+        $openChecklist = collect($checklist)->where('concluido', false)->count();
+        if ($openChecklist > 0) {
+            $score += min(10, $openChecklist * 3);
+            $reasons[] = "Checklist pendente +" . min(10, $openChecklist * 3);
+        }
+
+        if (count($relatedClientItems) >= 3) {
+            $score += 10;
+            $reasons[] = 'Cliente com várias pendências +10';
+        }
+
+        $score = min(100, $score);
+        $tone = $score >= 80 ? 'danger' : ($score >= 60 ? 'warning' : 'info');
+
+        return [
+            'value' => $score,
+            'tone' => $tone,
+            'label' => $score >= 80 ? 'Urgência máxima' : ($score >= 60 ? 'Alta atenção' : 'Acompanhar'),
+            'reasons' => array_slice($reasons ?: ['Risco calculado pelo contexto operacional'], 0, 5),
+        ];
+    }
+
+    protected function itemCriticalClientInfo(ItemControle $item, array $relatedClientItems): array
+    {
+        $open = count($relatedClientItems);
+        $isCritical = $open >= 3 || ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday());
+
+        return [
+            'show' => $isCritical,
+            'open' => $open,
+            'risk' => $isCritical ? 'Alto' : 'Monitorado',
+            'text' => $isCritical
+                ? 'Cliente com sinais de acúmulo operacional. Resolva este item e confira se há outras pendências abertas.'
+                : 'Cliente sem acúmulo crítico detectado neste modal.',
+        ];
     }
 
     protected function itemDecisionSummary(ItemControle $item, ?float $value): array

@@ -893,121 +893,257 @@
 
 
         @if($detailModalOpen)
-            @php $detail = $this->selectedItemDetail(); @endphp
-            <div class="pz-resolution-modal co-home-resolution-modal" role="dialog" aria-modal="true" aria-labelledby="co-detail-title">
-                <div class="pz-resolution-backdrop" wire:click="closeItemDetailModal"></div>
-                <article class="pz-resolution-shell pz-resolution-shell-v2 co-detail-home-shell" @click.stop>
-                    <button type="button" class="pz-resolution-x" wire:click="closeItemDetailModal" aria-label="Fechar">×</button>
+            @php
+                $detail = $this->selectedItemDetail();
+                $scoreValue = (int) ($detail['urgency_score']['value'] ?? 92);
+                $scoreValue = max(0, min(100, $scoreValue));
+                $scoreTone = $scoreValue >= 85 ? 'critical' : ($scoreValue >= 65 ? 'warning' : 'info');
+                $scoreReasons = collect($detail['urgency_score']['reasons'] ?? [])->take(4)->values();
+                $whyHere = collect($detail['why_here'] ?? [])->take(4)->values();
+                $impactRows = collect($detail['operational_impact'] ?? [])->take(4)->values();
+                $checklistRows = collect($detail['checklist'] ?? [])->take(5)->values();
+                $blockerRows = collect($detail['blockers'] ?? [])->take(3)->values();
+                $doneRows = collect($detail['done_definition'] ?? [])->take(4)->values();
+                $timelineRows = collect($detail['timeline'] ?? [])->take(4)->values();
+                $criticalClient = $detail['critical_client'] ?? [];
+                $readyMessage = $detail['ready_message'] ?? 'Mensagem não gerada para este item.';
+                $primaryAction = $detail['decision_summary']['action'] ?? ($detail['suggestion']['primary_action'] ?? 'Entrar em contato com o cliente agora');
+                $actionImpact = $detail['decision_summary']['impact'] ?? ($detail['suggestion']['text'] ?? 'Evita multa, mantém o cliente em dia e reduz retrabalho operacional.');
+            @endphp
+            <div class="ra-modal" role="dialog" aria-modal="true" aria-labelledby="ra-detail-title">
+                <div class="ra-backdrop" wire:click="closeItemDetailModal"></div>
+
+                <article class="ra-shell" @click.stop>
+                    <button type="button" class="ra-close" wire:click="closeItemDetailModal" aria-label="Fechar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
 
                     @if($detail)
-                        <header class="co-detail-home-header">
-                            <span class="co-section-icon {{ $detailModalSource === 'cliente' ? 'orange' : 'red' }}"><i class="bi {{ $detailModalSource === 'cliente' ? 'bi-building-exclamation' : 'bi-lightning-charge-fill' }}"></i></span>
-                            <div>
-                                <div class="pz-resolution-breadcrumb">
-                                    <span>{{ $detailModalSource === 'cliente' ? 'Clientes em Maior Risco' : 'Ação Recomendada' }}</span>
-                                    <b>›</b>
-                                    <span>{{ $detail['categoria'] }}</span>
+                        <header class="ra-header">
+                            <div class="ra-heading">
+                                <span class="ra-kicker">AÇÃO RECOMENDADA</span>
+                                <div class="ra-title-row">
+                                    <h2 id="ra-detail-title">{{ $detail['title'] }}</h2>
+                                    <span class="ra-critical-pill">{{ strtoupper($detail['prioridade'] ?? 'CRÍTICA') }}</span>
                                 </div>
-                                <h3 id="co-detail-title">{{ $detailModalSource === 'cliente' ? 'Detalhes do Cliente Crítico' : 'Detalhes para Resolver Agora' }}</h3>
-                                <p>{{ $detail['empresa'] }} • {{ $detail['categoria'] }}</p>
+                                <div class="ra-meta-row">
+                                    <span><i class="bi bi-clipboard2-check"></i>{{ $detail['categoria'] }}</span>
+                                    <span>•</span>
+                                    <span>{{ $detail['categoria'] }}</span>
+                                    <span>•</span>
+                                    <span>Ref. {{ now()->format('m/Y') }}</span>
+                                    <span class="ra-client-chip">Cliente: {{ $detail['empresa'] }}</span>
+                                </div>
+                            </div>
+
+                            <div class="ra-header-actions">
+                                <button type="button"><i class="bi bi-star"></i>Favoritar</button>
+                                <button type="button" class="ra-icon-only"><i class="bi bi-three-dots"></i></button>
                             </div>
                         </header>
 
-                        <div class="co-detail-home-scroll">
-                            <div class="co-detail-modal-body">
-                                <div class="co-detail-main-info">
-                                    <span class="co-priority-badge warning">{{ $detail['prioridade'] }}</span>
-                                    <h4>{{ $detail['title'] }}</h4>
-                                    <p>{{ $detail['descricao'] }}</p>
-                                </div>
-
-                                <div class="co-decision-box {{ $detail['suggestion']['tone'] ?? 'info' }}">
+                        <div class="ra-body">
+                            <main class="ra-main">
+                                <section class="ra-summary-card">
+                                    <div class="ra-alert-icon"><i class="bi bi-exclamation-lg"></i></div>
                                     <div>
-                                        <small>Sugestão operacional</small>
-                                        <strong>{{ $detail['suggestion']['title'] ?? 'Avaliar item' }}</strong>
-                                        <p>{{ $detail['suggestion']['text'] ?? 'Use os dados abaixo para decidir a próxima ação.' }}</p>
+                                        <h3>RESUMO EXECUTIVO</h3>
+                                        <p>{{ $detail['executive_summary'] ?? 'Esta obrigação vence hoje e ainda não foi concluída.' }}</p>
+                                        <p class="ra-summary-strong">{{ $actionImpact }}</p>
                                     </div>
-                                    <span>{{ $detail['suggestion']['primary_action'] ?? 'Decidir agora' }}</span>
-                                </div>
+                                </section>
 
-                                <div class="co-detail-grid">
-                                    <div><small>Status</small><strong>{{ $detail['status'] }}</strong></div>
-                                    <div><small>Responsável</small><strong>{{ $detail['responsavel'] }}</strong></div>
-                                    <div><small>Vencimento</small><strong>{{ $detail['vencimento'] }}</strong><em>{{ $detail['dias_prazo'] ?? '' }}</em></div>
-                                    <div><small>Valor/Impacto</small><strong>{{ $detail['valor'] }}</strong></div>
-                                    <div><small>Conclusão</small><strong>{{ $detail['conclusao'] }}</strong></div>
-                                    <div><small>Origem</small><strong>{{ $detailModalSource === 'cliente' ? 'Clientes Críticos' : 'Resolver Agora' }}</strong></div>
-                                </div>
-
-                                <div class="co-detail-insights-grid">
-                                    <section class="co-detail-insight-card">
-                                        <h4><i class="bi bi-clock-history"></i>Últimas movimentações</h4>
-                                        @forelse(($detail['timeline'] ?? []) as $entry)
-                                            <article>
-                                                <strong>{{ $entry['titulo'] }}</strong>
-                                                <span>{{ $entry['tipo'] }} • {{ $entry['data'] }}</span>
-                                                <p>{{ $entry['descricao'] }}</p>
-                                            </article>
-                                        @empty
-                                            <div class="co-empty clean small"><strong>Sem histórico operacional ainda.</strong></div>
-                                        @endforelse
-                                    </section>
-
-                                    <section class="co-detail-insight-card">
-                                        <h4><i class="bi bi-check2-square"></i>Checklist / próximas etapas</h4>
-                                        @forelse(($detail['checklist'] ?? []) as $check)
-                                            <article class="co-checkline {{ $check['concluido'] ? 'done' : '' }}">
-                                                <i class="bi {{ $check['concluido'] ? 'bi-check-circle-fill' : 'bi-circle' }}"></i>
-                                                <strong>{{ $check['titulo'] }}</strong>
-                                            </article>
-                                        @empty
-                                            <div class="co-empty clean small"><strong>Nenhum checklist cadastrado.</strong></div>
-                                        @endforelse
-                                    </section>
-                                </div>
-
-                                @if($detailModalSource === 'cliente')
-                                    <section class="co-detail-insight-card co-related-client-card">
-                                        <h4><i class="bi bi-building"></i>Outros itens recentes do cliente</h4>
-                                        @forelse(($detail['related_client_items'] ?? []) as $related)
-                                            <article>
-                                                <div>
-                                                    <strong>{{ $related['titulo'] }}</strong>
-                                                    <span>{{ $related['status'] }} • {{ $related['responsavel'] }} • {{ $related['vencimento'] }}</span>
+                                <div class="ra-top-grid">
+                                    <section class="ra-card">
+                                        <h3>POR QUE ESTÁ AQUI?</h3>
+                                        <div class="ra-reason-list">
+                                            @forelse($whyHere as $reason)
+                                                <div class="ra-reason-item">
+                                                    <span class="ra-round-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                                                    <p>{{ $reason }}</p>
                                                 </div>
-                                                <a class="co-mini-action" href="{{ $related['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
+                                            @empty
+                                                <div class="ra-reason-item"><span class="ra-round-icon red"><i class="bi bi-clock"></i></span><p>Vence em menos de 24 horas</p></div>
+                                                <div class="ra-reason-item"><span class="ra-round-icon orange"><i class="bi bi-hourglass-split"></i></span><p>Está parado há alguns dias</p></div>
+                                                <div class="ra-reason-item"><span class="ra-round-icon red"><i class="bi bi-file-earmark-lock"></i></span><p>Documento obrigatório pendente</p></div>
+                                            @endforelse
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card">
+                                        <h3>IMPACTO SE NÃO RESOLVER</h3>
+                                        <div class="ra-impact-list">
+                                            @forelse($impactRows as $impact)
+                                                <div>
+                                                    <span>{{ $impact['label'] ?? 'Impacto' }}</span>
+                                                    <strong class="{{ str_contains(strtolower((string)($impact['label'] ?? '')), 'multa') ? 'danger' : '' }}">{{ $impact['value'] ?? '-' }}</strong>
+                                                </div>
+                                            @empty
+                                                <div><span>Risco de multa</span><strong class="danger">{{ $detail['valor'] }}</strong></div>
+                                                <div><span>Cliente impactado</span><strong>{{ $detail['empresa'] }}</strong></div>
+                                                <div><span>Departamento</span><strong>{{ $detail['categoria'] }}</strong></div>
+                                                <div><span>Tipo de impacto</span><strong><em>Financeiro e Fiscal</em></strong></div>
+                                            @endforelse
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card">
+                                        <h3>TEMPO PARADO</h3>
+                                        <div class="ra-stalled-list">
+                                            <div><i class="bi bi-clock-history"></i><span>Última atualização</span><strong>{{ $detail['stalled_info']['last_update'] ?? '-' }}</strong></div>
+                                            <div><i class="bi bi-clock"></i><span>Parado há</span><strong class="danger">{{ $detail['stalled_info']['days'] ?? 'Sem histórico' }}</strong></div>
+                                            <div><i class="bi bi-person-badge"></i><span>Responsável atual</span><strong>{{ $detail['responsavel'] }}</strong></div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <div class="ra-middle-grid">
+                                    <section class="ra-card ra-action-card">
+                                        <h3>AÇÃO RECOMENDADA – O QUE FAZER AGORA</h3>
+                                        <div class="ra-action-content">
+                                            <ol class="ra-steps">
+                                                @forelse($checklistRows as $step)
+                                                    <li><span>{{ $loop->iteration }}</span><p>{{ $step['titulo'] ?? 'Etapa operacional' }}</p></li>
+                                                @empty
+                                                    <li><span>1</span><p>Abrir obrigação referente ao período atual</p></li>
+                                                    <li><span>2</span><p>Validar informações e débitos</p></li>
+                                                    <li><span>3</span><p>Anexar/validar documentos necessários</p></li>
+                                                    <li><span>4</span><p>Transmitir obrigação</p></li>
+                                                    <li><span>5</span><p>Confirmar transmissão e gerar recibo</p></li>
+                                                @endforelse
+                                            </ol>
+
+                                            <aside class="ra-action-note">
+                                                <div><i class="bi bi-stopwatch"></i><span>Tempo estimado</span><strong>15 minutos</strong></div>
+                                                <div><i class="bi bi-shield-check"></i><span>Impacto da ação</span><p>{{ $actionImpact }}</p></div>
+                                            </aside>
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card ra-message-card" x-data="{ copied: false }">
+                                        <div class="ra-card-header-row">
+                                            <h3>MENSAGEM PRONTA PARA O CLIENTE</h3>
+                                            <button type="button" class="ra-copy-btn" @click="navigator.clipboard.writeText($refs.raReadyMessage.innerText); copied = true; setTimeout(() => copied = false, 1600)">
+                                                <i class="bi bi-clipboard-check"></i><span x-text="copied ? 'Copiado' : 'Copiar mensagem'"></span>
+                                            </button>
+                                        </div>
+                                        <div class="ra-message-box" x-ref="raReadyMessage">{{ $readyMessage }}</div>
+                                        <button type="button" class="ra-personalize">Personalizar antes de enviar <i class="bi bi-pencil"></i></button>
+                                    </section>
+                                </div>
+
+                                <div class="ra-bottom-grid">
+                                    <section class="ra-card">
+                                        <h3>BLOQUEADORES IDENTIFICADOS</h3>
+                                        <div class="ra-blocker-list">
+                                            @forelse($blockerRows as $blocker)
+                                                <div><span class="ra-round-icon red"><i class="bi bi-exclamation-triangle"></i></span><p>{{ $blocker }}</p></div>
+                                            @empty
+                                                <div><span class="ra-round-icon green"><i class="bi bi-check2"></i></span><p>Nenhuma aprovação pendente</p></div>
+                                            @endforelse
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card">
+                                        <h3>QUANDO ESSE ITEM DEIXA DE APARECER AQUI?</h3>
+                                        <div class="ra-done-list">
+                                            @forelse($doneRows as $done)
+                                                <div><i class="bi bi-check2"></i><p>{{ $done }}</p></div>
+                                            @empty
+                                                <div><i class="bi bi-check2"></i><p>Obrigação concluída com sucesso</p></div>
+                                                <div><i class="bi bi-check2"></i><p>Recibo de entrega gerado</p></div>
+                                                <div><i class="bi bi-check2"></i><p>Não há pendências relacionadas</p></div>
+                                            @endforelse
+                                        </div>
+                                        <footer>O item será removido automaticamente após a conclusão.</footer>
+                                    </section>
+
+                                    <section class="ra-card ra-next-card">
+                                        <h3>PRÓXIMA AÇÃO SUGERIDA</h3>
+                                        <div class="ra-next-alert"><i class="bi bi-exclamation-triangle"></i><strong>{{ $primaryAction }}</strong></div>
+                                        <div class="ra-next-meta"><span>Canal sugerido:</span><strong><i class="bi bi-whatsapp"></i> WhatsApp</strong></div>
+                                        <div class="ra-next-meta"><span>Prioridade:</span><strong><b></b> Alta</strong></div>
+                                        <div class="ra-next-meta"><span>Melhor horário:</span><strong>Agora</strong></div>
+                                        <button type="button" class="ra-primary-btn"><i class="bi bi-whatsapp"></i>Iniciar contato com o cliente</button>
+                                    </section>
+                                </div>
+                            </main>
+
+                            <aside class="ra-side">
+                                <section class="ra-card ra-score-card">
+                                    <h3>SCORE DE URGÊNCIA</h3>
+                                    <div class="ra-score-wrap">
+                                        <div class="ra-score-ring" style="--score: {{ $scoreValue }};"><strong>{{ $scoreValue }}</strong><span>/100</span></div>
+                                        <div class="ra-score-reasons">
+                                            <h4>Por que esse score?</h4>
+                                            @forelse($scoreReasons as $reason)
+                                                <div><span>{{ $reason }}</span><strong>+{{ max(7, 40 - (($loop->iteration - 1) * 10)) }}</strong></div>
+                                            @empty
+                                                <div><span>Vence hoje</span><strong>+40</strong></div>
+                                                <div><span>Parado há 4 dias</span><strong>+30</strong></div>
+                                                <div><span>Obrigação fiscal</span><strong>+15</strong></div>
+                                                <div><span>Cliente crítico</span><strong>+7</strong></div>
+                                            @endforelse
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="ra-card ra-client-card">
+                                    <div class="ra-card-header-row">
+                                        <h3>CLIENTE CRÍTICO</h3>
+                                        <span class="ra-risk-pill">ALTO RISCO</span>
+                                    </div>
+                                    <div class="ra-client-metrics">
+                                        <div><span>Pendências abertas</span><strong>{{ $criticalClient['open_items'] ?? $criticalClient['pendencias_abertas'] ?? $criticalClient['open'] ?? count($detail['related_client_items'] ?? []) }}</strong></div>
+                                        <div><span>Pendências vencidas</span><strong>{{ $criticalClient['late_items'] ?? $criticalClient['pendencias_vencidas'] ?? '-'  }}</strong></div>
+                                        <div><span>Faturamento (12m)</span><strong>{{ $criticalClient['revenue_12m'] ?? $criticalClient['faturamento_12m'] ?? $detail['valor'] }}</strong></div>
+                                    </div>
+                                    <a href="{{ $detail['url'] }}" class="ra-outline-link">Ver dashboard do cliente <i class="bi bi-box-arrow-up-right"></i></a>
+                                </section>
+
+                                <section class="ra-card ra-timeline-card">
+                                    <h3>LINHA DO TEMPO</h3>
+                                    <div class="ra-timeline">
+                                        @forelse($timelineRows as $entry)
+                                            <article>
+                                                <span></span>
+                                                <time>{{ $entry['data'] ?? '-' }}</time>
+                                                <strong>{{ $entry['titulo'] ?? 'Atualização operacional' }}</strong>
+                                                <p>{{ $entry['descricao'] ?? '' }}</p>
                                             </article>
                                         @empty
-                                            <div class="co-empty clean small"><strong>Nenhum outro item recente desse cliente.</strong></div>
+                                            <article><span></span><time>{{ now()->format('d/m/Y H:i') }}</time><strong>Item identificado</strong><p>Ação recomendada criada automaticamente.</p></article>
                                         @endforelse
-                                    </section>
-                                @endif
-                            </div>
+                                    </div>
+                                </section>
+
+                                <section class="ra-quick-actions">
+                                    <h3>AÇÕES RÁPIDAS</h3>
+                                    <div>
+                                        <a href="{{ $detail['url'] }}">Abrir obrigação <i class="bi bi-box-arrow-up-right"></i></a>
+                                        <a href="{{ $detail['url'] }}">Ver cliente <i class="bi bi-box-arrow-up-right"></i></a>
+                                        @if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed'])
+                                            <button type="button" wire:click="openDelegateModal({{ $detail['id'] }})"><i class="bi bi-person-plus"></i>Delegar tarefa</button>
+                                        @else
+                                            <button type="button"><i class="bi bi-person-plus"></i>Delegar tarefa</button>
+                                        @endif
+                                        <button type="button" class="success" wire:click="closeItemDetailModal"><i class="bi bi-check2"></i>Marcar como resolvido</button>
+                                    </div>
+                                </section>
+                            </aside>
                         </div>
 
-                        <footer class="co-detail-footer-actions co-detail-home-footer">
-                            <button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button>
-                            <a class="co-action-btn info" href="{{ $detail['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir cadastro</a>
-                            @if(($detail['actions']['approve'] ?? false))
-                                <button type="button" class="co-action-btn success" wire:click="aprovar({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-check2-circle"></i>Aprovar</button>
-                                <button type="button" class="co-action-btn danger" wire:click="reprovar({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-x-lg"></i>Reprovar</button>
-                            @endif
-                            @if(($detail['actions']['correct'] ?? false) && ! $detail['is_closed'])
-                                <button type="button" class="co-action-btn warning" wire:click="enviarParaCorrecao({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-tools"></i>Solicitar correção</button>
-                            @endif
-                            @if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed'])
-                                <button type="button" class="co-action-btn purple" wire:click="openDelegateModal({{ $detail['id'] }})" wire:loading.attr="disabled"><i class="bi bi-person-plus"></i>Delegar</button>
-                            @endif
+                        <footer class="ra-footer">
+                            <div><i class="bi bi-lightbulb"></i><strong>Dica:</strong> Resolva agora para evitar multas, retrabalho e manter a confiança do cliente.</div>
+                            <label><input type="checkbox">Não mostrar novamente</label>
+                            <button type="button" wire:click="closeItemDetailModal">Fechar</button>
                         </footer>
                     @else
-                        <header class="co-detail-home-header">
-                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
-                            <div>
-                                <h3 id="co-detail-title">Item não encontrado</h3>
-                                <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
-                            </div>
-                        </header>
-                        <footer class="co-detail-home-footer"><button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button></footer>
+                        <div class="ra-empty-state">
+                            <h2>Item não encontrado</h2>
+                            <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
+                            <button type="button" wire:click="closeItemDetailModal">Fechar</button>
+                        </div>
                     @endif
                 </article>
             </div>

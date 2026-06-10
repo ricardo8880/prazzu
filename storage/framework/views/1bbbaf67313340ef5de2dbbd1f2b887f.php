@@ -906,121 +906,257 @@
 
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalOpen): ?>
-            <?php $detail = $this->selectedItemDetail(); ?>
-            <div class="pz-resolution-modal co-home-resolution-modal" role="dialog" aria-modal="true" aria-labelledby="co-detail-title">
-                <div class="pz-resolution-backdrop" wire:click="closeItemDetailModal"></div>
-                <article class="pz-resolution-shell pz-resolution-shell-v2 co-detail-home-shell" @click.stop>
-                    <button type="button" class="pz-resolution-x" wire:click="closeItemDetailModal" aria-label="Fechar">×</button>
+            <?php
+                $detail = $this->selectedItemDetail();
+                $scoreValue = (int) ($detail['urgency_score']['value'] ?? 92);
+                $scoreValue = max(0, min(100, $scoreValue));
+                $scoreTone = $scoreValue >= 85 ? 'critical' : ($scoreValue >= 65 ? 'warning' : 'info');
+                $scoreReasons = collect($detail['urgency_score']['reasons'] ?? [])->take(4)->values();
+                $whyHere = collect($detail['why_here'] ?? [])->take(4)->values();
+                $impactRows = collect($detail['operational_impact'] ?? [])->take(4)->values();
+                $checklistRows = collect($detail['checklist'] ?? [])->take(5)->values();
+                $blockerRows = collect($detail['blockers'] ?? [])->take(3)->values();
+                $doneRows = collect($detail['done_definition'] ?? [])->take(4)->values();
+                $timelineRows = collect($detail['timeline'] ?? [])->take(4)->values();
+                $criticalClient = $detail['critical_client'] ?? [];
+                $readyMessage = $detail['ready_message'] ?? 'Mensagem não gerada para este item.';
+                $primaryAction = $detail['decision_summary']['action'] ?? ($detail['suggestion']['primary_action'] ?? 'Entrar em contato com o cliente agora');
+                $actionImpact = $detail['decision_summary']['impact'] ?? ($detail['suggestion']['text'] ?? 'Evita multa, mantém o cliente em dia e reduz retrabalho operacional.');
+            ?>
+            <div class="ra-modal" role="dialog" aria-modal="true" aria-labelledby="ra-detail-title">
+                <div class="ra-backdrop" wire:click="closeItemDetailModal"></div>
+
+                <article class="ra-shell" @click.stop>
+                    <button type="button" class="ra-close" wire:click="closeItemDetailModal" aria-label="Fechar">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
 
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail): ?>
-                        <header class="co-detail-home-header">
-                            <span class="co-section-icon <?php echo e($detailModalSource === 'cliente' ? 'orange' : 'red'); ?>"><i class="bi <?php echo e($detailModalSource === 'cliente' ? 'bi-building-exclamation' : 'bi-lightning-charge-fill'); ?>"></i></span>
-                            <div>
-                                <div class="pz-resolution-breadcrumb">
-                                    <span><?php echo e($detailModalSource === 'cliente' ? 'Clientes em Maior Risco' : 'Ação Recomendada'); ?></span>
-                                    <b>›</b>
-                                    <span><?php echo e($detail['categoria']); ?></span>
+                        <header class="ra-header">
+                            <div class="ra-heading">
+                                <span class="ra-kicker">AÇÃO RECOMENDADA</span>
+                                <div class="ra-title-row">
+                                    <h2 id="ra-detail-title"><?php echo e($detail['title']); ?></h2>
+                                    <span class="ra-critical-pill"><?php echo e(strtoupper($detail['prioridade'] ?? 'CRÍTICA')); ?></span>
                                 </div>
-                                <h3 id="co-detail-title"><?php echo e($detailModalSource === 'cliente' ? 'Detalhes do Cliente Crítico' : 'Detalhes para Resolver Agora'); ?></h3>
-                                <p><?php echo e($detail['empresa']); ?> • <?php echo e($detail['categoria']); ?></p>
+                                <div class="ra-meta-row">
+                                    <span><i class="bi bi-clipboard2-check"></i><?php echo e($detail['categoria']); ?></span>
+                                    <span>•</span>
+                                    <span><?php echo e($detail['categoria']); ?></span>
+                                    <span>•</span>
+                                    <span>Ref. <?php echo e(now()->format('m/Y')); ?></span>
+                                    <span class="ra-client-chip">Cliente: <?php echo e($detail['empresa']); ?></span>
+                                </div>
+                            </div>
+
+                            <div class="ra-header-actions">
+                                <button type="button"><i class="bi bi-star"></i>Favoritar</button>
+                                <button type="button" class="ra-icon-only"><i class="bi bi-three-dots"></i></button>
                             </div>
                         </header>
 
-                        <div class="co-detail-home-scroll">
-                            <div class="co-detail-modal-body">
-                                <div class="co-detail-main-info">
-                                    <span class="co-priority-badge warning"><?php echo e($detail['prioridade']); ?></span>
-                                    <h4><?php echo e($detail['title']); ?></h4>
-                                    <p><?php echo e($detail['descricao']); ?></p>
-                                </div>
-
-                                <div class="co-decision-box <?php echo e($detail['suggestion']['tone'] ?? 'info'); ?>">
+                        <div class="ra-body">
+                            <main class="ra-main">
+                                <section class="ra-summary-card">
+                                    <div class="ra-alert-icon"><i class="bi bi-exclamation-lg"></i></div>
                                     <div>
-                                        <small>Sugestão operacional</small>
-                                        <strong><?php echo e($detail['suggestion']['title'] ?? 'Avaliar item'); ?></strong>
-                                        <p><?php echo e($detail['suggestion']['text'] ?? 'Use os dados abaixo para decidir a próxima ação.'); ?></p>
+                                        <h3>RESUMO EXECUTIVO</h3>
+                                        <p><?php echo e($detail['executive_summary'] ?? 'Esta obrigação vence hoje e ainda não foi concluída.'); ?></p>
+                                        <p class="ra-summary-strong"><?php echo e($actionImpact); ?></p>
                                     </div>
-                                    <span><?php echo e($detail['suggestion']['primary_action'] ?? 'Decidir agora'); ?></span>
-                                </div>
+                                </section>
 
-                                <div class="co-detail-grid">
-                                    <div><small>Status</small><strong><?php echo e($detail['status']); ?></strong></div>
-                                    <div><small>Responsável</small><strong><?php echo e($detail['responsavel']); ?></strong></div>
-                                    <div><small>Vencimento</small><strong><?php echo e($detail['vencimento']); ?></strong><em><?php echo e($detail['dias_prazo'] ?? ''); ?></em></div>
-                                    <div><small>Valor/Impacto</small><strong><?php echo e($detail['valor']); ?></strong></div>
-                                    <div><small>Conclusão</small><strong><?php echo e($detail['conclusao']); ?></strong></div>
-                                    <div><small>Origem</small><strong><?php echo e($detailModalSource === 'cliente' ? 'Clientes Críticos' : 'Resolver Agora'); ?></strong></div>
-                                </div>
-
-                                <div class="co-detail-insights-grid">
-                                    <section class="co-detail-insight-card">
-                                        <h4><i class="bi bi-clock-history"></i>Últimas movimentações</h4>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($detail['timeline'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                            <article>
-                                                <strong><?php echo e($entry['titulo']); ?></strong>
-                                                <span><?php echo e($entry['tipo']); ?> • <?php echo e($entry['data']); ?></span>
-                                                <p><?php echo e($entry['descricao']); ?></p>
-                                            </article>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                            <div class="co-empty clean small"><strong>Sem histórico operacional ainda.</strong></div>
-                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    </section>
-
-                                    <section class="co-detail-insight-card">
-                                        <h4><i class="bi bi-check2-square"></i>Checklist / próximas etapas</h4>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($detail['checklist'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $check): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                            <article class="co-checkline <?php echo e($check['concluido'] ? 'done' : ''); ?>">
-                                                <i class="bi <?php echo e($check['concluido'] ? 'bi-check-circle-fill' : 'bi-circle'); ?>"></i>
-                                                <strong><?php echo e($check['titulo']); ?></strong>
-                                            </article>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                            <div class="co-empty clean small"><strong>Nenhum checklist cadastrado.</strong></div>
-                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    </section>
-                                </div>
-
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalSource === 'cliente'): ?>
-                                    <section class="co-detail-insight-card co-related-client-card">
-                                        <h4><i class="bi bi-building"></i>Outros itens recentes do cliente</h4>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($detail['related_client_items'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $related): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                            <article>
-                                                <div>
-                                                    <strong><?php echo e($related['titulo']); ?></strong>
-                                                    <span><?php echo e($related['status']); ?> • <?php echo e($related['responsavel']); ?> • <?php echo e($related['vencimento']); ?></span>
+                                <div class="ra-top-grid">
+                                    <section class="ra-card">
+                                        <h3>POR QUE ESTÁ AQUI?</h3>
+                                        <div class="ra-reason-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $whyHere; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <div class="ra-reason-item">
+                                                    <span class="ra-round-icon red"><i class="bi bi-exclamation-triangle"></i></span>
+                                                    <p><?php echo e($reason); ?></p>
                                                 </div>
-                                                <a class="co-mini-action" href="<?php echo e($related['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div class="ra-reason-item"><span class="ra-round-icon red"><i class="bi bi-clock"></i></span><p>Vence em menos de 24 horas</p></div>
+                                                <div class="ra-reason-item"><span class="ra-round-icon orange"><i class="bi bi-hourglass-split"></i></span><p>Está parado há alguns dias</p></div>
+                                                <div class="ra-reason-item"><span class="ra-round-icon red"><i class="bi bi-file-earmark-lock"></i></span><p>Documento obrigatório pendente</p></div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card">
+                                        <h3>IMPACTO SE NÃO RESOLVER</h3>
+                                        <div class="ra-impact-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $impactRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $impact): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <div>
+                                                    <span><?php echo e($impact['label'] ?? 'Impacto'); ?></span>
+                                                    <strong class="<?php echo e(str_contains(strtolower((string)($impact['label'] ?? '')), 'multa') ? 'danger' : ''); ?>"><?php echo e($impact['value'] ?? '-'); ?></strong>
+                                                </div>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div><span>Risco de multa</span><strong class="danger"><?php echo e($detail['valor']); ?></strong></div>
+                                                <div><span>Cliente impactado</span><strong><?php echo e($detail['empresa']); ?></strong></div>
+                                                <div><span>Departamento</span><strong><?php echo e($detail['categoria']); ?></strong></div>
+                                                <div><span>Tipo de impacto</span><strong><em>Financeiro e Fiscal</em></strong></div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card">
+                                        <h3>TEMPO PARADO</h3>
+                                        <div class="ra-stalled-list">
+                                            <div><i class="bi bi-clock-history"></i><span>Última atualização</span><strong><?php echo e($detail['stalled_info']['last_update'] ?? '-'); ?></strong></div>
+                                            <div><i class="bi bi-clock"></i><span>Parado há</span><strong class="danger"><?php echo e($detail['stalled_info']['days'] ?? 'Sem histórico'); ?></strong></div>
+                                            <div><i class="bi bi-person-badge"></i><span>Responsável atual</span><strong><?php echo e($detail['responsavel']); ?></strong></div>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <div class="ra-middle-grid">
+                                    <section class="ra-card ra-action-card">
+                                        <h3>AÇÃO RECOMENDADA – O QUE FAZER AGORA</h3>
+                                        <div class="ra-action-content">
+                                            <ol class="ra-steps">
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $checklistRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $step): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                    <li><span><?php echo e($loop->iteration); ?></span><p><?php echo e($step['titulo'] ?? 'Etapa operacional'); ?></p></li>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                    <li><span>1</span><p>Abrir obrigação referente ao período atual</p></li>
+                                                    <li><span>2</span><p>Validar informações e débitos</p></li>
+                                                    <li><span>3</span><p>Anexar/validar documentos necessários</p></li>
+                                                    <li><span>4</span><p>Transmitir obrigação</p></li>
+                                                    <li><span>5</span><p>Confirmar transmissão e gerar recibo</p></li>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            </ol>
+
+                                            <aside class="ra-action-note">
+                                                <div><i class="bi bi-stopwatch"></i><span>Tempo estimado</span><strong>15 minutos</strong></div>
+                                                <div><i class="bi bi-shield-check"></i><span>Impacto da ação</span><p><?php echo e($actionImpact); ?></p></div>
+                                            </aside>
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card ra-message-card" x-data="{ copied: false }">
+                                        <div class="ra-card-header-row">
+                                            <h3>MENSAGEM PRONTA PARA O CLIENTE</h3>
+                                            <button type="button" class="ra-copy-btn" @click="navigator.clipboard.writeText($refs.raReadyMessage.innerText); copied = true; setTimeout(() => copied = false, 1600)">
+                                                <i class="bi bi-clipboard-check"></i><span x-text="copied ? 'Copiado' : 'Copiar mensagem'"></span>
+                                            </button>
+                                        </div>
+                                        <div class="ra-message-box" x-ref="raReadyMessage"><?php echo e($readyMessage); ?></div>
+                                        <button type="button" class="ra-personalize">Personalizar antes de enviar <i class="bi bi-pencil"></i></button>
+                                    </section>
+                                </div>
+
+                                <div class="ra-bottom-grid">
+                                    <section class="ra-card">
+                                        <h3>BLOQUEADORES IDENTIFICADOS</h3>
+                                        <div class="ra-blocker-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $blockerRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $blocker): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <div><span class="ra-round-icon red"><i class="bi bi-exclamation-triangle"></i></span><p><?php echo e($blocker); ?></p></div>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div><span class="ra-round-icon green"><i class="bi bi-check2"></i></span><p>Nenhuma aprovação pendente</p></div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
+                                    </section>
+
+                                    <section class="ra-card">
+                                        <h3>QUANDO ESSE ITEM DEIXA DE APARECER AQUI?</h3>
+                                        <div class="ra-done-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $doneRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $done): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <div><i class="bi bi-check2"></i><p><?php echo e($done); ?></p></div>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div><i class="bi bi-check2"></i><p>Obrigação concluída com sucesso</p></div>
+                                                <div><i class="bi bi-check2"></i><p>Recibo de entrega gerado</p></div>
+                                                <div><i class="bi bi-check2"></i><p>Não há pendências relacionadas</p></div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
+                                        <footer>O item será removido automaticamente após a conclusão.</footer>
+                                    </section>
+
+                                    <section class="ra-card ra-next-card">
+                                        <h3>PRÓXIMA AÇÃO SUGERIDA</h3>
+                                        <div class="ra-next-alert"><i class="bi bi-exclamation-triangle"></i><strong><?php echo e($primaryAction); ?></strong></div>
+                                        <div class="ra-next-meta"><span>Canal sugerido:</span><strong><i class="bi bi-whatsapp"></i> WhatsApp</strong></div>
+                                        <div class="ra-next-meta"><span>Prioridade:</span><strong><b></b> Alta</strong></div>
+                                        <div class="ra-next-meta"><span>Melhor horário:</span><strong>Agora</strong></div>
+                                        <button type="button" class="ra-primary-btn"><i class="bi bi-whatsapp"></i>Iniciar contato com o cliente</button>
+                                    </section>
+                                </div>
+                            </main>
+
+                            <aside class="ra-side">
+                                <section class="ra-card ra-score-card">
+                                    <h3>SCORE DE URGÊNCIA</h3>
+                                    <div class="ra-score-wrap">
+                                        <div class="ra-score-ring" style="--score: <?php echo e($scoreValue); ?>;"><strong><?php echo e($scoreValue); ?></strong><span>/100</span></div>
+                                        <div class="ra-score-reasons">
+                                            <h4>Por que esse score?</h4>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $scoreReasons; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <div><span><?php echo e($reason); ?></span><strong>+<?php echo e(max(7, 40 - (($loop->iteration - 1) * 10))); ?></strong></div>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div><span>Vence hoje</span><strong>+40</strong></div>
+                                                <div><span>Parado há 4 dias</span><strong>+30</strong></div>
+                                                <div><span>Obrigação fiscal</span><strong>+15</strong></div>
+                                                <div><span>Cliente crítico</span><strong>+7</strong></div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <section class="ra-card ra-client-card">
+                                    <div class="ra-card-header-row">
+                                        <h3>CLIENTE CRÍTICO</h3>
+                                        <span class="ra-risk-pill">ALTO RISCO</span>
+                                    </div>
+                                    <div class="ra-client-metrics">
+                                        <div><span>Pendências abertas</span><strong><?php echo e($criticalClient['open_items'] ?? $criticalClient['pendencias_abertas'] ?? $criticalClient['open'] ?? count($detail['related_client_items'] ?? [])); ?></strong></div>
+                                        <div><span>Pendências vencidas</span><strong><?php echo e($criticalClient['late_items'] ?? $criticalClient['pendencias_vencidas'] ?? '-'); ?></strong></div>
+                                        <div><span>Faturamento (12m)</span><strong><?php echo e($criticalClient['revenue_12m'] ?? $criticalClient['faturamento_12m'] ?? $detail['valor']); ?></strong></div>
+                                    </div>
+                                    <a href="<?php echo e($detail['url']); ?>" class="ra-outline-link">Ver dashboard do cliente <i class="bi bi-box-arrow-up-right"></i></a>
+                                </section>
+
+                                <section class="ra-card ra-timeline-card">
+                                    <h3>LINHA DO TEMPO</h3>
+                                    <div class="ra-timeline">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $timelineRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <article>
+                                                <span></span>
+                                                <time><?php echo e($entry['data'] ?? '-'); ?></time>
+                                                <strong><?php echo e($entry['titulo'] ?? 'Atualização operacional'); ?></strong>
+                                                <p><?php echo e($entry['descricao'] ?? ''); ?></p>
                                             </article>
                                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                            <div class="co-empty clean small"><strong>Nenhum outro item recente desse cliente.</strong></div>
+                                            <article><span></span><time><?php echo e(now()->format('d/m/Y H:i')); ?></time><strong>Item identificado</strong><p>Ação recomendada criada automaticamente.</p></article>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    </section>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
+                                    </div>
+                                </section>
+
+                                <section class="ra-quick-actions">
+                                    <h3>AÇÕES RÁPIDAS</h3>
+                                    <div>
+                                        <a href="<?php echo e($detail['url']); ?>">Abrir obrigação <i class="bi bi-box-arrow-up-right"></i></a>
+                                        <a href="<?php echo e($detail['url']); ?>">Ver cliente <i class="bi bi-box-arrow-up-right"></i></a>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed']): ?>
+                                            <button type="button" wire:click="openDelegateModal(<?php echo e($detail['id']); ?>)"><i class="bi bi-person-plus"></i>Delegar tarefa</button>
+                                        <?php else: ?>
+                                            <button type="button"><i class="bi bi-person-plus"></i>Delegar tarefa</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <button type="button" class="success" wire:click="closeItemDetailModal"><i class="bi bi-check2"></i>Marcar como resolvido</button>
+                                    </div>
+                                </section>
+                            </aside>
                         </div>
 
-                        <footer class="co-detail-footer-actions co-detail-home-footer">
-                            <button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button>
-                            <a class="co-action-btn info" href="<?php echo e($detail['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir cadastro</a>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['approve'] ?? false)): ?>
-                                <button type="button" class="co-action-btn success" wire:click="aprovar(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-check2-circle"></i>Aprovar</button>
-                                <button type="button" class="co-action-btn danger" wire:click="reprovar(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-x-lg"></i>Reprovar</button>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['correct'] ?? false) && ! $detail['is_closed']): ?>
-                                <button type="button" class="co-action-btn warning" wire:click="enviarParaCorrecao(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-tools"></i>Solicitar correção</button>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed']): ?>
-                                <button type="button" class="co-action-btn purple" wire:click="openDelegateModal(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled"><i class="bi bi-person-plus"></i>Delegar</button>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <footer class="ra-footer">
+                            <div><i class="bi bi-lightbulb"></i><strong>Dica:</strong> Resolva agora para evitar multas, retrabalho e manter a confiança do cliente.</div>
+                            <label><input type="checkbox">Não mostrar novamente</label>
+                            <button type="button" wire:click="closeItemDetailModal">Fechar</button>
                         </footer>
                     <?php else: ?>
-                        <header class="co-detail-home-header">
-                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
-                            <div>
-                                <h3 id="co-detail-title">Item não encontrado</h3>
-                                <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
-                            </div>
-                        </header>
-                        <footer class="co-detail-home-footer"><button type="button" class="co-action-btn muted" wire:click="closeItemDetailModal">Fechar</button></footer>
+                        <div class="ra-empty-state">
+                            <h2>Item não encontrado</h2>
+                            <p>O item pode ter sido atualizado, removido ou estar fora do seu escopo.</p>
+                            <button type="button" wire:click="closeItemDetailModal">Fechar</button>
+                        </div>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </article>
             </div>
