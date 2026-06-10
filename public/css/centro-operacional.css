@@ -7649,3 +7649,467 @@
     .ra-quick-actions { grid-column: auto; }
     .ra-footer { flex-wrap: wrap; padding: 12px 20px; }
 }
+
+
+/* =========================================================
+   Resolver Agora Modal - Ajuste visual compacto 1:1 modelo
+   Ajustes aplicados após comparação com o print de referência:
+   - menos scroll inicial
+   - coluna direita mais enxuta
+   - cards mais compactos
+   - score menor
+   - botões mais baixos
+   - footer visível
+   ========================================================= */
+.ra-modal {
+    padding: 24px 30px !important;
+    align-items: center !important;
+}
+
+.ra-shell {
+    width: min(1400px, calc(100vw - 92px)) !important;
+    max-height: calc(100vh - 44px) !important;
+    border-radius: 10px !important;
+}
+
+.ra-close {
+    top: 18px !important;
+    right: 22px !important;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.ra-header {
+    padding: 22px 48px 14px 30px !important;
+    gap: 18px !important;
+}
+
+.ra-kicker {
+    margin-bottom: 7px !important;
+    font-size: 11px !important;
+}
+
+.ra-title-row {
+    gap: 13px !important;
+}
+
+.ra-title-row h2 {
+    font-size: 21px !important;
+    line-height: 1.16 !important;
+}
+
+.ra-critical-pill,
+.ra-risk-pill {
+    min-height: 25px !important;
+    padding: 0 12px !important;
+    border-radius: 8px !important;
+    font-size: 11px !important;
+}
+
+.ra-meta-row {
+    margin-top: 14px !important;
+    gap: 9px !important;
+    font-size: 12px !important;
+}
+
+.ra-meta-row i {
+    font-size: 15px !important;
+    margin-right: 5px !important;
+}
+
+.ra-client-chip {
+    min-height: 25px !important;
+    padding: 0 12px !important;
+    border-radius: 7px !important;
+}
+
+.ra-header-actions {
+    padding-top: 38px !important;
+    padding-right: 18px !important;
+    gap: 10px !important;
+}
+
+.ra-header-actions button,
+.ra-footer button {
+    min-height: 34px !important;
+    padding: 0 14px !important;
+    font-size: 12px !important;
+}
+
+.ra-header-actions .ra-icon-only {
+    width: 36px !important;
+}
+
+.ra-body {
+    grid-template-columns: minmax(0, 1fr) 350px !important;
+    gap: 14px !important;
+    padding: 0 30px 10px !important;
+    max-height: calc(100vh - 176px) !important;
+}
+
+.ra-summary-card,
+.ra-card {
+    border-radius: 8px !important;
+}
+
+.ra-summary-card {
+    min-height: 92px !important;
+    gap: 18px !important;
+    padding: 17px 26px !important;
+}
+
+.ra-alert-icon {
+    width: 50px !important;
+    height: 50px !important;
+    box-shadow: 0 0 0 12px rgba(229, 44, 66, .10) !important;
+    font-size: 29px !important;
+}
+
+.ra-summary-card h3,
+.ra-card h3,
+.ra-quick-actions h3 {
+    font-size: 11px !important;
+}
+
+.ra-summary-card h3 {
+    margin-bottom: 9px !important;
+}
+
+.ra-summary-card p {
+    font-size: 13px !important;
+    line-height: 1.38 !important;
+    margin-bottom: 4px !important;
+}
+
+.ra-top-grid,
+.ra-middle-grid,
+.ra-bottom-grid {
+    gap: 14px !important;
+    margin-top: 14px !important;
+}
+
+.ra-top-grid {
+    grid-template-columns: .98fr 1.10fr .95fr !important;
+}
+
+.ra-middle-grid {
+    grid-template-columns: 1.08fr .92fr !important;
+}
+
+.ra-bottom-grid {
+    grid-template-columns: .92fr 1.08fr 1.38fr !important;
+}
+
+.ra-card {
+    padding: 15px !important;
+}
+
+.ra-card > h3 {
+    margin-bottom: 14px !important;
+}
+
+.ra-reason-list,
+.ra-blocker-list,
+.ra-done-list {
+    gap: 13px !important;
+}
+
+.ra-reason-item,
+.ra-blocker-list div,
+.ra-done-list div {
+    gap: 10px !important;
+}
+
+.ra-reason-item p,
+.ra-blocker-list p,
+.ra-done-list p {
+    font-size: 13px !important;
+    line-height: 1.28 !important;
+}
+
+.ra-round-icon {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 12px !important;
+}
+
+.ra-impact-list {
+    gap: 15px !important;
+}
+
+.ra-impact-list div,
+.ra-client-metrics div,
+.ra-score-reasons div,
+.ra-next-meta {
+    gap: 10px !important;
+}
+
+.ra-impact-list span,
+.ra-client-metrics span,
+.ra-next-meta span,
+.ra-impact-list strong,
+.ra-client-metrics strong,
+.ra-next-meta strong {
+    font-size: 13px !important;
+}
+
+.ra-impact-list em {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+}
+
+.ra-stalled-list {
+    gap: 12px !important;
+}
+
+.ra-stalled-list div {
+    grid-template-columns: 22px 1fr !important;
+    gap: 2px 10px !important;
+}
+
+.ra-stalled-list i {
+    font-size: 16px !important;
+}
+
+.ra-stalled-list span,
+.ra-stalled-list strong {
+    font-size: 12px !important;
+}
+
+.ra-action-card {
+    min-height: 168px !important;
+}
+
+.ra-action-content {
+    grid-template-columns: minmax(0, 1fr) 178px !important;
+    gap: 16px !important;
+    align-items: center !important;
+}
+
+.ra-steps {
+    gap: 11px !important;
+    padding-left: 6px !important;
+}
+
+.ra-steps li {
+    gap: 12px !important;
+}
+
+.ra-steps span {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: 11px !important;
+}
+
+.ra-steps p {
+    font-size: 13px !important;
+}
+
+.ra-action-note {
+    padding: 14px !important;
+    gap: 13px !important;
+}
+
+.ra-action-note div {
+    grid-template-columns: 23px 1fr !important;
+    gap: 3px 8px !important;
+}
+
+.ra-action-note i {
+    font-size: 19px !important;
+}
+
+.ra-action-note span,
+.ra-action-note strong,
+.ra-action-note p {
+    font-size: 12px !important;
+}
+
+.ra-card-header-row {
+    margin-bottom: 12px !important;
+}
+
+.ra-copy-btn {
+    min-height: 28px !important;
+    padding: 0 11px !important;
+    font-size: 11px !important;
+}
+
+.ra-message-box {
+    min-height: 118px !important;
+    padding: 15px 17px !important;
+    font-size: 12px !important;
+    line-height: 1.43 !important;
+}
+
+.ra-personalize {
+    margin-top: 8px !important;
+    font-size: 12px !important;
+}
+
+.ra-done-list i {
+    width: 18px !important;
+    height: 18px !important;
+}
+
+.ra-done-list + footer,
+.ra-card footer {
+    margin: 13px -15px -15px !important;
+    padding: 10px 15px !important;
+    font-size: 11px !important;
+}
+
+.ra-next-alert {
+    padding: 12px 14px !important;
+    gap: 10px !important;
+    font-size: 12px !important;
+    margin-bottom: 14px !important;
+}
+
+.ra-next-alert i {
+    font-size: 16px !important;
+}
+
+.ra-next-meta {
+    margin-bottom: 9px !important;
+}
+
+.ra-next-meta span {
+    width: 110px !important;
+}
+
+.ra-primary-btn {
+    min-height: 40px !important;
+    margin-top: 8px !important;
+    font-size: 12px !important;
+}
+
+.ra-side {
+    gap: 13px !important;
+}
+
+.ra-score-card,
+.ra-client-card {
+    padding: 15px 18px !important;
+}
+
+.ra-score-wrap {
+    grid-template-columns: 120px minmax(0, 1fr) !important;
+    gap: 15px !important;
+}
+
+.ra-score-ring {
+    width: 98px !important;
+    height: 98px !important;
+    margin-top: 4px !important;
+}
+
+.ra-score-ring::before {
+    inset: 13px !important;
+}
+
+.ra-score-ring strong {
+    font-size: 28px !important;
+}
+
+.ra-score-ring span {
+    font-size: 12px !important;
+}
+
+.ra-score-reasons h4 {
+    font-size: 11px !important;
+    margin-bottom: 9px !important;
+}
+
+.ra-score-reasons {
+    gap: 7px !important;
+}
+
+.ra-score-reasons span,
+.ra-score-reasons strong {
+    font-size: 12px !important;
+}
+
+.ra-client-metrics {
+    gap: 11px !important;
+    margin-top: 10px !important;
+}
+
+.ra-outline-link {
+    min-height: 31px !important;
+    margin-top: 14px !important;
+    font-size: 12px !important;
+}
+
+.ra-timeline-card {
+    padding-left: 15px !important;
+}
+
+.ra-timeline-card h3 {
+    padding-bottom: 13px !important;
+}
+
+.ra-timeline {
+    padding-top: 10px !important;
+}
+
+.ra-timeline article {
+    padding-left: 25px !important;
+    padding-bottom: 16px !important;
+}
+
+.ra-timeline time,
+.ra-timeline strong,
+.ra-timeline p {
+    font-size: 11px !important;
+}
+
+.ra-quick-actions h3 {
+    margin-bottom: 12px !important;
+}
+
+.ra-quick-actions > div {
+    gap: 10px !important;
+}
+
+.ra-quick-actions a,
+.ra-quick-actions button {
+    min-height: 35px !important;
+    font-size: 12px !important;
+}
+
+.ra-footer {
+    padding: 9px 30px !important;
+    gap: 14px !important;
+}
+
+.ra-footer div,
+.ra-footer label {
+    font-size: 12px !important;
+}
+
+.ra-footer div i {
+    font-size: 16px !important;
+}
+
+@media (max-width: 1280px) {
+    .ra-shell { width: calc(100vw - 32px) !important; }
+    .ra-body { grid-template-columns: 1fr !important; }
+    .ra-side { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    .ra-timeline-card,
+    .ra-quick-actions { grid-column: span 2; }
+}
+
+@media (max-width: 900px) {
+    .ra-modal { padding: 10px !important; }
+    .ra-header { padding: 18px 44px 12px 18px !important; }
+    .ra-body { padding: 0 18px 10px !important; max-height: calc(100vh - 168px) !important; }
+    .ra-top-grid,
+    .ra-middle-grid,
+    .ra-bottom-grid,
+    .ra-side { grid-template-columns: 1fr !important; }
+    .ra-timeline-card,
+    .ra-quick-actions { grid-column: auto; }
+    .ra-action-content { grid-template-columns: 1fr !important; }
+    .ra-footer { padding: 9px 18px !important; flex-wrap: wrap !important; }
+}
