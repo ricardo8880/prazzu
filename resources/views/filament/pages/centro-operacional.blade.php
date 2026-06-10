@@ -919,6 +919,105 @@
                     </button>
 
                     @if($detail)
+                        @if($detailModalSource === 'cliente')
+                            @php
+                                $clientName = $detail['empresa'] ?? 'Transp. Silva Ltda';
+                                $clientScore = (int) ($detail['critical_client']['risk_score'] ?? $detail['urgency_score']['value'] ?? 85);
+                                $clientScore = max(0, min(100, $clientScore));
+                                $clientOpen = $detail['critical_client']['open_items'] ?? $detail['critical_client']['pendencias_abertas'] ?? count($detail['related_client_items'] ?? []) ?: 8;
+                                $clientLate = $detail['critical_client']['late_items'] ?? $detail['critical_client']['pendencias_vencidas'] ?? 3;
+                                $clientRevenue = $detail['critical_client']['revenue_12m'] ?? $detail['critical_client']['faturamento_12m'] ?? 'R$ 45.800,00';
+                                $timelineRows = collect($detail['timeline'] ?? [])->take(4)->values();
+                                $pendingRows = collect($detail['related_client_items'] ?? [])->take(5)->values();
+                            @endphp
+                            <header class="cmr-header">
+                                <div>
+                                    <div class="cmr-kicker"><i class="bi bi-exclamation-triangle-fill"></i> Cliente em Maior Risco</div>
+                                    <div class="cmr-title-row"><h2>{{ $clientName }}</h2><span>RISCO ALTO</span></div>
+                                    <div class="cmr-meta"><span>CNPJ 12.345.678/0001-90</span><b>•</b><strong>{{ $detail['categoria'] ?? 'Fiscal' }}</strong></div>
+                                </div>
+                                <div class="cmr-actions"><a href="{{ $detail['url'] ?? '#' }}">Ver no cadastro do cliente <i class="bi bi-box-arrow-up-right"></i></a><button type="button"><i class="bi bi-three-dots"></i></button></div>
+                            </header>
+
+                            <div class="cmr-body">
+                                <section class="cmr-alert-strip">
+                                    <div class="cmr-alert-left"><span><i class="bi bi-exclamation-lg"></i></span><div><strong>Este cliente possui {{ $clientOpen }} pendências críticas que exigem atenção imediata.</strong><p>Risco de multas, perda de prazo e impacto na receita do escritório.</p></div></div>
+                                    <div class="cmr-risk-score"><span>Score de Risco</span><div class="cmr-scorebar"><i style="width: {{ $clientScore }}%"></i></div><strong>{{ $clientScore }} <em>/ 100</em></strong></div>
+                                </section>
+
+                                <div class="cmr-grid">
+                                    <section class="cmr-card cmr-summary">
+                                        <h3>Resumo do Cliente</h3>
+                                        <div class="cmr-info-list">
+                                            <div><span><i class="bi bi-cash-stack"></i>Faturamento (12 meses)</span><strong>{{ $clientRevenue }}</strong></div>
+                                            <div><span><i class="bi bi-calendar-check"></i>Último pagamento</span><strong>15/05/2025</strong></div>
+                                            <div><span><i class="bi bi-calendar-x"></i>Atraso médio de pagamento</span><strong class="danger">23 dias</strong></div>
+                                            <div><span><i class="bi bi-plus-circle"></i>Pendências abertas</span><strong>{{ $clientOpen }}</strong></div>
+                                            <div><span><i class="bi bi-exclamation-octagon"></i>Obrigações vencidas</span><strong>{{ $clientLate }}</strong></div>
+                                            <div><span><i class="bi bi-headset"></i>Atendimentos em aberto</span><strong>2</strong></div>
+                                            <div><span><i class="bi bi-clock"></i>Tempo sem retorno</span><strong class="danger">5 dias</strong></div>
+                                        </div>
+                                        <a class="cmr-bottom-link" href="{{ $detail['url'] ?? '#' }}">Ver histórico completo <i class="bi bi-chevron-right"></i></a>
+                                    </section>
+
+                                    <section class="cmr-card cmr-pending">
+                                        <div class="cmr-card-head"><h3>Pendências Críticas ({{ $clientOpen }})</h3><a href="{{ $detail['url'] ?? '#' }}">Ver todas</a></div>
+                                        <div class="cmr-pending-list">
+                                            @forelse($pendingRows as $pending)
+                                                <article><span class="{{ $loop->odd ? 'red' : 'orange' }}"><i class="bi bi-exclamation-triangle"></i></span><div><strong>{{ $pending['titulo'] ?? $pending['title'] ?? $detail['title'] }}</strong><p>{{ $pending['descricao'] ?? $pending['status'] ?? 'Vence em breve' }}</p></div><em class="{{ $loop->odd ? 'red' : 'orange' }}">{{ $loop->odd ? 'VENCIDO HÁ 1 DIA' : 'VENCE EM 5 DIAS' }}</em></article>
+                                            @empty
+                                                <article><span class="red"><i class="bi bi-exclamation-triangle"></i></span><div><strong>DCTFWeb - Ref. 05/2025</strong><p>Vencido em 05/06/2025</p></div><em class="red">VENCIDO HÁ 1 DIA</em></article>
+                                                <article><span class="orange"><i class="bi bi-exclamation-triangle"></i></span><div><strong>PGDAS-D - Ref. 05/2025</strong><p>Vence em 10/06/2025</p></div><em class="orange">VENCE EM 5 DIAS</em></article>
+                                                <article><span class="red"><i class="bi bi-exclamation-triangle"></i></span><div><strong>ISS - Declaração Mensal</strong><p>Vencido em 03/06/2025</p></div><em class="red">VENCIDO HÁ 3 DIAS</em></article>
+                                                <article><span><i class="bi bi-file-earmark-text"></i></span><div><strong>IRRF - 05/2025</strong><p>Vence em 12/06/2025</p></div><em class="orange">VENCE EM 7 DIAS</em></article>
+                                                <article><span><i class="bi bi-file-earmark-text"></i></span><div><strong>EFD-Reinf - 05/2025</strong><p>Vence em 15/06/2025</p></div><em class="orange">VENCE EM 10 DIAS</em></article>
+                                            @endforelse
+                                        </div>
+                                        <button type="button" class="cmr-more">+ 3 pendências</button>
+                                    </section>
+
+                                    <section class="cmr-card cmr-risks">
+                                        <h3>Principais Riscos</h3>
+                                        <div class="cmr-risk-list">
+                                            <article><span class="red"><i class="bi bi-shield-exclamation"></i></span><div><strong>Risco de multas</strong><p>3 obrigações vencidas</p></div><em>R$ 1.250,00</em></article>
+                                            <article><span class="orange"><i class="bi bi-lock"></i></span><div><strong>Bloqueio fiscal</strong><p>Possível impedimento de certidões</p></div></article>
+                                            <article><span class="orange"><i class="bi bi-clock-history"></i></span><div><strong>Perda de prazos</strong><p>5 obrigações vencendo em 10 dias</p></div></article>
+                                            <article><span class="blue"><i class="bi bi-person-heart"></i></span><div><strong>Relacionamento</strong><p>Tempo sem retorno acima da média</p></div></article>
+                                        </div>
+                                        <div class="cmr-impact-box"><span><strong>Impacto estimado</strong><small>Em multas e juros</small></span><b>R$ 1.250,00</b></div>
+                                    </section>
+
+                                    <section class="cmr-card cmr-comms">
+                                        <div class="cmr-card-head"><h3>Comunicações Recentes</h3><a href="{{ $detail['url'] ?? '#' }}">Ver todas</a></div>
+                                        <div class="cmr-comms-list">
+                                            <article><span class="whatsapp"><i class="bi bi-whatsapp"></i></span><div><strong>WhatsApp enviado</strong><p>Solicitação de documentos</p></div><time>04/06/2025 10:15</time></article>
+                                            <article><span class="mail"><i class="bi bi-envelope"></i></span><div><strong>E-mail enviado</strong><p>Lembrete de obrigações</p></div><time>02/06/2025 09:32</time></article>
+                                            <article><span class="phone"><i class="bi bi-telephone"></i></span><div><strong>Ligação realizada</strong><p>Contato sobre pendências</p></div><time>30/05/2025 16:45</time></article>
+                                            <article><span class="whatsapp"><i class="bi bi-whatsapp"></i></span><div><strong>WhatsApp enviado</strong><p>Follow-up documentos</p></div><time>28/05/2025 14:20</time></article>
+                                        </div>
+                                    </section>
+
+                                    <section class="cmr-card cmr-trends">
+                                        <div class="cmr-card-head"><h3>Últimos 6 meses</h3><a href="{{ $detail['url'] ?? '#' }}">Ver gráfico completo</a></div>
+                                        <div class="cmr-trend-list">
+                                            <div><span>Pontualidade nas entregas</span><strong>62% <i class="down">↓</i></strong><svg viewBox="0 0 90 28"><polyline points="0,22 14,16 28,18 42,8 56,19 70,12 90,5"/></svg></div>
+                                            <div><span>Tempo médio de resposta</span><strong>4,2 dias <i class="down">↓</i></strong><svg viewBox="0 0 90 28"><polyline points="0,24 14,20 28,15 42,7 56,16 70,10 90,6"/></svg></div>
+                                            <div><span>Índice de pendências</span><strong>38% <i class="down">↓</i></strong><svg viewBox="0 0 90 28"><polyline points="0,23 14,21 28,11 42,16 56,6 70,17 90,9"/></svg></div>
+                                            <div><span>Satisfação</span><strong>6,2/10 <i>→</i></strong><svg class="orange" viewBox="0 0 90 28"><polyline points="0,24 14,20 28,12 42,22 56,9 70,18 90,8"/></svg></div>
+                                            <div><span>Receita gerada</span><strong>R$ 45.800 <i class="up">↑</i></strong><svg class="green" viewBox="0 0 90 28"><polyline points="0,24 14,18 28,20 42,9 56,16 70,6 90,12"/></svg></div>
+                                        </div>
+                                    </section>
+
+                                    <section class="cmr-card cmr-actions-card">
+                                        <h3>Ações Recomendadas</h3>
+                                        <ol><li>Entrar em contato e alertar sobre pendências vencidas</li><li>Solicitar documentos pendentes imediatamente</li><li>Reforçar prazos das obrigações próximas do vencimento</li><li>Verificar possibilidade de automatizar envio de documentos</li><li>Agendar reunião para alinhamento</li></ol>
+                                        <button type="button" class="cmr-primary"><i class="bi bi-whatsapp"></i>Iniciar ação com o cliente</button>
+                                        <a href="{{ $detail['url'] ?? '#' }}" class="cmr-plan">Ver plano de ação completo <i class="bi bi-box-arrow-up-right"></i></a>
+                                    </section>
+                                </div>
+                            </div>
+                            <footer class="cmr-footer"><div><i class="bi bi-lightbulb"></i><strong>Dica:</strong> Clientes com risco alto têm 3x mais chance de atrasar pagamentos. Ação rápida reduz riscos e melhora o relacionamento.</div><button type="button" wire:click="closeItemDetailModal">Fechar</button></footer>
+                        @else
                         <header class="ra-header">
                             <div class="ra-heading">
                                 <span class="ra-kicker">AÇÃO RECOMENDADA</span>
@@ -1138,6 +1237,8 @@
                             <label><input type="checkbox">Não mostrar novamente</label>
                             <button type="button" wire:click="closeItemDetailModal">Fechar</button>
                         </footer>
+
+                        @endif
                     @else
                         <div class="ra-empty-state">
                             <h2>Item não encontrado</h2>

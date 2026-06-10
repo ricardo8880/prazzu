@@ -8113,3 +8113,200 @@
     .ra-action-content { grid-template-columns: 1fr !important; }
     .ra-footer { padding: 9px 18px !important; flex-wrap: wrap !important; }
 }
+
+/* CLIENTES EM MAIOR RISCO - MODAL VISUAL 1:1 DO MODELO */
+.ra-shell:has(.cmr-header){width:min(1430px,calc(100vw - 72px));max-height:calc(100vh - 46px);padding:0;border-radius:13px;overflow:hidden;background:#fff;box-shadow:0 24px 70px rgba(2,8,23,.38)}
+.ra-shell:has(.cmr-header) .ra-close{top:26px;right:30px;width:30px;height:30px;color:#64748b;background:transparent;border:0;font-size:20px;z-index:5}.ra-shell:has(.cmr-header) .ra-close:hover{background:#f1f5f9}.ra-shell:has(.cmr-header) .ra-backdrop{background:rgba(2,6,23,.72)}
+.cmr-header{height:142px;padding:30px 42px 18px 42px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:0;background:#fff}.cmr-kicker{display:flex;align-items:center;gap:12px;color:#e11d35;font-weight:800;font-size:18px;line-height:1;margin-bottom:18px}.cmr-kicker i{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;color:#fff;background:#ef334e;border-radius:6px;font-size:16px}.cmr-title-row{display:flex;align-items:center;gap:14px}.cmr-title-row h2{margin:0;color:#0f172a;font-size:31px;font-weight:900;letter-spacing:-.045em;line-height:1.05}.cmr-title-row span{height:30px;padding:0 13px;border-radius:8px;border:1.5px solid #ef334e;color:#ef334e;background:#fff5f6;font-size:12px;font-weight:900;display:inline-flex;align-items:center}.cmr-meta{margin-top:14px;display:flex;align-items:center;gap:12px;color:#52617a;font-size:15px;font-weight:600}.cmr-meta strong{height:28px;padding:0 13px;border-radius:8px;background:#eaf2ff;color:#1d5cff;display:inline-flex;align-items:center}.cmr-actions{display:flex;gap:12px;margin-top:38px;margin-right:38px}.cmr-actions a,.cmr-actions button{height:43px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;padding:0 18px;color:#0757df;font-size:14px;font-weight:800;display:inline-flex;align-items:center;gap:10px;text-decoration:none}.cmr-actions button{width:45px;justify-content:center;padding:0;color:#0f172a;font-size:18px}
+.cmr-body{height:calc(100vh - 244px);max-height:790px;overflow:auto;padding:0 34px 22px 34px;background:#fff}.cmr-body::-webkit-scrollbar{width:8px}.cmr-body::-webkit-scrollbar-thumb{background:#9ca3af;border-radius:10px}.cmr-alert-strip{height:86px;border:1px solid #ffb6bd;background:linear-gradient(90deg,#fff1f2 0%,#fff8f8 60%,#fff1f2 100%);border-radius:8px;padding:18px 30px;display:flex;align-items:center;justify-content:space-between;margin:0 0 22px}.cmr-alert-left{display:flex;align-items:center;gap:22px}.cmr-alert-left>span{width:44px;height:44px;border-radius:8px;background:#ef334e;color:#fff;display:flex;align-items:center;justify-content:center;font-size:26px}.cmr-alert-left strong{display:block;color:#111827;font-size:14px;font-weight:900;margin-bottom:9px}.cmr-alert-left p{margin:0;color:#111827;font-size:14px;font-weight:500}.cmr-risk-score{min-width:386px;border-left:1px solid #f5c6cc;padding-left:28px;display:grid;grid-template-columns:140px 1fr 88px;align-items:center;gap:16px}.cmr-risk-score span{font-size:15px;color:#111827}.cmr-scorebar{height:8px;background:#f1cdd2;border-radius:999px;overflow:hidden}.cmr-scorebar i{height:100%;display:block;background:#ef334e;border-radius:999px}.cmr-risk-score strong{font-size:30px;font-weight:900;color:#0f172a;text-align:right}.cmr-risk-score em{font-size:15px;color:#64748b;font-style:normal;font-weight:600}
+.cmr-grid{display:grid;grid-template-columns:1fr 1.18fr 1.08fr;gap:18px}.cmr-card{background:#fff;border:1px solid #dfe7f3;border-radius:9px;box-shadow:0 8px 22px rgba(15,23,42,.035);min-height:0;overflow:hidden}.cmr-card h3{margin:0;color:#111827;font-size:16px;line-height:1;font-weight:900}.cmr-card-head{height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}.cmr-card-head a{color:#0757df;font-size:13px;font-weight:800;text-decoration:none}.cmr-summary{padding:22px 20px 0}.cmr-info-list{margin-top:22px;display:grid;gap:18px}.cmr-info-list div{display:flex;justify-content:space-between;align-items:center;gap:12px}.cmr-info-list span{display:flex;align-items:center;gap:12px;color:#475569;font-size:14px}.cmr-info-list i{color:#64748b;font-size:17px}.cmr-info-list strong{color:#111827;font-size:14px;font-weight:900;text-align:right}.cmr-info-list strong.danger{color:#ef1f39}.cmr-bottom-link{margin:25px -20px 0;height:52px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;color:#0757df;font-size:14px;font-weight:900;text-decoration:none;gap:8px}.cmr-pending{padding-top:0}.cmr-pending-list{padding:0 20px 0;display:grid;gap:13px}.cmr-pending article{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:12px}.cmr-pending article>span,.cmr-risk-list article>span{width:34px;height:34px;border-radius:50%;background:#f1f5f9;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:15px}.cmr-pending article>span.red,.cmr-risk-list span.red{background:#fff0f2;color:#ef334e}.cmr-pending article>span.orange,.cmr-risk-list span.orange{background:#fff6e7;color:#f97316}.cmr-risk-list span.blue{background:#eff6ff;color:#2563eb}.cmr-pending strong,.cmr-risk-list strong{display:block;color:#111827;font-size:14px;font-weight:900;margin-bottom:4px}.cmr-pending p,.cmr-risk-list p{margin:0;color:#334155;font-size:13px}.cmr-pending em{height:28px;padding:0 10px;border-radius:7px;font-style:normal;font-size:12px;font-weight:900;display:inline-flex;align-items:center;white-space:nowrap}.cmr-pending em.red{background:#fff1f2;border:1px solid #ffb6bd;color:#e11d35}.cmr-pending em.orange{background:#fff7ed;border:1px solid #fed7aa;color:#ea580c}.cmr-more{height:38px;width:100%;border:0;background:#fff;color:#0757df;font-size:15px;font-weight:900}.cmr-risks{padding:22px 20px}.cmr-risk-list{margin-top:22px;display:grid;gap:22px}.cmr-risk-list article{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:12px}.cmr-risk-list em{font-style:normal;color:#ef1f39;font-size:14px;font-weight:900}.cmr-impact-box{height:72px;margin-top:26px;border:1px solid #cbdaf2;background:#f8fbff;border-radius:6px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}.cmr-impact-box strong{display:block;color:#0757df;font-size:14px;font-weight:900;margin-bottom:3px}.cmr-impact-box small{display:block;color:#111827;font-size:13px}.cmr-impact-box b{font-size:24px;color:#111827}
+.cmr-comms{padding-top:0}.cmr-comms-list{padding:0 20px 19px;display:grid;gap:18px}.cmr-comms-list article{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:12px}.cmr-comms-list span{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center}.cmr-comms-list .whatsapp,.cmr-comms-list .phone{background:#dcfce7;color:#16a34a}.cmr-comms-list .mail{background:#eaf2ff;color:#2563eb}.cmr-comms-list strong{font-size:14px;color:#111827;font-weight:900}.cmr-comms-list p{margin:3px 0 0;font-size:13px;color:#334155}.cmr-comms-list time{font-size:13px;color:#64748b;white-space:nowrap}.cmr-trends{padding-top:0}.cmr-trend-list{padding:8px 20px 18px;display:grid;gap:16px}.cmr-trend-list div{display:grid;grid-template-columns:1fr 88px 95px;align-items:center;gap:12px}.cmr-trend-list span{font-size:14px;color:#334155}.cmr-trend-list strong{font-size:17px;color:#111827;font-weight:900;text-align:right}.cmr-trend-list i{font-style:normal;color:#f97316;margin-left:6px}.cmr-trend-list i.down{color:#ef334e}.cmr-trend-list i.up{color:#16a34a}.cmr-trend-list svg{width:92px;height:28px;fill:rgba(239,51,78,.10);stroke:#ef334e;stroke-width:2;overflow:visible}.cmr-trend-list svg.orange{fill:rgba(249,115,22,.10);stroke:#f97316}.cmr-trend-list svg.green{fill:rgba(22,163,74,.10);stroke:#16a34a}.cmr-trend-list polyline{fill:none;stroke-linecap:round;stroke-linejoin:round}.cmr-actions-card{padding:22px 22px}.cmr-actions-card ol{margin:22px 0 24px;padding:0;list-style:none;display:grid;gap:14px;counter-reset:cmrstep}.cmr-actions-card li{counter-increment:cmrstep;display:grid;grid-template-columns:24px 1fr;gap:12px;align-items:flex-start;color:#263244;font-size:14px}.cmr-actions-card li:before{content:counter(cmrstep);width:18px;height:18px;border-radius:50%;background:#2563eb;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}.cmr-primary{height:45px;width:100%;border:0;border-radius:7px;background:linear-gradient(180deg,#0757ff,#0649d8);color:#fff;font-size:14px;font-weight:900;box-shadow:0 10px 18px rgba(37,99,235,.22)}.cmr-plan{height:40px;margin-top:13px;border:1px solid #cbd5e1;border-radius:7px;color:#0757df;font-size:14px;font-weight:900;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:10px}.cmr-footer{height:66px;margin:0 34px 24px;border:1px solid #fed58c;background:#fff8e7;border-radius:8px;padding:0 16px 0 24px;display:flex;align-items:center;justify-content:space-between;color:#92400e;font-size:14px}.cmr-footer div{display:flex;align-items:center;gap:8px}.cmr-footer i{color:#f59e0b;font-size:22px}.cmr-footer button{height:42px;min-width:95px;border:1px solid #cbd5e1;background:#fff;border-radius:8px;color:#111827;font-weight:800}
+@media(max-width:1180px){.ra-shell:has(.cmr-header){width:calc(100vw - 24px)}.cmr-body{height:auto;max-height:calc(100vh - 230px)}.cmr-grid{grid-template-columns:1fr}.cmr-alert-strip,.cmr-risk-score{display:block;height:auto}.cmr-risk-score{border-left:0;border-top:1px solid #f5c6cc;margin-top:16px;padding:14px 0 0;min-width:0}.cmr-header{height:auto;display:block}.cmr-actions{margin:18px 0 0}.cmr-footer{margin:0 18px 18px}}
+
+/* =========================================================
+   AJUSTES FINAIS - POPUP CLIENTES EM MAIOR RISCO
+   Objetivo: aproximar 1:1 do modelo visual enviado.
+   Mantém o modal de Resolver Agora intacto; regras escopadas em .cmr-*.
+   ========================================================= */
+.ra-shell:has(.cmr-header){
+    width:min(1500px,calc(100vw - 56px));
+    max-height:calc(100vh - 34px);
+    border-radius:12px;
+}
+.ra-shell:has(.cmr-header) .ra-close{
+    top:24px;
+    right:28px;
+}
+.cmr-header{
+    height:132px;
+    padding:28px 38px 14px 38px;
+}
+.cmr-kicker{
+    margin-bottom:16px;
+    font-size:18px;
+}
+.cmr-title-row h2{
+    font-size:32px;
+    letter-spacing:-.05em;
+}
+.cmr-meta{
+    margin-top:14px;
+}
+.cmr-actions{
+    margin-top:34px;
+    margin-right:42px;
+}
+.cmr-body{
+    height:auto;
+    max-height:calc(100vh - 218px);
+    padding:0 30px 16px 30px;
+}
+.cmr-alert-strip{
+    height:82px;
+    margin:0 0 18px;
+    padding:16px 28px;
+}
+.cmr-alert-left{
+    gap:20px;
+}
+.cmr-alert-left>span{
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    font-size:28px;
+}
+.cmr-alert-left strong{
+    margin-bottom:8px;
+    font-size:14px;
+}
+.cmr-risk-score{
+    min-width:410px;
+    grid-template-columns:142px 1fr 96px;
+    gap:16px;
+    padding-left:30px;
+}
+.cmr-scorebar{
+    height:8px;
+}
+.cmr-risk-score strong{
+    font-size:31px;
+    line-height:1;
+}
+.cmr-risk-score em{
+    font-size:15px;
+}
+.cmr-grid{
+    gap:16px;
+    grid-template-columns:1fr 1.18fr 1.08fr;
+}
+.cmr-card{
+    border-radius:8px;
+    box-shadow:0 8px 20px rgba(15,23,42,.03);
+}
+.cmr-card h3{
+    font-size:16px;
+}
+.cmr-card-head{
+    height:48px;
+    padding:0 18px;
+}
+.cmr-summary{
+    padding:20px 18px 0;
+}
+.cmr-info-list{
+    margin-top:20px;
+    gap:16px;
+}
+.cmr-info-list span,
+.cmr-info-list strong{
+    font-size:14px;
+}
+.cmr-bottom-link{
+    height:50px;
+    margin:22px -18px 0;
+}
+.cmr-pending-list{
+    padding:0 18px 0;
+    gap:12px;
+}
+.cmr-pending article{
+    grid-template-columns:38px 1fr auto;
+    gap:11px;
+}
+.cmr-pending article>span,
+.cmr-risk-list article>span{
+    width:34px;
+    height:34px;
+}
+.cmr-pending strong,
+.cmr-risk-list strong{
+    font-size:14px;
+}
+.cmr-pending p,
+.cmr-risk-list p{
+    font-size:13px;
+}
+.cmr-pending em{
+    height:27px;
+    padding:0 10px;
+}
+.cmr-more{
+    height:36px;
+}
+.cmr-risks{
+    padding:20px 18px;
+}
+.cmr-risk-list{
+    margin-top:20px;
+    gap:20px;
+}
+.cmr-impact-box{
+    height:68px;
+    margin-top:22px;
+    padding:12px 18px;
+}
+.cmr-impact-box b{
+    font-size:25px;
+}
+.cmr-comms-list{
+    padding:0 18px 16px;
+    gap:16px;
+}
+.cmr-trend-list{
+    padding:7px 18px 16px;
+    gap:14px;
+}
+.cmr-trend-list div{
+    grid-template-columns:1fr 84px 88px;
+}
+.cmr-trend-list svg{
+    width:88px;
+    height:25px;
+}
+.cmr-actions-card{
+    padding:20px 20px;
+}
+.cmr-actions-card ol{
+    margin:20px 0 22px;
+    gap:13px;
+}
+.cmr-primary{
+    height:43px;
+}
+.cmr-plan{
+    height:38px;
+    margin-top:12px;
+}
+.cmr-footer{
+    height:54px;
+    margin:0 30px 18px;
+    padding:0 12px 0 22px;
+    font-size:14px;
+}
+.cmr-footer button{
+    height:38px;
+    min-width:88px;
+}
+.cmr-footer i{
+    font-size:20px;
+}
