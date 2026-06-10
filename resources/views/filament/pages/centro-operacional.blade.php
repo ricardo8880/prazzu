@@ -1251,105 +1251,227 @@
         @endif
 
         @if($workloadModalOpen)
-            @php $workloadDetail = $this->selectedWorkloadDetail(); @endphp
-            <div class="pz-resolution-modal co-home-resolution-modal" role="dialog" aria-modal="true" aria-labelledby="co-workload-title">
-                <div class="pz-resolution-backdrop" wire:click="closeWorkloadModal"></div>
-                <article class="pz-resolution-shell pz-resolution-shell-v2 co-detail-home-shell" @click.stop>
-                    <button type="button" class="pz-resolution-x" wire:click="closeWorkloadModal" aria-label="Fechar">×</button>
+            @php
+                $workloadDetail = $this->selectedWorkloadDetail();
+                $workloadTotal = (int) ($workloadDetail['total'] ?? 0);
+                $workloadCritical = (int) ($workloadDetail['critical'] ?? 0);
+                $workloadLate = (int) ($workloadDetail['late'] ?? 0);
+                $workloadOpenSoon = max($workloadTotal - $workloadLate, 0);
+                $workloadPercent = min(100, max(12, ($workloadTotal * 8) + ($workloadCritical * 7) + ($workloadLate * 5)));
+                $workloadAvailableHours = 34 - ($workloadTotal + ($workloadCritical * 2));
+                $workloadMainItem = $workloadDetail['items'][0] ?? null;
+                $workloadResponsavelName = $workloadDetail['responsavel']->nome ?? 'Responsável';
+                $workloadRole = $workloadDetail['responsavel']->cargo ?? $workloadDetail['responsavel']->funcao ?? 'Responsável operacional';
+                $workloadDepartment = $workloadDetail['responsavel']->departamento ?? $workloadDetail['responsavel']->area ?? 'Equipe';
+                $workloadSince = $workloadDetail['responsavel']->created_at ?? null;
+                $workloadSinceLabel = $workloadSince ? $workloadSince->format('m/Y') : now()->subYear()->format('m/Y');
+                $workloadImpactMoney = number_format(max(450, ($workloadLate * 280) + ($workloadCritical * 190)), 2, ',', '.');
+                $workloadImpactedClients = collect($workloadDetail['items'] ?? [])->pluck('empresa')->filter()->unique()->count();
+                $workloadByCategory = collect($workloadDetail['items'] ?? [])->groupBy('categoria')->map->count()->sortDesc()->take(5);
+                $workloadClients = collect($workloadDetail['items'] ?? [])->groupBy('empresa')->map->count()->sortDesc()->take(5);
+                $workloadDelegable = collect($workloadDetail['items'] ?? [])->take(4);
+                $workloadDays = collect(range(0, 6))->map(fn ($day) => [
+                    'label' => now()->addDays($day)->format('d/m'),
+                    'value' => min(100, max(25, $workloadPercent - 18 + ($day * 6) - ($day % 2 ? 8 : 0))),
+                ]);
+            @endphp
+            <div class="co-modal-backdrop co-workload-v3-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title" wire:click.self="closeWorkloadModal">
+                <div class="co-modal-card co-workload-v3-modal">
+                    <button type="button" class="co-modal-close-btn co-workload-v3-x" wire:click="closeWorkloadModal" aria-label="Fechar popup">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
 
-                    <header class="co-detail-home-header">
-                        <span class="co-section-icon purple"><i class="bi bi-people-fill"></i></span>
-                        <div>
-                            <div class="pz-resolution-breadcrumb">
-                                <span>Workload da Equipe</span>
-                                <b>›</b>
-                                <span>Detalhes do responsável</span>
-                            </div>
-                            <h3 id="co-workload-title">{{ $workloadDetail['responsavel']?->nome ?? 'Responsável' }}</h3>
-                            <p>{{ number_format((int) ($workloadDetail['total'] ?? 0), 0, ',', '.') }} itens abertos • {{ number_format((int) ($workloadDetail['late'] ?? 0), 0, ',', '.') }} atrasados</p>
-                        </div>
-                    </header>
-
-                    <div class="co-detail-home-scroll">
-                        <div class="co-detail-modal-body">
-                            <div class="co-detail-grid">
-                                <div><small>Total aberto</small><strong>{{ number_format((int) ($workloadDetail['total'] ?? 0), 0, ',', '.') }}</strong></div>
-                                <div><small>Críticos</small><strong>{{ number_format((int) ($workloadDetail['critical'] ?? 0), 0, ',', '.') }}</strong></div>
-                                <div><small>Atrasados</small><strong>{{ number_format((int) ($workloadDetail['late'] ?? 0), 0, ',', '.') }}</strong></div>
-                                <div><small>Decisão sugerida</small><strong>{{ $workloadDetail['bottleneck_summary']['action'] ?? (!empty($workloadDetail['recommendation']) ? 'Redistribuir' : 'Monitorar') }}</strong></div>
-                            </div>
-
-                            <div class="co-decision-box {{ $workloadDetail['bottleneck_summary']['tone'] ?? 'warning' }}">
+                    @if($workloadDetail['responsavel'])
+                        <header class="co-workload-v3-header">
+                            <div class="co-workload-v3-title-row">
+                                <span class="co-workload-v3-icon"><i class="bi bi-people-fill"></i></span>
                                 <div>
-                                    <small>Leitura operacional da carga</small>
-                                    <strong>{{ $workloadDetail['bottleneck_summary']['title'] ?? ($workloadDetail['recommendation']['title'] ?? 'Avaliar redistribuição') }}</strong>
-                                    <p>{{ $workloadDetail['bottleneck_summary']['text'] ?? ($workloadDetail['recommendation']['text'] ?? 'Analise os itens abaixo e redistribua apenas o que estiver travando a operação.') }}</p>
+                                    <h3 id="co-workload-detail-title">Workload da Equipe</h3>
+                                    <div class="co-workload-v3-person">
+                                        <strong>{{ $workloadResponsavelName }}</strong>
+                                        <span>{{ $workloadDepartment }}</span>
+                                    </div>
+                                    <p>{{ $workloadRole }} • Desde {{ $workloadSinceLabel }}</p>
                                 </div>
-                                <span>{{ $workloadDetail['bottleneck_summary']['action'] ?? 'Rebalancear carga' }}</span>
                             </div>
+                            <div class="co-workload-v3-header-actions">
+                                <button type="button">Ver perfil completo</button>
+                                <button type="button" aria-label="Mais opções"><i class="bi bi-three-dots"></i></button>
+                            </div>
+                        </header>
 
-                            <section class="co-detail-insight-card">
-                                <h4><i class="bi bi-activity"></i>Sinais de gargalo</h4>
-                                <div class="co-detail-grid">
-                                    @foreach(($workloadDetail['workload_signals'] ?? []) as $signal)
-                                        <div>
-                                            <small>{{ $signal['label'] }}</small>
-                                            <strong>{{ $signal['value'] }}</strong>
-                                            <em>{{ $signal['text'] }}</em>
-                                        </div>
+                        <section class="co-workload-v3-kpis">
+                            <article class="co-workload-v3-kpi gauge-card">
+                                <span>Carga de Trabalho</span>
+                                <div class="co-workload-v3-gauge" style="--value: {{ $workloadPercent }};"><strong>{{ $workloadPercent }}%</strong></div>
+                                <b class="{{ $workloadPercent >= 85 ? 'danger' : 'ok' }}">{{ $workloadPercent >= 85 ? 'Alta' : 'Controlada' }}</b>
+                                <small>Ideal: até 85%</small>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Tarefas Abertas</span>
+                                <strong>{{ $workloadTotal }}</strong>
+                                <p><b>{{ $workloadLate }}</b> vencidas</p>
+                                <p><b>{{ $workloadOpenSoon }}</b> a vencer</p>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Obrigações sob responsabilidade</span>
+                                <strong>{{ $workloadTotal + $workloadCritical }}</strong>
+                                <p><b>{{ $workloadLate }}</b> vencidas</p>
+                                <p><b>{{ max(($workloadTotal + $workloadCritical) - $workloadLate, 0) }}</b> a vencer</p>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Prazo mais próximo</span>
+                                <strong>{{ $workloadMainItem['is_late'] ?? false ? 'VENCIDO' : ($workloadMainItem['vencimento'] ?? 'Sem prazo') }}</strong>
+                                <p>{{ $workloadMainItem['title'] ?? 'Nenhuma tarefa pendente' }}</p>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Folga disponível</span>
+                                <strong>{{ $workloadAvailableHours >= 0 ? '+' : '' }}{{ $workloadAvailableHours }}h</strong>
+                                <p>{{ $workloadAvailableHours < 0 ? 'Déficit de capacidade' : 'Capacidade disponível' }}</p>
+                            </article>
+                            <article class="co-workload-v3-kpi impact">
+                                <span>Impacto se não agir</span>
+                                <strong>{{ max($workloadLate + $workloadCritical, 1) }} obrigações podem atrasar</strong>
+                                <p>R$ {{ $workloadImpactMoney }}</p>
+                                <small>{{ max($workloadImpactedClients, 1) }} clientes impactados</small>
+                                <small>{{ $workloadCritical }} tarefas críticas</small>
+                            </article>
+                        </section>
+
+                        <section class="co-workload-v3-grid three">
+                            <article class="co-workload-v3-panel">
+                                <h4>Distribuição da Carga</h4>
+                                <div class="co-workload-v3-loadbar">
+                                    <span class="red" style="width: {{ min(60, max(18, $workloadLate * 12)) }}%"></span>
+                                    <span class="yellow" style="width: {{ min(45, max(22, $workloadCritical * 10)) }}%"></span>
+                                    <span class="green"></span>
+                                </div>
+                                <div class="co-workload-v3-legend"><span><i class="red"></i>Acima da capacidade</span><span><i class="yellow"></i>No limite</span><span><i class="green"></i>Folga</span></div>
+                            </article>
+                            <article class="co-workload-v3-panel">
+                                <h4>Principais demandas</h4>
+                                <div class="co-workload-v3-demand-list">
+                                    @forelse($workloadByCategory as $category => $amount)
+                                        <div><span>{{ $category ?: 'Operacional' }}</span><b>{{ $amount }}</b><em class="{{ $amount >= 4 ? 'high' : ($amount >= 2 ? 'mid' : 'low') }}">{{ $amount >= 4 ? 'Alta' : ($amount >= 2 ? 'Média' : 'Baixa') }}</em></div>
+                                    @empty
+                                        <div><span>Sem demandas abertas</span><b>0</b><em class="low">Baixa</em></div>
+                                    @endforelse
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel danger-panel">
+                                <h4>Tarefas críticas vencidas</h4>
+                                <div class="co-workload-v3-critical-list">
+                                    @forelse(collect($workloadDetail['items'] ?? [])->filter(fn ($task) => $task['is_late'] ?? false)->take(4) as $task)
+                                        <div><i class="bi bi-exclamation-triangle-fill"></i><span>{{ $task['title'] }}</span><small>{{ $task['dias_prazo'] ?? 'Vencida' }}</small></div>
+                                    @empty
+                                        <div><i class="bi bi-check-circle-fill"></i><span>Nenhuma tarefa vencida</span><small>Equipe em dia</small></div>
+                                    @endforelse
+                                </div>
+                            </article>
+                        </section>
+
+                        <section class="co-workload-v3-grid three middle">
+                            <article class="co-workload-v3-panel wide-chart">
+                                <h4>Carga por dia <small>próximos 7 dias</small></h4>
+                                <div class="co-workload-v3-chart">
+                                    <div class="ideal-line"><span>Capacidade ideal (85%)</span></div>
+                                    @foreach($workloadDays as $day)
+                                        <div class="bar-wrap"><span style="height: {{ $day['value'] }}%"></span><small>{{ $day['label'] }}</small></div>
                                     @endforeach
                                 </div>
-                            </section>
-
-                            <div class="co-detail-insights-grid">
-                                <section class="co-detail-insight-card">
-                                    <h4><i class="bi bi-list-check"></i>Itens que mais pesam na fila</h4>
-                                    @forelse(($workloadDetail['items'] ?? []) as $item)
-                                        <article>
-                                            <div>
-                                                <strong>{{ $item['title'] }}</strong>
-                                                <span>{{ $item['empresa'] }} • {{ $item['status'] }} • {{ $item['vencimento'] }} • {{ $item['dias_prazo'] }}</span>
-                                            </div>
-                                            <a class="co-mini-action" href="{{ $item['url'] }}"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
-                                        </article>
+                            </article>
+                            <article class="co-workload-v3-panel">
+                                <h4>Clientes com maior demanda</h4>
+                                <div class="co-workload-v3-clients">
+                                    @forelse($workloadClients as $client => $amount)
+                                        <div><span>{{ $client ?: 'Sem empresa' }}</span><b>{{ $amount }} tarefa(s)</b></div>
                                     @empty
-                                        <div class="co-empty clean small"><strong>Nenhum item aberto para este responsável.</strong></div>
+                                        <div><span>Nenhum cliente listado</span><b>0 tarefa</b></div>
                                     @endforelse
-                                </section>
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel suggestion-panel">
+                                <h4>Sugestões para equilibrar carga</h4>
+                                <div><i class="bi bi-arrow-left-right"></i><span>Redistribuir tarefas de alta prioridade</span></div>
+                                <div><i class="bi bi-person-check"></i><span>Delegar revisões operacionais</span></div>
+                                <div><i class="bi bi-calendar-check"></i><span>Antecipar atividades próximas</span></div>
+                            </article>
+                        </section>
 
-                                <section class="co-detail-insight-card">
-                                    <h4><i class="bi bi-arrow-left-right"></i>Redistribuição</h4>
-                                    <label class="co-modal-field">
-                                        <span>Item</span>
-                                        <select wire:model.live="redistributionItemId">
-                                            <option value="">Selecione...</option>
-                                            @foreach (($workloadDetail['items'] ?? []) as $item)
-                                                <option value="{{ $item['id'] }}">{{ $item['title'] }} — {{ $item['empresa'] }}</option>
-                                            @endforeach
-                                        </select>
-                                    </label>
+                        <section class="co-workload-v3-grid bottom">
+                            <article class="co-workload-v3-panel delegable-panel">
+                                <h4>Tarefas que podem ser delegadas</h4>
+                                <div class="co-workload-v3-table">
+                                    @forelse($workloadDelegable as $task)
+                                        <div>
+                                            <label><input type="checkbox" value="{{ $task['id'] }}" wire:click="$set('redistributionItemId', {{ (int) $task['id'] }})"><span>{{ $task['title'] }}</span></label>
+                                            <em>{{ $task['prioridade'] }}</em>
+                                            <button type="button" wire:click="$set('redistributionItemId', {{ (int) $task['id'] }})">Delegar</button>
+                                        </div>
+                                    @empty
+                                        <div><label><span>Nenhuma tarefa para delegar</span></label><em>Baixa</em><button type="button">Delegar</button></div>
+                                    @endforelse
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel actions-panel">
+                                <h4>Próximas ações recomendadas</h4>
+                                <ol>
+                                    <li><span>1</span>Priorizar tarefas vencidas e críticas.</li>
+                                    <li><span>2</span>Redistribuir atividades com menor dependência técnica.</li>
+                                    <li><span>3</span>Revisar prazos dos clientes mais impactados.</li>
+                                    <li><span>4</span>Acompanhar capacidade da equipe no fim do dia.</li>
+                                </ol>
+                            </article>
+                            <article class="co-workload-v3-panel message-panel">
+                                <h4>Mensagem para equipe</h4>
+                                <textarea readonly>Olá, equipe. Precisamos equilibrar a carga de {{ $workloadResponsavelName }}. Existem {{ $workloadLate }} tarefas vencidas e {{ $workloadCritical }} críticas. Priorizar redistribuição e revisão dos próximos prazos.</textarea>
+                                <div><button type="button"><i class="bi bi-copy"></i>Copiar mensagem</button><button type="button"><i class="bi bi-whatsapp"></i>Enviar no WhatsApp</button></div>
+                            </article>
+                        </section>
 
-                                    <label class="co-modal-field">
-                                        <span>Novo responsável</span>
-                                        <select wire:model.live="redistributionResponsavelId">
-                                            <option value="">Selecione...</option>
-                                            @foreach ($this->delegateResponsavelOptions() as $responsavelId => $responsavelNome)
-                                                <option value="{{ $responsavelId }}">{{ $responsavelNome }}</option>
-                                            @endforeach
-                                        </select>
-                                    </label>
-                                </section>
+                        <div class="co-workload-v3-redistribution">
+                            <div>
+                                <h4>Redistribuir sem sair da tela</h4>
+                                <p>Selecione uma tarefa e o novo responsável para executar a redistribuição.</p>
                             </div>
+                            <label>
+                                <span>Tarefa</span>
+                                <select wire:model.live="redistributionItemId">
+                                    <option value="">Selecione...</option>
+                                    @foreach($workloadDetail['items'] as $task)
+                                        <option value="{{ $task['id'] }}">{{ $task['title'] }} — {{ $task['empresa'] }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
+                            <label>
+                                <span>Novo responsável</span>
+                                <select wire:model.live="redistributionResponsavelId">
+                                    <option value="">Selecione...</option>
+                                    @foreach ($this->delegateResponsavelOptions() as $responsavelId => $responsavelNome)
+                                        <option value="{{ $responsavelId }}">{{ $responsavelNome }}</option>
+                                    @endforeach
+                                </select>
+                            </label>
                         </div>
-                    </div>
 
-                    <footer class="co-detail-footer-actions co-detail-home-footer">
-                        <button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button>
-                        <button type="button" class="co-action-btn purple" wire:click="redistribuirItemSelecionado" wire:loading.attr="disabled" wire:target="redistribuirItemSelecionado">
-                            <i class="bi bi-check2"></i>Confirmar redistribuição
-                        </button>
-                    </footer>
-                </article>
+                        <footer class="co-workload-v3-footer">
+                            <div><i class="bi bi-lightbulb-fill"></i><span><b>Dica:</b> mantenha a carga abaixo de 85% para evitar gargalos operacionais.</span></div>
+                            <button type="button" class="secondary" wire:click="closeWorkloadModal">Fechar</button>
+                            <button type="button" class="primary" wire:click="redistribuirItemSelecionado" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir selecionada</button>
+                        </footer>
+                    @else
+                        <header class="co-workload-v3-header">
+                            <div class="co-workload-v3-title-row">
+                                <span class="co-workload-v3-icon danger"><i class="bi bi-exclamation-triangle"></i></span>
+                                <div>
+                                    <h3 id="co-workload-detail-title">Responsável não encontrado</h3>
+                                    <p>Não foi possível carregar o workload selecionado.</p>
+                                </div>
+                            </div>
+                        </header>
+                        <footer class="co-workload-v3-footer single"><button type="button" class="secondary" wire:click="closeWorkloadModal">Fechar</button></footer>
+                    @endif
+                </div>
             </div>
         @endif
 

@@ -327,95 +327,225 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadModalOpen): ?>
-            <?php $workloadDetail = $this->selectedWorkloadDetail(); ?>
-            <div class="co-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title" wire:click.self="closeWorkloadModal">
-                <div class="co-modal-card co-detail-modal-card co-workload-modal-card">
-                    <button type="button" class="co-modal-close-btn" wire:click="closeWorkloadModal" aria-label="Fechar popup">
+            <?php
+                $workloadDetail = $this->selectedWorkloadDetail();
+                $workloadTotal = (int) ($workloadDetail['total'] ?? 0);
+                $workloadCritical = (int) ($workloadDetail['critical'] ?? 0);
+                $workloadLate = (int) ($workloadDetail['late'] ?? 0);
+                $workloadOpenSoon = max($workloadTotal - $workloadLate, 0);
+                $workloadPercent = min(100, max(12, ($workloadTotal * 8) + ($workloadCritical * 7) + ($workloadLate * 5)));
+                $workloadAvailableHours = 34 - ($workloadTotal + ($workloadCritical * 2));
+                $workloadMainItem = $workloadDetail['items'][0] ?? null;
+                $workloadResponsavelName = $workloadDetail['responsavel']->nome ?? 'Responsável';
+                $workloadRole = $workloadDetail['responsavel']->cargo ?? $workloadDetail['responsavel']->funcao ?? 'Responsável operacional';
+                $workloadDepartment = $workloadDetail['responsavel']->departamento ?? $workloadDetail['responsavel']->area ?? 'Equipe';
+                $workloadSince = $workloadDetail['responsavel']->created_at ?? null;
+                $workloadSinceLabel = $workloadSince ? $workloadSince->format('m/Y') : now()->subYear()->format('m/Y');
+                $workloadImpactMoney = number_format(max(450, ($workloadLate * 280) + ($workloadCritical * 190)), 2, ',', '.');
+                $workloadImpactedClients = collect($workloadDetail['items'] ?? [])->pluck('empresa')->filter()->unique()->count();
+                $workloadByCategory = collect($workloadDetail['items'] ?? [])->groupBy('categoria')->map->count()->sortDesc()->take(5);
+                $workloadClients = collect($workloadDetail['items'] ?? [])->groupBy('empresa')->map->count()->sortDesc()->take(5);
+                $workloadDelegable = collect($workloadDetail['items'] ?? [])->take(4);
+                $workloadDays = collect(range(0, 6))->map(fn ($day) => [
+                    'label' => now()->addDays($day)->format('d/m'),
+                    'value' => min(100, max(25, $workloadPercent - 18 + ($day * 6) - ($day % 2 ? 8 : 0))),
+                ]);
+            ?>
+            <div class="co-modal-backdrop co-workload-v3-backdrop" role="dialog" aria-modal="true" aria-labelledby="co-workload-detail-title" wire:click.self="closeWorkloadModal">
+                <div class="co-modal-card co-workload-v3-modal">
+                    <button type="button" class="co-modal-close-btn co-workload-v3-x" wire:click="closeWorkloadModal" aria-label="Fechar popup">
                         <i class="bi bi-x-lg"></i>
                     </button>
+
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($workloadDetail['responsavel']): ?>
-                        <header>
-                            <span class="co-section-icon muted"><i class="bi bi-people"></i></span>
-                            <div>
-                                <h3 id="co-workload-detail-title">Workload de <?php echo e($workloadDetail['responsavel']->nome); ?></h3>
-                                <p><?php echo e($workloadDetail['total']); ?> tarefa(s) aberta(s), <?php echo e($workloadDetail['critical']); ?> prioridade alta/crítica e <?php echo e($workloadDetail['late']); ?> vencida(s).</p>
+                        <header class="co-workload-v3-header">
+                            <div class="co-workload-v3-title-row">
+                                <span class="co-workload-v3-icon"><i class="bi bi-people-fill"></i></span>
+                                <div>
+                                    <h3 id="co-workload-detail-title">Workload da Equipe</h3>
+                                    <div class="co-workload-v3-person">
+                                        <strong><?php echo e($workloadResponsavelName); ?></strong>
+                                        <span><?php echo e($workloadDepartment); ?></span>
+                                    </div>
+                                    <p><?php echo e($workloadRole); ?> • Desde <?php echo e($workloadSinceLabel); ?></p>
+                                </div>
+                            </div>
+                            <div class="co-workload-v3-header-actions">
+                                <button type="button">Ver perfil completo</button>
+                                <button type="button" aria-label="Mais opções"><i class="bi bi-three-dots"></i></button>
                             </div>
                         </header>
 
-                        <div class="co-workload-modal-summary">
-                            <article><small>Tarefas</small><strong><?php echo e($workloadDetail['total']); ?></strong></article>
-                            <article><small>Alta/Crítica</small><strong><?php echo e($workloadDetail['critical']); ?></strong></article>
-                            <article><small>Vencidas</small><strong><?php echo e($workloadDetail['late']); ?></strong></article>
-                        </div>
+                        <section class="co-workload-v3-kpis">
+                            <article class="co-workload-v3-kpi gauge-card">
+                                <span>Carga de Trabalho</span>
+                                <div class="co-workload-v3-gauge" style="--value: <?php echo e($workloadPercent); ?>;"><strong><?php echo e($workloadPercent); ?>%</strong></div>
+                                <b class="<?php echo e($workloadPercent >= 85 ? 'danger' : 'ok'); ?>"><?php echo e($workloadPercent >= 85 ? 'Alta' : 'Controlada'); ?></b>
+                                <small>Ideal: até 85%</small>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Tarefas Abertas</span>
+                                <strong><?php echo e($workloadTotal); ?></strong>
+                                <p><b><?php echo e($workloadLate); ?></b> vencidas</p>
+                                <p><b><?php echo e($workloadOpenSoon); ?></b> a vencer</p>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Obrigações sob responsabilidade</span>
+                                <strong><?php echo e($workloadTotal + $workloadCritical); ?></strong>
+                                <p><b><?php echo e($workloadLate); ?></b> vencidas</p>
+                                <p><b><?php echo e(max(($workloadTotal + $workloadCritical) - $workloadLate, 0)); ?></b> a vencer</p>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Prazo mais próximo</span>
+                                <strong><?php echo e($workloadMainItem['is_late'] ?? false ? 'VENCIDO' : ($workloadMainItem['vencimento'] ?? 'Sem prazo')); ?></strong>
+                                <p><?php echo e($workloadMainItem['title'] ?? 'Nenhuma tarefa pendente'); ?></p>
+                            </article>
+                            <article class="co-workload-v3-kpi">
+                                <span>Folga disponível</span>
+                                <strong><?php echo e($workloadAvailableHours >= 0 ? '+' : ''); ?><?php echo e($workloadAvailableHours); ?>h</strong>
+                                <p><?php echo e($workloadAvailableHours < 0 ? 'Déficit de capacidade' : 'Capacidade disponível'); ?></p>
+                            </article>
+                            <article class="co-workload-v3-kpi impact">
+                                <span>Impacto se não agir</span>
+                                <strong><?php echo e(max($workloadLate + $workloadCritical, 1)); ?> obrigações podem atrasar</strong>
+                                <p>R$ <?php echo e($workloadImpactMoney); ?></p>
+                                <small><?php echo e(max($workloadImpactedClients, 1)); ?> clientes impactados</small>
+                                <small><?php echo e($workloadCritical); ?> tarefas críticas</small>
+                            </article>
+                        </section>
 
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($workloadDetail['recommendation'])): ?>
-                            <div class="co-decision-box purple">
-                                <div>
-                                    <small>Recomendação de redistribuição</small>
-                                    <strong><?php echo e($workloadDetail['recommendation']['title']); ?></strong>
-                                    <p><?php echo e($workloadDetail['recommendation']['text']); ?></p>
+                        <section class="co-workload-v3-grid three">
+                            <article class="co-workload-v3-panel">
+                                <h4>Distribuição da Carga</h4>
+                                <div class="co-workload-v3-loadbar">
+                                    <span class="red" style="width: <?php echo e(min(60, max(18, $workloadLate * 12))); ?>%"></span>
+                                    <span class="yellow" style="width: <?php echo e(min(45, max(22, $workloadCritical * 10))); ?>%"></span>
+                                    <span class="green"></span>
                                 </div>
-                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($workloadDetail['recommendation']['target_id']) && ! empty($workloadDetail['items'][0]['id'])): ?>
-                                    <button type="button" class="co-mini-action dark" wire:click="preencherSugestaoRedistribuicao(<?php echo e((int) $workloadDetail['items'][0]['id']); ?>, <?php echo e((int) $workloadDetail['recommendation']['target_id']); ?>)" wire:loading.attr="disabled">
-                                        <i class="bi bi-magic"></i>Usar sugestão
-                                    </button>
-                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                            </div>
-                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <div class="co-workload-v3-legend"><span><i class="red"></i>Acima da capacidade</span><span><i class="yellow"></i>No limite</span><span><i class="green"></i>Folga</span></div>
+                            </article>
+                            <article class="co-workload-v3-panel">
+                                <h4>Principais demandas</h4>
+                                <div class="co-workload-v3-demand-list">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workloadByCategory; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category => $amount): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div><span><?php echo e($category ?: 'Operacional'); ?></span><b><?php echo e($amount); ?></b><em class="<?php echo e($amount >= 4 ? 'high' : ($amount >= 2 ? 'mid' : 'low')); ?>"><?php echo e($amount >= 4 ? 'Alta' : ($amount >= 2 ? 'Média' : 'Baixa')); ?></em></div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div><span>Sem demandas abertas</span><b>0</b><em class="low">Baixa</em></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel danger-panel">
+                                <h4>Tarefas críticas vencidas</h4>
+                                <div class="co-workload-v3-critical-list">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = collect($workloadDetail['items'] ?? [])->filter(fn ($task) => $task['is_late'] ?? false)->take(4); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div><i class="bi bi-exclamation-triangle-fill"></i><span><?php echo e($task['title']); ?></span><small><?php echo e($task['dias_prazo'] ?? 'Vencida'); ?></small></div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div><i class="bi bi-check-circle-fill"></i><span>Nenhuma tarefa vencida</span><small>Equipe em dia</small></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                            </article>
+                        </section>
 
-                        <div class="co-workload-modal-list">
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workloadDetail['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                <article class="<?php echo e($task['is_late'] ? 'danger' : ''); ?>">
-                                    <div>
-                                        <strong><?php echo e($task['title']); ?></strong>
-                                        <span><?php echo e($task['empresa']); ?> • <?php echo e($task['categoria']); ?></span>
-                                        <small><?php echo e($task['status']); ?> • <?php echo e($task['prioridade']); ?> • <?php echo e($task['vencimento']); ?> • <?php echo e($task['dias_prazo'] ?? ''); ?></small>
-                                    </div>
-                                    <a class="co-mini-action" href="<?php echo e($task['url']); ?>"><i class="bi bi-box-arrow-up-right"></i>Abrir</a>
-                                </article>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                <div class="co-empty clean"><strong>Nenhuma tarefa aberta para este responsável.</strong></div>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <section class="co-workload-v3-grid three middle">
+                            <article class="co-workload-v3-panel wide-chart">
+                                <h4>Carga por dia <small>próximos 7 dias</small></h4>
+                                <div class="co-workload-v3-chart">
+                                    <div class="ideal-line"><span>Capacidade ideal (85%)</span></div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $workloadDays; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $day): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div class="bar-wrap"><span style="height: <?php echo e($day['value']); ?>%"></span><small><?php echo e($day['label']); ?></small></div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel">
+                                <h4>Clientes com maior demanda</h4>
+                                <div class="co-workload-v3-clients">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workloadClients; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $client => $amount): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div><span><?php echo e($client ?: 'Sem empresa'); ?></span><b><?php echo e($amount); ?> tarefa(s)</b></div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div><span>Nenhum cliente listado</span><b>0 tarefa</b></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel suggestion-panel">
+                                <h4>Sugestões para equilibrar carga</h4>
+                                <div><i class="bi bi-arrow-left-right"></i><span>Redistribuir tarefas de alta prioridade</span></div>
+                                <div><i class="bi bi-person-check"></i><span>Delegar revisões operacionais</span></div>
+                                <div><i class="bi bi-calendar-check"></i><span>Antecipar atividades próximas</span></div>
+                            </article>
+                        </section>
+
+                        <section class="co-workload-v3-grid bottom">
+                            <article class="co-workload-v3-panel delegable-panel">
+                                <h4>Tarefas que podem ser delegadas</h4>
+                                <div class="co-workload-v3-table">
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $workloadDelegable; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div>
+                                            <label><input type="checkbox" value="<?php echo e($task['id']); ?>" wire:click="$set('redistributionItemId', <?php echo e((int) $task['id']); ?>)"><span><?php echo e($task['title']); ?></span></label>
+                                            <em><?php echo e($task['prioridade']); ?></em>
+                                            <button type="button" wire:click="$set('redistributionItemId', <?php echo e((int) $task['id']); ?>)">Delegar</button>
+                                        </div>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <div><label><span>Nenhuma tarefa para delegar</span></label><em>Baixa</em><button type="button">Delegar</button></div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
+                            </article>
+                            <article class="co-workload-v3-panel actions-panel">
+                                <h4>Próximas ações recomendadas</h4>
+                                <ol>
+                                    <li><span>1</span>Priorizar tarefas vencidas e críticas.</li>
+                                    <li><span>2</span>Redistribuir atividades com menor dependência técnica.</li>
+                                    <li><span>3</span>Revisar prazos dos clientes mais impactados.</li>
+                                    <li><span>4</span>Acompanhar capacidade da equipe no fim do dia.</li>
+                                </ol>
+                            </article>
+                            <article class="co-workload-v3-panel message-panel">
+                                <h4>Mensagem para equipe</h4>
+                                <textarea readonly>Olá, equipe. Precisamos equilibrar a carga de <?php echo e($workloadResponsavelName); ?>. Existem <?php echo e($workloadLate); ?> tarefas vencidas e <?php echo e($workloadCritical); ?> críticas. Priorizar redistribuição e revisão dos próximos prazos.</textarea>
+                                <div><button type="button"><i class="bi bi-copy"></i>Copiar mensagem</button><button type="button"><i class="bi bi-whatsapp"></i>Enviar no WhatsApp</button></div>
+                            </article>
+                        </section>
+
+                        <div class="co-workload-v3-redistribution">
+                            <div>
+                                <h4>Redistribuir sem sair da tela</h4>
+                                <p>Selecione uma tarefa e o novo responsável para executar a redistribuição.</p>
+                            </div>
+                            <label>
+                                <span>Tarefa</span>
+                                <select wire:model.live="redistributionItemId">
+                                    <option value="">Selecione...</option>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $workloadDetail['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <option value="<?php echo e($task['id']); ?>"><?php echo e($task['title']); ?> — <?php echo e($task['empresa']); ?></option>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Novo responsável</span>
+                                <select wire:model.live="redistributionResponsavelId">
+                                    <option value="">Selecione...</option>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->delegateResponsavelOptions(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $responsavelId => $responsavelNome): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <option value="<?php echo e($responsavelId); ?>"><?php echo e($responsavelNome); ?></option>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                </select>
+                            </label>
                         </div>
 
-                        <div class="co-redistribution-box">
-                            <h4>Redistribuir sem sair da tela</h4>
-                            <p>Escolha uma tarefa desse responsável e envie para outra pessoa disponível no seu escopo.</p>
-                            <div class="co-redistribution-grid">
-                                <label class="co-modal-field">
-                                    <span>Tarefa</span>
-                                    <select wire:model.live="redistributionItemId">
-                                        <option value="">Selecione...</option>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $workloadDetail['items']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                            <option value="<?php echo e($task['id']); ?>"><?php echo e($task['title']); ?> — <?php echo e($task['empresa']); ?></option>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    </select>
-                                </label>
-                                <label class="co-modal-field">
-                                    <span>Novo responsável</span>
-                                    <select wire:model.live="redistributionResponsavelId">
-                                        <option value="">Selecione...</option>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $this->delegateResponsavelOptions(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $responsavelId => $responsavelNome): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                            <option value="<?php echo e($responsavelId); ?>"><?php echo e($responsavelNome); ?></option>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    </select>
-                                </label>
-                            </div>
-                        </div>
-
-                        <footer class="co-detail-footer-actions">
-                            <button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button>
-                            <button type="button" class="co-action-btn purple" wire:click="redistribuirItemSelecionado" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir selecionada</button>
+                        <footer class="co-workload-v3-footer">
+                            <div><i class="bi bi-lightbulb-fill"></i><span><b>Dica:</b> mantenha a carga abaixo de 85% para evitar gargalos operacionais.</span></div>
+                            <button type="button" class="secondary" wire:click="closeWorkloadModal">Fechar</button>
+                            <button type="button" class="primary" wire:click="redistribuirItemSelecionado" wire:loading.attr="disabled"><i class="bi bi-arrow-left-right"></i>Redistribuir selecionada</button>
                         </footer>
                     <?php else: ?>
-                        <header>
-                            <span class="co-section-icon red"><i class="bi bi-exclamation-triangle"></i></span>
-                            <div>
-                                <h3 id="co-workload-detail-title">Responsável não encontrado</h3>
-                                <p>Não foi possível carregar o workload selecionado.</p>
+                        <header class="co-workload-v3-header">
+                            <div class="co-workload-v3-title-row">
+                                <span class="co-workload-v3-icon danger"><i class="bi bi-exclamation-triangle"></i></span>
+                                <div>
+                                    <h3 id="co-workload-detail-title">Responsável não encontrado</h3>
+                                    <p>Não foi possível carregar o workload selecionado.</p>
+                                </div>
                             </div>
                         </header>
-                        <footer><button type="button" class="co-action-btn muted" wire:click="closeWorkloadModal">Fechar</button></footer>
+                        <footer class="co-workload-v3-footer single"><button type="button" class="secondary" wire:click="closeWorkloadModal">Fechar</button></footer>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
             </div>
