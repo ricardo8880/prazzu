@@ -63,7 +63,12 @@ class PortalCliente extends Page
 
     public function mount(): void
     {
-        $this->empresaSelecionadaId = PortalClienteData::empresaIdAtual();
+        $empresaParam = request()->integer('empresa');
+
+        $this->empresaSelecionadaId = ($empresaParam && PortalClienteData::usuarioPodeAcessarEmpresa($empresaParam))
+            ? $empresaParam
+            : PortalClienteData::empresaIdAtual();
+
         $this->atualizarEstadoDigitando();
     }
 

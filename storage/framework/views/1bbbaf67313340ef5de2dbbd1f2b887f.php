@@ -77,7 +77,7 @@
         $resolverWithoutOwner = $resolverCollection->filter(fn ($item) => empty($item['responsavel']) || ($item['responsavel'] ?? null) === 'Sem responsável')->count();
         $resolverMainAction = $resolverTotal > 0
             ? ($resolverDanger > 0 ? 'Comece pelos itens vencidos ou com risco de multa.' : ($resolverWarning > 0 ? 'Priorize os vencimentos de hoje e aprovações paradas.' : 'Abra os itens em ordem e conclua o que estiver pronto.'))
-            : 'Operação sem ação crítica neste momento.';
+            : 'Operação sem risco para resolver neste momento.';
         $clientesCriticosCollection = collect($clientesCriticos)->values();
         $clientesMaiorRisco = $clientesCriticosCollection->take(5)->values();
         $clientesRiscoAlto = $clientesCriticosCollection->filter(fn ($cliente) => in_array(($cliente['tone'] ?? ''), ['danger', 'warning'], true))->count();
@@ -384,7 +384,7 @@
                     <div class="co-heading-with-icon">
                         <span class="co-section-icon red"><i class="bi bi-lightning-charge-fill"></i></span>
                         <div>
-                            <h2>Ação Recomendada <small>Resolver Agora</small></h2>
+                            <h2>Clientes em Maior Risco <small>Resolver agora</small></h2>
                             <p class="co-panel-subtitle"><?php echo e($resolverMainAction); ?></p>
                         </div>
                     </div>
@@ -396,8 +396,8 @@
 
                 <div class="co-resolve-command-strip <?php echo e($resolverDanger > 0 ? 'danger' : ($resolverWarning > 0 ? 'warning' : 'success')); ?>">
                     <div>
-                        <span>Fila única de prioridade</span>
-                        <strong><?php echo e(number_format($resolverTotal, 0, ',', '.')); ?> <?php echo e($resolverTotal === 1 ? 'ação crítica' : 'ações críticas'); ?></strong>
+                        <span>Clientes/riscos para resolver</span>
+                        <strong><?php echo e(number_format($resolverTotal, 0, ',', '.')); ?> <?php echo e($resolverTotal === 1 ? 'risco para resolver' : 'riscos para resolver'); ?></strong>
                     </div>
                     <div>
                         <span>Vencidas / multa</span>
@@ -482,7 +482,7 @@
                         </article>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         <div class="co-empty clean">
-                            <strong>Nenhuma ação crítica agora.</strong>
+                            <strong>Nenhuma risco para resolver agora.</strong>
                             <p>Quando existir risco, vencimento ou aprovação parada, aparecerá aqui.</p>
                         </div>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -491,71 +491,6 @@
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($resolverAgora) > 0): ?>
                     <a class="co-see-all centered" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todas as ações →</a>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </section>
-
-            <section class="co-panel co-clients-panel co-client-risk-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
-                <header class="co-panel-header">
-                    <div class="co-heading-with-icon">
-                        <span class="co-section-icon orange"><i class="bi bi-building-exclamation"></i></span>
-                        <div>
-                            <h2>Clientes em Maior Risco</h2>
-                            <p class="co-panel-subtitle">Ranking para atacar primeiro quem pode gerar atraso, multa ou retrabalho.</p>
-                        </div>
-                    </div>
-                    <div class="co-header-actions-inline">
-                        <a class="co-see-all" href="<?php echo e(\App\Filament\Resources\ItemControles\ItemControleResource::getUrl('index')); ?>">Ver todos</a>
-                        <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
-                            <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
-                            <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
-                        </button>
-                    </div>
-                </header>
-
-                <div class="co-risk-summary-strip">
-                    <article>
-                        <small>Clientes críticos</small>
-                        <strong><?php echo e(number_format($clientesCriticosCollection->count(), 0, ',', '.')); ?></strong>
-                    </article>
-                    <article>
-                        <small>Risco alto</small>
-                        <strong><?php echo e(number_format($clientesRiscoAlto, 0, ',', '.')); ?></strong>
-                    </article>
-                    <article>
-                        <small>Com ação rápida</small>
-                        <strong><?php echo e(number_format($clientesComItem, 0, ',', '.')); ?></strong>
-                    </article>
-                </div>
-
-                <div class="co-client-list-model co-client-risk-list">
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $clientesMaiorRisco; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                        <?php
-                            $clientTone = $cliente['tone'] ?? 'warning';
-                            $riskLabel = $cliente['risco'] ?? 'alto';
-                        ?>
-                        <article class="co-client-model-row co-client-risk-row <?php echo e($clientTone); ?>">
-                            <a class="co-client-row-link" href="<?php echo e($cliente['url']); ?>">
-                                <span class="co-client-rank"><?php echo e(str_pad($loop->iteration, 2, '0', STR_PAD_LEFT)); ?></span>
-                                <span class="co-client-avatar"><i class="bi bi-building"></i></span>
-                                <div class="co-client-main">
-                                    <strong><?php echo e($cliente['cliente']); ?></strong>
-                                    <span><?php echo e($cliente['problema']); ?></span>
-                                    <small><i class="bi bi-lightning-charge-fill"></i> Prioridade: resolver antes de virar prejuízo operacional.</small>
-                                </div>
-                                <span class="co-risk-badge <?php echo e($clientTone); ?>">Risco <?php echo e($riskLabel); ?></span>
-                            </a>
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($cliente['item_id'])): ?>
-                                <button type="button" class="co-mini-action dark" wire:click="openItemDetailModal(<?php echo e((int) $cliente['item_id']); ?>, 'cliente')" wire:loading.attr="disabled">
-                                    <i class="bi bi-eye"></i>Detalhes
-                                </button>
-                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        </article>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                        <div class="co-empty clean">
-                            <strong>Nenhum cliente crítico.</strong>
-                            <p>Sem clientes em risco neste momento.</p>
-                        </div>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                </div>
             </section>
 
             <aside class="co-panel co-deadline-panel co-mobile-collapsible" x-data="{ open: false }" :class="{ 'is-open': open }">
@@ -912,12 +847,12 @@
                 $scoreValue = max(0, min(100, $scoreValue));
                 $scoreTone = $scoreValue >= 85 ? 'critical' : ($scoreValue >= 65 ? 'warning' : 'info');
                 $scoreReasons = collect($detail['urgency_score']['reasons'] ?? [])->take(4)->values();
-                $whyHere = collect($detail['why_here'] ?? [])->take(4)->values();
-                $impactRows = collect($detail['operational_impact'] ?? [])->take(4)->values();
-                $checklistRows = collect($detail['checklist'] ?? [])->take(5)->values();
+                $whyHere = collect($detail['why_here'] ?? [])->take(3)->values();
+                $impactRows = collect($detail['operational_impact'] ?? [])->take(3)->values();
+                $checklistRows = collect($detail['checklist'] ?? [])->take(3)->values();
                 $blockerRows = collect($detail['blockers'] ?? [])->take(3)->values();
-                $doneRows = collect($detail['done_definition'] ?? [])->take(4)->values();
-                $timelineRows = collect($detail['timeline'] ?? [])->take(4)->values();
+                $doneRows = collect($detail['done_definition'] ?? [])->take(2)->values();
+                $timelineRows = collect($detail['timeline'] ?? [])->take(2)->values();
                 $criticalClient = $detail['critical_client'] ?? [];
                 $readyMessage = $detail['ready_message'] ?? 'Mensagem não gerada para este item.';
                 $primaryAction = $detail['decision_summary']['action'] ?? ($detail['suggestion']['primary_action'] ?? 'Entrar em contato com o cliente agora');
@@ -932,125 +867,242 @@
                     </button>
 
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail): ?>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailModalSource === 'cliente'): ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(false && $detailModalSource === 'cliente'): ?>
                             <?php
-                                $clientName = $detail['empresa'] ?? 'Transp. Silva Ltda';
-                                $clientScore = (int) ($detail['critical_client']['risk_score'] ?? $detail['urgency_score']['value'] ?? 85);
+                                $clientName = $detail['empresa'] ?? 'Cliente não informado';
+                                $clientScore = (int) ($detail['critical_client']['risk_score'] ?? $detail['urgency_score']['value'] ?? 0);
                                 $clientScore = max(0, min(100, $clientScore));
-                                $clientOpen = $detail['critical_client']['open_items'] ?? $detail['critical_client']['pendencias_abertas'] ?? count($detail['related_client_items'] ?? []) ?: 8;
-                                $clientLate = $detail['critical_client']['late_items'] ?? $detail['critical_client']['pendencias_vencidas'] ?? 3;
-                                $clientRevenue = $detail['critical_client']['revenue_12m'] ?? $detail['critical_client']['faturamento_12m'] ?? 'R$ 45.800,00';
-                                $timelineRows = collect($detail['timeline'] ?? [])->take(4)->values();
-                                $pendingRows = collect($detail['related_client_items'] ?? [])->take(5)->values();
+                                $clientTone = $clientScore >= 80 ? 'RISCO ALTO' : ($clientScore >= 55 ? 'ATENÇÃO' : 'ACOMPANHAR');
+                                $timelineRows = collect($detail['timeline'] ?? [])->take(3)->values();
+                                $currentItem = [
+                                    'titulo' => $detail['title'] ?? 'Item operacional',
+                                    'status' => $detail['status'] ?? 'Pendente',
+                                    'responsavel' => $detail['responsavel'] ?? 'Sem responsável',
+                                    'vencimento' => $detail['vencimento'] ?? 'Sem prazo',
+                                    'url' => $detail['url'] ?? '#',
+                                    'atual' => true,
+                                ];
+                                $pendingRows = collect([$currentItem])
+                                    ->merge(collect($detail['related_client_items'] ?? [])->map(function ($row) {
+                                        $row['atual'] = false;
+                                        return $row;
+                                    }))
+                                    ->take(6)
+                                    ->values();
+                                $clientOpen = $pendingRows->count();
+                                $clientLate = (int) ($detail['critical_client']['late_items'] ?? $detail['critical_client']['pendencias_vencidas'] ?? 0);
+                                $reasonRows = collect($detail['why_here'] ?? [])->merge($detail['blockers'] ?? [])->unique()->take(4)->values();
+                                $impactRows = collect($detail['operational_impact'] ?? [])->take(4)->values();
+                                $doneRows = collect($detail['done_definition'] ?? [])->take(3)->values();
+                                $checklistRows = collect($detail['checklist'] ?? [])->take(5)->values();
+                                $readyMessage = $detail['ready_message'] ?? 'Mensagem não gerada para este cliente.';
+                                $riskSummaryRows = collect($detail['client_risk_summary'] ?? [])->take(5)->values();
+                                $relationship = $detail['client_relationship'] ?? [];
                             ?>
-                            <header class="cmr-header">
+                            <header class="cmr-header cmr-client-resolution">
                                 <div>
-                                    <div class="cmr-kicker"><i class="bi bi-exclamation-triangle-fill"></i> Cliente em Maior Risco</div>
-                                    <div class="cmr-title-row"><h2><?php echo e($clientName); ?></h2><span>RISCO ALTO</span></div>
-                                    <div class="cmr-meta"><span>CNPJ 12.345.678/0001-90</span><b>•</b><strong><?php echo e($detail['categoria'] ?? 'Fiscal'); ?></strong></div>
+                                    <div class="cmr-kicker"><i class="bi bi-exclamation-triangle-fill"></i> Central de ação do cliente</div>
+                                    <div class="cmr-title-row"><h2><?php echo e($clientName); ?></h2><span><?php echo e($clientTone); ?></span></div>
+                                    <div class="cmr-meta">
+                                        <span><?php echo e($clientOpen); ?> pendência(s) operacional(is) nesta análise</span>
+                                        <b>•</b>
+                                        <strong><?php echo e($detail['categoria'] ?? 'Operacional'); ?></strong>
+                                    </div>
                                 </div>
-                                <div class="cmr-actions"><a href="<?php echo e($detail['url'] ?? '#'); ?>">Ver no cadastro do cliente <i class="bi bi-box-arrow-up-right"></i></a><button type="button"><i class="bi bi-three-dots"></i></button></div>
+                                <div class="cmr-actions">
+                                    <a href="<?php echo e($detail['url'] ?? '#'); ?>" target="_blank" rel="noopener">Abrir obrigação <i class="bi bi-box-arrow-up-right"></i></a>
+                                </div>
                             </header>
 
-                            <div class="cmr-body">
-                                <section class="cmr-alert-strip">
-                                    <div class="cmr-alert-left"><span><i class="bi bi-exclamation-lg"></i></span><div><strong>Este cliente possui <?php echo e($clientOpen); ?> pendências críticas que exigem atenção imediata.</strong><p>Risco de multas, perda de prazo e impacto na receita do escritório.</p></div></div>
-                                    <div class="cmr-risk-score"><span>Score de Risco</span><div class="cmr-scorebar"><i style="width: <?php echo e($clientScore); ?>%"></i></div><strong><?php echo e($clientScore); ?> <em>/ 100</em></strong></div>
+                            <div class="cmr-body cmr-client-action-body">
+                                <section class="cmr-alert-strip cmr-client-risk-top">
+                                    <div class="cmr-alert-left">
+                                        <span><i class="bi bi-exclamation-lg"></i></span>
+                                        <div>
+                                            <strong>Por que este cliente está em risco</strong>
+                                            <ul class="cmr-risk-bullets">
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $riskSummaryRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $riskSummary): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                    <li><?php echo e($riskSummary); ?></li>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                    <li><?php echo e($detail['decision_summary']['impact'] ?? 'Existe risco operacional que precisa de acompanhamento.'); ?></li>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="cmr-risk-score"><span>Risco atual</span><div class="cmr-scorebar"><i style="width: <?php echo e($clientScore); ?>%"></i></div><strong><?php echo e($clientScore); ?> <em>/ 100</em></strong></div>
                                 </section>
 
-                                <div class="cmr-grid">
-                                    <section class="cmr-card cmr-summary">
-                                        <h3>Resumo do Cliente</h3>
-                                        <div class="cmr-info-list">
-                                            <div><span><i class="bi bi-cash-stack"></i>Faturamento (12 meses)</span><strong><?php echo e($clientRevenue); ?></strong></div>
-                                            <div><span><i class="bi bi-calendar-check"></i>Último pagamento</span><strong>15/05/2025</strong></div>
-                                            <div><span><i class="bi bi-calendar-x"></i>Atraso médio de pagamento</span><strong class="danger">23 dias</strong></div>
-                                            <div><span><i class="bi bi-plus-circle"></i>Pendências abertas</span><strong><?php echo e($clientOpen); ?></strong></div>
-                                            <div><span><i class="bi bi-exclamation-octagon"></i>Obrigações vencidas</span><strong><?php echo e($clientLate); ?></strong></div>
-                                            <div><span><i class="bi bi-headset"></i>Atendimentos em aberto</span><strong>2</strong></div>
-                                            <div><span><i class="bi bi-clock"></i>Tempo sem retorno</span><strong class="danger">5 dias</strong></div>
-                                        </div>
-                                        <a class="cmr-bottom-link" href="<?php echo e($detail['url'] ?? '#'); ?>">Ver histórico completo <i class="bi bi-chevron-right"></i></a>
-                                    </section>
+                                <section class="cmr-card cmr-relationship-card">
+                                    <div>
+                                        <span>Último contato</span>
+                                        <strong><?php echo e($relationship['last_contact'] ?? 'Sem contato registrado'); ?></strong>
+                                    </div>
+                                    <div>
+                                        <span>Situação recente</span>
+                                        <strong><?php echo e($relationship['silence'] ?? 'Sem informação suficiente'); ?></strong>
+                                    </div>
+                                    <div>
+                                        <span>Canal registrado</span>
+                                        <strong><?php echo e($relationship['channel'] ?? 'Ainda não registrado'); ?></strong>
+                                    </div>
+                                </section>
 
+                                <section class="cmr-card cmr-actions-card cmr-client-primary-actions">
+                                    <h3>Ação recomendada</h3>
+                                    <p><?php echo e($detail['decision_summary']['action'] ?? $detail['suggestion']['primary_action'] ?? 'Entrar em contato com o cliente e encaminhar a pendência.'); ?></p>
+                                    <div class="cmr-action-buttons">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($detail['portal_cliente_url'])): ?>
+                                            <a href="<?php echo e($detail['portal_cliente_url']); ?>" target="_blank" rel="noopener" class="cmr-primary cmr-secondary" wire:click="registrarContatoPortalCliente(<?php echo e($detail['id']); ?>)">
+                                                <i class="bi bi-chat-dots"></i> Conversar pelo Portal do Cliente
+                                            </a>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($detail['whatsapp_url'])): ?>
+                                            <a href="<?php echo e($detail['whatsapp_url']); ?>" target="_blank" rel="noopener" class="cmr-primary" wire:click="registrarContatoCliente(<?php echo e($detail['id']); ?>)">
+                                                <i class="bi bi-whatsapp"></i> Solicitar pelo WhatsApp
+                                            </a>
+                                        <?php else: ?>
+                                            <button type="button" class="cmr-primary" wire:click="registrarContatoCliente(<?php echo e($detail['id']); ?>)">
+                                                <i class="bi bi-clipboard-check"></i> Registrar contato / copiar mensagem
+                                            </button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['execute'] ?? false) && !($detail['is_closed'] ?? false)): ?>
+                                            <button type="button" class="cmr-plan" wire:click="marcarItemComoResolvido(<?php echo e($detail['id']); ?>)"><i class="bi bi-check2-circle"></i> Concluir tarefa</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail['actions']['delegate'] ?? false): ?>
+                                            <button type="button" class="cmr-plan" wire:click="openDelegateModal(<?php echo e($detail['id']); ?>)"><i class="bi bi-person-plus"></i> Delegar</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail['actions']['correct'] ?? false): ?>
+                                            <button type="button" class="cmr-plan" wire:click="enviarParaCorrecao(<?php echo e($detail['id']); ?>)"><i class="bi bi-arrow-counterclockwise"></i> Enviar para correção</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </div>
+                                </section>
+
+                                <div class="cmr-grid cmr-client-grid">
                                     <section class="cmr-card cmr-pending">
-                                        <div class="cmr-card-head"><h3>Pendências Críticas (<?php echo e($clientOpen); ?>)</h3><a href="<?php echo e($detail['url'] ?? '#'); ?>">Ver todas</a></div>
+                                        <div class="cmr-card-head"><h3>Pendências reais do cliente (<?php echo e($clientOpen); ?>)</h3><a href="<?php echo e($detail['url'] ?? '#'); ?>" target="_blank" rel="noopener">Abrir principal</a></div>
                                         <div class="cmr-pending-list">
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $pendingRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pending): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                                <article><span class="<?php echo e($loop->odd ? 'red' : 'orange'); ?>"><i class="bi bi-exclamation-triangle"></i></span><div><strong><?php echo e($pending['titulo'] ?? $pending['title'] ?? $detail['title']); ?></strong><p><?php echo e($pending['descricao'] ?? $pending['status'] ?? 'Vence em breve'); ?></p></div><em class="<?php echo e($loop->odd ? 'red' : 'orange'); ?>"><?php echo e($loop->odd ? 'VENCIDO HÁ 1 DIA' : 'VENCE EM 5 DIAS'); ?></em></article>
+                                                <article>
+                                                    <span class="<?php echo e(!empty($pending['atual']) ? 'red' : 'orange'); ?>"><i class="bi bi-exclamation-triangle"></i></span>
+                                                    <div>
+                                                        <strong><?php echo e($pending['titulo'] ?? $pending['title'] ?? 'Item operacional'); ?></strong>
+                                                        <p><?php echo e($pending['status'] ?? 'Status não informado'); ?> • <?php echo e($pending['responsavel'] ?? 'Sem responsável'); ?> • <?php echo e($pending['vencimento'] ?? 'Sem prazo'); ?></p>
+                                                    </div>
+                                                    <a href="<?php echo e($pending['url'] ?? ($detail['url'] ?? '#')); ?>" target="_blank" rel="noopener">Abrir</a>
+                                                </article>
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                <article><span class="red"><i class="bi bi-exclamation-triangle"></i></span><div><strong>DCTFWeb - Ref. 05/2025</strong><p>Vencido em 05/06/2025</p></div><em class="red">VENCIDO HÁ 1 DIA</em></article>
-                                                <article><span class="orange"><i class="bi bi-exclamation-triangle"></i></span><div><strong>PGDAS-D - Ref. 05/2025</strong><p>Vence em 10/06/2025</p></div><em class="orange">VENCE EM 5 DIAS</em></article>
-                                                <article><span class="red"><i class="bi bi-exclamation-triangle"></i></span><div><strong>ISS - Declaração Mensal</strong><p>Vencido em 03/06/2025</p></div><em class="red">VENCIDO HÁ 3 DIAS</em></article>
-                                                <article><span><i class="bi bi-file-earmark-text"></i></span><div><strong>IRRF - 05/2025</strong><p>Vence em 12/06/2025</p></div><em class="orange">VENCE EM 7 DIAS</em></article>
-                                                <article><span><i class="bi bi-file-earmark-text"></i></span><div><strong>EFD-Reinf - 05/2025</strong><p>Vence em 15/06/2025</p></div><em class="orange">VENCE EM 10 DIAS</em></article>
+                                                <div class="cmr-empty-state">Nenhuma pendência relacionada encontrada para este cliente.</div>
                                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </div>
-                                        <button type="button" class="cmr-more">+ 3 pendências</button>
                                     </section>
 
                                     <section class="cmr-card cmr-risks">
-                                        <h3>Principais Riscos</h3>
+                                        <h3>Motivos do risco</h3>
                                         <div class="cmr-risk-list">
-                                            <article><span class="red"><i class="bi bi-shield-exclamation"></i></span><div><strong>Risco de multas</strong><p>3 obrigações vencidas</p></div><em>R$ 1.250,00</em></article>
-                                            <article><span class="orange"><i class="bi bi-lock"></i></span><div><strong>Bloqueio fiscal</strong><p>Possível impedimento de certidões</p></div></article>
-                                            <article><span class="orange"><i class="bi bi-clock-history"></i></span><div><strong>Perda de prazos</strong><p>5 obrigações vencendo em 10 dias</p></div></article>
-                                            <article><span class="blue"><i class="bi bi-person-heart"></i></span><div><strong>Relacionamento</strong><p>Tempo sem retorno acima da média</p></div></article>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $reasonRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <article><span class="red"><i class="bi bi-exclamation-triangle"></i></span><div><strong><?php echo e($reason); ?></strong></div></article>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <article><span class="blue"><i class="bi bi-info-circle"></i></span><div><strong>Sem motivo adicional registrado.</strong><p>Use as pendências reais para decidir a próxima ação.</p></div></article>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </div>
-                                        <div class="cmr-impact-box"><span><strong>Impacto estimado</strong><small>Em multas e juros</small></span><b>R$ 1.250,00</b></div>
+                                    </section>
+
+                                    <section class="cmr-card cmr-summary">
+                                        <h3>Se não agir</h3>
+                                        <div class="cmr-info-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $impactRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <div><span><?php echo e($row['label'] ?? 'Impacto'); ?></span><strong><?php echo e($row['value'] ?? '-'); ?></strong></div>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div><span>Impacto</span><strong>Não informado; tratar pelo risco operacional.</strong></div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
                                     </section>
 
                                     <section class="cmr-card cmr-comms">
-                                        <div class="cmr-card-head"><h3>Comunicações Recentes</h3><a href="<?php echo e($detail['url'] ?? '#'); ?>">Ver todas</a></div>
-                                        <div class="cmr-comms-list">
-                                            <article><span class="whatsapp"><i class="bi bi-whatsapp"></i></span><div><strong>WhatsApp enviado</strong><p>Solicitação de documentos</p></div><time>04/06/2025 10:15</time></article>
-                                            <article><span class="mail"><i class="bi bi-envelope"></i></span><div><strong>E-mail enviado</strong><p>Lembrete de obrigações</p></div><time>02/06/2025 09:32</time></article>
-                                            <article><span class="phone"><i class="bi bi-telephone"></i></span><div><strong>Ligação realizada</strong><p>Contato sobre pendências</p></div><time>30/05/2025 16:45</time></article>
-                                            <article><span class="whatsapp"><i class="bi bi-whatsapp"></i></span><div><strong>WhatsApp enviado</strong><p>Follow-up documentos</p></div><time>28/05/2025 14:20</time></article>
-                                        </div>
+                                        <div class="cmr-card-head"><h3>Mensagem pronta</h3><button type="button" wire:click="toggleDetailPersonalize">Editar</button></div>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailPersonalizeOpen): ?>
+                                            <textarea class="ra-message-editor" wire:model.defer="detailDraftMessage" rows="5"></textarea>
+                                        <?php else: ?>
+                                            <div class="cmr-message-box"><?php echo e($readyMessage); ?></div>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     </section>
 
-                                    <section class="cmr-card cmr-trends">
-                                        <div class="cmr-card-head"><h3>Últimos 6 meses</h3><a href="<?php echo e($detail['url'] ?? '#'); ?>">Ver gráfico completo</a></div>
-                                        <div class="cmr-trend-list">
-                                            <div><span>Pontualidade nas entregas</span><strong>62% <i class="down">↓</i></strong><svg viewBox="0 0 90 28"><polyline points="0,22 14,16 28,18 42,8 56,19 70,12 90,5"/></svg></div>
-                                            <div><span>Tempo médio de resposta</span><strong>4,2 dias <i class="down">↓</i></strong><svg viewBox="0 0 90 28"><polyline points="0,24 14,20 28,15 42,7 56,16 70,10 90,6"/></svg></div>
-                                            <div><span>Índice de pendências</span><strong>38% <i class="down">↓</i></strong><svg viewBox="0 0 90 28"><polyline points="0,23 14,21 28,11 42,16 56,6 70,17 90,9"/></svg></div>
-                                            <div><span>Satisfação</span><strong>6,2/10 <i>→</i></strong><svg class="orange" viewBox="0 0 90 28"><polyline points="0,24 14,20 28,12 42,22 56,9 70,18 90,8"/></svg></div>
-                                            <div><span>Receita gerada</span><strong>R$ 45.800 <i class="up">↑</i></strong><svg class="green" viewBox="0 0 90 28"><polyline points="0,24 14,18 28,20 42,9 56,16 70,6 90,12"/></svg></div>
-                                        </div>
+                                    <section class="cmr-card cmr-actions-card cmr-status-actions-card">
+                                        <h3>Atualizar situação</h3>
+                                        <button type="button" class="cmr-plan success" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'respondeu')"><i class="bi bi-reply-fill"></i> Cliente respondeu</button>
+                                        <button type="button" class="cmr-plan success" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'documentos_recebidos')"><i class="bi bi-file-earmark-check"></i> Documentos recebidos</button>
+                                        <button type="button" class="cmr-plan" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'aguardando_cliente')"><i class="bi bi-hourglass-split"></i> Aguardando cliente</button>
+                                        <button type="button" class="cmr-plan danger" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'nao_respondeu')"><i class="bi bi-x-circle"></i> Cliente não respondeu</button>
                                     </section>
 
                                     <section class="cmr-card cmr-actions-card">
-                                        <h3>Ações Recomendadas</h3>
-                                        <ol><li>Entrar em contato e alertar sobre pendências vencidas</li><li>Solicitar documentos pendentes imediatamente</li><li>Reforçar prazos das obrigações próximas do vencimento</li><li>Verificar possibilidade de automatizar envio de documentos</li><li>Agendar reunião para alinhamento</li></ol>
-                                        <button type="button" class="cmr-primary"><i class="bi bi-whatsapp"></i>Iniciar ação com o cliente</button>
-                                        <a href="<?php echo e($detail['url'] ?? '#'); ?>" class="cmr-plan">Ver plano de ação completo <i class="bi bi-box-arrow-up-right"></i></a>
+                                        <h3>Registrar impedimento</h3>
+                                        <button type="button" class="cmr-plan" wire:click="registrarImpedimentoResolverAgora(<?php echo e($detail['id']); ?>, 'cliente')">Retorno/documento do cliente pendente</button>
+                                        <button type="button" class="cmr-plan" wire:click="registrarImpedimentoResolverAgora(<?php echo e($detail['id']); ?>, 'documento')">Documento obrigatório pendente</button>
+                                        <button type="button" class="cmr-plan" wire:click="registrarImpedimentoResolverAgora(<?php echo e($detail['id']); ?>, 'governo')">Sistema externo indisponível</button>
+                                    </section>
+
+                                    <section class="cmr-card cmr-actions-card">
+                                        <h3>Adiar com registro</h3>
+                                        <button type="button" class="cmr-plan" wire:click="adiarItemResolverAgora(<?php echo e($detail['id']); ?>, 1)">+1 dia</button>
+                                        <button type="button" class="cmr-plan" wire:click="adiarItemResolverAgora(<?php echo e($detail['id']); ?>, 3)">+3 dias</button>
+                                        <button type="button" class="cmr-plan" wire:click="adiarItemResolverAgora(<?php echo e($detail['id']); ?>, 7)">+7 dias</button>
+                                    </section>
+
+                                    <section class="cmr-card cmr-pending">
+                                        <div class="cmr-card-head"><h3>Passos para encerrar</h3></div>
+                                        <div class="cmr-pending-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $checklistRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $step): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <article><span class="<?php echo e(!empty($step['concluido']) ? 'green' : 'orange'); ?>"><i class="bi <?php echo e(!empty($step['concluido']) ? 'bi-check2' : 'bi-circle'); ?>"></i></span><div><strong><?php echo e($step['titulo'] ?? 'Etapa operacional'); ?></strong><p><?php echo e(!empty($step['concluido']) ? 'Concluído' : 'Pendente'); ?></p></div></article>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $doneRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $done): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                    <article><span class="green"><i class="bi bi-check2"></i></span><div><strong><?php echo e($done); ?></strong></div></article>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                    <div class="cmr-empty-state">Nenhum checklist cadastrado para este item.</div>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
+                                    </section>
+
+                                    <section class="cmr-card cmr-comms">
+                                        <div class="cmr-card-head"><h3>Últimos eventos reais</h3><a href="<?php echo e($detail['url'] ?? '#'); ?>" target="_blank" rel="noopener">Ver completo</a></div>
+                                        <div class="cmr-comms-list">
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $timelineRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $event): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                <article><span class="blue"><i class="bi bi-clock-history"></i></span><div><strong><?php echo e($event['titulo'] ?? 'Atualização operacional'); ?></strong><p><?php echo e($event['descricao'] ?? 'Sem detalhe adicional.'); ?></p></div><time><?php echo e($event['data'] ?? '-'); ?></time></article>
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                <div class="cmr-empty-state">Nenhum evento registrado ainda.</div>
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        </div>
                                     </section>
                                 </div>
                             </div>
-                            <footer class="cmr-footer"><div><i class="bi bi-lightbulb"></i><strong>Dica:</strong> Clientes com risco alto têm 3x mais chance de atrasar pagamentos. Ação rápida reduz riscos e melhora o relacionamento.</div><button type="button" wire:click="closeItemDetailModal">Fechar</button></footer>
+                            <footer class="cmr-footer"><div><i class="bi bi-lightbulb"></i><strong>Foco:</strong> tratar pendência real, registrar o contato e tirar o cliente da fila de risco.</div><button type="button" wire:click="closeItemDetailModal">Fechar</button></footer>
                         <?php else: ?>
                         <header class="ra-header">
                             <div class="ra-heading">
-                                <span class="ra-kicker">AÇÃO RECOMENDADA</span>
+                                <span class="ra-kicker">CLIENTES EM MAIOR RISCO</span>
                                 <div class="ra-title-row">
                                     <h2 id="ra-detail-title"><?php echo e($detail['title']); ?></h2>
-                                    <span class="ra-critical-pill"><?php echo e(strtoupper($detail['prioridade'] ?? 'CRÍTICA')); ?></span>
+                                    <span class="ra-critical-pill"><?php echo e(strtoupper($detail['decision_summary']['tone'] === 'danger' ? 'RISCO ALTO' : ($detail['decision_summary']['tone'] === 'warning' ? 'ATENÇÃO' : $detail['prioridade']))); ?></span>
                                 </div>
                                 <div class="ra-meta-row">
-                                    <span><i class="bi bi-clipboard2-check"></i><?php echo e($detail['categoria']); ?></span>
+                                    <span><i class="bi bi-building"></i>Cliente: <?php echo e($detail['empresa']); ?></span>
                                     <span>•</span>
-                                    <span><?php echo e($detail['categoria']); ?></span>
+                                    <span><i class="bi bi-calendar-event"></i><?php echo e($detail['dias_prazo']); ?></span>
                                     <span>•</span>
-                                    <span>Ref. <?php echo e(now()->format('m/Y')); ?></span>
-                                    <span class="ra-client-chip">Cliente: <?php echo e($detail['empresa']); ?></span>
+                                    <span>Status: <?php echo e($detail['status']); ?></span>
+                                    <span class="ra-client-chip"><?php echo e($detail['categoria']); ?></span>
                                 </div>
                             </div>
 
                             <div class="ra-header-actions">
-                                <button type="button"><i class="bi bi-star"></i>Favoritar</button>
-                                <button type="button" class="ra-icon-only"><i class="bi bi-three-dots"></i></button>
+                                <a href="<?php echo e($detail['url']); ?>" class="ra-icon-only" title="Abrir obrigação completa">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
                             </div>
                         </header>
 
@@ -1059,15 +1111,54 @@
                                 <section class="ra-summary-card">
                                     <div class="ra-alert-icon"><i class="bi bi-exclamation-lg"></i></div>
                                     <div>
-                                        <h3>RESUMO EXECUTIVO</h3>
-                                        <p><?php echo e($detail['executive_summary'] ?? 'Esta obrigação vence hoje e ainda não foi concluída.'); ?></p>
-                                        <p class="ra-summary-strong"><?php echo e($actionImpact); ?></p>
+                                        <h3>RISCO OPERACIONAL</h3>
+                                        <p><?php echo e($detail['decision_summary']['problem'] ?? $detail['executive_summary']); ?></p>
+                                        <p class="ra-summary-strong"><?php echo e($detail['decision_summary']['impact'] ?? $actionImpact); ?></p>
+                                    </div>
+                                </section>
+
+                                <section class="ra-card ra-next-card">
+                                    <h3>AÇÃO RÁPIDA RECOMENDADA</h3>
+                                    <div class="ra-next-alert"><i class="bi bi-lightning-charge"></i><strong><?php echo e($primaryAction); ?></strong></div>
+                                    <div class="ra-next-meta"><span>Prazo:</span><strong><?php echo e($detail['dias_prazo']); ?></strong></div>
+                                    <div class="ra-next-meta"><span>Responsável:</span><strong><?php echo e($detail['responsavel']); ?></strong></div>
+
+                                    <div class="ra-action-dock" aria-label="Ações rápidas da central de resolução">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detail['whatsapp_url'] ?? null): ?>
+                                            <a href="<?php echo e($detail['whatsapp_url']); ?>" target="_blank" rel="noopener" class="ra-action-btn ra-action-btn-primary" wire:click="registrarContatoCliente(<?php echo e($detail['id']); ?>)">
+                                                <i class="bi bi-whatsapp"></i><span>Solicitar pelo WhatsApp</span>
+                                            </a>
+                                        <?php else: ?>
+                                            <button type="button" class="ra-action-btn ra-action-btn-primary" wire:click="registrarContatoCliente(<?php echo e($detail['id']); ?>)">
+                                                <i class="bi bi-clipboard-check"></i><span>Registrar contato</span>
+                                            </button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <a href="<?php echo e($detail['portal_cliente_url']); ?>" target="_blank" rel="noopener" class="ra-action-btn ra-action-btn-secondary" wire:click="registrarContatoPortalCliente(<?php echo e($detail['id']); ?>)">
+                                            <i class="bi bi-chat-dots"></i><span>Conversar no Portal</span>
+                                        </a>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['execute'] ?? false) && ! $detail['is_closed']): ?>
+                                            <button type="button" class="ra-action-btn ra-action-btn-success" wire:click="marcarItemComoResolvido(<?php echo e($detail['id']); ?>)" wire:loading.attr="disabled" wire:target="marcarItemComoResolvido(<?php echo e($detail['id']); ?>)"><i class="bi bi-check2-circle"></i><span>Concluir tarefa</span></button>
+                                        <?php else: ?>
+                                            <button type="button" class="ra-action-btn ra-action-btn-muted" disabled><i class="bi bi-lock"></i><span><?php echo e($detail['is_closed'] ? 'Item encerrado' : 'Sem permissão para concluir'); ?></span></button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed']): ?>
+                                            <button type="button" class="ra-action-btn ra-action-btn-secondary" wire:click="openDelegateModal(<?php echo e($detail['id']); ?>)"><i class="bi bi-person-plus"></i><span>Delegar</span></button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['correct'] ?? false) && ! $detail['is_closed']): ?>
+                                            <button type="button" class="ra-action-btn ra-action-btn-secondary" wire:click="enviarParaCorrecao(<?php echo e($detail['id']); ?>)"><i class="bi bi-arrow-counterclockwise"></i><span>Correção</span></button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                                        <a href="<?php echo e($detail['url']); ?>" class="ra-action-btn ra-action-btn-ghost"><i class="bi bi-box-arrow-up-right"></i><span>Abrir obrigação</span></a>
                                     </div>
                                 </section>
 
                                 <div class="ra-top-grid">
                                     <section class="ra-card">
-                                        <h3>POR QUE ESTÁ AQUI?</h3>
+                                        <h3>MOTIVOS</h3>
                                         <div class="ra-reason-list">
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $whyHere; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                                 <div class="ra-reason-item">
@@ -1075,15 +1166,13 @@
                                                     <p><?php echo e($reason); ?></p>
                                                 </div>
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                <div class="ra-reason-item"><span class="ra-round-icon red"><i class="bi bi-clock"></i></span><p>Vence em menos de 24 horas</p></div>
-                                                <div class="ra-reason-item"><span class="ra-round-icon orange"><i class="bi bi-hourglass-split"></i></span><p>Está parado há alguns dias</p></div>
-                                                <div class="ra-reason-item"><span class="ra-round-icon red"><i class="bi bi-file-earmark-lock"></i></span><p>Documento obrigatório pendente</p></div>
+                                                <div class="ra-reason-item"><span class="ra-round-icon orange"><i class="bi bi-info-circle"></i></span><p>Revise o item antes de concluir.</p></div>
                                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </div>
                                     </section>
 
                                     <section class="ra-card">
-                                        <h3>IMPACTO SE NÃO RESOLVER</h3>
+                                        <h3>SE NÃO RESOLVER</h3>
                                         <div class="ra-impact-list">
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $impactRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $impact): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                                 <div>
@@ -1091,130 +1180,86 @@
                                                     <strong class="<?php echo e(str_contains(strtolower((string)($impact['label'] ?? '')), 'multa') ? 'danger' : ''); ?>"><?php echo e($impact['value'] ?? '-'); ?></strong>
                                                 </div>
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                <div><span>Risco de multa</span><strong class="danger"><?php echo e($detail['valor']); ?></strong></div>
                                                 <div><span>Cliente impactado</span><strong><?php echo e($detail['empresa']); ?></strong></div>
-                                                <div><span>Departamento</span><strong><?php echo e($detail['categoria']); ?></strong></div>
-                                                <div><span>Tipo de impacto</span><strong><em>Financeiro e Fiscal</em></strong></div>
+                                                <div><span>Responsável atual</span><strong><?php echo e($detail['responsavel']); ?></strong></div>
+                                                <div><span>Risco</span><strong class="danger">Atraso, retrabalho ou cobrança do cliente</strong></div>
                                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </div>
                                     </section>
 
                                     <section class="ra-card">
-                                        <h3>TEMPO PARADO</h3>
-                                        <div class="ra-stalled-list">
-                                            <div><i class="bi bi-clock-history"></i><span>Última atualização</span><strong><?php echo e($detail['stalled_info']['last_update'] ?? '-'); ?></strong></div>
-                                            <div><i class="bi bi-clock"></i><span>Parado há</span><strong class="danger"><?php echo e($detail['stalled_info']['days'] ?? 'Sem histórico'); ?></strong></div>
-                                            <div><i class="bi bi-person-badge"></i><span>Responsável atual</span><strong><?php echo e($detail['responsavel']); ?></strong></div>
-                                        </div>
-                                    </section>
-                                </div>
-
-                                <div class="ra-middle-grid">
-                                    <section class="ra-card ra-action-card">
-                                        <h3>AÇÃO RECOMENDADA – O QUE FAZER AGORA</h3>
-                                        <div class="ra-action-content">
-                                            <ol class="ra-steps">
-                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $checklistRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $step): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                                    <li><span><?php echo e($loop->iteration); ?></span><p><?php echo e($step['titulo'] ?? 'Etapa operacional'); ?></p></li>
-                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                    <li><span>1</span><p>Abrir obrigação referente ao período atual</p></li>
-                                                    <li><span>2</span><p>Validar informações e débitos</p></li>
-                                                    <li><span>3</span><p>Anexar/validar documentos necessários</p></li>
-                                                    <li><span>4</span><p>Transmitir obrigação</p></li>
-                                                    <li><span>5</span><p>Confirmar transmissão e gerar recibo</p></li>
-                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                            </ol>
-
-                                            <aside class="ra-action-note">
-                                                <div><i class="bi bi-stopwatch"></i><span>Tempo estimado</span><strong>15 minutos</strong></div>
-                                                <div><i class="bi bi-shield-check"></i><span>Impacto da ação</span><p><?php echo e($actionImpact); ?></p></div>
-                                            </aside>
-                                        </div>
-                                    </section>
-
-                                    <section class="ra-card ra-message-card" x-data="{ copied: false }">
-                                        <div class="ra-card-header-row">
-                                            <h3>MENSAGEM PRONTA PARA O CLIENTE</h3>
-                                            <button type="button" class="ra-copy-btn" @click="navigator.clipboard.writeText($refs.raReadyMessage.innerText); copied = true; setTimeout(() => copied = false, 1600)">
-                                                <i class="bi bi-clipboard-check"></i><span x-text="copied ? 'Copiado' : 'Copiar mensagem'"></span>
-                                            </button>
-                                        </div>
-                                        <div class="ra-message-box" x-ref="raReadyMessage"><?php echo e($readyMessage); ?></div>
-                                        <button type="button" class="ra-personalize">Personalizar antes de enviar <i class="bi bi-pencil"></i></button>
-                                    </section>
-                                </div>
-
-                                <div class="ra-bottom-grid">
-                                    <section class="ra-card">
-                                        <h3>BLOQUEADORES IDENTIFICADOS</h3>
+                                        <h3>BLOQUEADORES</h3>
                                         <div class="ra-blocker-list">
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $blockerRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $blocker): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                                 <div><span class="ra-round-icon red"><i class="bi bi-exclamation-triangle"></i></span><p><?php echo e($blocker); ?></p></div>
                                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                <div><span class="ra-round-icon green"><i class="bi bi-check2"></i></span><p>Nenhuma aprovação pendente</p></div>
+                                                <div><span class="ra-round-icon green"><i class="bi bi-check2"></i></span><p>Nenhum bloqueador claro identificado.</p></div>
                                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </div>
                                     </section>
+                                </div>
 
-                                    <section class="ra-card">
-                                        <h3>QUANDO ESSE ITEM DEIXA DE APARECER AQUI?</h3>
-                                        <div class="ra-done-list">
-                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $doneRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $done): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                                <div><i class="bi bi-check2"></i><p><?php echo e($done); ?></p></div>
-                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                <div><i class="bi bi-check2"></i><p>Obrigação concluída com sucesso</p></div>
-                                                <div><i class="bi bi-check2"></i><p>Recibo de entrega gerado</p></div>
-                                                <div><i class="bi bi-check2"></i><p>Não há pendências relacionadas</p></div>
-                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <div class="ra-middle-grid ra-middle-grid-balanced">
+                                    <section class="ra-card ra-message-card" x-data="{ copied: false }">
+                                        <div class="ra-card-header-row">
+                                            <h3>MENSAGEM E PASSOS PARA RESOLVER</h3>
+                                            <button type="button" class="ra-copy-btn" @click="navigator.clipboard.writeText($refs.raReadyMessage.innerText); copied = true; setTimeout(() => copied = false, 1600)">
+                                                <i class="bi bi-clipboard-check"></i><span x-text="copied ? 'Copiado' : 'Copiar'"></span>
+                                            </button>
                                         </div>
-                                        <footer>O item será removido automaticamente após a conclusão.</footer>
+                                        <div class="ra-message-box" x-ref="raReadyMessage"><?php echo e($detailDraftMessage ?: $readyMessage); ?></div>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detailPersonalizeOpen): ?>
+                                            <textarea class="ra-message-box" rows="5" wire:model.live.debounce.500ms="detailDraftMessage"></textarea>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <div class="ra-message-footer-row">
+                                            <button type="button" class="ra-personalize" wire:click="toggleDetailPersonalize">
+                                                <?php echo e($detailPersonalizeOpen ? 'Ocultar edição' : 'Editar mensagem'); ?> <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </div>
+
+                                        <div class="ra-inline-steps">
+                                            <h4>PASSOS PARA ENCERRAR</h4>
+                                            <ol class="ra-steps ra-steps-compact">
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $checklistRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $step): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                    <li><span><?php echo e($loop->iteration); ?></span><p><?php echo e($step['titulo'] ?? 'Etapa operacional'); ?></p></li>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                                    <li><span>1</span><p>Tomar a ação recomendada.</p></li>
+                                                    <li><span>2</span><p>Registrar o contato, impedimento ou conclusão.</p></li>
+                                                    <li><span>3</span><p>Manter status e responsável atualizados.</p></li>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                            </ol>
+                                        </div>
+                                    </section>
+                                </div>
+
+                                <div class="ra-bottom-grid ra-bottom-grid-balanced">
+                                    <section class="ra-card ra-situation-card">
+                                        <h3>ATUALIZAR SITUAÇÃO</h3>
+                                        <div class="ra-action-button-grid">
+                                            <button type="button" class="ra-personalize" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'respondeu')">Cliente respondeu</button>
+                                            <button type="button" class="ra-personalize" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'documentos_recebidos')">Documentos recebidos</button>
+                                            <button type="button" class="ra-personalize" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'aguardando_cliente')">Aguardando cliente</button>
+                                            <button type="button" class="ra-personalize" wire:click="registrarSituacaoCliente(<?php echo e($detail['id']); ?>, 'nao_respondeu')">Cliente não respondeu</button>
+                                            <button type="button" class="ra-personalize" wire:click="registrarImpedimentoResolverAgora(<?php echo e($detail['id']); ?>, 'cliente')">Registrar sem resposta</button>
+                                            <button type="button" class="ra-personalize" wire:click="registrarImpedimentoResolverAgora(<?php echo e($detail['id']); ?>, 'documento')">Documento pendente</button>
+                                            <button type="button" class="ra-personalize" wire:click="registrarImpedimentoResolverAgora(<?php echo e($detail['id']); ?>, 'governo')">Sistema indisponível</button>
+                                        </div>
                                     </section>
 
-                                    <section class="ra-card ra-next-card">
-                                        <h3>PRÓXIMA AÇÃO SUGERIDA</h3>
-                                        <div class="ra-next-alert"><i class="bi bi-exclamation-triangle"></i><strong><?php echo e($primaryAction); ?></strong></div>
-                                        <div class="ra-next-meta"><span>Canal sugerido:</span><strong><i class="bi bi-whatsapp"></i> WhatsApp</strong></div>
-                                        <div class="ra-next-meta"><span>Prioridade:</span><strong><b></b> Alta</strong></div>
-                                        <div class="ra-next-meta"><span>Melhor horário:</span><strong>Agora</strong></div>
-                                        <button type="button" class="ra-primary-btn"><i class="bi bi-whatsapp"></i>Iniciar contato com o cliente</button>
+                                    <section class="ra-card ra-postpone-card">
+                                        <h3>ADIAR COM REGISTRO</h3>
+                                        <div class="ra-action-button-grid ra-action-button-grid-compact">
+                                            <button type="button" class="ra-personalize" wire:click="adiarItemResolverAgora(<?php echo e($detail['id']); ?>, 1)">+1 dia</button>
+                                            <button type="button" class="ra-personalize" wire:click="adiarItemResolverAgora(<?php echo e($detail['id']); ?>, 3)">+3 dias</button>
+                                            <button type="button" class="ra-personalize" wire:click="adiarItemResolverAgora(<?php echo e($detail['id']); ?>, 7)">+7 dias</button>
+                                        </div>
                                     </section>
                                 </div>
                             </main>
 
                             <aside class="ra-side">
-                                <section class="ra-card ra-score-card">
-                                    <h3>SCORE DE URGÊNCIA</h3>
-                                    <div class="ra-score-wrap">
-                                        <div class="ra-score-ring" style="--score: <?php echo e($scoreValue); ?>;"><strong><?php echo e($scoreValue); ?></strong><span>/100</span></div>
-                                        <div class="ra-score-reasons">
-                                            <h4>Por que esse score?</h4>
-                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $scoreReasons; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $reason): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                                <div><span><?php echo e($reason); ?></span><strong>+<?php echo e(max(7, 40 - (($loop->iteration - 1) * 10))); ?></strong></div>
-                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                                <div><span>Vence hoje</span><strong>+40</strong></div>
-                                                <div><span>Parado há 4 dias</span><strong>+30</strong></div>
-                                                <div><span>Obrigação fiscal</span><strong>+15</strong></div>
-                                                <div><span>Cliente crítico</span><strong>+7</strong></div>
-                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section class="ra-card ra-client-card">
-                                    <div class="ra-card-header-row">
-                                        <h3>CLIENTE CRÍTICO</h3>
-                                        <span class="ra-risk-pill">ALTO RISCO</span>
-                                    </div>
-                                    <div class="ra-client-metrics">
-                                        <div><span>Pendências abertas</span><strong><?php echo e($criticalClient['open_items'] ?? $criticalClient['pendencias_abertas'] ?? $criticalClient['open'] ?? count($detail['related_client_items'] ?? [])); ?></strong></div>
-                                        <div><span>Pendências vencidas</span><strong><?php echo e($criticalClient['late_items'] ?? $criticalClient['pendencias_vencidas'] ?? '-'); ?></strong></div>
-                                        <div><span>Faturamento (12m)</span><strong><?php echo e($criticalClient['revenue_12m'] ?? $criticalClient['faturamento_12m'] ?? $detail['valor']); ?></strong></div>
-                                    </div>
-                                    <a href="<?php echo e($detail['url']); ?>" class="ra-outline-link">Ver dashboard do cliente <i class="bi bi-box-arrow-up-right"></i></a>
-                                </section>
-
                                 <section class="ra-card ra-timeline-card">
-                                    <h3>LINHA DO TEMPO</h3>
+                                    <h3>ÚLTIMOS EVENTOS</h3>
                                     <div class="ra-timeline">
                                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $timelineRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $entry): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                             <article>
@@ -1224,33 +1269,28 @@
                                                 <p><?php echo e($entry['descricao'] ?? ''); ?></p>
                                             </article>
                                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                            <article><span></span><time><?php echo e(now()->format('d/m/Y H:i')); ?></time><strong>Item identificado</strong><p>Ação recomendada criada automaticamente.</p></article>
+                                            <article><span></span><time>-</time><strong>Sem histórico recente</strong><p>Use as ações do popup para registrar o próximo movimento.</p></article>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     </div>
                                 </section>
 
-                                <section class="ra-quick-actions">
-                                    <h3>AÇÕES RÁPIDAS</h3>
-                                    <div>
-                                        <a href="<?php echo e($detail['url']); ?>">Abrir obrigação <i class="bi bi-box-arrow-up-right"></i></a>
-                                        <a href="<?php echo e($detail['url']); ?>">Ver cliente <i class="bi bi-box-arrow-up-right"></i></a>
-                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($detail['actions']['delegate'] ?? false) && ! $detail['is_closed']): ?>
-                                            <button type="button" wire:click="openDelegateModal(<?php echo e($detail['id']); ?>)"><i class="bi bi-person-plus"></i>Delegar tarefa</button>
-                                        <?php else: ?>
-                                            <button type="button"><i class="bi bi-person-plus"></i>Delegar tarefa</button>
+                                <section class="ra-card">
+                                    <h3>SAI DO RESOLVER QUANDO</h3>
+                                    <div class="ra-done-list">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $doneRows; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $done): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <div><i class="bi bi-check2"></i><p><?php echo e($done); ?></p></div>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                            <div><i class="bi bi-check2"></i><p>Concluído, delegado, corrigido ou documentado com impedimento real.</p></div>
                                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                        <button type="button" class="success" wire:click="closeItemDetailModal"><i class="bi bi-check2"></i>Marcar como resolvido</button>
                                     </div>
                                 </section>
                             </aside>
                         </div>
 
                         <footer class="ra-footer">
-                            <div><i class="bi bi-lightbulb"></i><strong>Dica:</strong> Resolva agora para evitar multas, retrabalho e manter a confiança do cliente.</div>
-                            <label><input type="checkbox">Não mostrar novamente</label>
+                            <div><i class="bi bi-lightbulb"></i><strong>Foco:</strong> entender o risco, tomar uma ação e registrar o movimento sem abrir várias telas.</div>
                             <button type="button" wire:click="closeItemDetailModal">Fechar</button>
                         </footer>
-
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     <?php else: ?>
                         <div class="ra-empty-state">

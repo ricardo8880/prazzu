@@ -8824,3 +8824,594 @@
     .co-workload-v3-footer { padding-inline: 18px; flex-wrap: wrap; }
     .co-workload-v3-footer > div { width: 100%; }
 }
+
+/* =========================================================
+   AJUSTE VISUAL - CENTRAL DE RESOLUCAO / RESOLVER AGORA
+   Escopo: somente modal de detalhes do Resolver Agora.
+   Nao altera o popup Clientes em Maior Risco (.cmr-*).
+   ========================================================= */
+.ra-shell:has(.ra-header):not(:has(.cmr-header)){
+    width:min(1420px, calc(100vw - 28px)) !important;
+    max-height:calc(100vh - 24px) !important;
+    border-radius:16px !important;
+    overflow:hidden !important;
+    box-shadow:0 28px 90px rgba(15,23,42,.34) !important;
+    border:1px solid rgba(226,232,240,.95) !important;
+    background:#ffffff !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-close{
+    top:22px !important;
+    right:22px !important;
+    width:36px !important;
+    height:36px !important;
+    border-radius:999px !important;
+    color:#64748b !important;
+    background:#fff !important;
+    border:1px solid transparent !important;
+    transition:.18s ease !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-close:hover{
+    background:#f8fafc !important;
+    border-color:#e2e8f0 !important;
+    color:#0f172a !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-header{
+    padding:24px 64px 18px 32px !important;
+    border-bottom:1px solid #eef2f7 !important;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%) !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-kicker{
+    color:#e11d35 !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+    letter-spacing:.06em !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-title-row{
+    margin-top:8px !important;
+    gap:12px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-title-row h2{
+    font-size:24px !important;
+    letter-spacing:-.035em !important;
+    line-height:1.1 !important;
+    color:#0f172a !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-critical-pill{
+    height:30px !important;
+    padding:0 13px !important;
+    border-radius:999px !important;
+    background:#fff1f2 !important;
+    border:1px solid #fb7185 !important;
+    color:#e11d48 !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-meta-row{
+    margin-top:14px !important;
+    gap:10px !important;
+    color:#475569 !important;
+    font-size:12px !important;
+    font-weight:700 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-meta-row i{
+    color:#64748b !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-client-chip{
+    background:#eef5ff !important;
+    color:#2563eb !important;
+    border:0 !important;
+    border-radius:8px !important;
+    font-weight:900 !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-body{
+    grid-template-columns:minmax(0,1fr) 330px !important;
+    gap:16px !important;
+    padding:18px 32px 22px !important;
+    max-height:calc(100vh - 144px) !important;
+    overflow:auto !important;
+    background:#fff !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-body::-webkit-scrollbar{width:10px !important;}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-body::-webkit-scrollbar-thumb{background:#cbd5e1 !important;border:3px solid #fff !important;border-radius:999px !important;}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-main,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-side{
+    gap:14px !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-summary-card{
+    min-height:104px !important;
+    padding:18px 22px !important;
+    border-radius:14px !important;
+    border:1px solid #fecdd3 !important;
+    background:linear-gradient(135deg,#fff1f2 0%,#fff7f8 58%,#ffffff 100%) !important;
+    box-shadow:none !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-alert-icon{
+    width:58px !important;
+    height:58px !important;
+    border-radius:18px !important;
+    background:linear-gradient(180deg,#fb2446,#df1634) !important;
+    box-shadow:0 0 0 12px rgba(225,29,72,.09) !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-summary-card h3,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-card h3{
+    color:#172033 !important;
+    font-size:12px !important;
+    letter-spacing:.02em !important;
+    font-weight:900 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-summary-card h3{
+    color:#e11d35 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-summary-card p{
+    color:#1f2937 !important;
+    font-size:14px !important;
+    line-height:1.42 !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-card{
+    border-radius:14px !important;
+    border:1px solid #dbe5f2 !important;
+    background:#fff !important;
+    box-shadow:0 10px 25px rgba(15,23,42,.035) !important;
+    padding:18px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-next-card{
+    border-color:#c7d8f8 !important;
+    background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%) !important;
+    padding:18px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-next-alert{
+    min-height:54px !important;
+    border-radius:12px !important;
+    border:1px solid #fecdd3 !important;
+    background:#fff1f2 !important;
+    color:#e11d35 !important;
+    padding:14px 16px !important;
+    font-size:13px !important;
+    margin:14px 0 16px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-next-alert i{
+    font-size:19px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-next-meta{
+    display:grid !important;
+    grid-template-columns:110px 1fr !important;
+    margin:7px 0 !important;
+    font-size:13px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-next-meta span{
+    color:#64748b !important;
+    font-weight:800 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-next-meta strong{
+    color:#0f172a !important;
+    font-weight:900 !important;
+}
+
+.ra-action-dock{
+    display:grid !important;
+    grid-template-columns:1.45fr 1fr .82fr .82fr .9fr !important;
+    gap:10px !important;
+    margin-top:18px !important;
+    align-items:stretch !important;
+}
+.ra-action-btn{
+    min-height:46px !important;
+    border-radius:12px !important;
+    padding:0 14px !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    gap:8px !important;
+    border:1px solid #dbe5f2 !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+    text-decoration:none !important;
+    line-height:1.15 !important;
+    cursor:pointer !important;
+    transition:transform .16s ease, box-shadow .16s ease, background .16s ease !important;
+    white-space:normal !important;
+    text-align:center !important;
+}
+.ra-action-btn:hover{transform:translateY(-1px) !important;}
+.ra-action-btn-primary{
+    border:0 !important;
+    background:linear-gradient(180deg,#ef2445,#df1734) !important;
+    color:#fff !important;
+    box-shadow:0 14px 28px rgba(225,29,72,.20) !important;
+}
+.ra-action-btn-success{
+    border-color:#bbf7d0 !important;
+    background:#f0fdf4 !important;
+    color:#15803d !important;
+}
+.ra-action-btn-secondary{
+    border-color:#bfdbfe !important;
+    background:#eff6ff !important;
+    color:#1d4ed8 !important;
+}
+.ra-action-btn-ghost{
+    border-color:#e2e8f0 !important;
+    background:#fff !important;
+    color:#334155 !important;
+}
+.ra-action-btn-muted{
+    background:#f8fafc !important;
+    color:#94a3b8 !important;
+    cursor:not-allowed !important;
+}
+.ra-action-btn-muted:hover{transform:none !important;}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-top-grid,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-middle-grid,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-bottom-grid{
+    gap:14px !important;
+    margin-top:14px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-top-grid{
+    grid-template-columns:1fr 1.08fr .92fr !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-middle-grid{
+    grid-template-columns:1.05fr .95fr !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-bottom-grid{
+    grid-template-columns:1fr 1fr !important;
+    max-width:720px !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-reason-list,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-blocker-list,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-done-list{
+    gap:12px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-round-icon{
+    flex:0 0 24px !important;
+    width:24px !important;
+    height:24px !important;
+    border-radius:999px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-reason-item p,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-blocker-list p,
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-done-list p{
+    color:#263244 !important;
+    font-size:13px !important;
+    line-height:1.35 !important;
+    font-weight:700 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-impact-list div{
+    padding:0 0 10px !important;
+    border-bottom:1px dashed #e2e8f0 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-impact-list div:last-child{border-bottom:0 !important;padding-bottom:0 !important;}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-impact-list span{
+    color:#64748b !important;
+    font-size:12px !important;
+    font-weight:800 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-impact-list strong{
+    color:#0f172a !important;
+    font-size:13px !important;
+    font-weight:900 !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-message-box{
+    min-height:116px !important;
+    border-radius:12px !important;
+    border-color:#bbf7d0 !important;
+    background:#f0fdf4 !important;
+    color:#334155 !important;
+    font-size:13px !important;
+    line-height:1.5 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-copy-btn{
+    border-radius:10px !important;
+    border-color:#bbf7d0 !important;
+    background:#ecfdf5 !important;
+    color:#16a34a !important;
+    font-weight:900 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-personalize{
+    color:#2563eb !important;
+    font-size:12px !important;
+    font-weight:900 !important;
+    text-decoration:none !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-card .ra-blocker-list button.ra-personalize{
+    width:100% !important;
+    min-height:40px !important;
+    margin:0 !important;
+    border:1px solid #dbe5f2 !important;
+    background:#f8fafc !important;
+    border-radius:11px !important;
+    color:#1d4ed8 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-card .ra-blocker-list button.ra-personalize:hover{
+    background:#eff6ff !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-steps li{
+    align-items:flex-start !important;
+    padding:8px 0 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-steps span{
+    width:24px !important;
+    height:24px !important;
+    background:#2563eb !important;
+    color:#fff !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-steps p{
+    font-size:13px !important;
+    font-weight:800 !important;
+    color:#1f2937 !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-side .ra-card{
+    padding:17px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline-card{
+    max-height:260px !important;
+    overflow:hidden !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline{
+    max-height:198px !important;
+    overflow:auto !important;
+    padding-right:4px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline::-webkit-scrollbar{width:6px !important;}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline::-webkit-scrollbar-thumb{background:#dbe5f2 !important;border-radius:999px !important;}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline article{
+    padding-bottom:16px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline time{
+    color:#64748b !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline strong{
+    color:#172033 !important;
+    font-size:12px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-timeline p{
+    color:#475569 !important;
+    font-size:12px !important;
+    line-height:1.35 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-done-list div{
+    align-items:flex-start !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-done-list i{
+    background:#dcfce7 !important;
+    color:#16a34a !important;
+}
+
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-footer{
+    display:none !important;
+}
+
+@media (max-width: 1180px){
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-body{grid-template-columns:1fr !important;}
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-side{display:grid !important;grid-template-columns:1fr 1fr !important;}
+    .ra-action-dock{grid-template-columns:1fr 1fr !important;}
+    .ra-action-btn-primary{grid-column:span 2 !important;}
+}
+@media (max-width: 760px){
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)){width:calc(100vw - 14px) !important;}
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-header{padding:18px 54px 14px 18px !important;}
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-body{padding:14px 18px 18px !important;}
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-top-grid,
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-middle-grid,
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-bottom-grid,
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-side{grid-template-columns:1fr !important;}
+    .ra-action-dock{grid-template-columns:1fr !important;}
+    .ra-action-btn-primary{grid-column:auto !important;}
+}
+
+/* Ajuste específico do popup: Clientes em Maior Risco -> Detalhes */
+.cmr-client-resolution .cmr-title-row span{background:#fff1f2;color:#e11d48;border:1px solid #fb7185}.cmr-client-action-body{padding-top:18px}.cmr-client-primary-actions{margin:18px 34px 0;border-color:#fecdd3;background:linear-gradient(180deg,#fff7f8,#fff)}.cmr-client-primary-actions>p{margin:8px 0 18px;color:#334155;font-weight:700}.cmr-action-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cmr-action-buttons .cmr-primary,.cmr-action-buttons .cmr-plan{margin:0;text-align:center;text-decoration:none}.cmr-action-buttons .cmr-secondary{background:linear-gradient(180deg,#2563eb,#1d4ed8)}.cmr-client-grid{margin-top:18px}.cmr-client-grid .cmr-card{min-height:0}.cmr-message-box{min-height:96px;border:1px solid #bbf7d0;background:#f0fdf4;border-radius:10px;padding:16px 18px;color:#334155;line-height:1.55;font-size:14px;white-space:pre-line}.cmr-empty-state{padding:16px;border:1px dashed #cbd5e1;border-radius:10px;color:#64748b;font-weight:700;background:#f8fafc}.cmr-pending-list article>a{font-size:12px;font-weight:900;color:#2563eb;text-decoration:none;white-space:nowrap}.cmr-card-head button{border:1px solid #bfdbfe;background:#eff6ff;color:#2563eb;border-radius:8px;height:34px;padding:0 12px;font-weight:900}.cmr-risk-list .blue{background:#eff6ff;color:#2563eb}.cmr-risk-list .green,.cmr-pending-list .green{background:#dcfce7;color:#16a34a}@media (max-width:1100px){.cmr-action-buttons{grid-template-columns:1fr}.cmr-client-primary-actions{margin-left:18px;margin-right:18px}}
+
+/* Refinamento final: Clientes em Maior Risco -> Detalhes */
+.cmr-client-risk-top{
+    height:auto !important;
+    min-height:118px !important;
+    align-items:flex-start !important;
+    padding:20px 24px !important;
+    border-color:#fecaca !important;
+    background:linear-gradient(135deg,#fff1f2 0%,#fff 62%,#fef2f2 100%) !important;
+}
+.cmr-client-risk-top .cmr-alert-left{
+    align-items:flex-start !important;
+    flex:1 !important;
+}
+.cmr-risk-bullets{
+    margin:8px 0 0 !important;
+    padding:0 !important;
+    list-style:none !important;
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:7px 18px !important;
+}
+.cmr-risk-bullets li{
+    color:#334155 !important;
+    font-size:13px !important;
+    font-weight:800 !important;
+    line-height:1.35 !important;
+    position:relative !important;
+    padding-left:14px !important;
+}
+.cmr-risk-bullets li:before{
+    content:"" !important;
+    width:6px !important;
+    height:6px !important;
+    border-radius:999px !important;
+    background:#ef4444 !important;
+    position:absolute !important;
+    left:0 !important;
+    top:.55em !important;
+}
+.cmr-relationship-card{
+    margin:0 34px 18px !important;
+    display:grid !important;
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:12px !important;
+    padding:14px !important;
+    background:#f8fafc !important;
+    border:1px solid #e2e8f0 !important;
+}
+.cmr-relationship-card div{
+    border:1px solid #e2e8f0 !important;
+    border-radius:12px !important;
+    background:#fff !important;
+    padding:13px 14px !important;
+}
+.cmr-relationship-card span{
+    display:block !important;
+    color:#64748b !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+    letter-spacing:.04em !important;
+    text-transform:uppercase !important;
+    margin-bottom:5px !important;
+}
+.cmr-relationship-card strong{
+    display:block !important;
+    color:#0f172a !important;
+    font-size:13px !important;
+    font-weight:900 !important;
+    line-height:1.35 !important;
+}
+.cmr-status-actions-card .cmr-plan.success{
+    border-color:#bbf7d0 !important;
+    background:#f0fdf4 !important;
+    color:#15803d !important;
+}
+.cmr-status-actions-card .cmr-plan.danger{
+    border-color:#fecaca !important;
+    background:#fff1f2 !important;
+    color:#be123c !important;
+}
+.cmr-status-actions-card .cmr-plan i{
+    margin-right:7px !important;
+}
+@media (max-width:1100px){
+    .cmr-risk-bullets{grid-template-columns:1fr !important;}
+    .cmr-relationship-card{grid-template-columns:1fr !important;margin-left:18px !important;margin-right:18px !important;}
+}
+
+/* Ajuste visual: elimina espaços vazios do popup unificado Clientes em Maior Risco */
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-middle-grid-balanced{
+    display:block !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-middle-grid-balanced .ra-message-card{
+    min-height:0 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-message-footer-row{
+    display:flex !important;
+    align-items:center !important;
+    justify-content:flex-start !important;
+    margin-top:10px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-inline-steps{
+    margin-top:16px !important;
+    padding-top:16px !important;
+    border-top:1px solid #e5edf7 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-inline-steps h4{
+    margin:0 0 10px !important;
+    color:#1f2937 !important;
+    font-size:11px !important;
+    font-weight:900 !important;
+    text-transform:uppercase !important;
+    letter-spacing:.02em !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-steps-compact{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px 16px !important;
+    margin:0 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-steps-compact li{
+    padding:0 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-bottom-grid-balanced{
+    display:grid !important;
+    grid-template-columns:1.4fr .6fr !important;
+    max-width:none !important;
+    align-items:stretch !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-bottom-grid-balanced .ra-card{
+    min-height:0 !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-action-button-grid{
+    display:grid !important;
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:10px !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-action-button-grid-compact{
+    grid-template-columns:1fr !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-action-button-grid button.ra-personalize{
+    width:100% !important;
+    min-height:40px !important;
+    margin:0 !important;
+    border:1px solid #dbe5f2 !important;
+    background:#f8fafc !important;
+    border-radius:11px !important;
+    color:#1d4ed8 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    text-align:center !important;
+}
+.ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-action-button-grid button.ra-personalize:hover{
+    background:#eff6ff !important;
+}
+@media (max-width: 1100px){
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-steps-compact,
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-bottom-grid-balanced,
+    .ra-shell:has(.ra-header):not(:has(.cmr-header)) .ra-action-button-grid{
+        grid-template-columns:1fr !important;
+    }
+}
+
+/* Ajuste solicitado - Clientes em Maior Risco + Vencimentos ocupando a linha inteira
+   Mantém apenas dois blocos na linha: 60% para Clientes em Maior Risco e 40% para Vencimentos. */
+@media (min-width: 1201px) {
+    .co-focus-grid {
+        grid-template-columns: minmax(0, 3fr) minmax(340px, 2fr) !important;
+        gap: 26px;
+        align-items: stretch;
+    }
+
+    .co-focus-grid > .co-resolve-panel,
+    .co-focus-grid > .co-deadline-panel {
+        grid-column: auto !important;
+        min-width: 0;
+        height: 100%;
+    }
+}
+
+@media (min-width: 1201px) and (max-width: 1600px) {
+    .co-focus-grid {
+        grid-template-columns: minmax(0, 3fr) minmax(320px, 2fr) !important;
+    }
+
+    .co-focus-grid > .co-deadline-panel {
+        grid-column: auto !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .co-focus-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .co-focus-grid > .co-resolve-panel,
+    .co-focus-grid > .co-deadline-panel {
+        grid-column: auto !important;
+    }
+}

@@ -37,6 +37,8 @@ class CentroOperacional extends Page
     public bool $detailModalOpen = false;
     public ?int $detailItemId = null;
     public string $detailModalSource = 'resolver';
+    public bool $detailPersonalizeOpen = false;
+    public string $detailDraftMessage = '';
     public bool $workloadModalOpen = false;
     public ?int $workloadResponsavelId = null;
     public ?int $redistributionItemId = null;
@@ -212,6 +214,8 @@ class CentroOperacional extends Page
 
         $this->detailItemId = $item->id;
         $this->detailModalSource = in_array($source, ['resolver', 'cliente'], true) ? $source : 'resolver';
+        $this->detailDraftMessage = $this->itemReadyMessage($item);
+        $this->detailPersonalizeOpen = false;
         $this->detailModalOpen = true;
     }
 
@@ -220,6 +224,13 @@ class CentroOperacional extends Page
         $this->detailModalOpen = false;
         $this->detailItemId = null;
         $this->detailModalSource = 'resolver';
+        $this->detailPersonalizeOpen = false;
+        $this->detailDraftMessage = '';
+    }
+
+    public function toggleDetailPersonalize(): void
+    {
+        $this->detailPersonalizeOpen = ! $this->detailPersonalizeOpen;
     }
 
     public function selectedItemDetail(): ?array
@@ -312,6 +323,10 @@ class CentroOperacional extends Page
             'conclusao' => $item->data_conclusao?->format('d/m/Y') ?: 'Não concluído',
             'descricao' => $description,
             'valor' => $value !== null ? 'R$ ' . number_format($value, 2, ',', '.') : 'Sem valor informado',
+            'referencia' => $item->data_vencimento?->format('m/Y') ?: 'Sem referência',
+            'estimated_time' => filled($item->estimated_minutes) ? ((int) $item->estimated_minutes . ' min') : 'Não calculado',
+            'whatsapp_url' => $this->itemWhatsappUrl($item),
+            'portal_cliente_url' => $this->itemPortalClienteUrl($item),
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
             'actions' => CentroOperacionalAccess::actionPermissions(Filament::auth()->user(), $item),
             'is_closed' => in_array((string) $item->status, ['concluido', 'cancelado'], true),
@@ -328,10 +343,240 @@ class CentroOperacional extends Page
             'done_definition' => $this->itemDoneDefinition($item),
             'urgency_score' => $this->itemUrgencyScore($item, $checklist, $timeline, $relatedClientItems),
             'critical_client' => $this->itemCriticalClientInfo($item, $relatedClientItems),
+            'client_risk_summary' => $this->itemClientRiskSummary($item, $checklist, $timeline, $relatedClientItems),
+            'client_relationship' => $this->itemClientRelationship($item),
             'timeline' => $timeline,
             'checklist' => $checklist,
             'related_client_items' => $relatedClientItems,
         ];
+    }
+
+    public function registrarContatoCliente(int $id): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_VIEW);
+
+        if (! $item) {
+            return;
+        }
+
+        $message = trim($this->detailDraftMessage) !== '' ? trim($this->detailDraftMessage) : $this->itemReadyMessage($item);
+
+        $item->registrarTimeline(
+            'contato_cliente',
+            'Contato com cliente iniciado pelo Centro Operacional',
+            $message,
+            ['canal' => $this->empresaTelefone($item) ? 'whatsapp' : 'mensagem_copiada'],
+            Filament::auth()->user()
+        );
+
+        $this->notifySuccess($this->empresaTelefone($item) ? 'Contato registrado. O WhatsApp foi aberto com a mensagem pronta.' : 'Contato registrado. Copie a mensagem para enviar ao cliente.');
+    }
+
+
+    public function registrarContatoPortalCliente(int $id): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_VIEW);
+
+        if (! $item) {
+            return;
+        }
+
+        $message = trim($this->detailDraftMessage) !== '' ? trim($this->detailDraftMessage) : $this->itemReadyMessage($item);
+
+        $item->registrarTimeline(
+            'contato_cliente',
+            'Contato pelo Portal do Cliente iniciado pelo Centro Operacional',
+            $message,
+            ['canal' => 'portal_cliente', 'empresa_id' => $item->empresa_id],
+            Filament::auth()->user()
+        );
+
+        $this->notifySuccess('Contato registrado. O Portal do Cliente foi aberto para continuar a conversa.');
+    }
+
+    public function marcarItemComoResolvido(int $id): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_EXECUTE);
+
+        if (! $item) {
+            return;
+        }
+
+        if (in_array((string) $item->status, ['concluido', 'cancelado'], true)) {
+            $this->notifyError('Este item já está encerrado.');
+            $this->closeItemDetailModal();
+            return;
+        }
+
+        $payload = ['status' => 'concluido'];
+
+        if (CachedSchema::hasColumn('item_controles', 'data_conclusao')) {
+            $payload['data_conclusao'] = now();
+        }
+
+        if (CachedSchema::hasColumn('item_controles', 'sla_concluido_em') && blank($item->sla_concluido_em)) {
+            $payload['sla_concluido_em'] = now();
+        }
+
+        if (CachedSchema::hasColumn('item_controles', 'sla_status')) {
+            $payload['sla_status'] = 'concluido';
+        }
+
+        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
+            $payload['status_operacional_at'] = now();
+        }
+
+        $item->update($payload);
+        $item->registrarTimeline(
+            'conclusao',
+            'Item resolvido pelo Centro Operacional',
+            'Marcado como resolvido pelo popup de Detalhes da Ação Recomendada.',
+            null,
+            Filament::auth()->user()
+        );
+
+        $this->closeItemDetailModal();
+        $this->notifySuccess('Item marcado como resolvido.');
+    }
+
+    public function adiarItemResolverAgora(int $id, int $days = 1): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_EXECUTE);
+
+        if (! $item) {
+            return;
+        }
+
+        if (in_array((string) $item->status, ['concluido', 'cancelado'], true)) {
+            $this->notifyError('Itens encerrados não podem ser adiados.');
+            return;
+        }
+
+        $days = in_array($days, [1, 3, 7], true) ? $days : 1;
+        $newDate = now()->addDays($days)->toDateString();
+
+        $payload = ['data_vencimento' => $newDate];
+        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
+            $payload['status_operacional_at'] = now();
+        }
+
+        $item->update($payload);
+        $item->registrarTimeline(
+            'prazo_alterado',
+            'Prazo adiado pelo Centro Operacional',
+            "Prazo adiado por {$days} dia(s) pelo popup de Detalhes da Ação Recomendada.",
+            ['dias' => $days, 'novo_prazo' => $newDate],
+            Filament::auth()->user()
+        );
+
+        $this->notifySuccess('Prazo adiado e registrado na linha do tempo.');
+    }
+
+    public function registrarImpedimentoResolverAgora(int $id, string $motivo): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_EXECUTE);
+
+        if (! $item) {
+            return;
+        }
+
+        $motivos = [
+            'cliente' => 'Aguardando retorno ou documento do cliente.',
+            'interno' => 'Aguardando validação interna.',
+            'governo' => 'Aguardando sistema externo/governo.',
+            'documento' => 'Documento obrigatório pendente.',
+        ];
+
+        $descricao = $motivos[$motivo] ?? 'Impedimento operacional registrado.';
+
+        $payload = [];
+        if (CachedSchema::hasColumn('item_controles', 'bloqueado')) {
+            $payload['bloqueado'] = true;
+        }
+        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
+            $payload['status_operacional_at'] = now();
+        }
+
+        if (! empty($payload)) {
+            $item->update($payload);
+        }
+
+        $item->registrarTimeline(
+            'impedimento',
+            'Impedimento registrado pelo Centro Operacional',
+            $descricao,
+            ['motivo' => $motivo],
+            Filament::auth()->user()
+        );
+
+        $this->notifySuccess('Impedimento registrado.');
+    }
+
+    public function registrarSituacaoCliente(int $id, string $situacao): void
+    {
+        $item = $this->findAllowedItem($id, CentroOperacionalAccess::ACTION_EXECUTE);
+
+        if (! $item) {
+            return;
+        }
+
+        $situacoes = [
+            'respondeu' => [
+                'titulo' => 'Cliente respondeu',
+                'descricao' => 'Retorno do cliente registrado pelo popup Clientes em Maior Risco.',
+                'bloqueado' => false,
+                'message' => 'Retorno do cliente registrado.',
+            ],
+            'documentos_recebidos' => [
+                'titulo' => 'Documentos recebidos',
+                'descricao' => 'Documentos recebidos ou confirmados pelo popup Clientes em Maior Risco.',
+                'bloqueado' => false,
+                'message' => 'Documentos recebidos registrados.',
+            ],
+            'aguardando_cliente' => [
+                'titulo' => 'Aguardando cliente',
+                'descricao' => 'Pendência mantida em acompanhamento porque depende de retorno do cliente.',
+                'bloqueado' => true,
+                'message' => 'Situação atualizada para aguardando cliente.',
+            ],
+            'nao_respondeu' => [
+                'titulo' => 'Cliente não respondeu',
+                'descricao' => 'Tentativa sem resposta registrada pelo popup Clientes em Maior Risco.',
+                'bloqueado' => true,
+                'message' => 'Cliente sem resposta registrado.',
+            ],
+        ];
+
+        $dados = $situacoes[$situacao] ?? null;
+
+        if (! $dados) {
+            $this->notifyError('Situação inválida.');
+            return;
+        }
+
+        $payload = [];
+
+        if (CachedSchema::hasColumn('item_controles', 'bloqueado')) {
+            $payload['bloqueado'] = (bool) $dados['bloqueado'];
+        }
+
+        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
+            $payload['status_operacional_at'] = now();
+        }
+
+        if (! empty($payload)) {
+            $item->update($payload);
+        }
+
+        $item->registrarTimeline(
+            'situacao_cliente',
+            $dados['titulo'],
+            $dados['descricao'],
+            ['situacao' => $situacao],
+            Filament::auth()->user()
+        );
+
+        $this->notifySuccess($dados['message']);
     }
 
     public function openWorkloadModal(int $responsavelId): void
@@ -782,6 +1027,58 @@ class CentroOperacional extends Page
         ];
     }
 
+    protected function itemWhatsappUrl(ItemControle $item): ?string
+    {
+        $phone = $this->empresaTelefone($item);
+
+        if (! $phone) {
+            return null;
+        }
+
+        return 'https://wa.me/55' . $phone . '?text=' . rawurlencode($this->itemReadyMessage($item));
+    }
+
+    protected function itemPortalClienteUrl(ItemControle $item): string
+    {
+        $params = [];
+
+        if ($item->empresa_id) {
+            $params['empresa'] = $item->empresa_id;
+        }
+
+        try {
+            return PortalCliente::getUrl($params);
+        } catch (\Throwable $exception) {
+            $query = $params ? ('?' . http_build_query($params)) : '';
+
+            return url('/admin/portal-cliente' . $query);
+        }
+    }
+
+    protected function empresaTelefone(ItemControle $item): ?string
+    {
+        $empresa = $item->empresa;
+
+        if (! $empresa) {
+            return null;
+        }
+
+        foreach (['telefone', 'celular', 'whatsapp', 'phone', 'mobile'] as $field) {
+            $value = data_get($empresa, $field);
+
+            if (filled($value)) {
+                $digits = preg_replace('/\D+/', '', (string) $value);
+                $digits = preg_replace('/^55/', '', $digits);
+
+                if (strlen($digits) >= 10) {
+                    return $digits;
+                }
+            }
+        }
+
+        return null;
+    }
+
     protected function itemReadyMessage(ItemControle $item): string
     {
         $company = $item->empresa?->razao_social ?: 'cliente';
@@ -891,6 +1188,102 @@ class CentroOperacional extends Page
             'tone' => $tone,
             'label' => $score >= 80 ? 'Urgência máxima' : ($score >= 60 ? 'Alta atenção' : 'Acompanhar'),
             'reasons' => array_slice($reasons ?: ['Risco calculado pelo contexto operacional'], 0, 5),
+        ];
+    }
+
+    protected function itemClientRiskSummary(ItemControle $item, array $checklist, array $timeline, array $relatedClientItems): array
+    {
+        $summary = [];
+        $openRelated = count($relatedClientItems);
+        $openChecklist = collect($checklist)->where('concluido', false)->count();
+
+        if ($openRelated > 0) {
+            $summary[] = $openRelated . ' pendência(s) relacionada(s) aberta(s).';
+        }
+
+        if ($item->data_vencimento?->isPast() && ! $item->data_vencimento?->isToday()) {
+            $summary[] = 'Obrigação principal com prazo vencido.';
+        } elseif ($item->data_vencimento?->isToday()) {
+            $summary[] = 'Obrigação principal vence hoje.';
+        } elseif ($item->data_vencimento) {
+            $summary[] = 'Prazo principal: ' . $item->data_vencimento->format('d/m/Y') . '.';
+        } else {
+            $summary[] = 'Obrigação principal sem prazo cadastrado.';
+        }
+
+        if ($openChecklist > 0) {
+            $summary[] = $openChecklist . ' etapa(s) de checklist pendente(s).';
+        }
+
+        if (! $item->responsavel_id) {
+            $summary[] = 'Sem responsável definido.';
+        }
+
+        if (in_array((string) $item->status, ['aguardando_aprovacao', 'em_aprovacao', 'correcao_necessaria', 'reprovado'], true)) {
+            $summary[] = 'Status atual exige decisão ou correção.';
+        }
+
+        if (CachedSchema::hasColumn('item_controles', 'bloqueado') && (bool) $item->bloqueado) {
+            $summary[] = 'Item marcado como bloqueado.';
+        }
+
+        $lastDate = $item->updated_at ?: $item->created_at;
+        if ($lastDate) {
+            $days = (int) $lastDate->copy()->startOfDay()->diffInDays(now()->startOfDay());
+            if ($days >= 2) {
+                $summary[] = 'Sem movimentação há ' . $days . ' dia(s).';
+            }
+        }
+
+        return array_slice(array_values(array_unique($summary)), 0, 5);
+    }
+
+    protected function itemClientRelationship(ItemControle $item): array
+    {
+        $lastContact = null;
+
+        if (CachedSchema::hasTable('item_controle_timeline')) {
+            try {
+                $lastContact = $item->timelines()
+                    ->latest('id')
+                    ->get()
+                    ->first(function ($entry): bool {
+                        $haystack = mb_strtolower(trim(((string) $entry->tipo) . ' ' . ((string) $entry->titulo) . ' ' . ((string) $entry->descricao)));
+
+                        return str_contains($haystack, 'contato')
+                            || str_contains($haystack, 'cliente respondeu')
+                            || str_contains($haystack, 'documentos recebidos')
+                            || str_contains($haystack, 'whatsapp')
+                            || str_contains($haystack, 'portal');
+                    });
+            } catch (\Throwable $exception) {
+                $lastContact = null;
+            }
+        }
+
+        $lastDate = $lastContact?->created_at ?: ($item->updated_at ?: $item->created_at);
+        $days = $lastDate ? (int) $lastDate->copy()->startOfDay()->diffInDays(now()->startOfDay()) : null;
+        $channel = 'Ainda não registrado';
+
+        if ($lastContact) {
+            $text = mb_strtolower(trim(((string) $lastContact->titulo) . ' ' . ((string) $lastContact->descricao)));
+
+            if (str_contains($text, 'portal')) {
+                $channel = 'Portal do Cliente';
+            } elseif (str_contains($text, 'whatsapp')) {
+                $channel = 'WhatsApp';
+            } elseif (str_contains($text, 'documento')) {
+                $channel = 'Documentos';
+            } else {
+                $channel = 'Registro interno';
+            }
+        }
+
+        return [
+            'last_contact' => $lastContact?->created_at?->format('d/m/Y H:i') ?: 'Sem contato registrado',
+            'last_activity' => $lastDate?->format('d/m/Y H:i') ?: 'Sem movimentação registrada',
+            'silence' => $days !== null ? ($days === 0 ? 'Movimentado hoje' : $days . ' dia(s) sem nova movimentação') : 'Sem informação suficiente',
+            'channel' => $channel,
         ];
     }
 
