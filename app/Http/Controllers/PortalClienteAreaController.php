@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +41,7 @@ class PortalClienteAreaController extends Controller
 
 
 
-    public function mensagem(Request $request, int|string $atendimento): RedirectResponse
+    public function mensagem(Request $request, int|string $atendimento): RedirectResponse|JsonResponse
     {
         Log::info('PORTAL_CLIENTE_DEBUG mensagem POST recebido', [
             'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
@@ -65,6 +66,10 @@ class PortalClienteAreaController extends Controller
         abort_if(! $atendimentoAtual, 404, 'Atendimento não encontrado para este cliente.');
 
         if (! empty($atendimentoAtual['is_finalizado'])) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['ok' => false, 'message' => 'Este atendimento já foi finalizado e não aceita novas mensagens.'], 422);
+            }
+
             return redirect()
                 ->route('portal.cliente.atendimentos.show', ['atendimento' => $atendimentoId])
                 ->withErrors(['mensagem' => 'Este atendimento já foi finalizado e não aceita novas mensagens.']);
@@ -93,6 +98,14 @@ class PortalClienteAreaController extends Controller
                 'errors' => $exception->errors(),
             ]);
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => collect($exception->errors())->flatten()->first() ?: 'Revise a mensagem enviada.',
+                    'errors' => $exception->errors(),
+                ], 422);
+            }
+
             throw $exception;
         }
 
@@ -114,6 +127,10 @@ class PortalClienteAreaController extends Controller
             ->values();
 
         if ($mensagem === '' && $arquivos->isEmpty()) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['ok' => false, 'message' => 'Digite uma mensagem ou selecione um arquivo antes de enviar.'], 422);
+            }
+
             return redirect()
                 ->route('portal.cliente.atendimentos.show', ['atendimento' => $atendimentoId])
                 ->withErrors(['mensagem' => 'Digite uma mensagem ou selecione um arquivo antes de enviar.'])
@@ -187,6 +204,10 @@ class PortalClienteAreaController extends Controller
                 'erro' => $exception->getMessage(),
             ]);
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['ok' => false, 'message' => 'Não foi possível enviar sua mensagem agora. Tente novamente em alguns instantes.'], 500);
+            }
+
             return redirect()
                 ->route('portal.cliente.atendimentos.show', ['atendimento' => $atendimentoId])
                 ->withErrors(['mensagem' => 'Não foi possível enviar sua mensagem agora. Tente novamente em alguns instantes.'])
@@ -198,9 +219,34 @@ class PortalClienteAreaController extends Controller
             'atendimento_id' => $atendimentoId,
         ]);
 
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'message' => count($anexos) > 0 ? 'Mensagem e arquivo(s) enviados com sucesso.' : 'Mensagem enviada com sucesso.',
+                'messages' => $this->mensagensTempoReal($atendimentoId),
+            ]);
+        }
+
         return redirect()
             ->route('portal.cliente.atendimentos.show', ['atendimento' => $atendimentoId])
             ->with('success', count($anexos) > 0 ? 'Mensagem e arquivo(s) enviados com sucesso.' : 'Mensagem enviada com sucesso.');
+    }
+
+    public function estadoChat(int|string $atendimento): JsonResponse
+    {
+        $cliente = Auth::guard('portal_cliente')->user();
+        abort_if(! $cliente || ! $cliente->empresa_id, 403, 'Cliente sem empresa vinculada.');
+        abort_if(! Schema::hasTable('atendimentos') || ! Schema::hasTable('atendimento_interacoes'), 503, 'Estrutura de atendimentos indisponível.');
+
+        $empresaId = (int) $cliente->empresa_id;
+        $atendimentoId = (int) $atendimento;
+        $atendimentoAtual = $this->atendimentoDaEmpresa($empresaId, $atendimentoId);
+        abort_if(! $atendimentoAtual, 404, 'Atendimento não encontrado para este cliente.');
+
+        return response()->json([
+            'ok' => true,
+            'messages' => $this->mensagensTempoReal($atendimentoId),
+        ]);
     }
 
     public function debugLog(Request $request): \Illuminate\Http\JsonResponse
@@ -524,6 +570,35 @@ class PortalClienteAreaController extends Controller
 
                 return $item;
             })
+            ->all();
+    }
+
+    private function mensagensTempoReal(int $atendimentoId): array
+    {
+        return collect($this->interacoes($atendimentoId))
+            ->map(function (array $interacao): array {
+                return [
+                    'id' => (int) ($interacao['id'] ?? 0),
+                    'is_cliente' => (bool) ($interacao['is_cliente'] ?? false),
+                    'author' => (bool) ($interacao['is_cliente'] ?? false)
+                        ? 'Você'
+                        : (string) ($interacao['usuario_nome'] ?? 'Equipe de suporte'),
+                    'text' => (string) ($interacao['mensagem'] ?? ''),
+                    'time' => (string) ($interacao['created_at_label'] ?? ''),
+                    'attachments' => collect($interacao['anexos'] ?? [])->map(function (array $anexo): array {
+                        return [
+                            'name' => (string) ($anexo['nome_original'] ?? 'arquivo'),
+                            'ext' => strtoupper((string) ($anexo['extensao'] ?? 'ARQ')),
+                            'size' => (string) ($anexo['tamanho_label'] ?? ''),
+                            'mime' => (string) ($anexo['mime'] ?? ''),
+                            'url' => (string) ($anexo['download_url'] ?? '#'),
+                            'preview_url' => (string) ($anexo['preview_url'] ?? ''),
+                            'is_image' => (bool) ($anexo['is_imagem'] ?? false),
+                        ];
+                    })->values()->all(),
+                ];
+            })
+            ->values()
             ->all();
     }
 

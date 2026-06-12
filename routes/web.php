@@ -16,6 +16,11 @@ use App\Http\Middleware\RedirectIfPortalClienteAuthenticated;
 use App\Http\Middleware\ValidatePortalPublicAccess;
 use App\Models\ItemControle;
 use App\Services\ItemControlePdfService;
+use App\Models\PortalMensagem;
+use App\Support\CachedSchema;
+use App\Support\PortalClienteData;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 
 
@@ -75,6 +80,11 @@ Route::middleware(['auth:portal_cliente'])->group(function (): void {
         ->middleware('throttle:30,1')
         ->name('portal.cliente.atendimentos.mensagem');
 
+    Route::get('/portal-cliente/atendimentos/{atendimento}/chat-estado', [PortalClienteAreaController::class, 'estadoChat'])
+        ->whereNumber('atendimento')
+        ->middleware('throttle:900,1')
+        ->name('portal.cliente.atendimentos.chat.estado');
+
     Route::get('/portal-cliente/atendimentos/{atendimento}/interacoes/{interacao}/anexo', [PortalClienteAreaController::class, 'anexo'])
         ->whereNumber('atendimento')
         ->whereNumber('interacao')
@@ -86,6 +96,146 @@ Route::middleware(['auth:portal_cliente'])->group(function (): void {
 
     Route::post('/portal-cliente/logout', [PortalClienteAuthController::class, 'logout'])
         ->name('portal.cliente.logout');
+});
+
+
+Route::middleware(['auth'])->group(function (): void {
+    Route::get('/admin/portal-cliente/chat-estado', function (Request $request) {
+        $empresaId = $request->integer('empresa');
+
+        abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
+
+        if (CachedSchema::hasTable('portal_mensagens')) {
+            $ultimoIdCliente = PortalMensagem::query()
+                ->where('empresa_id', $empresaId)
+                ->where(function ($query): void {
+                    $query->where('origem', 'cliente')
+                        ->orWhere('origem', 'portal_cliente')
+                        ->orWhere('origem', 'client');
+                })
+                ->max('id');
+
+            if ($ultimoIdCliente) {
+                Cache::put('portal_suporte_visualizou_cliente_empresa_' . $empresaId, (int) $ultimoIdCliente, now()->addHours(8));
+            }
+        }
+
+        $dados = PortalClienteData::data($empresaId, true);
+        $mensagens = collect($dados['chat'] ?? [])->map(function (array $mensagem): array {
+            $classe = (string) ($mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente'));
+            $texto = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
+            $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ($classe === 'equipe' ? 'Equipe' : 'Cliente')));
+
+            return [
+                'id' => (int) ($mensagem['id'] ?? 0),
+                'class' => $classe === 'equipe' ? 'equipe' : 'cliente',
+                'author' => $nome !== '' ? $nome : ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
+                'text' => $texto,
+                'time' => (string) ($mensagem['created_at_label'] ?? ''),
+                'attachments' => collect($mensagem['attachments'] ?? [])->map(fn ($anexo): array => [
+                    'url' => (string) ($anexo['url'] ?? ''),
+                    'name' => (string) ($anexo['nome'] ?? $anexo['name'] ?? 'Anexo'),
+                    'size' => (string) ($anexo['size_label'] ?? ($anexo['mime_type'] ?? 'arquivo')),
+                    'is_image' => (bool) ($anexo['is_image'] ?? false),
+                ])->values()->all(),
+            ];
+        })->values()->all();
+
+        $typing = Cache::get('portal_cliente_digitando_empresa_' . $empresaId);
+        $typingAtivo = is_array($typing) && (int) ($typing['timestamp'] ?? 0) >= now()->subSeconds(8)->timestamp;
+
+        if (! $typingAtivo) {
+            Cache::forget('portal_cliente_digitando_empresa_' . $empresaId);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'messages' => $mensagens,
+            'client_typing' => $typingAtivo,
+            'client_typing_name' => $typingAtivo ? trim((string) ($typing['nome'] ?? 'Cliente')) : null,
+            'support_seen_until_id' => Cache::get('portal_suporte_visualizou_cliente_empresa_' . $empresaId),
+            'client_seen_until_id' => Cache::get('portal_cliente_visualizou_suporte_empresa_' . $empresaId),
+        ]);
+    })->middleware('throttle:900,1')->name('admin.portal-cliente.chat.estado');
+
+    Route::post('/admin/portal-cliente/mensagem', function (Request $request) {
+        $empresaId = $request->integer('empresa');
+
+        abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
+        abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
+
+        $dados = $request->validate([
+            'mensagem' => ['required', 'string', 'max:5000'],
+        ]);
+
+        $mensagemTexto = trim((string) $dados['mensagem']);
+
+        abort_if($mensagemTexto === '', 422, 'Digite uma mensagem antes de enviar.');
+
+        $payload = [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'nome' => auth()->user()?->name,
+            'email' => auth()->user()?->email,
+            'mensagem' => $mensagemTexto,
+            'origem' => 'interno',
+        ];
+
+        if (CachedSchema::hasColumn('portal_mensagens', 'conversa_status')) {
+            $payload['conversa_status'] = 'aberta';
+        }
+
+        $mensagem = PortalMensagem::create($payload);
+        Cache::forget('portal_suporte_digitando_empresa_' . $empresaId);
+
+        $dadosChat = PortalClienteData::data($empresaId, true);
+        $mensagens = collect($dadosChat['chat'] ?? [])->map(function (array $mensagem): array {
+            $classe = (string) ($mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente'));
+            $texto = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
+            $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ($classe === 'equipe' ? 'Equipe' : 'Cliente')));
+
+            return [
+                'id' => (int) ($mensagem['id'] ?? 0),
+                'class' => $classe === 'equipe' ? 'equipe' : 'cliente',
+                'author' => $nome !== '' ? $nome : ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
+                'text' => $texto,
+                'time' => (string) ($mensagem['created_at_label'] ?? ''),
+                'attachments' => collect($mensagem['attachments'] ?? [])->map(fn ($anexo): array => [
+                    'url' => (string) ($anexo['url'] ?? ''),
+                    'name' => (string) ($anexo['nome'] ?? $anexo['name'] ?? 'Anexo'),
+                    'size' => (string) ($anexo['size_label'] ?? ($anexo['mime_type'] ?? 'arquivo')),
+                    'is_image' => (bool) ($anexo['is_image'] ?? false),
+                ])->values()->all(),
+            ];
+        })->values()->all();
+
+        return response()->json([
+            'ok' => true,
+            'message_id' => (int) $mensagem->id,
+            'messages' => $mensagens,
+            'support_seen_until_id' => Cache::get('portal_suporte_visualizou_cliente_empresa_' . $empresaId),
+            'client_seen_until_id' => Cache::get('portal_cliente_visualizou_suporte_empresa_' . $empresaId),
+        ]);
+    })->middleware('throttle:120,1')->name('admin.portal-cliente.chat.mensagem');
+
+    Route::post('/admin/portal-cliente/digitando', function (Request $request) {
+        $empresaId = $request->integer('empresa');
+
+        abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
+
+        $text = trim((string) $request->input('text', ''));
+
+        if ($text === '') {
+            Cache::forget('portal_suporte_digitando_empresa_' . $empresaId);
+        } else {
+            Cache::put('portal_suporte_digitando_empresa_' . $empresaId, [
+                'nome' => auth()->user()?->name ?: 'Suporte',
+                'timestamp' => now()->timestamp,
+            ], now()->addSeconds(10));
+        }
+
+        return response()->json(['ok' => true]);
+    })->middleware('throttle:600,1')->name('admin.portal-cliente.digitando');
 });
 
 Route::get('/auth/white-label/sso', [WhiteLabelSsoController::class, 'redirect'])

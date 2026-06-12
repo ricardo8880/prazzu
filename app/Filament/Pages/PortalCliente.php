@@ -14,6 +14,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Attributes\Renderless;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Cache;
@@ -90,7 +91,8 @@ class PortalCliente extends Page
         $this->atualizarVisualizacoesChat();
     }
 
-    public function updatedRespostaChat(): void
+    #[Renderless]
+    public function registrarSuporteDigitando(?string $texto = null): void
     {
         $empresaId = $this->empresaIdAtualDaTela();
 
@@ -98,7 +100,7 @@ class PortalCliente extends Page
             return;
         }
 
-        if (trim((string) $this->respostaChat) === '') {
+        if (trim((string) $texto) === '') {
             Cache::forget($this->cacheKeySuporteDigitando($empresaId));
             return;
         }
@@ -252,6 +254,7 @@ class PortalCliente extends Page
         Cache::forget($this->cacheKeySuporteDigitando($empresaId));
 
         $this->reset(['chatMensagem', 'portalAnexos']);
+        $this->atualizarConversa();
 
         Notification::make()->title('Mensagem enviada')->body('A resposta ficou visível no portal público do cliente.')->success()->send();
     }
@@ -275,6 +278,7 @@ class PortalCliente extends Page
         PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->respostaChat, 'interno', $this->salvarAnexosMensagem($empresaId)));
         Cache::forget($this->cacheKeySuporteDigitando($empresaId));
         $this->reset(['respostaChat', 'portalAnexos']);
+        $this->atualizarConversa();
 
         Notification::make()->title('Resposta enviada')->body('A resposta ficou registrada no histórico do portal do cliente.')->success()->send();
     }

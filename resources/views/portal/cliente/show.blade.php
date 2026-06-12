@@ -2412,34 +2412,34 @@
         if (text) text.textContent = (name || 'Suporte') + ' está digitando...';
     }
 
-    async function pollChatState() {
-        if (!chatStateUrl || !window.fetch || document.hidden) return;
 
+    let publicChatPollingBusy = false;
+
+    async function pollPublicChatState() {
+        if (!chatStateUrl || !window.fetch || document.hidden || publicChatPollingBusy) return;
+        publicChatPollingBusy = true;
         try {
             const response = await fetch(chatStateUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin'
             });
-
             if (!response.ok) return;
-
             const data = await response.json();
             if (!data || !data.ok) return;
-
             renderChatMessages(data.messages || [], data.client_seen_until_id || 0);
-            setSupportTyping(data.support_typing, data.support_typing_name || 'Suporte');
-        } catch (error) {}
+            setSupportTyping(Boolean(data.support_typing), data.support_typing_name || 'Suporte');
+        } catch (error) {
+        } finally {
+            publicChatPollingBusy = false;
+        }
     }
 
-    window.setInterval(pollChatState, 3000);
+    pollPublicChatState();
+    window.setInterval(pollPublicChatState, 1000);
     document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) pollChatState();
+        if (!document.hidden) pollPublicChatState();
     });
-    pollChatState();
+
 
     document.querySelectorAll('[data-chat-form]').forEach(function (form) {
         form.addEventListener('submit', async function (event) {
@@ -2506,6 +2506,7 @@
                 }
 
                 markOptimisticMessage(optimisticRow, 'sent', 'agora');
+                if (responseData?.chat_message) { pollPublicChatState(); }
                 setInlineFeedback(form, '', 'success');
                 portalDebug('chat_ajax_success', { status: response.status });
             } catch (error) {

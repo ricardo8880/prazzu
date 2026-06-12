@@ -197,6 +197,8 @@
         .pc-date-divider::before, .pc-date-divider::after { content:''; height:1px; flex:1; background:var(--pc-border); }
         .pc-message-status-line { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-top:.5rem; color:var(--pc-muted); font-size:.68rem; font-weight:850; }
         .pc-message-status-line .pc-seen-status { width:auto; margin:0; }
+        .pc-message.is-sending .pc-bubble { opacity:.78; }
+        .pc-message.is-failed .pc-bubble { border-color:#fecaca; background:#fff7f7; }
         .pc-attachments { display:grid; gap:.45rem; margin-top:.65rem; }
         .pc-attachment { display:grid; grid-template-columns:1.8rem minmax(0,1fr) auto; gap:.5rem; align-items:center; border-radius:.8rem; padding:.5rem; background:rgba(15,23,42,.045); color:inherit; text-decoration:none; }
         .pc-attachment strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.76rem; color:inherit; }
@@ -971,7 +973,7 @@
         }
     </style>
 
-    <div class="pc-service-shell" wire:poll.2500ms.visible="atualizarConversa" x-data="{
+    <div class="pc-service-shell" x-data="{
         shouldStick: true,
         activeSection: 'conversa',
         quickReplyOpen: false,
@@ -1136,7 +1138,7 @@
                     <button type="button" class="pc-tab" :class="activeSection === 'anotacoes' ? 'is-active' : ''" :aria-selected="activeSection === 'anotacoes'" role="tab" x-on:click="setSection('anotacoes')">Anotações</button>
                 </nav>
 
-                <main class="pc-messages" x-show="activeSection === 'conversa'" x-cloak x-ref="chatBody" x-init="scrollChat(true)" x-on:scroll.passive="watchScroll()">
+                <main class="pc-messages" id="portalClienteChatBody" data-chat-state-url="{{ route('admin.portal-cliente.chat.estado', ['empresa' => $empresaId]) }}" x-show="activeSection === 'conversa'" x-cloak x-ref="chatBody" x-init="scrollChat(true)" x-on:scroll.passive="watchScroll()">
                     @php $dataAnteriorMensagem = null; @endphp
                     @forelse ($mensagensChat as $mensagem)
                         @php
@@ -1289,12 +1291,10 @@
                     </div>
                 </section>
 
-                @if ($clienteDigitando)
-                    <div class="pc-typing-row" wire:key="cliente-digitando-indicador">
-                        <span class="pc-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-                        <span>{{ $clienteDigitandoNome ?: 'Cliente' }} está digitando...</span>
-                    </div>
-                @endif
+                <div class="pc-typing-row" data-cliente-typing style="display: none;">
+                    <span class="pc-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span data-cliente-typing-text>Cliente está digitando...</span>
+                </div>
 
                 <footer class="pc-chat-composer" x-show="activeSection === 'conversa'" x-cloak>
                     <div class="pc-upload-progress" wire:loading.flex wire:target="portalAnexos"><i></i> Preparando anexos...</div>
@@ -1307,13 +1307,13 @@
                         </div>
                     @endif
 
-                    <form wire:submit.prevent="responderChat">
+                    <form wire:submit.prevent="responderChat" data-admin-chat-form data-send-url="{{ route('admin.portal-cliente.chat.mensagem', ['empresa' => $empresaId]) }}">
                         <div class="pc-composer-tabs" role="tablist" aria-label="Modo de mensagem">
                             <button type="button" class="pc-composer-tab is-active" role="tab" aria-selected="true">Responder</button>
                             <button type="button" class="pc-composer-tab" role="tab" aria-selected="false" disabled title="Mensagem interna ficará para o próximo lote funcional">Mensagem interna</button>
                         </div>
                         <div class="pc-composer-box">
-                            <textarea class="pc-composer-textarea" x-ref="replyTextarea" wire:model.live.debounce.500ms="respostaChat" placeholder="Digite sua mensagem..." aria-label="Mensagem de resposta para o cliente" x-on:input="grow($event.target)" x-on:keydown.enter="if (!$event.shiftKey && !$event.isComposing) { $event.preventDefault(); const form = $event.target.closest('form'); if (form && $event.target.value.trim().length > 0) form.requestSubmit(); }"></textarea>
+                            <textarea class="pc-composer-textarea" x-ref="replyTextarea" wire:model.defer="respostaChat" data-admin-chat-textarea placeholder="Digite sua mensagem..." aria-label="Mensagem de resposta para o cliente" x-on:input="grow($event.target); window.portalClienteAvisarSuporteDigitando && window.portalClienteAvisarSuporteDigitando($event.target.value)" x-on:keydown.enter="if (!$event.shiftKey && !$event.isComposing) { $event.preventDefault(); const form = $event.target.closest('form'); if (form && $event.target.value.trim().length > 0) form.requestSubmit(); }"></textarea>
                             <div class="pc-composer-row">
                                 <div class="pc-composer-tools">
                                     <label class="pc-file-trigger pc-icon-btn" title="Anexar arquivo">
@@ -1327,9 +1327,9 @@
                                         </template>
                                     </div>
                                 </div>
-                                <button type="submit" class="pc-btn pc-btn-send-split" wire:loading.attr="disabled" wire:target="responderChat,portalAnexos">
-                                    <span wire:loading.remove wire:target="responderChat">Enviar</span>
-                                    <span class="pc-send-loading" wire:loading.inline-flex wire:target="responderChat"><i></i> Enviando</span>
+                                <button type="submit" class="pc-btn pc-btn-send-split" wire:loading.attr="disabled" wire:target="responderChat,portalAnexos" data-admin-chat-submit>
+                                    <span wire:loading.remove wire:target="responderChat" data-send-label>Enviar</span>
+                                    <span class="pc-send-loading" wire:loading.inline-flex wire:target="responderChat" data-send-loading><i></i> Enviando</span>
                                 </button>
                             </div>
                         </div>
@@ -1488,4 +1488,252 @@
             </aside>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+            const chat = document.getElementById('portalClienteChatBody');
+            const stateUrl = chat?.dataset.chatStateUrl;
+            const typingUrl = '{{ route('admin.portal-cliente.digitando', ['empresa' => $empresaId]) }}';
+            const typingState = { lastSent: 0, timer: null };
+            const knownMessageIds = new Set();
+            let lastSignature = '';
+            let pollTimer = null;
+            let pollingBusy = false;
+            let sendingBusy = false;
+
+
+            function setSending(form, sending) {
+                sendingBusy = Boolean(sending);
+                if (!form) return;
+                const button = form.querySelector('[data-admin-chat-submit]');
+                const label = form.querySelector('[data-send-label]');
+                const loading = form.querySelector('[data-send-loading]');
+                if (button) button.disabled = Boolean(sending);
+                if (label) label.style.display = sending ? 'none' : '';
+                if (loading) loading.style.display = sending ? 'inline-flex' : 'none';
+            }
+
+            function appendMessageHtml(html) {
+                if (!chat || !html) return;
+                const empty = chat.querySelector('.pc-empty');
+                if (empty) empty.remove();
+                chat.insertAdjacentHTML('beforeend', html);
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+            function appendOptimisticMessage(text) {
+                const tempId = 'tmp-' + Date.now();
+                const author = @json(auth()->user()?->name ?: 'Suporte');
+                const html = '<article class="pc-message equipe is-sending" data-message-id="' + tempId + '">'
+                    + '<div class="pc-message-avatar" title="' + escapeHtml(author) + '">' + initials(author, 'EQ') + '</div>'
+                    + '<div class="pc-bubble"><div class="pc-bubble-content"><div class="pc-bubble-head"><span>' + escapeHtml(author) + ' (Suporte)</span><span>agora</span></div>'
+                    + '<div class="pc-bubble-text">' + escapeHtml(text) + '</div>'
+                    + '<div class="pc-message-status-line"><span>Resposta do suporte</span><span data-seen-status>Enviando...</span></div>'
+                    + '</div></div></article>';
+                appendMessageHtml(html);
+                return tempId;
+            }
+
+            function markOptimisticMessage(tempId, status, serverId) {
+                const row = chat?.querySelector('[data-message-id="' + tempId + '"]');
+                if (!row) return;
+                const seen = row.querySelector('[data-seen-status]');
+                row.classList.remove('is-sending');
+                row.classList.toggle('is-failed', status === 'failed');
+                if (serverId) row.dataset.messageId = String(serverId);
+                if (seen) seen.textContent = status === 'failed' ? 'Falha ao enviar' : 'Enviada';
+            }
+
+            function escapeHtml(value) {
+                return String(value || '').replace(/[&<>"']/g, function (char) {
+                    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
+                });
+            }
+
+            function initials(author, fallback) {
+                const clean = String(author || '').trim();
+                return (clean ? clean.slice(0, 2) : fallback).toUpperCase();
+            }
+
+            function renderAttachment(anexo) {
+                const url = escapeHtml(anexo.url || '#');
+                const name = escapeHtml(anexo.name || anexo.nome || 'Anexo');
+                const size = escapeHtml(anexo.size || anexo.size_label || anexo.mime_type || 'arquivo');
+                return '<a class="pc-attachment" href="' + url + '" target="_blank" rel="noopener" download>'
+                    + '<span>' + (anexo.is_image ? '🖼️' : '📄') + '</span>'
+                    + '<span><strong>' + name + '</strong><span>' + size + '</span></span><span>↗</span></a>';
+            }
+
+            function renderMessage(msg) {
+                const isCliente = msg.class === 'cliente';
+                const author = msg.author || (isCliente ? 'Cliente' : 'Equipe');
+                const id = Number(msg.id || 0);
+                const attach = Array.isArray(msg.attachments) && msg.attachments.length
+                    ? '<div class="pc-attachments">' + msg.attachments.map(renderAttachment).join('') + '</div>'
+                    : '';
+                return '<article class="pc-message ' + (isCliente ? 'cliente' : 'equipe') + '" data-message-id="' + id + '">'
+                    + (!isCliente ? '<div class="pc-message-avatar" title="' + escapeHtml(author) + '">' + initials(author, 'EQ') + '</div>' : '')
+                    + '<div class="pc-bubble">'
+                    + (isCliente ? '<div class="pc-message-avatar" title="' + escapeHtml(author) + '">' + initials(author, 'CL') + '</div>' : '')
+                    + '<div class="pc-bubble-content"><div class="pc-bubble-head"><span>' + escapeHtml(author) + ' ' + (isCliente ? '(Cliente)' : '(Suporte)') + '</span><span>' + escapeHtml(msg.time || '') + '</span></div>'
+                    + (msg.text ? '<div class="pc-bubble-text">' + escapeHtml(msg.text) + '</div>' : '')
+                    + attach
+                    + '<div class="pc-message-status-line"><span>' + (isCliente ? 'Mensagem do cliente' : 'Resposta do suporte') + '</span><span data-seen-status>Enviada</span></div>'
+                    + '</div></div></article>';
+            }
+
+            function updateTyping(isTyping, name) {
+                const box = document.querySelector('[data-cliente-typing]');
+                const text = document.querySelector('[data-cliente-typing-text]');
+                if (!box) return;
+                box.style.display = isTyping ? 'flex' : 'none';
+                if (text) text.textContent = (name || 'Cliente') + ' está digitando...';
+            }
+
+            function updateSeen(supportSeenUntil, clientSeenUntil) {
+                document.querySelectorAll('#portalClienteChatBody [data-message-id]').forEach(function (row) {
+                    const id = Number(row.dataset.messageId || 0);
+                    const status = row.querySelector('[data-seen-status]');
+                    if (!status || !id) return;
+                    const isCliente = row.classList.contains('cliente');
+                    if (isCliente && Number(supportSeenUntil || 0) >= id) status.textContent = '✓✓ Visualizado pelo suporte';
+                    else if (!isCliente && Number(clientSeenUntil || 0) >= id) status.textContent = '✓✓ Visualizado pelo cliente';
+                    else status.textContent = isCliente ? 'Aguardando leitura' : 'Enviada';
+                });
+            }
+
+            function renderMessages(messages, supportSeenUntil, clientSeenUntil) {
+                if (!chat || !Array.isArray(messages)) return;
+                const signature = messages.map(function (m) { return [m.id, m.class, m.time, m.text].join(':'); }).join('|');
+
+                if (!lastSignature) {
+                    chat.querySelectorAll('[data-message-id]').forEach(function (row) {
+                        const id = Number(row.dataset.messageId || 0);
+                        if (id) knownMessageIds.add(id);
+                    });
+                    lastSignature = signature;
+                    updateSeen(supportSeenUntil, clientSeenUntil);
+                    return;
+                }
+
+                if (signature !== lastSignature) {
+                    const incoming = messages.filter(function (m) {
+                        const id = Number(m.id || 0);
+                        return id && !knownMessageIds.has(id);
+                    });
+
+                    if (incoming.length) {
+                        const nearBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 220;
+                        const empty = chat.querySelector('.pc-empty');
+                        if (empty) empty.remove();
+                        incoming.forEach(function (message) {
+                            knownMessageIds.add(Number(message.id || 0));
+                            const pendingSameText = Array.from(chat.querySelectorAll('.pc-message.is-sending .pc-bubble-text')).find(function (node) {
+                                return node.textContent.trim() === String(message.text || '').trim();
+                            });
+                            if (pendingSameText && message.class === 'equipe') {
+                                const row = pendingSameText.closest('.pc-message');
+                                row.classList.remove('is-sending');
+                                row.dataset.messageId = String(message.id || 0);
+                                const status = row.querySelector('[data-seen-status]');
+                                if (status) status.textContent = 'Enviada';
+                                return;
+                            }
+                            chat.insertAdjacentHTML('beforeend', renderMessage(message));
+                        });
+                        if (nearBottom || !document.activeElement?.classList.contains('pc-composer-textarea')) {
+                            chat.scrollTop = chat.scrollHeight;
+                        }
+                    } else if (chat.querySelectorAll('[data-message-id]').length === 0 && messages.length) {
+                        chat.innerHTML = messages.map(renderMessage).join('');
+                        messages.forEach(function (message) { if (message.id) knownMessageIds.add(Number(message.id)); });
+                        chat.scrollTop = chat.scrollHeight;
+                    }
+                    lastSignature = signature;
+                }
+                updateSeen(supportSeenUntil, clientSeenUntil);
+            }
+
+            async function pollChatState() {
+                if (!stateUrl || !window.fetch || document.hidden || pollingBusy) return;
+                pollingBusy = true;
+                try {
+                    const response = await fetch(stateUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
+                    if (!response.ok) return;
+                    const data = await response.json();
+                    if (!data || !data.ok) return;
+                    renderMessages(data.messages || [], data.support_seen_until_id || 0, data.client_seen_until_id || 0);
+                    updateTyping(Boolean(data.client_typing), data.client_typing_name || 'Cliente');
+                } catch (error) {} finally { pollingBusy = false; }
+            }
+
+            async function sendAdminMessage(form) {
+                if (!form || sendingBusy || !window.fetch) return false;
+                const textarea = form.querySelector('[data-admin-chat-textarea]');
+                const fileInput = form.querySelector('input[type=\"file\"]');
+                const message = (textarea?.value || '').trim();
+                if (!message && (!fileInput || !fileInput.files || fileInput.files.length === 0)) return false;
+                if (fileInput && fileInput.files && fileInput.files.length > 0) return true;
+
+                setSending(form, true);
+                const tempId = appendOptimisticMessage(message);
+                if (textarea) { textarea.value = ''; textarea.dispatchEvent(new Event('input', { bubbles: true })); }
+
+                try {
+                    const response = await fetch(form.dataset.sendUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify({ mensagem: message }),
+                        credentials: 'same-origin'
+                    });
+                    const data = await response.json().catch(function () { return null; });
+                    if (!response.ok || !data || !data.ok) throw new Error(data?.message || 'Falha ao enviar');
+                    markOptimisticMessage(tempId, 'sent', data.message_id || null);
+                    if (Array.isArray(data.messages)) renderMessages(data.messages, data.support_seen_until_id || 0, data.client_seen_until_id || 0);
+                    else pollChatState();
+                    return false;
+                } catch (error) {
+                    markOptimisticMessage(tempId, 'failed');
+                    if (textarea) { textarea.value = message; textarea.focus(); }
+                    return false;
+                } finally {
+                    setSending(form, false);
+                }
+            }
+
+            document.querySelectorAll('[data-admin-chat-form]').forEach(function (form) {
+                form.addEventListener('submit', async function (event) {
+                    const fileInput = form.querySelector('input[type=\"file\"]');
+                    if (fileInput && fileInput.files && fileInput.files.length > 0) return;
+
+                    event.preventDefault();
+                    await sendAdminMessage(form);
+                });
+            });
+
+            window.portalClienteAvisarSuporteDigitando = function (text) {
+                if (!typingUrl || !window.fetch) return;
+                window.clearTimeout(typingState.timer);
+                typingState.timer = window.setTimeout(function () {
+                    const now = Date.now();
+                    if (now - typingState.lastSent < 2500) return;
+                    typingState.lastSent = now;
+                    fetch(typingUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify({ text: text || '' }),
+                        credentials: 'same-origin',
+                        keepalive: true
+                    }).catch(function () {});
+                }, 450);
+            };
+
+            pollChatState();
+            pollTimer = window.setInterval(pollChatState, 1000);
+            document.addEventListener('visibilitychange', function () { if (!document.hidden) pollChatState(); });
+            document.addEventListener('livewire:navigated', function () { if (pollTimer) window.clearInterval(pollTimer); });
+        })();
+    </script>
+
 </x-filament-panels::page>

@@ -667,6 +667,10 @@
             .portal-chat-composer form { grid-template-columns: 1fr; }
             .portal-chat-send { width: 100%; }
         }
+
+        .portal-message.is-pending .portal-message-bubble { opacity: .78; }
+        .portal-message.is-failed .portal-message-bubble { border-color: #fecaca; background: #fff1f2; }
+        .portal-message-status { display:block; margin-top:6px; font-size:.76rem; font-weight:900; opacity:.8; }
     </style>
 
     <script>
@@ -1280,6 +1284,9 @@
         var sendButton = document.getElementById('portal-chat-send');
         var fileInput = document.getElementById('portal-chat-file');
         var fileName = document.getElementById('portal-file-name');
+        var chatStateUrl = @json($atendimentoAtual ? route('portal.cliente.atendimentos.chat.estado', ['atendimento' => $atendimentoAtual['id']]) : null);
+        var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
+        var chatPollingBusy = false;
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-portal-tab]'));
         var tabPanels = Array.prototype.slice.call(document.querySelectorAll('.portal-tab-panel'));
 
@@ -1354,6 +1361,112 @@
             });
         }
 
+        function escapeHtml(value) {
+            return String(value || '').replace(/[&<>'"]/g, function (char) {
+                return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[char];
+            });
+        }
+
+        function renderPortalAttachment(anexo) {
+            var name = escapeHtml(anexo && anexo.name ? anexo.name : 'arquivo');
+            var ext = escapeHtml(anexo && anexo.ext ? anexo.ext : 'ARQ');
+            var size = escapeHtml(anexo && anexo.size ? anexo.size : '');
+            var mime = escapeHtml(anexo && anexo.mime ? anexo.mime : '');
+            var url = escapeHtml(anexo && anexo.url ? anexo.url : '#');
+            var previewUrl = escapeHtml(anexo && anexo.preview_url ? anexo.preview_url : '');
+            var preview = anexo && anexo.is_image && previewUrl !== ''
+                ? '<img class="portal-attachment-preview" src="' + previewUrl + '" alt="Prévia do anexo ' + name + '">'
+                : '';
+
+            return '<div><div class="portal-attachment-card">'
+                + '<div class="portal-attachment-icon" aria-hidden="true">' + ext + '</div>'
+                + '<div class="portal-attachment-info"><strong>' + name + '</strong><span>' + size + (size && mime ? ' · ' : '') + mime + '</span></div>'
+                + '<a class="portal-attachment-download" href="' + url + '">Baixar</a>'
+                + '</div>' + preview + '</div>';
+        }
+
+        function renderPortalMessages(messages) {
+            if (! chatBody || ! Array.isArray(messages)) return;
+
+            var currentIds = Array.prototype.slice.call(chatBody.querySelectorAll('[data-interacao-id]'))
+                .map(function (el) { return el.getAttribute('data-interacao-id'); })
+                .join('|');
+            var nextIds = messages.map(function (msg) { return String(msg.id || ''); }).join('|');
+
+            if (currentIds === nextIds) return;
+
+            if (messages.length === 0) {
+                chatBody.innerHTML = '<div class="portal-empty">Nenhuma interação registrada ainda.</div>';
+                return;
+            }
+
+            chatBody.innerHTML = messages.map(function (msg) {
+                var isClient = !! msg.is_cliente;
+                var attachments = Array.isArray(msg.attachments) && msg.attachments.length > 0
+                    ? '<div class="portal-attachment-list">' + msg.attachments.map(renderPortalAttachment).join('') + '</div>'
+                    : '';
+                var text = escapeHtml(msg.text || '').replace(/\n/g, '<br>');
+                var avatar = isClient ? '{{ strtoupper(substr($clienteNome, 0, 1)) }}' : 'S';
+                var author = escapeHtml(isClient ? 'Você' : (msg.author || 'Equipe de suporte'));
+
+                return '<article class="portal-message ' + (isClient ? 'is-client' : 'is-support') + '" data-interacao-id="' + escapeHtml(msg.id || '') + '">'
+                    + (! isClient ? '<div class="portal-message-avatar" aria-hidden="true">S</div>' : '')
+                    + '<div class="portal-message-bubble">'
+                    + '<span class="portal-message-author">' + author + '</span>'
+                    + (text !== '' ? '<div class="portal-message-text">' + text + '</div>' : '')
+                    + attachments
+                    + '<span class="portal-message-time">' + escapeHtml(msg.time || '') + '</span>'
+                    + '</div>'
+                    + (isClient ? '<div class="portal-message-avatar" aria-hidden="true">' + avatar + '</div>' : '')
+                    + '</article>';
+            }).join('');
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function appendPortalPendingMessage(text, filesCount) {
+            if (! chatBody) return null;
+            var id = 'pendente-' + Date.now();
+            var artigo = document.createElement('article');
+            artigo.className = 'portal-message is-client is-pending';
+            artigo.setAttribute('data-interacao-id', id);
+            artigo.innerHTML = '<div class="portal-message-bubble">'
+                + '<span class="portal-message-author">Você</span>'
+                + (text ? '<div class="portal-message-text">' + escapeHtml(text).replace(/\n/g, '<br>') + '</div>' : '')
+                + (filesCount > 0 ? '<div class="portal-message-text">📎 ' + filesCount + ' arquivo(s) em envio</div>' : '')
+                + '<span class="portal-message-time">agora</span>'
+                + '<span class="portal-message-status">Enviando...</span>'
+                + '</div>'
+                + '<div class="portal-message-avatar" aria-hidden="true">{{ strtoupper(substr($clienteNome, 0, 1)) }}</div>';
+            chatBody.appendChild(artigo);
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return artigo;
+        }
+
+        async function atualizarChatClienteLogado() {
+            if (! chatStateUrl || ! window.fetch || document.hidden || chatPollingBusy) return;
+            chatPollingBusy = true;
+            try {
+                var response = await fetch(chatStateUrl, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                });
+                if (! response.ok) return;
+                var data = await response.json();
+                if (data && data.ok) renderPortalMessages(data.messages || []);
+            } catch (error) {
+                window.portalClienteDebugLog('chat_estado_erro', { erro: error && error.message ? error.message : String(error) });
+            } finally {
+                chatPollingBusy = false;
+            }
+        }
+
+        atualizarChatClienteLogado();
+        window.setInterval(atualizarChatClienteLogado, 1200);
+        document.addEventListener('visibilitychange', function () {
+            if (! document.hidden) atualizarChatClienteLogado();
+        });
+
         if (fileInput && fileName) {
             fileInput.addEventListener('change', function () {
                 var files = fileInput.files ? Array.prototype.slice.call(fileInput.files) : [];
@@ -1371,16 +1484,19 @@
         }
 
         if (form) {
-            form.addEventListener('submit', function (event) {
+            form.addEventListener('submit', async function (event) {
                 window.portalClienteDebugLog('form_submit_disparado', {
                     action: form.getAttribute('action'),
                     method: form.getAttribute('method'),
                     textarea_len: textarea ? textarea.value.trim().length : null,
-                    arquivos: fileInput && fileInput.files ? fileInput.files.length : 0
+                    arquivos: fileInput && fileInput.files ? fileInput.files.length : 0,
+                    modo: 'ajax_sem_reload'
                 });
 
-                var hasText = textarea && textarea.value.trim() !== '';
-                var hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+                var message = textarea ? textarea.value.trim() : '';
+                var filesCount = fileInput && fileInput.files ? fileInput.files.length : 0;
+                var hasText = message !== '';
+                var hasFile = filesCount > 0;
 
                 if (! hasText && ! hasFile) {
                     event.preventDefault();
@@ -1389,9 +1505,69 @@
                     return;
                 }
 
+                if (! window.fetch || ! window.FormData) {
+                    if (sendButton) {
+                        sendButton.disabled = true;
+                        sendButton.textContent = 'Enviando...';
+                    }
+                    return;
+                }
+
+                event.preventDefault();
+
+                var pendingMessage = appendPortalPendingMessage(message, filesCount);
+                var formData = new FormData(form);
+
+                if (textarea) {
+                    textarea.value = '';
+                    resizeTextarea();
+                    textarea.focus();
+                }
+                if (fileInput) fileInput.value = '';
+                if (fileName) fileName.textContent = 'Até 5 arquivos: imagem, PDF, Word, Excel, TXT ou CSV com 10 MB cada.';
+
                 if (sendButton) {
                     sendButton.disabled = true;
                     sendButton.textContent = 'Enviando...';
+                }
+
+                try {
+                    var response = await fetch(form.getAttribute('action'), {
+                        method: (form.getAttribute('method') || 'POST').toUpperCase(),
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: formData,
+                        credentials: 'same-origin'
+                    });
+
+                    var data = null;
+                    try { data = await response.json(); } catch (parseError) { data = null; }
+
+                    if (! response.ok || (data && data.ok === false)) {
+                        throw new Error((data && data.message) ? data.message : 'Não foi possível enviar a mensagem.');
+                    }
+
+                    if (data && Array.isArray(data.messages)) {
+                        renderPortalMessages(data.messages);
+                    } else {
+                        await atualizarChatClienteLogado();
+                    }
+                } catch (error) {
+                    if (pendingMessage) {
+                        pendingMessage.classList.remove('is-pending');
+                        pendingMessage.classList.add('is-failed');
+                        var status = pendingMessage.querySelector('.portal-message-status');
+                        if (status) status.textContent = 'Não enviado. Tente novamente.';
+                    }
+                    window.portalClienteDebugLog('chat_envio_ajax_erro', { erro: error && error.message ? error.message : String(error) });
+                } finally {
+                    if (sendButton) {
+                        sendButton.disabled = false;
+                        sendButton.textContent = 'Enviar';
+                    }
                 }
             });
         }
