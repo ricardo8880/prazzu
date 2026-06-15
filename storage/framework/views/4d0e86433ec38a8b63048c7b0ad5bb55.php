@@ -1982,43 +1982,52 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
     const typingState = { timer: null, lastSent: 0 };
     const debugState = { lastSent: 0, lastStep: null };
+    let clientChatSendingBusy = false;
 
-    function announceClientTyping(form, force = false) {
+    function announceClientTyping(form) {
         if (!typingUrl || !window.fetch) return;
 
-        const now = Date.now();
+        const sendTyping = function () {
+            const now = Date.now();
+            if (now - typingState.lastSent < 2500) return;
+            typingState.lastSent = now;
+            const nome = form?.querySelector('[name="nome"]')?.value || '';
 
-        if (!force && now - typingState.lastSent < 3000) {
-            window.clearTimeout(typingState.timer);
-            typingState.timer = window.setTimeout(function () {
-                announceClientTyping(form);
-            }, 3000);
+            try {
+                const typingStartedAt = performance.now();
+                fetch(typingUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ nome: nome }),
+                    credentials: 'same-origin',
+                    keepalive: true
+                }).then(function (response) {
+                    portalDebug('cliente_typing_response', { status: response.status, duration_ms: Math.round(performance.now() - typingStartedAt) });
+                }).catch(function (error) {
+                    portalDebug('cliente_typing_error', { erro: String(error && error.message ? error.message : error), duration_ms: Math.round(performance.now() - typingStartedAt) });
+                });
+            } catch (error) {
+                portalDebug('cliente_typing_exception', { erro: String(error && error.message ? error.message : error) });
+            }
+        };
+
+        if (Date.now() - typingState.lastSent >= 2500) {
+            sendTyping();
             return;
         }
 
-        typingState.lastSent = now;
-
-        const nome = form?.querySelector('[name="nome"]')?.value || '';
-
-        try {
-            fetch(typingUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ nome: nome }),
-                credentials: 'same-origin',
-                keepalive: true
-            }).catch(function () {});
-        } catch (error) {}
+        window.clearTimeout(typingState.timer);
+        typingState.timer = window.setTimeout(sendTyping, 350);
     }
 
     function portalDebug(step, extra = {}) {
         const now = Date.now();
-        const important = ['chat_ajax_error', 'chat_ajax_success', 'chat_submit'].includes(step);
+        const important = ['chat_ajax_error', 'chat_ajax_success', 'chat_submit', 'chat_ajax_start', 'chat_ajax_response', 'chat_poll_response', 'chat_poll_error', 'cliente_typing_response', 'cliente_typing_error'].includes(step);
         if (!important && debugState.lastStep === step && now - debugState.lastSent < 8000) {
             return;
         }
@@ -2191,13 +2200,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             }
         });
         textarea.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
+            if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
                 event.preventDefault();
                 const tamanhoMensagem = textarea.value.trim().length;
-                if (tamanhoMensagem > 0) {
-                    announceClientTyping(form, true);
-                }
                 portalDebug('chat_enter_submit', { tamanhoMensagem: tamanhoMensagem });
+                if (tamanhoMensagem > 0) announceClientTyping(form);
                 form?.requestSubmit();
             }
         });
@@ -2257,6 +2264,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
         const row = document.createElement('div');
         row.className = 'message-row cliente is-optimistic is-sent';
+        row.dataset.messageId = 'tmp-' + Date.now();
 
         const wrap = document.createElement('div');
         wrap.className = 'bubble-wrap';
@@ -2324,16 +2332,22 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         if (counter) counter.textContent = '0';
     }
 
-    function markOptimisticMessage(row, status, text, messageData = null) {
+    function markOptimisticMessage(row, status, text) {
         if (!row) return;
         row.classList.toggle('is-sent', status === 'sent');
         row.classList.toggle('is-failed', status === 'failed');
-        row.classList.toggle('is-optimistic', status !== 'sent');
-        if (messageData?.id) {
-            row.dataset.messageId = String(messageData.id);
-        }
         const time = row.querySelector('.bubble-time');
-        if (time) time.textContent = text || messageData?.time || (status === 'sent' ? 'enviado agora' : 'falha no envio');
+        if (time) time.textContent = text || (status === 'sent' ? 'enviado agora' : 'falha no envio');
+    }
+
+    function applyServerMessageToOptimistic(row, msg) {
+        if (!row || !msg) return;
+        row.classList.remove('is-optimistic');
+        row.dataset.messageId = String(msg.id || row.dataset.messageId || '');
+        const text = row.querySelector('.bubble > span:first-child');
+        if (text && msg.text) text.textContent = msg.text;
+        const time = row.querySelector('.bubble-time');
+        if (time) time.textContent = msg.time || 'agora';
     }
 
 
@@ -2361,11 +2375,27 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         const chat = document.getElementById('chatHistorico');
         if (!chat || !Array.isArray(messages)) return;
 
-        const currentIds = Array.from(chat.querySelectorAll('[data-message-id]')).map(function (el) { return el.dataset.messageId; }).join('|');
+        const rows = Array.from(chat.querySelectorAll('[data-message-id]'));
+        const currentIds = rows
+            .filter(function (el) { return !String(el.dataset.messageId || '').startsWith('tmp-'); })
+            .map(function (el) { return String(el.dataset.messageId || ''); })
+            .join('|');
         const nextIds = messages.map(function (msg) { return String(msg.id || ''); }).join('|');
+        const hasOptimisticRows = rows.some(function (el) {
+            return el.classList.contains('is-optimistic') || String(el.dataset.messageId || '').startsWith('tmp-');
+        });
 
-        if (currentIds === nextIds) {
+        portalDebug('chat_render_start', {
+            current_ids: currentIds,
+            next_ids: nextIds,
+            has_optimistic: hasOptimisticRows,
+            total_dom: rows.length,
+            total_server: messages.length
+        });
+
+        if (currentIds === nextIds && !hasOptimisticRows) {
             updateSeenStatus(clientSeenUntilId);
+            portalDebug('chat_render_skip', { motivo: 'ids_iguais', total_server: messages.length });
             return;
         }
 
@@ -2439,6 +2469,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
         chat.scrollTop = chat.scrollHeight;
         updateSeenStatus(clientSeenUntilId);
+        portalDebug('chat_render_done', {
+            total_renderizado: messages.length,
+            ultimo_id: messages.length ? Number(messages[messages.length - 1].id || 0) : 0,
+            client_seen_until_id: Number(clientSeenUntilId || 0)
+        });
     }
 
     function updateSeenStatus(clientSeenUntilId) {
@@ -2465,23 +2500,38 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         if (!chatStateUrl || !window.fetch || document.hidden || publicChatPollingBusy) return;
         publicChatPollingBusy = true;
         try {
+            const pollStartedAt = performance.now();
             const response = await fetch(chatStateUrl, {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin'
             });
-            if (!response.ok) return;
+            if (!response.ok) {
+                portalDebug('chat_poll_response', { status: response.status, duration_ms: Math.round(performance.now() - pollStartedAt), fase: 'http_not_ok' });
+                return;
+            }
             const data = await response.json();
-            if (!data || !data.ok) return;
+            if (!data || !data.ok) {
+                portalDebug('chat_poll_response', { status: response.status, duration_ms: Math.round(performance.now() - pollStartedAt), fase: 'json_not_ok' });
+                return;
+            }
             renderChatMessages(data.messages || [], data.client_seen_until_id || 0);
             setSupportTyping(Boolean(data.support_typing), data.support_typing_name || 'Suporte');
+            portalDebug('chat_poll_response', {
+                status: response.status,
+                duration_ms: Math.round(performance.now() - pollStartedAt),
+                total_mensagens: Array.isArray(data.messages) ? data.messages.length : 0,
+                ultimo_id: Array.isArray(data.messages) && data.messages.length ? Number(data.messages[data.messages.length - 1].id || 0) : 0,
+                fase: 'ok'
+            });
         } catch (error) {
+            portalDebug('chat_poll_error', { erro: String(error && error.message ? error.message : error) });
         } finally {
             publicChatPollingBusy = false;
         }
     }
 
     pollPublicChatState();
-    window.setInterval(pollPublicChatState, 3000);
+    window.setInterval(pollPublicChatState, 1000);
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) pollPublicChatState();
     });
@@ -2489,9 +2539,15 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
     document.querySelectorAll('[data-chat-form]').forEach(function (form) {
         form.addEventListener('submit', async function (event) {
+            if (clientChatSendingBusy) {
+                event.preventDefault();
+                return;
+            }
+
             const message = form.querySelector('.js-chat-message')?.value.trim() || '';
             const files = form.querySelector('.js-chat-files')?.files || [];
-            portalDebug('chat_submit', { tamanhoMensagem: message.length, quantidadeArquivos: files.length, modo: 'ajax' });
+            const submitStartedAt = performance.now();
+            portalDebug('chat_submit', { tamanhoMensagem: message.length, quantidadeArquivos: files.length, modo: 'ajax', fase: 'listener' });
 
             if (message === '' && files.length === 0) {
                 event.preventDefault();
@@ -2516,10 +2572,12 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             resetChatComposer(form);
             setInlineFeedback(form, '', 'success');
 
+            clientChatSendingBusy = true;
             form.classList.add('is-processing');
             const submitButton = form.querySelector('button[type="submit"]');
 
             try {
+                portalDebug('chat_ajax_start', { tamanhoMensagem: message.length, quantidadeArquivos: files.length, fase: 'fetch_inicio' });
                 const response = await fetch(form.action, {
                     method: (form.method || 'POST').toUpperCase(),
                     headers: {
@@ -2543,6 +2601,13 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     responseData = null;
                 }
 
+                portalDebug('chat_ajax_response', {
+                    status: response.status,
+                    duration_ms: Math.round(performance.now() - submitStartedAt),
+                    message_id: Number(responseData?.chat_message?.id || responseData?.message_id || 0),
+                    fase: response.ok ? 'http_ok' : 'http_not_ok'
+                });
+
                 if (!response.ok || (responseData && responseData.ok === false)) {
                     let serverMessage = responseData?.message || responseData?.errors?.mensagem?.[0] || ('HTTP ' + response.status);
                     if (response.status === 429 || String(serverMessage).toLowerCase().includes('too many attempts')) {
@@ -2551,11 +2616,21 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     throw new Error(serverMessage);
                 }
 
-                markOptimisticMessage(optimisticRow, 'sent', responseData?.chat_message?.time || 'enviado agora', responseData?.chat_message || null);
+                markOptimisticMessage(optimisticRow, 'sent', 'agora');
+                if (responseData?.chat_message) {
+                    applyServerMessageToOptimistic(optimisticRow, responseData.chat_message);
+                }
+                portalDebug('chat_after_success_poll', {
+                    message_id: Number(responseData?.chat_message?.id || responseData?.message_id || 0),
+                    fase: 'poll_imediato'
+                });
+                pollPublicChatState();
+                window.setTimeout(pollPublicChatState, 350);
                 setInlineFeedback(form, '', 'success');
-                portalDebug('chat_ajax_success', { status: response.status });
+                portalDebug('chat_ajax_success', { status: response.status, duration_ms: Math.round(performance.now() - submitStartedAt), message_id: Number(responseData?.chat_message?.id || responseData?.message_id || 0) });
             } catch (error) {
                 markOptimisticMessage(optimisticRow, 'failed', 'não enviado');
+                portalDebug('chat_ajax_error', { erro: String(error && error.message ? error.message : error), duration_ms: Math.round(performance.now() - submitStartedAt) });
                 const errorMessage = error?.message && !String(error.message).startsWith('HTTP')
                     ? error.message
                     : 'Não foi possível enviar agora. Sua mensagem ficou na tela; tente enviar novamente.';
@@ -2563,6 +2638,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 showClientToast(errorMessage, 'error');
                 portalDebug('chat_ajax_error', { message: error?.message || String(error) });
             } finally {
+                clientChatSendingBusy = false;
                 form.classList.remove('is-processing');
             }
         });

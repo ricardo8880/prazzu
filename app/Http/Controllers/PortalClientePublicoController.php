@@ -66,6 +66,13 @@ class PortalClientePublicoController extends Controller
             'type' => ['nullable', 'string', 'max:80'],
             'tamanhoMensagem' => ['nullable', 'integer'],
             'quantidadeArquivos' => ['nullable', 'integer'],
+            'duration_ms' => ['nullable', 'numeric'],
+            'status' => ['nullable', 'integer'],
+            'message_id' => ['nullable', 'integer'],
+            'total_mensagens' => ['nullable', 'integer'],
+            'ultimo_id' => ['nullable', 'integer'],
+            'erro' => ['nullable', 'string', 'max:1000'],
+            'fase' => ['nullable', 'string', 'max:120'],
         ]);
 
         Log::info('[PORTAL_CLIENTE_PUBLICO_DEBUG] ' . ($payload['step'] ?? 'browser'), array_merge([
@@ -81,6 +88,7 @@ class PortalClientePublicoController extends Controller
 
     public function digitando(Request $request, string $token): JsonResponse
     {
+        $inicio = microtime(true);
         $empresa = $this->empresaPorToken($token);
 
         abort_if(! $empresa, 404);
@@ -97,16 +105,34 @@ class PortalClientePublicoController extends Controller
             'timestamp' => now()->timestamp,
         ], now()->addSeconds(10));
 
+        Log::info('[PORTAL_CHAT_CLIENTE_DIGITANDO] estado', [
+            'empresa_id' => (int) $empresa->id,
+            'token_hash' => hash('sha256', $token),
+            'nome_informado' => $nome !== '',
+            'ip' => $request->ip(),
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
+
         return response()->json(['ok' => true]);
     }
 
     public function mensagem(Request $request, string $token): RedirectResponse|JsonResponse
     {
+        $inicio = microtime(true);
         $empresa = $this->empresaPorToken($token);
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
+
+        Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] inicio', [
+            'empresa_id' => (int) $empresa->id,
+            'token_hash' => hash('sha256', $token),
+            'ip' => $request->ip(),
+            'ajax' => $this->querRespostaJsonPortal($request),
+            'tamanho_mensagem' => strlen((string) $request->input('mensagem', '')),
+            'quantidade_anexos' => count(array_filter($request->file('anexos', []))),
+        ]);
 
         $validator = Validator::make($request->all(), [
             'nome' => ['nullable', 'string', 'min:2', 'max:255', 'not_regex:/^\s*$/'],
@@ -152,6 +178,13 @@ class PortalClientePublicoController extends Controller
         });
 
         if ($validator->fails()) {
+            Log::warning('[PORTAL_CHAT_CLIENTE_ENVIO] validacao_falhou', [
+                'empresa_id' => (int) $empresa->id,
+                'token_hash' => hash('sha256', $token),
+                'erros' => $validator->errors()->toArray(),
+                'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+            ]);
+
             if ($this->querRespostaJsonPortal($request)) {
                 return response()->json([
                     'ok' => false,
@@ -171,6 +204,14 @@ class PortalClientePublicoController extends Controller
 
         try {
             foreach ($arquivos as $arquivo) {
+                $inicioAnexo = microtime(true);
+                Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] anexo_inicio', [
+                    'empresa_id' => (int) $empresa->id,
+                    'nome' => $arquivo->getClientOriginalName(),
+                    'mime' => $arquivo->getClientMimeType(),
+                    'tamanho_bytes' => $arquivo->getSize(),
+                ]);
+
                 $path = $arquivo->store('portal-cliente/chat', 'public');
 
                 if (! $path) {
@@ -185,10 +226,17 @@ class PortalClientePublicoController extends Controller
                     'tipo' => str_starts_with((string) $arquivo->getClientMimeType(), 'image/') ? 'imagem' : 'documento',
                     'download_url' => asset('storage/' . $path),
                 ];
+
+                Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] anexo_fim', [
+                    'empresa_id' => (int) $empresa->id,
+                    'path' => $path,
+                    'duracao_ms' => round((microtime(true) - $inicioAnexo) * 1000, 2),
+                ]);
             }
 
             $mensagemCriada = null;
 
+            $inicioTransacao = microtime(true);
             DB::transaction(function () use ($empresa, $data, $anexosArmazenados, &$mensagemCriada): void {
                 $texto = trim((string) ($data['mensagem'] ?? ''));
                 $textoFinal = $this->mensagemComAnexos($texto, $anexosArmazenados);
@@ -205,19 +253,50 @@ class PortalClientePublicoController extends Controller
                 $mensagemCriada = $mensagem;
             });
 
+            Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] transacao_fim', [
+                'empresa_id' => (int) $empresa->id,
+                'mensagem_id' => $mensagemCriada instanceof PortalMensagem ? (int) $mensagemCriada->id : null,
+                'quantidade_anexos' => count($anexosArmazenados),
+                'duracao_transacao_ms' => round((microtime(true) - $inicioTransacao) * 1000, 2),
+                'duracao_total_ate_salvar_ms' => round((microtime(true) - $inicio) * 1000, 2),
+            ]);
+
             if ($mensagemCriada instanceof PortalMensagem) {
-                try {
-                    app(AtendimentoPortalService::class)->registrarMensagem($mensagemCriada);
-                } catch (Throwable $atendimentoException) {
-                    Log::warning('Mensagem do portal público salva, mas não foi possível gerar/atualizar atendimento operacional.', [
-                        'empresa_id' => (int) $empresa->id,
-                        'mensagem_id' => (int) $mensagemCriada->id,
-                        'token_hash' => hash('sha256', $token),
-                        'message' => $atendimentoException->getMessage(),
-                        'file' => $atendimentoException->getFile(),
-                        'line' => $atendimentoException->getLine(),
-                    ]);
-                }
+                $mensagemIdAtendimento = (int) $mensagemCriada->id;
+                $empresaIdAtendimento = (int) $empresa->id;
+                $tokenHashAtendimento = hash('sha256', $token);
+
+                app()->terminating(function () use ($mensagemIdAtendimento, $empresaIdAtendimento, $tokenHashAtendimento): void {
+                    try {
+                        $inicioAtendimento = microtime(true);
+                        Log::info('[PORTAL_CHAT_CLIENTE_ATENDIMENTO] inicio_terminating', [
+                            'empresa_id' => $empresaIdAtendimento,
+                            'mensagem_id' => $mensagemIdAtendimento,
+                            'token_hash' => $tokenHashAtendimento,
+                        ]);
+
+                        $mensagemAtendimento = PortalMensagem::find($mensagemIdAtendimento);
+
+                        if ($mensagemAtendimento instanceof PortalMensagem) {
+                            app(AtendimentoPortalService::class)->registrarMensagem($mensagemAtendimento);
+                        }
+
+                        Log::info('[PORTAL_CHAT_CLIENTE_ATENDIMENTO] fim_terminating', [
+                            'empresa_id' => $empresaIdAtendimento,
+                            'mensagem_id' => $mensagemIdAtendimento,
+                            'duracao_ms' => round((microtime(true) - $inicioAtendimento) * 1000, 2),
+                        ]);
+                    } catch (Throwable $atendimentoException) {
+                        Log::warning('Mensagem do portal público salva, mas não foi possível gerar/atualizar atendimento operacional.', [
+                            'empresa_id' => $empresaIdAtendimento,
+                            'mensagem_id' => $mensagemIdAtendimento,
+                            'token_hash' => $tokenHashAtendimento,
+                            'message' => $atendimentoException->getMessage(),
+                            'file' => $atendimentoException->getFile(),
+                            'line' => $atendimentoException->getLine(),
+                        ]);
+                    }
+                });
             }
         } catch (Throwable $exception) {
             foreach ($anexosArmazenados as $anexo) {
@@ -247,6 +326,14 @@ class PortalClientePublicoController extends Controller
 
         Cache::forget($this->cacheKeyClienteDigitando((int) $empresa->id));
 
+        Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] fim_resposta', [
+            'empresa_id' => (int) $empresa->id,
+            'token_hash' => hash('sha256', $token),
+            'mensagem_id' => $mensagemCriada instanceof PortalMensagem ? (int) $mensagemCriada->id : null,
+            'ajax' => $this->querRespostaJsonPortal($request),
+            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
+
         if ($this->querRespostaJsonPortal($request)) {
             return response()->json([
                 'ok' => true,
@@ -271,6 +358,7 @@ class PortalClientePublicoController extends Controller
 
     public function estadoChat(string $token): JsonResponse
     {
+        $inicio = microtime(true);
         $empresa = $this->empresaPorToken($token);
 
         abort_if(! $empresa, 404);
@@ -280,51 +368,27 @@ class PortalClientePublicoController extends Controller
 
         $this->registrarVisualizacaoCliente($empresaId);
 
-        $mensagens = $this->mensagensChatTempoReal($empresaId);
+        $mensagens = $this->mensagensTempoReal($empresaId);
+        $supportTyping = $this->suporteEstaDigitando($empresaId);
+        $supportTypingName = $this->nomeSuporteDigitando($empresaId);
+
+        Log::info('[PORTAL_CHAT_CLIENTE_ESTADO] fim', [
+            'empresa_id' => $empresaId,
+            'token_hash' => hash('sha256', $token),
+            'total_mensagens' => count($mensagens),
+            'ultimo_id' => collect($mensagens)->max('id'),
+            'suporte_digitando' => $supportTyping,
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         return response()->json([
             'ok' => true,
             'messages' => $mensagens,
-            'support_typing' => $this->suporteEstaDigitando($empresaId),
-            'support_typing_name' => $this->nomeSuporteDigitando($empresaId),
+            'support_typing' => $supportTyping,
+            'support_typing_name' => $supportTypingName,
             'support_seen_until_id' => Cache::get($this->cacheKeyVisualizadoCliente($empresaId)),
             'client_seen_until_id' => Cache::get($this->cacheKeyVisualizadoSuporte($empresaId)),
         ]);
-    }
-
-    /**
-     * Busca somente as mensagens necessárias para o estado do chat público.
-     * Evita carregar todo o PortalClienteData a cada polling do navegador.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function mensagensChatTempoReal(int $empresaId): array
-    {
-        if (! CachedSchema::hasTable('portal_mensagens')) {
-            return [];
-        }
-
-        return PortalMensagem::query()
-            ->where('empresa_id', $empresaId)
-            ->when(
-                CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
-                fn ($query) => $query->where('conversa_status', 'aberta')
-            )
-            ->oldest()
-            ->limit(80)
-            ->get()
-            ->map(fn (PortalMensagem $mensagem): array => $this->formatarMensagemTempoReal([
-                'id' => $mensagem->id,
-                'source' => 'portal_mensagens',
-                'nome' => $mensagem->nome,
-                'email' => $mensagem->email,
-                'mensagem' => $mensagem->mensagem,
-                'origem' => $mensagem->origem,
-                'conversa_status' => $mensagem->conversa_status ?? 'aberta',
-                'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
-            ]))
-            ->values()
-            ->all();
     }
 
     private function registrarVisualizacaoCliente(int $empresaId): void
@@ -364,6 +428,37 @@ class PortalClientePublicoController extends Controller
         $estado = Cache::get($this->cacheKeySuporteDigitando($empresaId));
 
         return is_array($estado) ? trim((string) ($estado['nome'] ?? 'Suporte')) : null;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function mensagensTempoReal(int $empresaId): array
+    {
+        if (! CachedSchema::hasTable('portal_mensagens')) {
+            return [];
+        }
+
+        return PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->when(
+                CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
+                fn ($query) => $query->where('conversa_status', 'aberta')
+            )
+            ->oldest()
+            ->limit(120)
+            ->get()
+            ->map(fn (PortalMensagem $mensagem): array => $this->formatarMensagemTempoReal([
+                'id' => $mensagem->id,
+                'origem' => $mensagem->origem,
+                'css_class' => in_array((string) $mensagem->origem, ['cliente', 'portal_cliente', 'client'], true) ? 'cliente' : 'equipe',
+                'nome' => $mensagem->nome,
+                'mensagem_texto' => $mensagem->mensagem,
+                'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
+                'attachments' => [],
+            ]))
+            ->values()
+            ->all();
     }
 
     private function formatarMensagemTempoReal(array $mensagem): array

@@ -1605,47 +1605,44 @@
 
             function renderMessages(messages, supportSeenUntil, clientSeenUntil) {
                 if (!chat || !Array.isArray(messages)) return;
+
+                const serverIds = messages.map(function (message) { return String(message.id || ''); }).join('|');
+                const domRows = Array.from(chat.querySelectorAll('[data-message-id]'));
+                const domIds = domRows
+                    .filter(function (row) { return !String(row.dataset.messageId || '').startsWith('tmp-'); })
+                    .map(function (row) { return String(row.dataset.messageId || ''); })
+                    .join('|');
                 const signature = messages.map(function (m) { return [m.id, m.class, m.time, m.text].join(':'); }).join('|');
+                const hasSendingRows = domRows.some(function (row) { return row.classList.contains('is-sending'); });
 
-                chat.querySelectorAll('[data-message-id]').forEach(function (row) {
-                    const id = Number(row.dataset.messageId || 0);
-                    if (id) knownMessageIds.add(id);
+                console.info('[PORTAL_CHAT_EQUIPE_RENDER]', {
+                    domIds: domIds,
+                    serverIds: serverIds,
+                    totalDom: domRows.length,
+                    totalServer: messages.length,
+                    hasSendingRows: hasSendingRows
                 });
 
-                const incoming = messages.filter(function (m) {
-                    const id = Number(m.id || 0);
-                    return id && !knownMessageIds.has(id);
-                });
-
-                if (incoming.length) {
-                    const nearBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 220;
-                    const empty = chat.querySelector('.pc-empty');
-                    if (empty) empty.remove();
-                    incoming.forEach(function (message) {
-                        knownMessageIds.add(Number(message.id || 0));
-                        const pendingSameText = Array.from(chat.querySelectorAll('.pc-message.is-sending .pc-bubble-text')).find(function (node) {
-                            return node.textContent.trim() === String(message.text || '').trim();
-                        });
-                        if (pendingSameText && message.class === 'equipe') {
-                            const row = pendingSameText.closest('.pc-message');
-                            row.classList.remove('is-sending');
-                            row.dataset.messageId = String(message.id || 0);
-                            const status = row.querySelector('[data-seen-status]');
-                            if (status) status.textContent = 'Enviada';
-                            return;
-                        }
-                        chat.insertAdjacentHTML('beforeend', renderMessage(message));
-                    });
-                    if (nearBottom || !document.activeElement?.classList.contains('pc-composer-textarea')) {
-                        chat.scrollTop = chat.scrollHeight;
-                    }
-                } else if (chat.querySelectorAll('[data-message-id]').length === 0 && messages.length) {
-                    chat.innerHTML = messages.map(renderMessage).join('');
-                    messages.forEach(function (message) { if (message.id) knownMessageIds.add(Number(message.id)); });
-                    chat.scrollTop = chat.scrollHeight;
+                if (serverIds === domIds && signature === lastSignature && !hasSendingRows) {
+                    updateSeen(supportSeenUntil, clientSeenUntil);
+                    return;
                 }
 
+                if (messages.length === 0) {
+                    chat.innerHTML = '<div class="pc-empty">Nenhuma mensagem ainda.</div>';
+                    knownMessageIds.clear();
+                    lastSignature = signature;
+                    updateSeen(supportSeenUntil, clientSeenUntil);
+                    return;
+                }
+
+                chat.innerHTML = messages.map(renderMessage).join('');
+                knownMessageIds.clear();
+                messages.forEach(function (message) {
+                    if (message.id) knownMessageIds.add(Number(message.id));
+                });
                 lastSignature = signature;
+                chat.scrollTop = chat.scrollHeight;
                 updateSeen(supportSeenUntil, clientSeenUntil);
             }
 
@@ -1708,8 +1705,8 @@
 
             window.portalClienteAvisarSuporteDigitando = function (text) {
                 if (!typingUrl || !window.fetch) return;
-                window.clearTimeout(typingState.timer);
-                typingState.timer = window.setTimeout(function () {
+
+                const sendTyping = function () {
                     const now = Date.now();
                     if (now - typingState.lastSent < 2500) return;
                     typingState.lastSent = now;
@@ -1720,7 +1717,15 @@
                         credentials: 'same-origin',
                         keepalive: true
                     }).catch(function () {});
-                }, 450);
+                };
+
+                if (Date.now() - typingState.lastSent >= 2500) {
+                    sendTyping();
+                    return;
+                }
+
+                window.clearTimeout(typingState.timer);
+                typingState.timer = window.setTimeout(sendTyping, 350);
             };
 
             pollChatState();

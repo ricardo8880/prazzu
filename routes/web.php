@@ -21,6 +21,7 @@ use App\Support\CachedSchema;
 use App\Support\PortalClienteData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -101,23 +102,26 @@ Route::middleware(['auth:portal_cliente'])->group(function (): void {
 
 Route::middleware(['auth'])->group(function (): void {
     Route::get('/admin/portal-cliente/chat-estado', function (Request $request) {
+        $inicio = microtime(true);
         $empresaId = $request->integer('empresa');
 
+        Log::info('[PORTAL_CHAT_EQUIPE_ESTADO] inicio', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'ip' => $request->ip(),
+            'ajax' => $request->ajax(),
+        ]);
+
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
+        abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
-        if (CachedSchema::hasTable('portal_mensagens')) {
-            $ultimoIdCliente = PortalMensagem::query()
-                ->where('empresa_id', $empresaId)
-                ->where(function ($query): void {
-                    $query->where('origem', 'cliente')
-                        ->orWhere('origem', 'portal_cliente')
-                        ->orWhere('origem', 'client');
-                })
-                ->max('id');
+        $ultimoIdCliente = PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->whereIn('origem', ['cliente', 'portal_cliente', 'client'])
+            ->max('id');
 
-            if ($ultimoIdCliente) {
-                Cache::put('portal_suporte_visualizou_cliente_empresa_' . $empresaId, (int) $ultimoIdCliente, now()->addHours(8));
-            }
+        if ($ultimoIdCliente) {
+            Cache::put('portal_suporte_visualizou_cliente_empresa_' . $empresaId, (int) $ultimoIdCliente, now()->addHours(8));
         }
 
         $mensagens = PortalMensagem::query()
@@ -127,23 +131,23 @@ Route::middleware(['auth'])->group(function (): void {
                 fn ($query) => $query->where('conversa_status', 'aberta')
             )
             ->oldest()
-            ->limit(80)
+            ->limit(120)
             ->get()
             ->map(function (PortalMensagem $mensagem): array {
-                $origem = strtolower((string) $mensagem->origem);
+                $origem = (string) $mensagem->origem;
                 $isCliente = in_array($origem, ['cliente', 'portal_cliente', 'client'], true);
-                $createdAt = $mensagem->created_at;
+                $texto = trim((string) $mensagem->mensagem);
+                $nome = trim((string) $mensagem->nome);
 
                 return [
                     'id' => (int) $mensagem->id,
                     'class' => $isCliente ? 'cliente' : 'equipe',
-                    'author' => trim((string) $mensagem->nome) ?: ($isCliente ? 'Cliente' : 'Equipe'),
-                    'text' => trim((string) $mensagem->mensagem),
-                    'time' => $createdAt ? $createdAt->timezone(config('app.timezone'))->format('d/m/Y H:i') : '',
+                    'author' => $nome !== '' ? $nome : ($isCliente ? 'Cliente' : 'Equipe'),
+                    'text' => $texto,
+                    'time' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
                     'attachments' => [],
                 ];
             })
-            ->filter(fn (array $mensagem): bool => $mensagem['text'] !== '')
             ->values()
             ->all();
 
@@ -153,6 +157,15 @@ Route::middleware(['auth'])->group(function (): void {
         if (! $typingAtivo) {
             Cache::forget('portal_cliente_digitando_empresa_' . $empresaId);
         }
+
+        Log::info('[PORTAL_CHAT_EQUIPE_ESTADO] fim', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'total_mensagens' => count($mensagens),
+            'ultimo_id' => collect($mensagens)->max('id'),
+            'cliente_digitando' => $typingAtivo,
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         return response()->json([
             'ok' => true,
@@ -165,7 +178,15 @@ Route::middleware(['auth'])->group(function (): void {
     })->middleware('throttle:900,1')->name('admin.portal-cliente.chat.estado');
 
     Route::post('/admin/portal-cliente/mensagem', function (Request $request) {
+        $inicio = microtime(true);
         $empresaId = $request->integer('empresa');
+
+        Log::info('[PORTAL_CHAT_EQUIPE_ENVIO] inicio', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'ip' => $request->ip(),
+            'tamanho_mensagem' => strlen((string) $request->input('mensagem', '')),
+        ]);
 
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
@@ -194,6 +215,13 @@ Route::middleware(['auth'])->group(function (): void {
         $mensagem = PortalMensagem::create($payload);
         Cache::forget('portal_suporte_digitando_empresa_' . $empresaId);
 
+        Log::info('[PORTAL_CHAT_EQUIPE_ENVIO] mensagem_salva', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'mensagem_id' => (int) $mensagem->id,
+            'duracao_ate_salvar_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
+
         $mensagens = PortalMensagem::query()
             ->where('empresa_id', $empresaId)
             ->when(
@@ -201,25 +229,33 @@ Route::middleware(['auth'])->group(function (): void {
                 fn ($query) => $query->where('conversa_status', 'aberta')
             )
             ->oldest()
-            ->limit(80)
+            ->limit(120)
             ->get()
             ->map(function (PortalMensagem $mensagem): array {
-                $origem = strtolower((string) $mensagem->origem);
+                $origem = (string) $mensagem->origem;
                 $isCliente = in_array($origem, ['cliente', 'portal_cliente', 'client'], true);
-                $createdAt = $mensagem->created_at;
+                $texto = trim((string) $mensagem->mensagem);
+                $nome = trim((string) $mensagem->nome);
 
                 return [
                     'id' => (int) $mensagem->id,
                     'class' => $isCliente ? 'cliente' : 'equipe',
-                    'author' => trim((string) $mensagem->nome) ?: ($isCliente ? 'Cliente' : 'Equipe'),
-                    'text' => trim((string) $mensagem->mensagem),
-                    'time' => $createdAt ? $createdAt->timezone(config('app.timezone'))->format('d/m/Y H:i') : '',
+                    'author' => $nome !== '' ? $nome : ($isCliente ? 'Cliente' : 'Equipe'),
+                    'text' => $texto,
+                    'time' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
                     'attachments' => [],
                 ];
             })
-            ->filter(fn (array $mensagem): bool => $mensagem['text'] !== '')
             ->values()
             ->all();
+
+        Log::info('[PORTAL_CHAT_EQUIPE_ENVIO] fim', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'mensagem_id' => (int) $mensagem->id,
+            'total_mensagens_retorno' => count($mensagens),
+            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         return response()->json([
             'ok' => true,
@@ -231,6 +267,7 @@ Route::middleware(['auth'])->group(function (): void {
     })->middleware('throttle:120,1')->name('admin.portal-cliente.chat.mensagem');
 
     Route::post('/admin/portal-cliente/digitando', function (Request $request) {
+        $inicio = microtime(true);
         $empresaId = $request->integer('empresa');
 
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
@@ -245,6 +282,14 @@ Route::middleware(['auth'])->group(function (): void {
                 'timestamp' => now()->timestamp,
             ], now()->addSeconds(10));
         }
+
+        Log::info('[PORTAL_CHAT_EQUIPE_DIGITANDO] estado', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'ativo' => $text !== '',
+            'tamanho_texto' => strlen($text),
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         return response()->json(['ok' => true]);
     })->middleware('throttle:600,1')->name('admin.portal-cliente.digitando');

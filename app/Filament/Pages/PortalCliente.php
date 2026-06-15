@@ -20,6 +20,7 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Log;
 use UnitEnum;
 
 class PortalCliente extends Page
@@ -94,14 +95,24 @@ class PortalCliente extends Page
     #[Renderless]
     public function registrarSuporteDigitando(?string $texto = null): void
     {
+        $inicio = microtime(true);
         $empresaId = $this->empresaIdAtualDaTela();
 
         if (! $empresaId) {
+            Log::warning('[PORTAL_CHAT_LIVEWIRE_SUPORTE_DIGITANDO] empresa_ausente', [
+                'user_id' => auth()->id(),
+                'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+            ]);
             return;
         }
 
         if (trim((string) $texto) === '') {
             Cache::forget($this->cacheKeySuporteDigitando($empresaId));
+            Log::info('[PORTAL_CHAT_LIVEWIRE_SUPORTE_DIGITANDO] limpo', [
+                'empresa_id' => $empresaId,
+                'user_id' => auth()->id(),
+                'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+            ]);
             return;
         }
 
@@ -109,6 +120,13 @@ class PortalCliente extends Page
             'nome' => auth()->user()?->name ?: 'Suporte',
             'timestamp' => now()->timestamp,
         ], now()->addSeconds(10));
+
+        Log::info('[PORTAL_CHAT_LIVEWIRE_SUPORTE_DIGITANDO] ativo', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'tamanho_texto' => strlen((string) $texto),
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
     }
 
     private function atualizarEstadoDigitando(): void
@@ -236,6 +254,14 @@ class PortalCliente extends Page
 
     public function enviarMensagem(): void
     {
+        $inicio = microtime(true);
+        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] inicio_enviarMensagem', [
+            'empresa_id' => $this->empresaSelecionadaId,
+            'user_id' => auth()->id(),
+            'tamanho_mensagem' => strlen((string) $this->chatMensagem),
+            'quantidade_anexos' => count($this->portalAnexos),
+        ]);
+
         $this->validarMensagemComAnexos('chatMensagem');
 
         if (! CachedSchema::hasTable('portal_mensagens')) {
@@ -250,17 +276,39 @@ class PortalCliente extends Page
             return;
         }
 
-        PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->chatMensagem, 'interno', $this->salvarAnexosMensagem($empresaId)));
+        $mensagem = PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->chatMensagem, 'interno', $this->salvarAnexosMensagem($empresaId)));
         Cache::forget($this->cacheKeySuporteDigitando($empresaId));
+
+        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] mensagem_salva_enviarMensagem', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'mensagem_id' => (int) $mensagem->id,
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         $this->reset(['chatMensagem', 'portalAnexos']);
         $this->atualizarConversa();
+
+        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] fim_enviarMensagem', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'mensagem_id' => (int) $mensagem->id,
+            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         Notification::make()->title('Mensagem enviada')->body('A resposta ficou visível no portal público do cliente.')->success()->send();
     }
 
     public function responderChat(): void
     {
+        $inicio = microtime(true);
+        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] inicio_responderChat', [
+            'empresa_id' => $this->empresaSelecionadaId,
+            'user_id' => auth()->id(),
+            'tamanho_mensagem' => strlen((string) $this->respostaChat),
+            'quantidade_anexos' => count($this->portalAnexos),
+        ]);
+
         $this->validarMensagemComAnexos('respostaChat');
 
         if (! CachedSchema::hasTable('portal_mensagens')) {
@@ -275,10 +323,24 @@ class PortalCliente extends Page
             return;
         }
 
-        PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->respostaChat, 'interno', $this->salvarAnexosMensagem($empresaId)));
+        $mensagem = PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->respostaChat, 'interno', $this->salvarAnexosMensagem($empresaId)));
         Cache::forget($this->cacheKeySuporteDigitando($empresaId));
+
+        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] mensagem_salva_responderChat', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'mensagem_id' => (int) $mensagem->id,
+            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
         $this->reset(['respostaChat', 'portalAnexos']);
         $this->atualizarConversa();
+
+        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] fim_responderChat', [
+            'empresa_id' => $empresaId,
+            'user_id' => auth()->id(),
+            'mensagem_id' => (int) $mensagem->id,
+            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
+        ]);
 
         Notification::make()->title('Resposta enviada')->body('A resposta ficou registrada no histórico do portal do cliente.')->success()->send();
     }
