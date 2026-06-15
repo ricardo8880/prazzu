@@ -1945,12 +1945,12 @@
     const typingState = { timer: null, lastSent: 0 };
     const debugState = { lastSent: 0, lastStep: null };
 
-    function announceClientTyping(form) {
+    function announceClientTyping(form, force = false) {
         if (!typingUrl || !window.fetch) return;
 
         const now = Date.now();
 
-        if (now - typingState.lastSent < 3000) {
+        if (!force && now - typingState.lastSent < 3000) {
             window.clearTimeout(typingState.timer);
             typingState.timer = window.setTimeout(function () {
                 announceClientTyping(form);
@@ -2155,7 +2155,11 @@
         textarea.addEventListener('keydown', function (event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
-                portalDebug('chat_enter_submit', { tamanhoMensagem: textarea.value.trim().length });
+                const tamanhoMensagem = textarea.value.trim().length;
+                if (tamanhoMensagem > 0) {
+                    announceClientTyping(form, true);
+                }
+                portalDebug('chat_enter_submit', { tamanhoMensagem: tamanhoMensagem });
                 form?.requestSubmit();
             }
         });
@@ -2282,12 +2286,16 @@
         if (counter) counter.textContent = '0';
     }
 
-    function markOptimisticMessage(row, status, text) {
+    function markOptimisticMessage(row, status, text, messageData = null) {
         if (!row) return;
         row.classList.toggle('is-sent', status === 'sent');
         row.classList.toggle('is-failed', status === 'failed');
+        row.classList.toggle('is-optimistic', status !== 'sent');
+        if (messageData?.id) {
+            row.dataset.messageId = String(messageData.id);
+        }
         const time = row.querySelector('.bubble-time');
-        if (time) time.textContent = text || (status === 'sent' ? 'enviado agora' : 'falha no envio');
+        if (time) time.textContent = text || messageData?.time || (status === 'sent' ? 'enviado agora' : 'falha no envio');
     }
 
 
@@ -2435,7 +2443,7 @@
     }
 
     pollPublicChatState();
-    window.setInterval(pollPublicChatState, 1000);
+    window.setInterval(pollPublicChatState, 3000);
     document.addEventListener('visibilitychange', function () {
         if (!document.hidden) pollPublicChatState();
     });
@@ -2505,8 +2513,7 @@
                     throw new Error(serverMessage);
                 }
 
-                markOptimisticMessage(optimisticRow, 'sent', 'agora');
-                if (responseData?.chat_message) { pollPublicChatState(); }
+                markOptimisticMessage(optimisticRow, 'sent', responseData?.chat_message?.time || 'enviado agora', responseData?.chat_message || null);
                 setInlineFeedback(form, '', 'success');
                 portalDebug('chat_ajax_success', { status: response.status });
             } catch (error) {

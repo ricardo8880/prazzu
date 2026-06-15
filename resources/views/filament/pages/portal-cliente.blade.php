@@ -1607,51 +1607,45 @@
                 if (!chat || !Array.isArray(messages)) return;
                 const signature = messages.map(function (m) { return [m.id, m.class, m.time, m.text].join(':'); }).join('|');
 
-                if (!lastSignature) {
-                    chat.querySelectorAll('[data-message-id]').forEach(function (row) {
-                        const id = Number(row.dataset.messageId || 0);
-                        if (id) knownMessageIds.add(id);
-                    });
-                    lastSignature = signature;
-                    updateSeen(supportSeenUntil, clientSeenUntil);
-                    return;
-                }
+                chat.querySelectorAll('[data-message-id]').forEach(function (row) {
+                    const id = Number(row.dataset.messageId || 0);
+                    if (id) knownMessageIds.add(id);
+                });
 
-                if (signature !== lastSignature) {
-                    const incoming = messages.filter(function (m) {
-                        const id = Number(m.id || 0);
-                        return id && !knownMessageIds.has(id);
-                    });
+                const incoming = messages.filter(function (m) {
+                    const id = Number(m.id || 0);
+                    return id && !knownMessageIds.has(id);
+                });
 
-                    if (incoming.length) {
-                        const nearBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 220;
-                        const empty = chat.querySelector('.pc-empty');
-                        if (empty) empty.remove();
-                        incoming.forEach(function (message) {
-                            knownMessageIds.add(Number(message.id || 0));
-                            const pendingSameText = Array.from(chat.querySelectorAll('.pc-message.is-sending .pc-bubble-text')).find(function (node) {
-                                return node.textContent.trim() === String(message.text || '').trim();
-                            });
-                            if (pendingSameText && message.class === 'equipe') {
-                                const row = pendingSameText.closest('.pc-message');
-                                row.classList.remove('is-sending');
-                                row.dataset.messageId = String(message.id || 0);
-                                const status = row.querySelector('[data-seen-status]');
-                                if (status) status.textContent = 'Enviada';
-                                return;
-                            }
-                            chat.insertAdjacentHTML('beforeend', renderMessage(message));
+                if (incoming.length) {
+                    const nearBottom = chat.scrollHeight - chat.scrollTop - chat.clientHeight < 220;
+                    const empty = chat.querySelector('.pc-empty');
+                    if (empty) empty.remove();
+                    incoming.forEach(function (message) {
+                        knownMessageIds.add(Number(message.id || 0));
+                        const pendingSameText = Array.from(chat.querySelectorAll('.pc-message.is-sending .pc-bubble-text')).find(function (node) {
+                            return node.textContent.trim() === String(message.text || '').trim();
                         });
-                        if (nearBottom || !document.activeElement?.classList.contains('pc-composer-textarea')) {
-                            chat.scrollTop = chat.scrollHeight;
+                        if (pendingSameText && message.class === 'equipe') {
+                            const row = pendingSameText.closest('.pc-message');
+                            row.classList.remove('is-sending');
+                            row.dataset.messageId = String(message.id || 0);
+                            const status = row.querySelector('[data-seen-status]');
+                            if (status) status.textContent = 'Enviada';
+                            return;
                         }
-                    } else if (chat.querySelectorAll('[data-message-id]').length === 0 && messages.length) {
-                        chat.innerHTML = messages.map(renderMessage).join('');
-                        messages.forEach(function (message) { if (message.id) knownMessageIds.add(Number(message.id)); });
+                        chat.insertAdjacentHTML('beforeend', renderMessage(message));
+                    });
+                    if (nearBottom || !document.activeElement?.classList.contains('pc-composer-textarea')) {
                         chat.scrollTop = chat.scrollHeight;
                     }
-                    lastSignature = signature;
+                } else if (chat.querySelectorAll('[data-message-id]').length === 0 && messages.length) {
+                    chat.innerHTML = messages.map(renderMessage).join('');
+                    messages.forEach(function (message) { if (message.id) knownMessageIds.add(Number(message.id)); });
+                    chat.scrollTop = chat.scrollHeight;
                 }
+
+                lastSignature = signature;
                 updateSeen(supportSeenUntil, clientSeenUntil);
             }
 

@@ -120,26 +120,32 @@ Route::middleware(['auth'])->group(function (): void {
             }
         }
 
-        $dados = PortalClienteData::data($empresaId, true);
-        $mensagens = collect($dados['chat'] ?? [])->map(function (array $mensagem): array {
-            $classe = (string) ($mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente'));
-            $texto = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
-            $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ($classe === 'equipe' ? 'Equipe' : 'Cliente')));
+        $mensagens = PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->when(
+                CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
+                fn ($query) => $query->where('conversa_status', 'aberta')
+            )
+            ->oldest()
+            ->limit(80)
+            ->get()
+            ->map(function (PortalMensagem $mensagem): array {
+                $origem = strtolower((string) $mensagem->origem);
+                $isCliente = in_array($origem, ['cliente', 'portal_cliente', 'client'], true);
+                $createdAt = $mensagem->created_at;
 
-            return [
-                'id' => (int) ($mensagem['id'] ?? 0),
-                'class' => $classe === 'equipe' ? 'equipe' : 'cliente',
-                'author' => $nome !== '' ? $nome : ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
-                'text' => $texto,
-                'time' => (string) ($mensagem['created_at_label'] ?? ''),
-                'attachments' => collect($mensagem['attachments'] ?? [])->map(fn ($anexo): array => [
-                    'url' => (string) ($anexo['url'] ?? ''),
-                    'name' => (string) ($anexo['nome'] ?? $anexo['name'] ?? 'Anexo'),
-                    'size' => (string) ($anexo['size_label'] ?? ($anexo['mime_type'] ?? 'arquivo')),
-                    'is_image' => (bool) ($anexo['is_image'] ?? false),
-                ])->values()->all(),
-            ];
-        })->values()->all();
+                return [
+                    'id' => (int) $mensagem->id,
+                    'class' => $isCliente ? 'cliente' : 'equipe',
+                    'author' => trim((string) $mensagem->nome) ?: ($isCliente ? 'Cliente' : 'Equipe'),
+                    'text' => trim((string) $mensagem->mensagem),
+                    'time' => $createdAt ? $createdAt->timezone(config('app.timezone'))->format('d/m/Y H:i') : '',
+                    'attachments' => [],
+                ];
+            })
+            ->filter(fn (array $mensagem): bool => $mensagem['text'] !== '')
+            ->values()
+            ->all();
 
         $typing = Cache::get('portal_cliente_digitando_empresa_' . $empresaId);
         $typingAtivo = is_array($typing) && (int) ($typing['timestamp'] ?? 0) >= now()->subSeconds(8)->timestamp;
@@ -188,26 +194,32 @@ Route::middleware(['auth'])->group(function (): void {
         $mensagem = PortalMensagem::create($payload);
         Cache::forget('portal_suporte_digitando_empresa_' . $empresaId);
 
-        $dadosChat = PortalClienteData::data($empresaId, true);
-        $mensagens = collect($dadosChat['chat'] ?? [])->map(function (array $mensagem): array {
-            $classe = (string) ($mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente'));
-            $texto = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
-            $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ($classe === 'equipe' ? 'Equipe' : 'Cliente')));
+        $mensagens = PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->when(
+                CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
+                fn ($query) => $query->where('conversa_status', 'aberta')
+            )
+            ->oldest()
+            ->limit(80)
+            ->get()
+            ->map(function (PortalMensagem $mensagem): array {
+                $origem = strtolower((string) $mensagem->origem);
+                $isCliente = in_array($origem, ['cliente', 'portal_cliente', 'client'], true);
+                $createdAt = $mensagem->created_at;
 
-            return [
-                'id' => (int) ($mensagem['id'] ?? 0),
-                'class' => $classe === 'equipe' ? 'equipe' : 'cliente',
-                'author' => $nome !== '' ? $nome : ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
-                'text' => $texto,
-                'time' => (string) ($mensagem['created_at_label'] ?? ''),
-                'attachments' => collect($mensagem['attachments'] ?? [])->map(fn ($anexo): array => [
-                    'url' => (string) ($anexo['url'] ?? ''),
-                    'name' => (string) ($anexo['nome'] ?? $anexo['name'] ?? 'Anexo'),
-                    'size' => (string) ($anexo['size_label'] ?? ($anexo['mime_type'] ?? 'arquivo')),
-                    'is_image' => (bool) ($anexo['is_image'] ?? false),
-                ])->values()->all(),
-            ];
-        })->values()->all();
+                return [
+                    'id' => (int) $mensagem->id,
+                    'class' => $isCliente ? 'cliente' : 'equipe',
+                    'author' => trim((string) $mensagem->nome) ?: ($isCliente ? 'Cliente' : 'Equipe'),
+                    'text' => trim((string) $mensagem->mensagem),
+                    'time' => $createdAt ? $createdAt->timezone(config('app.timezone'))->format('d/m/Y H:i') : '',
+                    'attachments' => [],
+                ];
+            })
+            ->filter(fn (array $mensagem): bool => $mensagem['text'] !== '')
+            ->values()
+            ->all();
 
         return response()->json([
             'ok' => true,

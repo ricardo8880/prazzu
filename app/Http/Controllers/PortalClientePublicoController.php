@@ -280,11 +280,7 @@ class PortalClientePublicoController extends Controller
 
         $this->registrarVisualizacaoCliente($empresaId);
 
-        $dados = PortalClienteData::data($empresaId, true);
-        $mensagens = collect($dados['chat'] ?? [])
-            ->map(fn (array $mensagem): array => $this->formatarMensagemTempoReal($mensagem))
-            ->values()
-            ->all();
+        $mensagens = $this->mensagensChatTempoReal($empresaId);
 
         return response()->json([
             'ok' => true,
@@ -294,6 +290,41 @@ class PortalClientePublicoController extends Controller
             'support_seen_until_id' => Cache::get($this->cacheKeyVisualizadoCliente($empresaId)),
             'client_seen_until_id' => Cache::get($this->cacheKeyVisualizadoSuporte($empresaId)),
         ]);
+    }
+
+    /**
+     * Busca somente as mensagens necessárias para o estado do chat público.
+     * Evita carregar todo o PortalClienteData a cada polling do navegador.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function mensagensChatTempoReal(int $empresaId): array
+    {
+        if (! CachedSchema::hasTable('portal_mensagens')) {
+            return [];
+        }
+
+        return PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->when(
+                CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
+                fn ($query) => $query->where('conversa_status', 'aberta')
+            )
+            ->oldest()
+            ->limit(80)
+            ->get()
+            ->map(fn (PortalMensagem $mensagem): array => $this->formatarMensagemTempoReal([
+                'id' => $mensagem->id,
+                'source' => 'portal_mensagens',
+                'nome' => $mensagem->nome,
+                'email' => $mensagem->email,
+                'mensagem' => $mensagem->mensagem,
+                'origem' => $mensagem->origem,
+                'conversa_status' => $mensagem->conversa_status ?? 'aberta',
+                'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
+            ]))
+            ->values()
+            ->all();
     }
 
     private function registrarVisualizacaoCliente(int $empresaId): void
