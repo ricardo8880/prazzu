@@ -6,6 +6,7 @@ use App\Models\PortalDocumento;
 use App\Models\PortalMensagem;
 use App\Models\PortalSolicitacao;
 use App\Services\ItemControleStatusService;
+use App\Support\PortalChatMessageContract;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -430,20 +431,16 @@ class PortalClienteData
      */
     private static function formatarMensagemChat(array $mensagem): array
     {
-        $origemNormalizada = self::normalizarStatus((string) ($mensagem['origem'] ?? 'cliente'));
-        $isCliente = in_array($origemNormalizada, ['cliente', 'portal_cliente', 'client'], true);
-        $texto = trim((string) ($mensagem['mensagem'] ?? ''));
-        $anexos = self::extrairAnexosMensagem($texto);
-
-        return array_merge($mensagem, [
-            'mensagem' => $texto,
-            'mensagem_texto' => self::removerBlocoAnexosMensagem($texto),
-            'attachments' => $anexos,
-            'has_attachments' => $anexos !== [],
-            'autor_label' => $isCliente ? 'Cliente' : 'Equipe',
-            'css_class' => $isCliente ? 'cliente' : 'equipe',
-            'created_at_timestamp' => self::timestampSeguro($mensagem['created_at'] ?? null),
+        $payload = PortalChatMessageContract::fromArray($mensagem, [
+            'empresa_id' => (int) ($mensagem['empresa_id'] ?? 0),
+            'room' => (string) ($mensagem['room'] ?? ''),
+            'room_scope' => (string) ($mensagem['room_scope'] ?? 'portal'),
         ]);
+
+        $payload['autor_label'] = $payload['class'] === 'cliente' ? 'Cliente' : 'Equipe';
+        $payload['created_at_timestamp'] = self::timestampSeguro($mensagem['created_at'] ?? null);
+
+        return $payload;
     }
 
     /**

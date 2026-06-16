@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PortalMensagem;
+use App\Support\PortalChatMessageContract;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -644,7 +645,7 @@ class PortalClienteAreaController extends Controller
         $room = 'empresa:' . $empresaId . ':atendimento:' . $atendimentoId;
         $actor = $item['is_cliente'] ? 'cliente' : 'suporte';
 
-        return [
+        return PortalChatMessageContract::fromArray([
             'id' => $messageId,
             'message_id' => $messageId,
             'interaction_id' => (int) ($item['id'] ?? 0),
@@ -655,7 +656,6 @@ class PortalClienteAreaController extends Controller
             'room' => $room,
             'room_scope' => 'atendimento',
             'actor' => $actor,
-            'server_signature' => $this->socketMessageSignature($empresaId, $room, $actor, $messageId),
             'origem' => $item['is_cliente'] ? 'cliente' : 'suporte',
             'nome' => $item['is_cliente'] ? 'Você' : 'Equipe de suporte',
             'tipo' => (string) ($item['tipo'] ?? 'resposta'),
@@ -672,7 +672,11 @@ class PortalClienteAreaController extends Controller
                     'is_image' => (bool) ($anexo['is_imagem'] ?? false),
                 ];
             })->values()->all(),
-        ];
+        ], [
+            'empresa_id' => $empresaId,
+            'room' => $room,
+            'room_scope' => 'atendimento',
+        ]);
     }
 
 

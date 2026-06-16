@@ -19,6 +19,7 @@ use App\Services\ItemControlePdfService;
 use App\Models\PortalMensagem;
 use App\Support\CachedSchema;
 use App\Support\PortalClienteData;
+use App\Support\PortalChatMessageContract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -159,55 +160,6 @@ Route::middleware(['auth'])->group(function (): void {
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
-        $formatarBytes = static function (int $bytes): string {
-            if ($bytes >= 1048576) {
-                return number_format($bytes / 1048576, 1, ',', '.') . ' MB';
-            }
-
-            if ($bytes >= 1024) {
-                return number_format($bytes / 1024, 1, ',', '.') . ' KB';
-            }
-
-            return $bytes . ' B';
-        };
-
-        $extrairAnexosMensagem = static function (string $texto) use ($formatarBytes): array {
-            if ($texto === '' || ! str_contains($texto, 'Anexos enviados:')) {
-                return [];
-            }
-
-            preg_match_all('/^-\s*(.+?)\s*\|\s*(https?:\/\/\S+)(?:\s*\|\s*([^|\r\n]+))?(?:\s*\|\s*([^\r\n]+))?/mi', $texto, $matches, PREG_SET_ORDER);
-
-            return collect($matches)
-                ->map(function (array $match) use ($formatarBytes): array {
-                    $nome = trim((string) ($match[1] ?? 'Anexo')) ?: 'Anexo';
-                    $url = trim((string) ($match[2] ?? ''));
-                    $mime = trim((string) ($match[3] ?? ''));
-                    $size = (int) trim((string) ($match[4] ?? '0'));
-
-                    return [
-                        'url' => $url,
-                        'name' => $nome,
-                        'size' => $size > 0 ? $formatarBytes($size) : ($mime !== '' ? $mime : 'arquivo'),
-                        'mime_type' => $mime,
-                        'is_image' => str_starts_with($mime, 'image/'),
-                    ];
-                })
-                ->filter(fn (array $anexo): bool => $anexo['url'] !== '')
-                ->values()
-                ->all();
-        };
-
-        $removerBlocoAnexosMensagem = static function (string $texto): string {
-            if ($texto === '' || ! str_contains($texto, 'Anexos enviados:')) {
-                return $texto;
-            }
-
-            $limpo = preg_replace('/\n?Anexos enviados:\s*(?:\n-\s*.+?(?:\r?\n|$))+/si', '', $texto) ?? $texto;
-
-            return trim($limpo) !== '' ? trim($limpo) : 'Arquivo(s) enviado(s).';
-        };
-
         if (CachedSchema::hasColumn('portal_mensagens', 'visualizada_em')) {
             PortalMensagem::query()
                 ->where('empresa_id', $empresaId)
@@ -226,34 +178,19 @@ Route::middleware(['auth'])->group(function (): void {
             ->orderBy('id')
             ->limit(50)
             ->get()
-            ->map(function (PortalMensagem $mensagem) use ($empresaId, $extrairAnexosMensagem, $removerBlocoAnexosMensagem): array {
-                $origem = strtolower((string) $mensagem->origem);
-                $classe = in_array($origem, ['cliente', 'portal_cliente', 'client'], true) ? 'cliente' : 'equipe';
-                $textoOriginal = trim((string) $mensagem->mensagem);
-                $textoLimpo = $removerBlocoAnexosMensagem($textoOriginal);
-                $anexos = $extrairAnexosMensagem($textoOriginal);
-                $room = 'empresa:' . $empresaId . ':portal';
-                $actor = $classe === 'cliente' ? 'cliente' : 'suporte';
-
-                return [
-                    'id' => (int) $mensagem->id,
-                    'message_id' => (int) $mensagem->id,
-                    'empresa_id' => $empresaId,
-                    'room' => $room,
-                    'room_scope' => 'portal',
-                    'class' => $classe,
-                    'actor' => $actor,
-                    'server_signature' => hash_hmac('sha256', $empresaId . '|' . $room . '|' . $actor . '|' . (int) $mensagem->id, (string) config('app.key')),
-                    'origem' => $mensagem->origem,
-                    'author' => $mensagem->nome ?: ($classe === 'cliente' ? 'Cliente' : 'Equipe'),
-                    'nome' => $mensagem->nome ?: ($classe === 'cliente' ? 'Cliente' : 'Equipe'),
-                    'text' => $textoLimpo,
-                    'mensagem' => $textoLimpo,
-                    'time' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
-                    'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
-                    'attachments' => $anexos,
-                ];
-            })
+            ->map(fn (PortalMensagem $mensagem): array => PortalChatMessageContract::fromArray([
+                'id' => (int) $mensagem->id,
+                'message_id' => (int) $mensagem->id,
+                'source' => 'portal_mensagens',
+                'origem' => (string) $mensagem->origem,
+                'nome' => (string) ($mensagem->nome ?: ''),
+                'mensagem' => (string) $mensagem->mensagem,
+                'created_at' => $mensagem->created_at,
+            ], [
+                'empresa_id' => $empresaId,
+                'room' => 'empresa:' . $empresaId . ':portal',
+                'room_scope' => 'portal',
+            ]))
             ->values();
 
 

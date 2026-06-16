@@ -12,7 +12,7 @@ function loadDotEnvFile() {
     const envPath = path.join(__dirname, '.env');
 
     if (!fs.existsSync(envPath)) {
-        console.warn('[socket.io] Arquivo .env não encontrado. Usando variáveis do ambiente atual.');
+        socketLogger.warn('[socket.io] Arquivo .env não encontrado. Usando variáveis do ambiente atual.');
         return;
     }
 
@@ -45,6 +45,12 @@ const port = Number(process.env.SOCKET_IO_PORT || 3001);
 const host = process.env.SOCKET_IO_HOST || '0.0.0.0';
 const appKey = process.env.APP_KEY || '';
 const enableAdminUi = String(process.env.SOCKET_IO_ADMIN_UI || 'false').toLowerCase() === 'true';
+const enableSocketDebug = String(process.env.SOCKET_IO_DEBUG || 'false').toLowerCase() === 'true';
+const socketLogger = {
+    info: (...args) => { if (enableSocketDebug) console.info(...args); },
+    warn: (...args) => { if (enableSocketDebug) console.warn(...args); },
+    error: (...args) => { if (enableSocketDebug) console.error(...args); },
+};
 
 const defaultAllowedOrigins = [
     process.env.APP_URL,
@@ -109,7 +115,7 @@ function makeMessageSignature({ empresaId, room, actor, messageId }) {
 
 function validMessageSignature(payload, context) {
     if (!appKey) {
-        console.error('[socket.io] APP_KEY ausente. Validação da mensagem falhou.');
+        socketLogger.error('[socket.io] APP_KEY ausente. Validação da mensagem falhou.');
         return false;
     }
 
@@ -120,7 +126,7 @@ function validMessageSignature(payload, context) {
     const signature = String(payload.server_signature || payload.socket_signature || '').trim();
 
     if (!empresaId || !room || !actor || !messageId || !signature) {
-        console.warn('[socket.io] Mensagem sem assinatura backend completa', { empresaId, room, actor, messageId, temSignature: Boolean(signature) });
+        socketLogger.warn('[socket.io] Mensagem sem assinatura backend completa', { empresaId, room, actor, messageId, temSignature: Boolean(signature) });
         return false;
     }
 
@@ -135,7 +141,7 @@ function validMessageSignature(payload, context) {
 
 function validSignature(payload) {
     if (!appKey) {
-        console.error('[socket.io] APP_KEY ausente. Autenticação do socket falhou.');
+        socketLogger.error('[socket.io] APP_KEY ausente. Autenticação do socket falhou.');
         return false;
     }
 
@@ -146,7 +152,7 @@ function validSignature(payload) {
     const room = normalizeRoomName(payload.room, empresaId);
 
     if (!empresaId || !actor || !signature || !room) {
-        console.warn('[socket.io] Payload de autenticação incompleto', { empresaId, actor, room, temSignature: Boolean(signature) });
+        socketLogger.warn('[socket.io] Payload de autenticação incompleto', { empresaId, actor, room, temSignature: Boolean(signature) });
         return false;
     }
 
@@ -251,7 +257,7 @@ io.on('connection', (socket) => {
 
     socket.join(room);
 
-    console.log('[socket.io] conectado', { socketId: socket.id, empresaId, actor, room });
+    socketLogger.info('[socket.io] conectado', { socketId: socket.id, empresaId, actor, room });
 
     socket.emit('chat:connected', {
         ok: true,
@@ -270,13 +276,13 @@ io.on('connection', (socket) => {
     socket.on('chat:message:new', (payload = {}, callback) => {
         if (!validMessageSignature(payload, { empresaId, room, actor })) {
             const messageId = payload.message_id || payload.id || null;
-            console.warn('[socket.io] chat:message:new rejeitado por assinatura inválida', { empresaId, actor, room, messageId });
+            socketLogger.warn('[socket.io] chat:message:new rejeitado por assinatura inválida', { empresaId, actor, room, messageId });
             callback?.({ ok: false, error: 'message_signature_invalid' });
             return;
         }
 
         const normalized = cleanPayload({ ...payload, empresa_id: empresaId, room }, actor);
-        console.log('[socket.io] chat:message:new', { empresaId, actor, messageId: normalized.id, room, clientesNaSala: io.sockets.adapter.rooms.get(room)?.size || 0 });
+        socketLogger.info('[socket.io] chat:message:new', { empresaId, actor, messageId: normalized.id, room, clientesNaSala: io.sockets.adapter.rooms.get(room)?.size || 0 });
         // Envia para todos na sala, inclusive quem enviou. Os clientes ignoram duplicado por data-message-id.
         io.to(room).emit('chat:message:new', normalized);
         callback?.({ ok: true, delivered_to_room: io.sockets.adapter.rooms.get(room)?.size || 0 });
@@ -312,7 +318,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', (reason) => {
-        console.log('[socket.io] desconectado', { socketId: socket.id, empresaId, actor, reason });
+        socketLogger.info('[socket.io] desconectado', { socketId: socket.id, empresaId, actor, reason });
         socket.to(room).emit('chat:presence', {
             empresa_id: empresaId,
             room,
@@ -329,14 +335,14 @@ if (enableAdminUi) {
                 auth: false,
                 mode: process.env.APP_ENV === 'production' ? 'production' : 'development',
             });
-            console.log('[socket.io] Admin UI ativado.');
+            socketLogger.info('[socket.io] Admin UI ativado.');
         })
         .catch((error) => {
-            console.warn('[socket.io] Admin UI não foi ativado. Instale @socket.io/admin-ui ou deixe SOCKET_IO_ADMIN_UI=false.', error.message);
+            socketLogger.warn('[socket.io] Admin UI não foi ativado. Instale @socket.io/admin-ui ou deixe SOCKET_IO_ADMIN_UI=false.', error.message);
         });
 }
 
 httpServer.listen(port, host, () => {
-    console.log(`[socket.io] Chat online em http://${host}:${port}`);
-    console.log(`[socket.io] Origens permitidas: ${allowedOrigins.join(', ') || '*'}`);
+    socketLogger.info(`[socket.io] Chat online em http://${host}:${port}`);
+    socketLogger.info(`[socket.io] Origens permitidas: ${allowedOrigins.join(', ') || '*'}`);
 });

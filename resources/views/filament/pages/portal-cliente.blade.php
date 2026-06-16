@@ -968,8 +968,11 @@
             .pc-actions .pc-btn, .pc-actions a, .pc-actions button { flex:1 1 100%; }
             .pc-tabs { overflow-x:auto; padding:0 .9rem; }
             .pc-messages { padding:1rem .9rem; }
-            .pc-message { grid-template-columns:2.1rem minmax(0,1fr); }
+            .pc-message { grid-template-columns:2.1rem minmax(0,1fr); max-width:100%; min-width:0; }
             .pc-message.cliente { grid-template-columns:minmax(0,1fr); }
+            .pc-message.cliente .pc-bubble { grid-template-columns:minmax(0,1fr); }
+            .pc-message.cliente .pc-message-avatar { display:none; }
+            .pc-bubble { max-width:100%; overflow-wrap:anywhere; }
             .pc-message-avatar { width:2.1rem; height:2.1rem; }
             .pc-bubble-head { align-items:flex-start; flex-direction:column; gap:.18rem; }
             .pc-chat-composer { padding:.75rem .85rem .9rem; }
@@ -1510,7 +1513,6 @@
             const chat = document.getElementById('portalClienteChatBody');
             const socketConfig = @json($socketIoConfig ?? []);
             const supportName = socketConfig?.nome || @json(auth()->user()?->name ?: 'Suporte');
-            const adminDebugUrl = @json(route('admin.portal-cliente.debug-log'));
             const adminSyncUrl = @json(route('admin.portal-cliente.chat.mensagens-novas', ['empresa' => $empresaId]));
             let socket = null;
             let sendingBusy = false;
@@ -1519,17 +1521,7 @@
             const typingState = { active: false, timer: null, stopTimer: null };
 
             function adminDebug(step, payload) {
-                const important = ['socket_admin_connected', 'socket_admin_connect_error', 'socket_admin_message_received', 'socket_admin_emit_ack', 'socket_admin_emit_start', 'socket_admin_sync_response', 'socket_admin_sync_error', 'chat_ajax_success', 'chat_ajax_error'].includes(step);
-                if (!important) return;
-                try {
-                    fetch(adminDebugUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
-                        body: JSON.stringify(Object.assign({ step, page: 'resources/views/filament/pages/portal-cliente.blade.php', empresa_id: socketConfig?.empresaId || null, socket_id: socket?.id || null, socket_connected: Boolean(socket && socket.connected), timestamp: new Date().toISOString() }, payload || {})),
-                        credentials: 'same-origin',
-                        keepalive: true,
-                    }).catch(function () {});
-                } catch (e) {}
+                return;
             }
 
             function escapeHtml(value) {
@@ -1700,12 +1692,12 @@
                 const hasText = String(text || '').trim() !== '';
                 if (hasText && !typingState.active) {
                     typingState.active = true;
-                    socket.emit('chat:typing:start', { nome: supportName, room: socketConfig.room || '' });
+                    socket.emit('chat:typing:start', { actor: socketConfig.actor || 'suporte', nome: supportName, room: socketConfig.room || '' });
                 }
                 window.clearTimeout(typingState.stopTimer);
                 typingState.stopTimer = window.setTimeout(function () {
                     typingState.active = false;
-                    socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
+                    socket.emit('chat:typing:stop', { actor: socketConfig.actor || 'suporte', nome: supportName, room: socketConfig.room || '' });
                 }, hasText ? 1200 : 0);
             }
 
@@ -1895,10 +1887,12 @@
                         if (socket && socket.connected) {
                             adminDebug('socket_admin_emit_start', { message_id: Number(data.chat_message.id || data.chat_message.message_id || 0) });
                             data.chat_message.room = data.chat_message.room || socketConfig.room || '';
+                            data.chat_message.actor = data.chat_message.actor || socketConfig.actor || 'suporte';
+                            data.chat_message.class = data.chat_message.class || 'equipe';
                             socket.emit('chat:message:new', data.chat_message, function (ack) {
                                 adminDebug('socket_admin_emit_ack', { message_id: Number(data.chat_message.id || data.chat_message.message_id || 0), ack });
                             });
-                            socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
+                            socket.emit('chat:typing:stop', { actor: socketConfig.actor || 'suporte', nome: supportName, room: socketConfig.room || '' });
                         } else {
                             startAdminOfflineSync('after_send_socket_offline');
                         }

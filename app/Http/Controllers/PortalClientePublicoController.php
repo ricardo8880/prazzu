@@ -12,6 +12,7 @@ use App\Services\ItemControleStatusService;
 use App\Support\AtendimentoPortalService;
 use App\Support\ItemControleAnexoUploader;
 use App\Support\PortalClienteData;
+use App\Support\PortalChatMessageContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -505,38 +506,13 @@ class PortalClientePublicoController extends Controller
 
     private function formatarMensagemTempoReal(array $mensagem): array
     {
-        $classe = (string) ($mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente'));
-        $textoOriginal = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
-        $anexos = $this->normalizarAnexosMensagem($mensagem['attachments'] ?? []);
+        $empresaId = $this->empresaIdFromRoom((string) ($mensagem['room'] ?? ''));
 
-        if ($anexos === []) {
-            $anexos = $this->extrairAnexosMensagem($textoOriginal);
-        }
-
-        $texto = $this->removerBlocoAnexosMensagem($textoOriginal);
-        $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ($classe === 'equipe' ? 'Equipe' : 'Cliente')));
-
-        $id = (int) ($mensagem['id'] ?? 0);
-        $room = (string) ($mensagem['room'] ?? '');
-        $actor = $classe === 'equipe' ? 'suporte' : 'cliente';
-        $empresaId = $this->empresaIdFromRoom($room);
-
-        return [
-            'id' => $id,
-            'message_id' => $id,
-            'source' => (string) ($mensagem['source'] ?? 'portal_mensagens'),
-            'class' => $classe === 'equipe' ? 'equipe' : 'cliente',
-            'actor' => $actor,
-            'author' => $nome !== '' ? $nome : ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
-            'text' => $texto,
-            'time' => (string) ($mensagem['created_at_label'] ?? ''),
-            'room' => $room,
+        return PortalChatMessageContract::fromArray($mensagem, [
+            'empresa_id' => $empresaId,
+            'room' => (string) ($mensagem['room'] ?? ''),
             'room_scope' => (string) ($mensagem['room_scope'] ?? 'portal'),
-            'server_signature' => $empresaId > 0 && $id > 0 && $room !== ''
-                ? $this->socketMessageSignature($empresaId, $room, $actor, $id)
-                : null,
-            'attachments' => $anexos,
-        ];
+        ]);
     }
 
 
