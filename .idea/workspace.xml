@@ -1,8 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Atendimentos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Atendimentos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Atendimento.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Atendimento.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/AtendimentoPortalService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AtendimentoPortalService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/AtendimentosData.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AtendimentosData.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/atendimentos.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/atendimentos.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/8beyZLRhPRSqDUXI4H8nqbvn1vjhlIxUiRnqdeHe" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/8beyZLRhPRSqDUXI4H8nqbvn1vjhlIxUiRnqdeHe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/views/d584cd13fc5083552184555347899467.php" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/views/d584cd13fc5083552184555347899467.php" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "git-widget-placeholder": "main"
+  }
+}]]></component>
   <component name="RunManager">
     <configuration default="true" type="ComposerRunConfigurationType" factoryName="Composer Script">
       <method v="2" />
     </configuration>
+  </component>
+  <component name="TaskManager">
+    <servers />
   </component>
 </project>

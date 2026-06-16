@@ -9,15 +9,7 @@ use Illuminate\Support\Str;
 
 class AtendimentosData
 {
-    public const STATUS = [
-        'aberto' => ['label' => 'Aberto', 'tone' => 'info'],
-        'em_andamento' => ['label' => 'Em andamento', 'tone' => 'primary'],
-        'aguardando_cliente' => ['label' => 'Aguardando cliente', 'tone' => 'warning'],
-        'aguardando_suporte' => ['label' => 'Aguardando suporte', 'tone' => 'danger'],
-        'resolvido' => ['label' => 'Resolvido', 'tone' => 'success'],
-        'fechado' => ['label' => 'Fechado', 'tone' => 'neutral'],
-        'cancelado' => ['label' => 'Cancelado', 'tone' => 'danger'],
-    ];
+    public const STATUS = AtendimentoStatus::OPTIONS;
 
     public const PRIORIDADES = [
         'baixa' => ['label' => 'Baixa', 'tone' => 'neutral', 'sla' => 72],
@@ -271,7 +263,7 @@ class AtendimentosData
 
     public static function statusLabel(string $status): string
     {
-        return self::STATUS[$status]['label'] ?? ucfirst(str_replace('_', ' ', $status));
+        return AtendimentoStatus::label($status);
     }
 
     public static function prioridadeLabel(string $prioridade): string
@@ -432,7 +424,7 @@ class AtendimentosData
 
         $status = (string) ($filters['status'] ?? 'todos');
         if ($status === 'ativos') {
-            $query->whereIn('a.status', ['aberto', 'em_andamento', 'aguardando_cliente', 'aguardando_suporte']);
+            $query->whereIn('a.status', AtendimentoStatus::ACTIVE);
         } elseif ($status !== 'todos' && $status !== '') {
             $query->where('a.status', $status);
         }
@@ -441,9 +433,9 @@ class AtendimentosData
         if ($aguardando === 'cliente') {
             $query->where('a.status', 'aguardando_cliente');
         } elseif ($aguardando === 'escritorio') {
-            $query->whereIn('a.status', ['aberto', 'em_andamento', 'aguardando_suporte']);
+            $query->whereIn('a.status', AtendimentoStatus::WAITING_OFFICE);
         } elseif ($aguardando === 'concluido') {
-            $query->whereIn('a.status', ['resolvido', 'fechado', 'cancelado']);
+            $query->whereIn('a.status', AtendimentoStatus::CLOSED);
         }
 
         foreach (['prioridade', 'origem'] as $field) {
@@ -467,11 +459,11 @@ class AtendimentosData
 
         $sla = (string) ($filters['sla'] ?? 'todos');
         if ($sla === 'vencidos') {
-            $query->whereNotIn('a.status', ['resolvido', 'fechado', 'cancelado'])
+            $query->whereNotIn('a.status', AtendimentoStatus::CLOSED)
                 ->whereNotNull('a.sla_limite_em')
                 ->where('a.sla_limite_em', '<', now());
         } elseif ($sla === 'vence_hoje') {
-            $query->whereNotIn('a.status', ['resolvido', 'fechado', 'cancelado'])
+            $query->whereNotIn('a.status', AtendimentoStatus::CLOSED)
                 ->whereNotNull('a.sla_limite_em')
                 ->whereBetween('a.sla_limite_em', [now()->startOfDay(), now()->endOfDay()]);
         } elseif ($sla === 'sem_sla') {
@@ -496,31 +488,37 @@ class AtendimentosData
         $rows = $base->select('status', DB::raw('COUNT(*) as total'))->groupBy('status')->pluck('total', 'status');
 
         $sla = DB::table('atendimentos')
-            ->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])
+            ->whereNotIn('status', AtendimentoStatus::CLOSED)
             ->whereNotNull('sla_limite_em')
             ->where('sla_limite_em', '<', now());
         self::applyTenantScope($sla, $user, 'empresa_id');
 
         $venceHoje = DB::table('atendimentos')
-            ->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])
+            ->whereNotIn('status', AtendimentoStatus::CLOSED)
             ->whereNotNull('sla_limite_em')
             ->whereBetween('sla_limite_em', [now()->startOfDay(), now()->endOfDay()]);
         self::applyTenantScope($venceHoje, $user, 'empresa_id');
 
         $semResponsavel = DB::table('atendimentos')
-            ->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])
+            ->whereNotIn('status', AtendimentoStatus::CLOSED)
             ->whereNull('responsavel_id');
         self::applyTenantScope($semResponsavel, $user, 'empresa_id');
 
         return [
             'total' => (int) $rows->sum(),
-            'abertos' => (int) (($rows['aberto'] ?? 0) + ($rows['em_andamento'] ?? 0) + ($rows['aguardando_cliente'] ?? 0) + ($rows['aguardando_suporte'] ?? 0)),
-            'aguardando_cliente' => (int) ($rows['aguardando_cliente'] ?? 0),
-            'resolvidos' => (int) (($rows['resolvido'] ?? 0) + ($rows['fechado'] ?? 0)),
+            'abertos' => self::sumStatusCounts($rows, AtendimentoStatus::ACTIVE),
+            'aguardando_cliente' => self::sumStatusCounts($rows, AtendimentoStatus::WAITING_CLIENT),
+            'resolvidos' => self::sumStatusCounts($rows, [AtendimentoStatus::RESOLVIDO, AtendimentoStatus::FECHADO]),
             'sla_vencido' => (int) $sla->count(),
             'vence_hoje' => (int) $venceHoje->count(),
             'sem_responsavel' => (int) $semResponsavel->count(),
         ];
+    }
+
+
+    private static function sumStatusCounts($rows, array $statuses): int
+    {
+        return collect($statuses)->sum(fn (string $status): int => (int) ($rows[$status] ?? 0));
     }
 
     private static function statusBoard(?User $user): array
@@ -542,7 +540,7 @@ class AtendimentosData
     private static function prioridadeResumo(?User $user): array
     {
         $rows = DB::table('atendimentos')
-            ->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])
+            ->whereNotIn('status', AtendimentoStatus::CLOSED)
             ->select('prioridade', DB::raw('COUNT(*) as total'))
             ->groupBy('prioridade');
         self::applyTenantScope($rows, $user, 'empresa_id');
@@ -564,7 +562,7 @@ class AtendimentosData
         $sla = $row->sla_limite_em ? Carbon::parse($row->sla_limite_em) : null;
         $status = (string) $row->status;
         $prioridade = (string) $row->prioridade;
-        $isClosed = in_array($status, ['resolvido', 'fechado', 'cancelado'], true);
+        $isClosed = AtendimentoStatus::isClosed($status);
         $isLate = (bool) ($sla && ! $isClosed && $sla->isPast());
         $slaDiff = $sla ? $sla->diffForHumans(null, true) : null;
         $aguardando = self::aguardandoMeta($status, $updated, $isClosed);
@@ -582,7 +580,7 @@ class AtendimentosData
             'descricao' => $row->descricao,
             'status' => $status,
             'status_label' => self::statusLabel($status),
-            'status_tone' => self::STATUS[$status]['tone'] ?? 'neutral',
+            'status_tone' => AtendimentoStatus::tone($status),
             'aguardando_key' => $aguardando['key'],
             'aguardando_label' => $aguardando['label'],
             'aguardando_tone' => $aguardando['tone'],

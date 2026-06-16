@@ -6,6 +6,8 @@ use App\Models\Atendimento;
 use App\Models\AtendimentoInteracao;
 use App\Models\ItemControle;
 use App\Support\AtendimentoPortalService;
+use App\Support\AtendimentoStatus;
+use App\Support\AtendimentoWorkflowService;
 use App\Support\AtendimentosData;
 use App\Support\ComplianceModuleData;
 use App\Support\CachedSchema;
@@ -13,7 +15,6 @@ use BackedEnum;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
@@ -209,7 +210,7 @@ class Atendimentos extends Page
 
     public function filtrarStatus(string $status): void
     {
-        $this->statusFilter = ($status === 'ativos' || array_key_exists($status, AtendimentosData::STATUS)) ? $status : 'todos';
+        $this->statusFilter = ($status === 'ativos' || AtendimentoStatus::exists($status)) ? $status : 'todos';
         $this->loadData(true);
     }
 
@@ -284,7 +285,7 @@ class Atendimentos extends Page
                     'criado_por' => auth()->id(),
                     'titulo' => $titulo,
                     'descricao' => $descricao,
-                    'status' => 'aberto',
+                    'status' => AtendimentoStatus::ABERTO,
                     'prioridade' => $prioridade,
                     'origem' => $origem,
                     'canal' => $canal,
@@ -350,16 +351,14 @@ class Atendimentos extends Page
             return;
         }
 
-        $novoStatus = $atendimento->status === 'aberto' ? 'em_andamento' : $atendimento->status;
-        $payload = ['responsavel_id' => auth()->id(), 'status' => $novoStatus];
-
-        if (! $atendimento->primeira_resposta_em) {
-            $payload['primeira_resposta_em'] = now();
+        try {
+            $this->workflow()->assumir($atendimento);
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível assumir o atendimento.');
+            return;
         }
 
-        $atendimento->update($payload);
-
-        $this->registrarInteracao($atendimento->id, 'responsavel', 'Atendimento assumido por ' . (auth()->user()?->name ?: 'usuário interno') . '.');
         $this->loadData(true);
         $this->notify('success', 'Atendimento assumido.');
     }
@@ -371,7 +370,7 @@ class Atendimentos extends Page
             return;
         }
 
-        if (! array_key_exists($status, AtendimentosData::STATUS)) {
+        if (! AtendimentoStatus::exists($status)) {
             $this->notify('danger', 'Status inválido.');
             return;
         }
@@ -381,7 +380,7 @@ class Atendimentos extends Page
 
     public function resolverAtendimento(int $id): void
     {
-        $this->mudarStatusRapido($id, 'resolvido');
+        $this->mudarStatusRapido($id, AtendimentoStatus::RESOLVIDO);
     }
 
     public function resolverComResumo(): void
@@ -401,7 +400,7 @@ class Atendimentos extends Page
             return;
         }
 
-        $this->aplicarStatus($atendimento, 'resolvido', Str::limit($resumo, 8000, ''));
+        $this->aplicarStatus($atendimento, AtendimentoStatus::RESOLVIDO, Str::limit($resumo, 8000, ''));
         $this->resolucaoTexto = '';
     }
 
@@ -438,19 +437,19 @@ class Atendimentos extends Page
             $mensagem .= "\nObservação: " . Str::limit($observacao, 1200, '');
         }
 
-        $this->aplicarStatus($atendimento, 'fechado', $mensagem);
+        $this->aplicarStatus($atendimento, AtendimentoStatus::FECHADO, $mensagem);
         $this->motivoEncerramento = 'duvida_resolvida';
         $this->observacaoEncerramento = '';
     }
 
     public function reabrirAtendimento(int $id): void
     {
-        $this->mudarStatusRapido($id, 'em_andamento');
+        $this->mudarStatusRapido($id, AtendimentoStatus::EM_ANDAMENTO);
     }
 
     public function aguardarCliente(int $id): void
     {
-        $this->mudarStatusRapido($id, 'aguardando_cliente');
+        $this->mudarStatusRapido($id, AtendimentoStatus::AGUARDANDO_CLIENTE);
     }
 
     public function salvarDetalhe(): void
@@ -464,7 +463,7 @@ class Atendimentos extends Page
             return;
         }
 
-        $status = array_key_exists($this->novoStatusDetalhe, AtendimentosData::STATUS) ? $this->novoStatusDetalhe : $atendimento->status;
+        $status = AtendimentoStatus::exists($this->novoStatusDetalhe) ? $this->novoStatusDetalhe : $atendimento->status;
         $prioridade = array_key_exists($this->novaPrioridadeDetalhe, AtendimentosData::PRIORIDADES) ? $this->novaPrioridadeDetalhe : $atendimento->prioridade;
         $responsavelId = $this->usuarioResponsavelValido((int) $this->novoResponsavelDetalhe) ? (int) $this->novoResponsavelDetalhe : null;
 
@@ -476,7 +475,7 @@ class Atendimentos extends Page
 
         $this->aplicarCamposStatus($atendimento, $status, $payload);
 
-        if ($prioridade !== $atendimento->prioridade && ! in_array($status, ['resolvido', 'fechado', 'cancelado'], true)) {
+        if ($prioridade !== $atendimento->prioridade && ! AtendimentoStatus::isClosed($status)) {
             $slaHoras = AtendimentosData::slaHorasPorPrioridade($prioridade);
             $payload['sla_horas'] = $slaHoras;
             $payload['sla_limite_em'] = now()->addHours($slaHoras);
@@ -545,7 +544,7 @@ class Atendimentos extends Page
             return;
         }
 
-        if (in_array((string) $atendimento->status, ['resolvido', 'fechado', 'cancelado'], true)) {
+        if (AtendimentoStatus::isClosed((string) $atendimento->status)) {
             $this->notify('danger', 'Este atendimento está finalizado. Reabra antes de responder ao cliente.');
             return;
         }
@@ -553,7 +552,7 @@ class Atendimentos extends Page
         DB::transaction(function () use ($atendimento, $mensagem, $anexo): void {
             $agora = now();
             $payload = [
-                'status' => 'aguardando_cliente',
+                'status' => AtendimentoStatus::AGUARDANDO_CLIENTE,
                 'updated_at' => $agora,
             ];
 
@@ -582,7 +581,7 @@ class Atendimentos extends Page
                 ],
             ]);
 
-            $this->sincronizarPortalVinculado($atendimento->refresh(), 'aguardando_cliente');
+            $this->sincronizarPortalVinculado($atendimento->refresh(), AtendimentoStatus::AGUARDANDO_CLIENTE);
         });
 
         $this->notificarClienteResposta($atendimento->refresh(), $mensagem, (bool) $anexo);
@@ -690,36 +689,12 @@ class Atendimentos extends Page
 
     private function enviarEmailSeguro(string $to, string $subject, string $body): void
     {
-        try {
-            Mail::raw($body, function ($message) use ($to, $subject): void {
-                $message->to($to)->subject($subject);
-            });
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $this->workflow()->enviarEmailSeguro($to, $subject, $body);
     }
 
     private function emailClienteAtendimento(Atendimento $atendimento): ?string
     {
-        if ($atendimento->crm_cliente_id && CachedSchema::hasTable('crm_clientes')) {
-            $cliente = DB::table('crm_clientes')->where('id', $atendimento->crm_cliente_id)->first();
-            foreach (['email', 'email_financeiro', 'email_responsavel'] as $campo) {
-                if ($cliente && property_exists($cliente, $campo) && filter_var($cliente->{$campo}, FILTER_VALIDATE_EMAIL)) {
-                    return (string) $cliente->{$campo};
-                }
-            }
-        }
-
-        if ($atendimento->empresa_id && CachedSchema::hasTable('empresas')) {
-            $empresa = DB::table('empresas')->where('id', $atendimento->empresa_id)->first();
-            foreach (['email', 'email_financeiro', 'email_responsavel'] as $campo) {
-                if ($empresa && property_exists($empresa, $campo) && filter_var($empresa->{$campo}, FILTER_VALIDATE_EMAIL)) {
-                    return (string) $empresa->{$campo};
-                }
-            }
-        }
-
-        return null;
+        return $this->workflow()->emailClienteAtendimento($atendimento);
     }
 
     private function metadataArray(mixed $metadata): array
@@ -850,7 +825,7 @@ class Atendimentos extends Page
                     true
                 );
 
-                $payloadAtendimento = ['status' => 'aguardando_cliente', 'updated_at' => now()];
+                $payloadAtendimento = ['status' => AtendimentoStatus::AGUARDANDO_CLIENTE, 'updated_at' => now()];
                 if (! $atendimento->item_controle_id) {
                     $payloadAtendimento['item_controle_id'] = $item->id;
                 }
@@ -870,7 +845,7 @@ class Atendimentos extends Page
                     ['item_controle_id' => $item->id, 'tipo' => 'documento', 'portal_ativo' => true]
                 );
 
-                $this->sincronizarPortalVinculado($atendimento->refresh(), 'aguardando_cliente');
+                $this->sincronizarPortalVinculado($atendimento->refresh(), AtendimentoStatus::AGUARDANDO_CLIENTE);
             });
         } catch (Throwable $exception) {
             report($exception);
@@ -965,25 +940,7 @@ class Atendimentos extends Page
 
     private function nomeClienteAtendimento(Atendimento $atendimento): ?string
     {
-        if ($atendimento->crm_cliente_id && CachedSchema::hasTable('crm_clientes')) {
-            $cliente = DB::table('crm_clientes')->where('id', $atendimento->crm_cliente_id)->first();
-            foreach (['nome', 'nome_fantasia', 'razao_social'] as $campo) {
-                if ($cliente && property_exists($cliente, $campo) && filled($cliente->{$campo})) {
-                    return (string) $cliente->{$campo};
-                }
-            }
-        }
-
-        if ($atendimento->empresa_id && CachedSchema::hasTable('empresas')) {
-            $empresa = DB::table('empresas')->where('id', $atendimento->empresa_id)->first();
-            foreach (['nome_fantasia', 'razao_social', 'nome'] as $campo) {
-                if ($empresa && property_exists($empresa, $campo) && filled($empresa->{$campo})) {
-                    return (string) $empresa->{$campo};
-                }
-            }
-        }
-
-        return null;
+        return $this->workflow()->nomeClienteAtendimento($atendimento);
     }
 
 
@@ -994,34 +951,13 @@ class Atendimentos extends Page
             return;
         }
 
-        $payload = ['status' => $status];
-        $this->aplicarCamposStatus($atendimento, $status, $payload);
-
-        if ($status === 'em_andamento' && ! $atendimento->responsavel_id && auth()->id()) {
-            $payload['responsavel_id'] = auth()->id();
+        try {
+            $this->workflow()->aplicarStatus($atendimento, $status, $mensagemOperacional);
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível atualizar o status do atendimento.');
+            return;
         }
-
-        if (in_array($status, ['aberto', 'em_andamento', 'aguardando_cliente', 'aguardando_suporte'], true) && ! $atendimento->sla_limite_em) {
-            $slaHoras = AtendimentosData::slaHorasPorPrioridade($atendimento->prioridade ?: 'media');
-            $payload['sla_horas'] = $slaHoras;
-            $payload['sla_limite_em'] = now()->addHours($slaHoras);
-        }
-
-        DB::transaction(function () use ($atendimento, $payload, $status, $mensagemOperacional): void {
-            $statusAnterior = (string) $atendimento->status;
-            $atendimento->update($payload);
-
-            $tipo = $status === 'resolvido' ? 'resolucao' : ($status === 'em_andamento' ? 'reabertura' : 'alteracao');
-            $mensagem = 'Status alterado de ' . AtendimentosData::statusLabel($statusAnterior) . ' para ' . AtendimentosData::statusLabel($status) . '.';
-            if ($mensagemOperacional) {
-                $mensagem .= "
-
-Resumo: " . $mensagemOperacional;
-            }
-
-            $this->registrarInteracao($atendimento->id, $tipo, $mensagem);
-            $this->sincronizarPortalVinculado($atendimento->refresh(), $status, $mensagemOperacional);
-        });
 
         $this->loadData(true);
         $this->notify('success', 'Status atualizado.');
@@ -1029,52 +965,12 @@ Resumo: " . $mensagemOperacional;
 
     private function aplicarCamposStatus(Atendimento $atendimento, string $status, array &$payload): void
     {
-        if ($status === 'resolvido' && ! $atendimento->resolvido_em) {
-            $payload['resolvido_em'] = now();
-        }
-
-        if ($status === 'fechado' && ! $atendimento->fechado_em) {
-            $payload['fechado_em'] = now();
-        }
-
-        if (in_array($status, ['aberto', 'em_andamento', 'aguardando_cliente', 'aguardando_suporte'], true)) {
-            $payload['resolvido_em'] = null;
-            $payload['fechado_em'] = null;
-        }
+        $this->workflow()->aplicarCamposStatus($atendimento, $status, $payload);
     }
 
     private function sincronizarPortalVinculado(Atendimento $atendimento, string $status, ?string $mensagemOperacional = null): void
     {
-        if (! $atendimento->portal_solicitacao_id || ! CachedSchema::hasTable('portal_solicitacoes')) {
-            return;
-        }
-
-        $portalStatus = match ($status) {
-            'resolvido', 'fechado' => 'concluido',
-            'cancelado' => 'cancelado',
-            'aguardando_cliente' => 'aguardando_cliente',
-            'aguardando_suporte' => 'em_andamento',
-            'em_andamento' => 'em_andamento',
-            default => 'aberto',
-        };
-
-        $payload = ['status' => $portalStatus];
-        if (in_array($status, ['resolvido', 'fechado'], true)) {
-            if (CachedSchema::hasColumn('portal_solicitacoes', 'resposta')) {
-                $payload['resposta'] = $mensagemOperacional ?: 'Atendimento marcado como resolvido pela equipe interna.';
-            }
-            if (CachedSchema::hasColumn('portal_solicitacoes', 'respondido_por')) {
-                $payload['respondido_por'] = auth()->id();
-            }
-            if (CachedSchema::hasColumn('portal_solicitacoes', 'respondido_em')) {
-                $payload['respondido_em'] = now();
-            }
-        }
-
-        DB::table('portal_solicitacoes')
-            ->where('id', $atendimento->portal_solicitacao_id)
-            ->where('empresa_id', $atendimento->empresa_id)
-            ->update($payload);
+        $this->workflow()->sincronizarPortalVinculado($atendimento, $status, $mensagemOperacional);
     }
 
     private function refreshSelectedAtendimento(int $id): void
@@ -1090,43 +986,16 @@ Resumo: " . $mensagemOperacional;
 
     private function findAtendimentoAutorizado(int $id, bool $notify = true): ?Atendimento
     {
-        if (! CachedSchema::hasTable('atendimentos')) {
-            if ($notify) {
-                $this->notify('danger', 'Tabela atendimentos não encontrada. Execute o SQL do Lote 1 antes de usar o módulo.');
-            }
-            return null;
-        }
-
-        $atendimento = Atendimento::query()->find($id);
-        if (! $atendimento || ! AtendimentosData::usuarioPodeAcessarEmpresa((int) $atendimento->empresa_id)) {
-            if ($notify) {
-                $this->notify('danger', 'Atendimento não encontrado ou sem permissão.');
-            }
-            return null;
-        }
-
-        return $atendimento;
+        return $this->workflow()->findAutorizado(
+            $id,
+            $notify,
+            fn (string $type, string $message) => $this->notify($type, $message),
+        );
     }
 
     private function registrarInteracao(int $atendimentoId, string $tipo, string $mensagem, ?array $metadata = null): void
     {
-        if (! CachedSchema::hasTable('atendimento_interacoes')) {
-            return;
-        }
-
-        $payload = [
-            'atendimento_id' => $atendimentoId,
-            'user_id' => auth()->id(),
-            'origem' => 'interno',
-            'tipo' => $tipo,
-            'mensagem' => $mensagem,
-        ];
-
-        if ($metadata !== null) {
-            $payload['metadata'] = $metadata;
-        }
-
-        AtendimentoInteracao::query()->create($payload);
+        $this->workflow()->registrarInteracao($atendimentoId, $tipo, $mensagem, $metadata);
     }
 
     private function resetFormCriacao(): void
@@ -1144,7 +1013,7 @@ Resumo: " . $mensagemOperacional;
 
     private function syncDetailFields(): void
     {
-        $this->novoStatusDetalhe = (string) ($this->selectedAtendimento['status'] ?? 'aberto');
+        $this->novoStatusDetalhe = (string) ($this->selectedAtendimento['status'] ?? AtendimentoStatus::ABERTO);
         $this->novaPrioridadeDetalhe = (string) ($this->selectedAtendimento['prioridade'] ?? 'media');
         $this->novoResponsavelDetalhe = $this->selectedAtendimento['responsavel_id'] ?? null;
         $this->resolucaoTexto = '';
@@ -1165,17 +1034,7 @@ Resumo: " . $mensagemOperacional;
 
     private function usuarioResponsavelValido(int $userId): bool
     {
-        if (! $userId || ! CachedSchema::hasTable('users')) {
-            return false;
-        }
-
-        $query = DB::table('users')->where('id', $userId);
-        $user = auth()->user();
-        if ($user && ! $user->isSuperAdmin()) {
-            $query->where('empresa_id', $user->empresa_id);
-        }
-
-        return $query->exists();
+        return $this->workflow()->usuarioResponsavelValido($userId);
     }
 
     private function bancoDisponivel(): bool
@@ -1191,6 +1050,11 @@ Resumo: " . $mensagemOperacional;
         }
 
         return true;
+    }
+
+    private function workflow(): AtendimentoWorkflowService
+    {
+        return app(AtendimentoWorkflowService::class);
     }
 
     private function notify(string $type, string $message): void

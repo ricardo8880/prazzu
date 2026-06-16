@@ -35,7 +35,7 @@ class AtendimentoPortalService
                         'criado_por' => null,
                         'titulo' => $this->tituloMensagem($mensagem),
                         'descricao' => trim((string) $mensagem->mensagem),
-                        'status' => 'aberto',
+                        'status' => AtendimentoStatus::ABERTO,
                         'prioridade' => 'media',
                         'origem' => 'portal',
                         'canal' => 'portal',
@@ -146,8 +146,8 @@ class AtendimentoPortalService
                 }
 
                 $payload = [];
-                if ($atendimento->status === 'aguardando_cliente') {
-                    $payload['status'] = 'em_andamento';
+                if ($atendimento->status === AtendimentoStatus::AGUARDANDO_CLIENTE) {
+                    $payload['status'] = AtendimentoStatus::EM_ANDAMENTO;
                 }
                 if (! $atendimento->primeira_resposta_em) {
                     $payload['primeira_resposta_em'] = now();
@@ -193,7 +193,7 @@ class AtendimentoPortalService
         if (CachedSchema::hasTable('portal_solicitacoes')) {
             PortalSolicitacao::query()
                 ->when($empresaId, fn ($query) => $query->where('empresa_id', $empresaId))
-                ->whereNotIn('status', ['concluido', 'cancelado'])
+                ->whereNotIn('status', ['concluido', 'concluida', 'finalizado', 'finalizada', 'cancelado', 'cancelada'])
                 ->whereDoesntHave('atendimento')
                 ->orderBy('id')
                 ->chunkById(100, function ($solicitacoes) use (&$criadasSolicitacoes): void {
@@ -303,13 +303,6 @@ class AtendimentoPortalService
 
     private function statusAtendimentoPorSolicitacao(string $status): string
     {
-        return match ($status) {
-            'em_andamento' => 'em_andamento',
-            'aguardando_equipe' => 'em_andamento',
-            'concluido', 'concluida', 'finalizado', 'finalizada' => 'resolvido',
-            'cancelado', 'cancelada' => 'cancelado',
-            'em_aprovacao', 'aguardando_cliente' => 'aguardando_cliente',
-            default => 'aberto',
-        };
+        return AtendimentoStatus::fromPortalStatus($status);
     }
 }

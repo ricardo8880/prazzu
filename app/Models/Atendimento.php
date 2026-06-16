@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Support\AtendimentoStatus;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Atendimento extends Model
@@ -88,6 +89,6 @@ class Atendimento extends Model
 
     public function isAberto(): bool
     {
-        return ! in_array($this->status, ['resolvido', 'fechado', 'cancelado'], true);
+        return AtendimentoStatus::isActive((string) $this->status);
     }
 }
