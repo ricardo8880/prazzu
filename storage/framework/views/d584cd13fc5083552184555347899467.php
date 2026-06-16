@@ -1,10 +1,21 @@
-<x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/atendimentos.css') }}">
-    @once
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    @endonce
+<?php if (isset($component)) { $__componentOriginal166a02a7c5ef5a9331faf66fa665c256 = $component; } ?>
+<?php if (isset($attributes)) { $__attributesOriginal166a02a7c5ef5a9331faf66fa665c256 = $attributes; } ?>
+<?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'filament-panels::components.page.index','data' => []] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>
+<?php $component->withName('filament-panels::page'); ?>
+<?php if ($component->shouldRender()): ?>
+<?php $__env->startComponent($component->resolveView(), $component->data()); ?>
+<?php if (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag): ?>
+<?php $attributes = $attributes->except(\Illuminate\View\AnonymousComponent::ignoredParameterNames()); ?>
+<?php endif; ?>
+<?php $component->withAttributes([]); ?>
+<?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    @php
+    <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos.css')); ?>">
+    <?php if (! $__env->hasRenderedOnce('22d2a183-5d8a-44ce-967e-46799a83ee17')): $__env->markAsRenderedOnce('22d2a183-5d8a-44ce-967e-46799a83ee17'); ?>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <?php endif; ?>
+
+    <?php
         $ready = (bool) ($ready ?? false);
         $summary = $summary ?? [];
         $statusBoard = $statusBoard ?? [];
@@ -20,9 +31,9 @@
         $idsAtendimentosVisiveis = collect($atendimentos)->pluck('id')->map(fn ($id) => (string) $id)->values();
         $idsAtendimentosSelecionados = collect($atendimentosSelecionados ?? [])->map(fn ($id) => (string) $id)->values();
         $todosAtendimentosVisiveisSelecionados = $idsAtendimentosVisiveis->isNotEmpty() && $idsAtendimentosVisiveis->diff($idsAtendimentosSelecionados)->isEmpty();
-    @endphp
+    ?>
 
-    <div class="at-wrap at-reference-layout" x-data="{ criar: @entangle('createModalAberto').live, detalhe: @entangle('detailModalAberto').live }" wire:poll.25s="loadData(true)">
+    <div class="at-wrap at-reference-layout" x-data="{ criar: <?php if ((object) ('createModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'->value()); ?>')<?php echo e('createModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'); ?>')<?php endif; ?>.live, detalhe: <?php if ((object) ('detailModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'->value()); ?>')<?php echo e('detailModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'); ?>')<?php endif; ?>.live }" wire:poll.25s="loadData(true)">
         <section class="at-page-head at-reference-head">
             <div class="at-title-block">
                 <span class="at-eyebrow">Central de suporte</span>
@@ -31,43 +42,43 @@
             </div>
 
             <div class="at-head-actions">
-                @if($lastRefreshAt)
-                    <small class="at-last-sync">Atualizado em {{ $lastRefreshAt }}</small>
-                @endif
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($lastRefreshAt): ?>
+                    <small class="at-last-sync">Atualizado em <?php echo e($lastRefreshAt); ?></small>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <button type="button" class="at-btn ghost" wire:click="sincronizarPortal" wire:loading.attr="disabled" wire:target="sincronizarPortal"><i class="bi bi-arrow-clockwise at-btn-icon" aria-hidden="true"></i> Atualizar</button>
                 <button type="button" class="at-btn" wire:click="abrirCriacao" wire:loading.attr="disabled" wire:target="abrirCriacao"><i class="bi bi-plus-lg at-btn-icon" aria-hidden="true"></i> Novo atendimento</button>
             </div>
         </section>
 
-        @unless($ready)
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if (! ($ready)): ?>
             <section class="at-alert danger">
                 <strong>Módulo aguardando banco de dados.</strong>
                 <span>Execute o arquivo <code>sql/lote1_atendimentos_base.sql</code> no seu banco atual para liberar a central de atendimentos.</span>
             </section>
-        @endunless
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <section class="at-kpis at-kpis-saas at-reference-metrics">
             <button type="button" wire:click="filtrarFilaAtiva" class="at-kpi-button at-kpi-focus">
                 <span class="at-kpi-icon danger"><i class="bi bi-inbox-fill" aria-hidden="true"></i></span>
-                <strong>{{ $summary['abertos'] ?? 0 }}</strong>
+                <strong><?php echo e($summary['abertos'] ?? 0); ?></strong>
                 <span>Abertos</span>
                 <small>Precisam de atenção</small>
             </button>
             <button type="button" wire:click="filtrarStatus('aguardando_cliente')" class="at-kpi-button at-kpi-focus warning">
                 <span class="at-kpi-icon warning"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
-                <strong>{{ $summary['aguardando_cliente'] ?? 0 }}</strong>
+                <strong><?php echo e($summary['aguardando_cliente'] ?? 0); ?></strong>
                 <span>Aguardando cliente</span>
                 <small>Resposta pendente</small>
             </button>
             <button type="button" wire:click="filtrarStatus('em_andamento')" class="at-kpi-button at-kpi-focus primary">
                 <span class="at-kpi-icon primary"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></span>
-                <strong>{{ $summary['em_andamento'] ?? 0 }}</strong>
+                <strong><?php echo e($summary['em_andamento'] ?? 0); ?></strong>
                 <span>Em andamento</span>
                 <small>Atendendo agora</small>
             </button>
             <button type="button" wire:click="filtrarStatus('resolvido')" class="at-kpi-button at-kpi-focus success">
                 <span class="at-kpi-icon success"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
-                <strong>{{ $summary['resolvidos_hoje'] ?? ($summary['resolvidos'] ?? 0) }}</strong>
+                <strong><?php echo e($summary['resolvidos_hoje'] ?? ($summary['resolvidos'] ?? 0)); ?></strong>
                 <span>Resolvidos hoje</span>
                 <small>Ótimo trabalho!</small>
             </button>
@@ -82,15 +93,15 @@
                     </label>
 
                     <details class="at-filter-drawer">
-                        <summary>Filtros <strong>{{ (($statusFilter ?? 'todos') !== 'todos' ? 1 : 0) + (($prioridadeFilter ?? 'todos') !== 'todos' ? 1 : 0) + (($slaFilter ?? 'todos') !== 'todos' ? 1 : 0) + (($responsavelFilter ?? 'todos') !== 'todos' ? 1 : 0) + (!empty($empresaFilter) ? 1 : 0) + (($origemFilter ?? 'todos') !== 'todos' ? 1 : 0) }}</strong></summary>
+                        <summary>Filtros <strong><?php echo e((($statusFilter ?? 'todos') !== 'todos' ? 1 : 0) + (($prioridadeFilter ?? 'todos') !== 'todos' ? 1 : 0) + (($slaFilter ?? 'todos') !== 'todos' ? 1 : 0) + (($responsavelFilter ?? 'todos') !== 'todos' ? 1 : 0) + (!empty($empresaFilter) ? 1 : 0) + (($origemFilter ?? 'todos') !== 'todos' ? 1 : 0)); ?></strong></summary>
                         <div class="at-filter-grid">
-                            <label><span>Status</span><select wire:model.live="statusFilter"><option value="todos">Todos</option><option value="ativos">Fila ativa</option>@foreach($statusOptions as $key => $meta)<option value="{{ $key }}">{{ $meta['label'] }}</option>@endforeach</select></label>
-                            <label><span>Prioridade</span><select wire:model.live="prioridadeFilter"><option value="todos">Todas</option>@foreach($prioridadeOptions as $key => $meta)<option value="{{ $key }}">{{ $meta['label'] }}</option>@endforeach</select></label>
-                            <label><span>SLA</span><select wire:model.live="slaFilter">@foreach($slaOptions as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach</select></label>
-                            <label><span>Responsável</span><select wire:model.live="responsavelFilter"><option value="todos">Todos</option><option value="sem_responsavel">Sem responsável</option>@foreach($responsaveis as $resp)<option value="{{ $resp['id'] }}">{{ $resp['nome'] }}</option>@endforeach</select></label>
-                            @if(count($empresas) > 1)
-                                <label><span>Empresa</span><select wire:model.live="empresaFilter"><option value="">Todas</option>@foreach($empresas as $empresa)<option value="{{ $empresa['id'] }}">{{ $empresa['nome'] }}</option>@endforeach</select></label>
-                            @endif
+                            <label><span>Status</span><select wire:model.live="statusFilter"><option value="todos">Todos</option><option value="ativos">Fila ativa</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $statusOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $meta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($key); ?>"><?php echo e($meta['label']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                            <label><span>Prioridade</span><select wire:model.live="prioridadeFilter"><option value="todos">Todas</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $prioridadeOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $meta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($key); ?>"><?php echo e($meta['label']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                            <label><span>SLA</span><select wire:model.live="slaFilter"><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $slaOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($key); ?>"><?php echo e($label); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                            <label><span>Responsável</span><select wire:model.live="responsavelFilter"><option value="todos">Todos</option><option value="sem_responsavel">Sem responsável</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $responsaveis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($resp['id']); ?>"><?php echo e($resp['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($empresas) > 1): ?>
+                                <label><span>Empresa</span><select wire:model.live="empresaFilter"><option value="">Todas</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $empresas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($empresa['id']); ?>"><?php echo e($empresa['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             <label><span>Origem</span><select wire:model.live="origemFilter"><option value="todos">Todas</option><option value="manual">Manual</option><option value="portal">Portal</option><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option><option value="telefone">Telefone</option></select></label>
                             <label><span>Ordenar</span><select wire:model.live="sortBy"><option value="recentes">Atualização</option><option value="sla">SLA mais próximo</option><option value="prioridade">Prioridade</option><option value="cliente">Cliente</option></select></label>
                         </div>
@@ -103,12 +114,12 @@
                     <header class="at-list-head at-reference-list-head">
                         <div>
                             <h2>Atendimentos recentes</h2>
-                            <p>{{ count($atendimentos) }} atendimento(s) na fila. Priorize quem precisa de resposta agora.</p>
+                            <p><?php echo e(count($atendimentos)); ?> atendimento(s) na fila. Priorize quem precisa de resposta agora.</p>
                         </div>
                         <div class="at-list-pills" aria-label="Resumo rápido da fila">
-                            <span><strong>{{ $summary['abertos'] ?? 0 }}</strong> abertos</span>
-                            <span><strong>{{ $summary['em_andamento'] ?? 0 }}</strong> em andamento</span>
-                            <span><strong>{{ $summary['aguardando_cliente'] ?? 0 }}</strong> aguardando</span>
+                            <span><strong><?php echo e($summary['abertos'] ?? 0); ?></strong> abertos</span>
+                            <span><strong><?php echo e($summary['em_andamento'] ?? 0); ?></strong> em andamento</span>
+                            <span><strong><?php echo e($summary['aguardando_cliente'] ?? 0); ?></strong> aguardando</span>
                         </div>
                     </header>
 
@@ -126,7 +137,7 @@
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th class="at-select-col"><input type="checkbox" class="at-fake-checkbox" aria-label="Selecionar todos os atendimentos visíveis" wire:click="alternarSelecaoVisivel" @checked($todosAtendimentosVisiveisSelecionados)></th>
+                                    <th class="at-select-col"><input type="checkbox" class="at-fake-checkbox" aria-label="Selecionar todos os atendimentos visíveis" wire:click="alternarSelecaoVisivel" <?php if($todosAtendimentosVisiveisSelecionados): echo 'checked'; endif; ?>></th>
                                     <th>Atendimento</th>
                                     <th>Cliente</th>
                                     <th>Prioridade</th>
@@ -137,76 +148,76 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($atendimentos as $item)
-                                    <tr wire:key="atendimento-row-{{ $item['id'] }}" class="at-ticket-row {{ $item['sla_vencido'] ? 'is-late' : '' }} tone-{{ $item['prioridade_tone'] ?? 'neutral' }}">
-                                        <td class="at-select-col" data-label=""><input type="checkbox" class="at-fake-checkbox" aria-label="Selecionar atendimento #{{ $item['id'] }}" value="{{ $item['id'] }}" wire:model.live="atendimentosSelecionados"></td>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $atendimentos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <tr <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'atendimento-row-'.e($item['id']).''; ?>wire:key="atendimento-row-<?php echo e($item['id']); ?>" class="at-ticket-row <?php echo e($item['sla_vencido'] ? 'is-late' : ''); ?> tone-<?php echo e($item['prioridade_tone'] ?? 'neutral'); ?>">
+                                        <td class="at-select-col" data-label=""><input type="checkbox" class="at-fake-checkbox" aria-label="Selecionar atendimento #<?php echo e($item['id']); ?>" value="<?php echo e($item['id']); ?>" wire:model.live="atendimentosSelecionados"></td>
                                         <td class="at-ticket-cell" data-label="Atendimento">
                                             <div class="at-ticket-content">
-                                                <span class="at-ticket-icon {{ $item['sla_vencido'] ? 'danger' : ($item['prioridade_tone'] ?? 'neutral') }}">
-                                                    <i class="bi {{ $item['sla_vencido'] ? 'bi-exclamation-lg' : 'bi-chat-dots-fill' }}" aria-hidden="true"></i>
+                                                <span class="at-ticket-icon <?php echo e($item['sla_vencido'] ? 'danger' : ($item['prioridade_tone'] ?? 'neutral')); ?>">
+                                                    <i class="bi <?php echo e($item['sla_vencido'] ? 'bi-exclamation-lg' : 'bi-chat-dots-fill'); ?>" aria-hidden="true"></i>
                                                 </span>
                                                 <div class="at-ticket-main">
                                                     <div class="at-ticket-title-row">
-                                                        <strong><span class="at-ticket-id">#{{ $item['id'] }} - </span>{{ $item['titulo'] }}</strong>
+                                                        <strong><span class="at-ticket-id">#<?php echo e($item['id']); ?> - </span><?php echo e($item['titulo']); ?></strong>
                                                     </div>
-                                                    <small>{{ \Illuminate\Support\Str::limit($item['descricao'], 92) }}</small>
+                                                    <small><?php echo e(\Illuminate\Support\Str::limit($item['descricao'], 92)); ?></small>
                                                     <div class="at-ticket-meta-line">
-                                                        <span>{{ $item['origem_label'] ?? ucfirst($item['origem'] ?? 'Manual') }}</span>
-                                                        @if(!empty($item['portal_solicitacao_id']) || !empty($item['portal_mensagem_id']))
+                                                        <span><?php echo e($item['origem_label'] ?? ucfirst($item['origem'] ?? 'Manual')); ?></span>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($item['portal_solicitacao_id']) || !empty($item['portal_mensagem_id'])): ?>
                                                             <span class="at-source-chip">Portal</span>
-                                                        @endif
-                                                        @if(! $item['responsavel_id'])
+                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $item['responsavel_id']): ?>
                                                             <span class="at-source-chip warning">Sem responsável</span>
-                                                        @endif
+                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="at-client-cell" data-label="Cliente">
                                             <div class="at-client-content">
-                                                <span class="at-client-avatar" title="{{ $item['empresa_nome'] ?? 'Cliente' }}">{{ mb_strtoupper(mb_substr(trim($item['empresa_nome'] ?? 'Cliente'), 0, 1)) }}</span>
+                                                <span class="at-client-avatar" title="<?php echo e($item['empresa_nome'] ?? 'Cliente'); ?>"><?php echo e(mb_strtoupper(mb_substr(trim($item['empresa_nome'] ?? 'Cliente'), 0, 1))); ?></span>
                                                 <div class="at-client-main">
-                                                    <strong>{{ $item['empresa_nome'] }}</strong>
-                                                    <small>{{ $item['empresa_email'] ?? $item['cliente_email'] ?? 'Sem e-mail' }}</small>
+                                                    <strong><?php echo e($item['empresa_nome']); ?></strong>
+                                                    <small><?php echo e($item['empresa_email'] ?? $item['cliente_email'] ?? 'Sem e-mail'); ?></small>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td data-label="Prioridade"><span class="at-badge at-badge-dot {{ $item['prioridade_tone'] }}">{{ $item['prioridade_label'] }}</span></td>
-                                        <td data-label="Status"><span class="at-badge at-badge-soft {{ $item['status_tone'] }}">{{ $item['status_label'] }}</span></td>
+                                        <td data-label="Prioridade"><span class="at-badge at-badge-dot <?php echo e($item['prioridade_tone']); ?>"><?php echo e($item['prioridade_label']); ?></span></td>
+                                        <td data-label="Status"><span class="at-badge at-badge-soft <?php echo e($item['status_tone']); ?>"><?php echo e($item['status_label']); ?></span></td>
                                         <td data-label="Aguardando">
-                                            <span class="at-badge at-badge-soft {{ $item['aguardando_tone'] ?? 'neutral' }}">{{ $item['aguardando_label'] ?? '-' }}</span>
+                                            <span class="at-badge at-badge-soft <?php echo e($item['aguardando_tone'] ?? 'neutral'); ?>"><?php echo e($item['aguardando_label'] ?? '-'); ?></span>
                                             <div class="at-ticket-meta-line" style="margin-top: .35rem;">
-                                                <span>{{ $item['responsavel_nome'] ?? 'Sem responsável' }}</span>
+                                                <span><?php echo e($item['responsavel_nome'] ?? 'Sem responsável'); ?></span>
                                             </div>
                                         </td>
                                         <td class="at-time-cell" data-label="Tempo">
-                                            <strong>{{ $item['tempo_aguardando_detalhe'] ?? ($item['updated_at'] ?? '-') }}</strong>
-                                            <small class="{{ $item['sla_vencido'] ? 'danger' : '' }}">{{ $item['sla_texto'] }}</small>
+                                            <strong><?php echo e($item['tempo_aguardando_detalhe'] ?? ($item['updated_at'] ?? '-')); ?></strong>
+                                            <small class="<?php echo e($item['sla_vencido'] ? 'danger' : ''); ?>"><?php echo e($item['sla_texto']); ?></small>
                                         </td>
                                         <td class="at-actions-cell" data-label="Ações">
                                             <div class="at-actions at-row-actions">
-                                                <button type="button" class="at-open-btn" wire:click="selecionarAtendimento({{ $item['id'] }})">Abrir</button>
+                                                <button type="button" class="at-open-btn" wire:click="selecionarAtendimento(<?php echo e($item['id']); ?>)">Abrir</button>
                                                 <details class="at-more-menu">
                                                     <summary class="at-more-btn" aria-label="Mais ações"><i class="bi bi-three-dots" aria-hidden="true"></i></summary>
                                                     <div class="at-more-menu-panel">
-                                                        <button type="button" wire:click="selecionarAtendimento({{ $item['id'] }})"><i class="bi bi-eye" aria-hidden="true"></i> Ver detalhes</button>
-                                                        @if(! $item['responsavel_id'])
-                                                            <button type="button" wire:click="assumirAtendimento({{ $item['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir</button>
-                                                        @endif
-                                                        @if(! in_array($item['status'] ?? '', ['resolvido', 'fechado', 'cancelado'], true))
-                                                            <button type="button" wire:click="mudarStatusRapido({{ $item['id'] }}, 'aguardando_cliente')"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Aguardar cliente</button>
-                                                            <button type="button" wire:click="resolverAtendimento({{ $item['id'] }})"><i class="bi bi-check2-circle" aria-hidden="true"></i> Resolver</button>
-                                                        @else
-                                                            <button type="button" wire:click="reabrirAtendimento({{ $item['id'] }})"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir</button>
-                                                        @endif
+                                                        <button type="button" wire:click="selecionarAtendimento(<?php echo e($item['id']); ?>)"><i class="bi bi-eye" aria-hidden="true"></i> Ver detalhes</button>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $item['responsavel_id']): ?>
+                                                            <button type="button" wire:click="assumirAtendimento(<?php echo e($item['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir</button>
+                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! in_array($item['status'] ?? '', ['resolvido', 'fechado', 'cancelado'], true)): ?>
+                                                            <button type="button" wire:click="mudarStatusRapido(<?php echo e($item['id']); ?>, 'aguardando_cliente')"><i class="bi bi-hourglass-split" aria-hidden="true"></i> Aguardar cliente</button>
+                                                            <button type="button" wire:click="resolverAtendimento(<?php echo e($item['id']); ?>)"><i class="bi bi-check2-circle" aria-hidden="true"></i> Resolver</button>
+                                                        <?php else: ?>
+                                                            <button type="button" wire:click="reabrirAtendimento(<?php echo e($item['id']); ?>)"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir</button>
+                                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                                     </div>
                                                 </details>
                                             </div>
                                         </td>
                                     </tr>
-                                @empty
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                     <tr><td colspan="8"><div class="at-empty">Nenhum atendimento encontrado com os filtros atuais.</div></td></tr>
-                                @endforelse
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -228,14 +239,14 @@
                             <span class="at-section-chevron"><i class="bi bi-chevron-down" aria-hidden="true"></i></span>
                         </summary>
                         <div class="at-filter-section-body">
-                            @foreach($statusBoard as $statusItem)
-                                <button type="button" class="at-filter-check-row {{ ($statusFilter === $statusItem['key']) ? 'active' : '' }}" wire:click="filtrarStatus('{{ $statusItem['key'] }}')">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $statusBoard; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $statusItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <button type="button" class="at-filter-check-row <?php echo e(($statusFilter === $statusItem['key']) ? 'active' : ''); ?>" wire:click="filtrarStatus('<?php echo e($statusItem['key']); ?>')">
                                     <span class="at-check-box"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
-                                    <span class="at-dot {{ $statusItem['tone'] }}"></span>
-                                    <span>{{ $statusItem['label'] }}</span>
-                                    <strong>{{ $statusItem['total'] }}</strong>
+                                    <span class="at-dot <?php echo e($statusItem['tone']); ?>"></span>
+                                    <span><?php echo e($statusItem['label']); ?></span>
+                                    <strong><?php echo e($statusItem['total']); ?></strong>
                                 </button>
-                            @endforeach
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         </div>
                     </details>
 
@@ -245,14 +256,14 @@
                             <span class="at-section-chevron"><i class="bi bi-chevron-down" aria-hidden="true"></i></span>
                         </summary>
                         <div class="at-filter-section-body">
-                            @foreach($prioridadeResumo as $prioridadeItem)
-                                <button type="button" class="at-filter-check-row {{ ($prioridadeFilter === $prioridadeItem['key']) ? 'active' : '' }}" wire:click="$set('prioridadeFilter', '{{ $prioridadeItem['key'] }}')">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $prioridadeResumo; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prioridadeItem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <button type="button" class="at-filter-check-row <?php echo e(($prioridadeFilter === $prioridadeItem['key']) ? 'active' : ''); ?>" wire:click="$set('prioridadeFilter', '<?php echo e($prioridadeItem['key']); ?>')">
                                     <span class="at-check-box"><i class="bi bi-check-lg" aria-hidden="true"></i></span>
-                                    <span class="at-dot {{ $prioridadeItem['tone'] ?? 'neutral' }}"></span>
-                                    <span>{{ $prioridadeItem['label'] }}</span>
-                                    <strong>{{ $prioridadeItem['total'] }}</strong>
+                                    <span class="at-dot <?php echo e($prioridadeItem['tone'] ?? 'neutral'); ?>"></span>
+                                    <span><?php echo e($prioridadeItem['label']); ?></span>
+                                    <strong><?php echo e($prioridadeItem['total']); ?></strong>
                                 </button>
-                            @endforeach
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         </div>
                     </details>
 
@@ -262,7 +273,7 @@
                             <span class="at-section-chevron"><i class="bi bi-chevron-down" aria-hidden="true"></i></span>
                         </summary>
                         <div class="at-filter-section-body">
-                            <label class="at-side-select"><span>Filtrar responsável</span><select wire:model.live="responsavelFilter"><option value="todos">Todos</option><option value="sem_responsavel">Sem responsável</option>@foreach($responsaveis as $resp)<option value="{{ $resp['id'] }}">{{ $resp['nome'] }}</option>@endforeach</select></label>
+                            <label class="at-side-select"><span>Filtrar responsável</span><select wire:model.live="responsavelFilter"><option value="todos">Todos</option><option value="sem_responsavel">Sem responsável</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $responsaveis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($resp['id']); ?>"><?php echo e($resp['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
                         </div>
                     </details>
 
@@ -276,11 +287,11 @@
                                 <span>Filtrar espera</span>
                                 <select wire:model.live="aguardandoFilter">
                                     <option value="todos">Todos</option>
-                                    @foreach(($aguardandoOptions ?? []) as $key => $label)
-                                        @if($key !== 'todos')
-                                            <option value="{{ $key }}">{{ $label }}</option>
-                                        @endif
-                                    @endforeach
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($aguardandoOptions ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($key !== 'todos'): ?>
+                                            <option value="<?php echo e($key); ?>"><?php echo e($label); ?></option>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                 </select>
                             </label>
                         </div>
@@ -302,21 +313,21 @@
                             <span class="at-section-chevron"><i class="bi bi-chevron-down" aria-hidden="true"></i></span>
                         </summary>
                         <div class="at-filter-section-body">
-                            <label class="at-side-select"><span>Prazo</span><select wire:model.live="slaFilter">@foreach($slaOptions as $key => $label)<option value="{{ $key }}">{{ $label }}</option>@endforeach</select></label>
+                            <label class="at-side-select"><span>Prazo</span><select wire:model.live="slaFilter"><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $slaOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($key); ?>"><?php echo e($label); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
                         </div>
                     </details>
 
-                    @if(count($empresas) > 1)
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($empresas) > 1): ?>
                         <details class="at-filter-section">
                             <summary class="at-filter-section-title">
                                 <span>Empresa</span>
                                 <span class="at-section-chevron"><i class="bi bi-chevron-down" aria-hidden="true"></i></span>
                             </summary>
                             <div class="at-filter-section-body">
-                                <label class="at-side-select"><span>Empresa</span><select wire:model.live="empresaFilter"><option value="">Todas</option>@foreach($empresas as $empresa)<option value="{{ $empresa['id'] }}">{{ $empresa['nome'] }}</option>@endforeach</select></label>
+                                <label class="at-side-select"><span>Empresa</span><select wire:model.live="empresaFilter"><option value="">Todas</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $empresas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($empresa['id']); ?>"><?php echo e($empresa['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
                             </div>
                         </details>
-                    @endif
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                     <button type="button" class="at-clear-filters-wide" wire:click="resetarFiltros" wire:loading.attr="disabled" wire:target="resetarFiltros"><i class="bi bi-x-lg" aria-hidden="true"></i> Limpar todos os filtros</button>
                 </article>
@@ -332,10 +343,10 @@
             <div class="at-modal-card" @click.outside="criar = false">
                 <header><div><h2>Novo atendimento</h2><p>Registre uma demanda interna vinculada ao cliente/empresa.</p></div><button type="button" @click="criar = false">×</button></header>
                 <div class="at-form-grid">
-                    <label><span>Empresa</span><select wire:model.live="novoEmpresaId"><option value="">Selecione</option>@foreach($empresas as $empresa)<option value="{{ $empresa['id'] }}">{{ $empresa['nome'] }}</option>@endforeach</select></label>
-                    <label><span>Cliente CRM</span><select wire:model="novoClienteId"><option value="">Opcional</option>@foreach($clientesDaEmpresa as $cliente)<option value="{{ $cliente['id'] }}">{{ $cliente['nome'] }}</option>@endforeach</select></label>
-                    <label><span>Responsável</span><select wire:model="novoResponsavelId"><option value="">Sem responsável</option>@foreach($responsaveis as $resp)<option value="{{ $resp['id'] }}">{{ $resp['nome'] }}</option>@endforeach</select></label>
-                    <label><span>Prioridade</span><select wire:model="novoPrioridade">@foreach($prioridadeOptions as $key => $meta)<option value="{{ $key }}">{{ $meta['label'] }} · SLA {{ $meta['sla'] ?? '-' }}h</option>@endforeach</select></label>
+                    <label><span>Empresa</span><select wire:model.live="novoEmpresaId"><option value="">Selecione</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $empresas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($empresa['id']); ?>"><?php echo e($empresa['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                    <label><span>Cliente CRM</span><select wire:model="novoClienteId"><option value="">Opcional</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $clientesDaEmpresa; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cliente): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($cliente['id']); ?>"><?php echo e($cliente['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                    <label><span>Responsável</span><select wire:model="novoResponsavelId"><option value="">Sem responsável</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $responsaveis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($resp['id']); ?>"><?php echo e($resp['nome']); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
+                    <label><span>Prioridade</span><select wire:model="novoPrioridade"><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $prioridadeOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $meta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($key); ?>"><?php echo e($meta['label']); ?> · SLA <?php echo e($meta['sla'] ?? '-'); ?>h</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></label>
                     <label><span>Origem</span><select wire:model="novoOrigem"><option value="manual">Manual</option><option value="portal">Portal</option><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option><option value="telefone">Telefone</option></select></label>
                     <label><span>Canal</span><select wire:model="novoCanal"><option value="interno">Interno</option><option value="portal">Portal</option><option value="whatsapp">WhatsApp</option><option value="email">E-mail</option><option value="telefone">Telefone</option></select></label>
                 </div>
@@ -1553,8 +1564,8 @@
 
         <div class="at-modal" x-show="detalhe" x-cloak>
             <div class="at-modal-card wide at-ticket-modal-shell" @click.outside="detalhe = false">
-                @if($selectedAtendimento)
-                    @php
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($selectedAtendimento): ?>
+                    <?php
                         $clienteInicial = mb_strtoupper(mb_substr(trim($selectedAtendimento['empresa_nome'] ?? 'Cliente'), 0, 1));
                         $responsavelNome = $selectedAtendimento['responsavel_nome'] ?? 'Sem responsável';
                         $responsavelInicial = mb_strtoupper(mb_substr(trim($responsavelNome ?: 'S'), 0, 1));
@@ -1566,18 +1577,19 @@
                             ->values();
                         $primeiroLogCliente = collect($timeline)->first(fn ($log) => in_array(($log['origem'] ?? ''), ['cliente', 'portal', 'publico'], true));
                         $eventosOperacionais = collect($timeline)->reverse()->values();
-                    @endphp
+                    ?>
 
                     <header class="at-ticket-modal-head">
                         <div class="at-ticket-modal-title">
                             <span class="at-ticket-modal-title-icon"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></span>
                             <div>
                                 <h2>
-                                    Atendimento #{{ $selectedAtendimento['id'] }} - {{ $selectedAtendimento['titulo'] }}
-                                    <span class="at-badge at-badge-soft {{ $selectedAtendimento['status_tone'] ?? 'info' }}">{{ $selectedAtendimento['status_label'] ?? 'Aberto' }}</span>
-                                    <span class="at-badge at-badge-soft {{ $selectedAtendimento['prioridade_tone'] ?? 'info' }}">{{ $selectedAtendimento['prioridade_label'] ?? 'Média' }}</span>
+                                    Atendimento #<?php echo e($selectedAtendimento['id']); ?> - <?php echo e($selectedAtendimento['titulo']); ?>
+
+                                    <span class="at-badge at-badge-soft <?php echo e($selectedAtendimento['status_tone'] ?? 'info'); ?>"><?php echo e($selectedAtendimento['status_label'] ?? 'Aberto'); ?></span>
+                                    <span class="at-badge at-badge-soft <?php echo e($selectedAtendimento['prioridade_tone'] ?? 'info'); ?>"><?php echo e($selectedAtendimento['prioridade_label'] ?? 'Média'); ?></span>
                                 </h2>
-                                <p>Criado em {{ $selectedAtendimento['created_at'] ?? '-' }}</p>
+                                <p>Criado em <?php echo e($selectedAtendimento['created_at'] ?? '-'); ?></p>
                             </div>
                         </div>
 
@@ -1585,9 +1597,9 @@
                             <details class="at-ticket-control">
                                 <summary><i class="bi bi-record-circle" aria-hidden="true"></i> Marcar como... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
                                 <div class="at-ticket-control-panel">
-                                    <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'em_andamento')"><span class="at-dot primary"></span> Em andamento</button>
-                                    <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'aguardando_cliente')"><span class="at-dot warning"></span> Aguardando cliente</button>
-                                    <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Resolvido</button>
+                                    <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'em_andamento')"><span class="at-dot primary"></span> Em andamento</button>
+                                    <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'aguardando_cliente')"><span class="at-dot warning"></span> Aguardando cliente</button>
+                                    <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'resolvido')"><span class="at-dot success"></span> Resolvido</button>
                                     <button type="button" wire:click="encerrarComMotivo" class="danger"><span class="at-dot danger"></span> Encerrar com motivo</button>
                                 </div>
                             </details>
@@ -1595,25 +1607,25 @@
                             <details class="at-ticket-control">
                                 <summary><i class="bi bi-person-plus" aria-hidden="true"></i> Atribuir a... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
                                 <div class="at-ticket-control-panel">
-                                    @foreach($responsaveis as $resp)
-                                        <button type="button" wire:click="atribuirResponsavelDetalhe({{ $resp['id'] }})"><i class="bi bi-person" aria-hidden="true"></i> {{ $resp['nome'] }}</button>
-                                    @endforeach
-                                    @if(empty($responsaveis))
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $responsaveis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <button type="button" wire:click="atribuirResponsavelDetalhe(<?php echo e($resp['id']); ?>)"><i class="bi bi-person" aria-hidden="true"></i> <?php echo e($resp['nome']); ?></button>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(empty($responsaveis)): ?>
                                         <button type="button" disabled><i class="bi bi-info-circle" aria-hidden="true"></i> Nenhum responsável disponível</button>
-                                    @endif
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </details>
 
                             <details class="at-ticket-control at-ticket-more-control">
                                 <summary class="at-ticket-icon-summary" title="Mais opções"><i class="bi bi-three-dots" aria-hidden="true"></i></summary>
                                 <div class="at-ticket-control-panel at-ticket-more-panel">
-                                    <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('#{{ $selectedAtendimento['id'] }}')"><i class="bi bi-clipboard" aria-hidden="true"></i> Copiar protocolo</button>
-                                    @if(! $selectedAtendimento['responsavel_id'])
-                                        <button type="button" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
-                                    @endif
+                                    <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('#<?php echo e($selectedAtendimento['id']); ?>')"><i class="bi bi-clipboard" aria-hidden="true"></i> Copiar protocolo</button>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $selectedAtendimento['responsavel_id']): ?>
+                                        <button type="button" wire:click="assumirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                     <button type="button" wire:click="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
                                     <button type="button" wire:click="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
-                                    <button type="button" wire:click="reabrirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir atendimento</button>
+                                    <button type="button" wire:click="reabrirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir atendimento</button>
                                     <button type="button" class="danger" wire:click="encerrarComMotivo"><i class="bi bi-x-octagon" aria-hidden="true"></i> Encerrar com motivo</button>
                                 </div>
                             </details>
@@ -1626,61 +1638,61 @@
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Detalhes do atendimento</header>
                                 <div class="at-ticket-detail-list">
-                                    <div class="at-ticket-detail-row"><i class="bi bi-file-earmark-text" aria-hidden="true"></i><span>Protocolo</span><strong>#{{ $selectedAtendimento['id'] }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Origem</span><strong>{{ $selectedAtendimento['origem_label'] ?? ucfirst($selectedAtendimento['origem'] ?? 'Manual') }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-list-ul" aria-hidden="true"></i><span>Categoria</span><strong>{{ $selectedAtendimento['canal_label'] ?? ucfirst($selectedAtendimento['canal'] ?? 'Interno') }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-envelope" aria-hidden="true"></i><span>Assunto</span><strong>{{ $selectedAtendimento['titulo'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-stars" aria-hidden="true"></i><span>Prioridade</span><strong>{{ $selectedAtendimento['prioridade_label'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>Status</span><strong>{{ $selectedAtendimento['status_label'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-hourglass-split" aria-hidden="true"></i><span>Aguardando</span><strong>{{ $selectedAtendimento['aguardando_label'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Tempo aguardando</span><strong>{{ $selectedAtendimento['tempo_aguardando_detalhe'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-clock" aria-hidden="true"></i><span>SLA</span><strong class="{{ !empty($selectedAtendimento['sla_vencido']) ? 'at-ticket-sla-danger' : 'at-ticket-sla-ok' }}">{{ !empty($selectedAtendimento['sla_vencido']) ? $selectedAtendimento['sla_texto'] : 'Dentro do prazo' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-calendar2" aria-hidden="true"></i><span>Criado em</span><strong>{{ $selectedAtendimento['created_at'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Atualizado em</span><strong>{{ $selectedAtendimento['updated_at'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-lightning-charge" aria-hidden="true"></i><span>Primeira resposta</span><strong>{{ $selectedAtendimento['primeira_resposta_em'] ?? '-' }}</strong></div>
-                                    <div class="at-ticket-detail-row"><i class="bi bi-check2-square" aria-hidden="true"></i><span>Resolução</span><strong>{{ $selectedAtendimento['resolvido_em'] ?? '-' }}</strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-file-earmark-text" aria-hidden="true"></i><span>Protocolo</span><strong>#<?php echo e($selectedAtendimento['id']); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-geo-alt" aria-hidden="true"></i><span>Origem</span><strong><?php echo e($selectedAtendimento['origem_label'] ?? ucfirst($selectedAtendimento['origem'] ?? 'Manual')); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-list-ul" aria-hidden="true"></i><span>Categoria</span><strong><?php echo e($selectedAtendimento['canal_label'] ?? ucfirst($selectedAtendimento['canal'] ?? 'Interno')); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-envelope" aria-hidden="true"></i><span>Assunto</span><strong><?php echo e($selectedAtendimento['titulo'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-stars" aria-hidden="true"></i><span>Prioridade</span><strong><?php echo e($selectedAtendimento['prioridade_label'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>Status</span><strong><?php echo e($selectedAtendimento['status_label'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-hourglass-split" aria-hidden="true"></i><span>Aguardando</span><strong><?php echo e($selectedAtendimento['aguardando_label'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Tempo aguardando</span><strong><?php echo e($selectedAtendimento['tempo_aguardando_detalhe'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-clock" aria-hidden="true"></i><span>SLA</span><strong class="<?php echo e(!empty($selectedAtendimento['sla_vencido']) ? 'at-ticket-sla-danger' : 'at-ticket-sla-ok'); ?>"><?php echo e(!empty($selectedAtendimento['sla_vencido']) ? $selectedAtendimento['sla_texto'] : 'Dentro do prazo'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-calendar2" aria-hidden="true"></i><span>Criado em</span><strong><?php echo e($selectedAtendimento['created_at'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-clock-history" aria-hidden="true"></i><span>Atualizado em</span><strong><?php echo e($selectedAtendimento['updated_at'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-lightning-charge" aria-hidden="true"></i><span>Primeira resposta</span><strong><?php echo e($selectedAtendimento['primeira_resposta_em'] ?? '-'); ?></strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-check2-square" aria-hidden="true"></i><span>Resolução</span><strong><?php echo e($selectedAtendimento['resolvido_em'] ?? '-'); ?></strong></div>
                                 </div>
                             </section>
 
                             <section class="at-ticket-panel">
-                                <header class="at-ticket-panel-header"><span>Histórico operacional</span><small>{{ $eventosOperacionais->count() }}</small></header>
+                                <header class="at-ticket-panel-header"><span>Histórico operacional</span><small><?php echo e($eventosOperacionais->count()); ?></small></header>
                                 <div class="at-ticket-operational-timeline">
-                                    @forelse($eventosOperacionais->take(8) as $evento)
-                                        <div class="at-ticket-op-event tone-{{ $evento['operacional_tone'] ?? 'neutral' }}">
-                                            <span class="at-ticket-op-icon"><i class="bi {{ $evento['operacional_icon'] ?? 'bi-activity' }}" aria-hidden="true"></i></span>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $eventosOperacionais->take(8); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $evento): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <div class="at-ticket-op-event tone-<?php echo e($evento['operacional_tone'] ?? 'neutral'); ?>">
+                                            <span class="at-ticket-op-icon"><i class="bi <?php echo e($evento['operacional_icon'] ?? 'bi-activity'); ?>" aria-hidden="true"></i></span>
                                             <div class="at-ticket-op-body">
-                                                <strong>{{ $evento['operacional_titulo'] ?? ($evento['tipo_label'] ?? 'Registro') }}</strong>
-                                                <small>{{ $evento['created_at'] ?? '-' }} · {{ $evento['operacional_actor'] ?? ($evento['usuario'] ?? 'Sistema') }}</small>
-                                                @if(trim((string) ($evento['operacional_detalhe'] ?? '')) !== '')
-                                                    <p>{{ $evento['operacional_detalhe'] }}</p>
-                                                @endif
+                                                <strong><?php echo e($evento['operacional_titulo'] ?? ($evento['tipo_label'] ?? 'Registro')); ?></strong>
+                                                <small><?php echo e($evento['created_at'] ?? '-'); ?> · <?php echo e($evento['operacional_actor'] ?? ($evento['usuario'] ?? 'Sistema')); ?></small>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(trim((string) ($evento['operacional_detalhe'] ?? '')) !== ''): ?>
+                                                    <p><?php echo e($evento['operacional_detalhe']); ?></p>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                             </div>
                                         </div>
-                                    @empty
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                         <div class="at-empty">Nenhum evento operacional registrado.</div>
-                                    @endforelse
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </section>
 
                             <section class="at-ticket-panel">
-                                <header class="at-ticket-panel-header"><span>Anexos</span><small>{{ $anexosDoAtendimento->count() }}</small></header>
+                                <header class="at-ticket-panel-header"><span>Anexos</span><small><?php echo e($anexosDoAtendimento->count()); ?></small></header>
                                 <div class="at-ticket-attachments">
-                                    @forelse($anexosDoAtendimento->take(4) as $anexo)
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $anexosDoAtendimento->take(4); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $anexo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                         <div class="at-ticket-file-row">
                                             <span><i class="bi bi-file-earmark" aria-hidden="true"></i></span>
                                             <div>
-                                                <strong>{{ $anexo['nome_original'] ?? 'Anexo' }}</strong>
-                                                <small>{{ $anexo['tamanho_label'] ?? 'Arquivo' }} · {{ $anexo['log_data'] ?? '-' }}</small>
+                                                <strong><?php echo e($anexo['nome_original'] ?? 'Anexo'); ?></strong>
+                                                <small><?php echo e($anexo['tamanho_label'] ?? 'Arquivo'); ?> · <?php echo e($anexo['log_data'] ?? '-'); ?></small>
                                             </div>
-                                            @if(!empty($anexo['log_id']) && !empty($anexo['hash']))
-                                                <button type="button" class="at-ticket-download-btn" wire:click="baixarAnexoHistorico({{ (int) $anexo['log_id'] }}, '{{ $anexo['hash'] }}')" title="Baixar anexo"><i class="bi bi-download" aria-hidden="true"></i></button>
-                                            @else
+                                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($anexo['log_id']) && !empty($anexo['hash'])): ?>
+                                                <button type="button" class="at-ticket-download-btn" wire:click="baixarAnexoHistorico(<?php echo e((int) $anexo['log_id']); ?>, '<?php echo e($anexo['hash']); ?>')" title="Baixar anexo"><i class="bi bi-download" aria-hidden="true"></i></button>
+                                            <?php else: ?>
                                                 <span></span>
-                                            @endif
+                                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                         </div>
-                                    @empty
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                         <div class="at-empty">Nenhum anexo neste atendimento.</div>
-                                    @endforelse
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </section>
                         </aside>
@@ -1693,53 +1705,53 @@
 
                             <div class="at-ticket-chat-scroll">
                                 <div class="at-ticket-chat-stream">
-                                    @if($primeiroLogCliente === null && trim((string) ($selectedAtendimento['descricao'] ?? '')) !== '')
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($primeiroLogCliente === null && trim((string) ($selectedAtendimento['descricao'] ?? '')) !== ''): ?>
                                         <article class="at-ticket-message client">
-                                            <span class="at-ticket-chat-avatar client">{{ $clienteInicial }}</span>
+                                            <span class="at-ticket-chat-avatar client"><?php echo e($clienteInicial); ?></span>
                                             <div class="at-ticket-message-card">
-                                                <strong>{{ $selectedAtendimento['empresa_nome'] ?? 'Cliente' }} <span>(Cliente)</span></strong>
-                                                <p>{{ $selectedAtendimento['descricao'] }}</p>
+                                                <strong><?php echo e($selectedAtendimento['empresa_nome'] ?? 'Cliente'); ?> <span>(Cliente)</span></strong>
+                                                <p><?php echo e($selectedAtendimento['descricao']); ?></p>
                                             </div>
-                                            <span class="at-ticket-message-time">{{ $selectedAtendimento['created_at'] ?? '-' }}</span>
+                                            <span class="at-ticket-message-time"><?php echo e($selectedAtendimento['created_at'] ?? '-'); ?></span>
                                         </article>
-                                    @endif
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                                    @forelse($timeline as $log)
-                                        @php
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $timeline; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $log): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                        <?php
                                             $origemLog = $log['origem'] ?? 'sistema';
                                             $isCliente = in_array($origemLog, ['cliente', 'portal', 'publico'], true);
                                             $isSuporte = in_array($origemLog, ['suporte', 'interno'], true);
                                             $tipoCard = $isCliente ? 'client' : ($isSuporte ? 'support' : 'system');
                                             $inicialLog = $isCliente ? $clienteInicial : ($isSuporte ? $responsavelInicial : 'S');
-                                        @endphp
-                                        <article wire:key="ticket-chat-{{ $log['id'] ?? md5(($log['created_at'] ?? '') . ($log['mensagem'] ?? '')) }}" class="at-ticket-message {{ $tipoCard }}">
-                                            <span class="at-ticket-chat-avatar {{ $tipoCard }}">{{ $inicialLog }}</span>
+                                        ?>
+                                        <article <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::$currentLoop['key'] = 'ticket-chat-'.e($log['id'] ?? md5(($log['created_at'] ?? '') . ($log['mensagem'] ?? ''))).''; ?>wire:key="ticket-chat-<?php echo e($log['id'] ?? md5(($log['created_at'] ?? '') . ($log['mensagem'] ?? ''))); ?>" class="at-ticket-message <?php echo e($tipoCard); ?>">
+                                            <span class="at-ticket-chat-avatar <?php echo e($tipoCard); ?>"><?php echo e($inicialLog); ?></span>
                                             <div class="at-ticket-message-card">
-                                                <strong>{{ $log['usuario'] ?? ($isCliente ? ($selectedAtendimento['empresa_nome'] ?? 'Cliente') : 'Suporte') }} <span>{{ $isCliente ? '(Cliente)' : ($isSuporte ? '(Suporte)' : '(Sistema)') }}</span></strong>
-                                                @if(trim((string) ($log['mensagem'] ?? '')) !== '')
-                                                    <p>{{ $log['mensagem'] }}</p>
-                                                @else
-                                                    <p>{{ $log['tipo_label'] ?? 'Registro do sistema' }}</p>
-                                                @endif
-                                                @if(! empty($log['anexos']))
+                                                <strong><?php echo e($log['usuario'] ?? ($isCliente ? ($selectedAtendimento['empresa_nome'] ?? 'Cliente') : 'Suporte')); ?> <span><?php echo e($isCliente ? '(Cliente)' : ($isSuporte ? '(Suporte)' : '(Sistema)')); ?></span></strong>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(trim((string) ($log['mensagem'] ?? '')) !== ''): ?>
+                                                    <p><?php echo e($log['mensagem']); ?></p>
+                                                <?php else: ?>
+                                                    <p><?php echo e($log['tipo_label'] ?? 'Registro do sistema'); ?></p>
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($log['anexos'])): ?>
                                                     <div class="at-ticket-message-files">
-                                                        @foreach($log['anexos'] as $anexo)
-                                                            <button type="button" class="at-ticket-attachment-btn" wire:click="baixarAnexoHistorico({{ $log['id'] }}, '{{ $anexo['hash'] }}')">
-                                                                <i class="bi bi-file-earmark" aria-hidden="true"></i> {{ $anexo['nome_original'] }} <i class="bi bi-download" aria-hidden="true"></i>
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $log['anexos']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $anexo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                                            <button type="button" class="at-ticket-attachment-btn" wire:click="baixarAnexoHistorico(<?php echo e($log['id']); ?>, '<?php echo e($anexo['hash']); ?>')">
+                                                                <i class="bi bi-file-earmark" aria-hidden="true"></i> <?php echo e($anexo['nome_original']); ?> <i class="bi bi-download" aria-hidden="true"></i>
                                                             </button>
-                                                        @endforeach
+                                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                                     </div>
-                                                @endif
+                                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                             </div>
-                                            <span class="at-ticket-message-time">{{ $log['created_at'] ?? '-' }} <i class="bi bi-check2-all" aria-hidden="true"></i></span>
+                                            <span class="at-ticket-message-time"><?php echo e($log['created_at'] ?? '-'); ?> <i class="bi bi-check2-all" aria-hidden="true"></i></span>
                                         </article>
-                                    @empty
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                         <div class="at-empty">Nenhuma interação registrada. A descrição inicial aparece como contexto do atendimento.</div>
-                                    @endforelse
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </div>
 
-                            @if(! $statusFechado)
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
                                 <section class="at-ticket-reply-box">
                                     <textarea wire:model="novaRespostaCliente" placeholder="Digite sua resposta..."></textarea>
                                     <div class="at-ticket-reply-actions">
@@ -1769,19 +1781,19 @@
                                     <small class="at-ticket-reply-hint" wire:loading.remove wire:target="anexoRespostaCliente">Pressione o botão para enviar ao portal do cliente</small>
                                     <small class="at-ticket-reply-hint" wire:loading wire:target="anexoRespostaCliente">Carregando anexo...</small>
                                 </section>
-                            @else
+                            <?php else: ?>
                                 <div class="at-ticket-finalized">Atendimento finalizado. Reabra para responder ao cliente.</div>
-                            @endif
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                         </main>
 
                         <aside class="at-ticket-right">
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Cliente</header>
                                 <div class="at-ticket-person-card">
-                                    <span class="at-ticket-person-avatar">{{ $clienteInicial }}</span>
+                                    <span class="at-ticket-person-avatar"><?php echo e($clienteInicial); ?></span>
                                     <div>
-                                        <strong>{{ $selectedAtendimento['empresa_nome'] ?? 'Cliente' }}</strong>
-                                        <small>{{ $clienteEmail }}</small>
+                                        <strong><?php echo e($selectedAtendimento['empresa_nome'] ?? 'Cliente'); ?></strong>
+                                        <small><?php echo e($clienteEmail); ?></small>
                                     </div>
                                 </div>
                                 <button type="button" class="at-ticket-side-btn"><i class="bi bi-person" aria-hidden="true"></i> Ver perfil do cliente <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></button>
@@ -1790,20 +1802,20 @@
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Responsável</header>
                                 <div class="at-ticket-person-card">
-                                    <span class="at-ticket-person-avatar support">{{ $responsavelInicial }}</span>
+                                    <span class="at-ticket-person-avatar support"><?php echo e($responsavelInicial); ?></span>
                                     <div>
-                                        <strong>{{ $responsavelNome }}</strong>
-                                        <small>{{ $selectedAtendimento['responsavel_email'] ?? 'Sem e-mail' }}</small>
+                                        <strong><?php echo e($responsavelNome); ?></strong>
+                                        <small><?php echo e($selectedAtendimento['responsavel_email'] ?? 'Sem e-mail'); ?></small>
                                     </div>
                                 </div>
-                                @if(! $selectedAtendimento['responsavel_id'])
-                                    <button type="button" class="at-ticket-side-btn" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
-                                @else
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $selectedAtendimento['responsavel_id']): ?>
+                                    <button type="button" class="at-ticket-side-btn" wire:click="assumirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                <?php else: ?>
                                     <button type="button" class="at-ticket-side-btn" wire:click="salvarDetalhe"><i class="bi bi-person-gear" aria-hidden="true"></i> Alterar responsável</button>
-                                @endif
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </section>
 
-                            @if(! $statusFechado)
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
                                 <section class="at-ticket-panel">
                                     <header class="at-ticket-panel-header">Encerramento com motivo</header>
                                     <div class="at-ticket-detail-list">
@@ -1825,17 +1837,17 @@
                                         <button type="button" class="at-ticket-quick-btn danger" wire:click="encerrarComMotivo" wire:loading.attr="disabled" wire:target="encerrarComMotivo"><span class="at-dot danger"></span> Encerrar atendimento</button>
                                     </div>
                                 </section>
-                            @endif
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Ações rápidas</header>
                                 <div class="at-ticket-quick-list">
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'em_andamento')"><span class="at-dot primary"></span> Marcar como em andamento</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'aguardando_cliente')"><span class="at-dot warning"></span> Marcar como aguardando</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
+                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'em_andamento')"><span class="at-dot primary"></span> Marcar como em andamento</button>
+                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'aguardando_cliente')"><span class="at-dot warning"></span> Marcar como aguardando</button>
+                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
                                     <button type="button" class="at-ticket-quick-btn" wire:click="criarPendenciaDoAtendimento" wire:loading.attr="disabled" wire:target="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
                                     <button type="button" class="at-ticket-quick-btn" wire:click="solicitarDocumentoDoAtendimento" wire:loading.attr="disabled" wire:target="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="reabrirAtendimento({{ $selectedAtendimento['id'] }})"><span class="at-dot info"></span> Reabrir atendimento</button>
+                                    <button type="button" class="at-ticket-quick-btn" wire:click="reabrirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><span class="at-dot info"></span> Reabrir atendimento</button>
                                     <button type="button" class="at-ticket-quick-btn danger" wire:click="encerrarComMotivo"><span class="at-dot danger"></span> Encerrar com motivo</button>
                                 </div>
                             </section>
@@ -1843,18 +1855,18 @@
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Histórico de status</header>
                                 <div class="at-ticket-status-list">
-                                    @foreach($statusOptions as $statusKey => $statusMeta)
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $statusOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $statusKey => $statusMeta): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                                         <div class="at-ticket-status-item">
-                                            <span class="at-ticket-status-circle {{ ($selectedAtendimento['status'] ?? '') === $statusKey ? ($statusMeta['tone'] ?? 'info') : '' }}"></span>
-                                            <span>{{ $statusMeta['label'] }}</span>
-                                            <small>{{ ($selectedAtendimento['status'] ?? '') === $statusKey ? ($selectedAtendimento['updated_at'] ?? '-') : '-' }}</small>
+                                            <span class="at-ticket-status-circle <?php echo e(($selectedAtendimento['status'] ?? '') === $statusKey ? ($statusMeta['tone'] ?? 'info') : ''); ?>"></span>
+                                            <span><?php echo e($statusMeta['label']); ?></span>
+                                            <small><?php echo e(($selectedAtendimento['status'] ?? '') === $statusKey ? ($selectedAtendimento['updated_at'] ?? '-') : '-'); ?></small>
                                         </div>
-                                    @endforeach
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                 </div>
                             </section>
                         </aside>
                     </div>
-                @else
+                <?php else: ?>
                     <header class="at-ticket-modal-head">
                         <div class="at-ticket-modal-title">
                             <span class="at-ticket-modal-title-icon"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></span>
@@ -1862,11 +1874,21 @@
                         </div>
                         <button type="button" class="at-ticket-icon-btn" title="Fechar" @click="detalhe = false"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                     </header>
-                @endif
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>
         </div>
         <div class="at-loading-panel" wire:loading.delay.longer wire:target="loadData,sincronizarPortal,criarAtendimento,salvarDetalhe,responderCliente,adicionarInteracao,resolverComResumo,encerrarComMotivo,criarPendenciaDoAtendimento,solicitarDocumentoDoAtendimento">
             Atualizando central de atendimentos...
         </div>
     </div>
-</x-filament-panels::page>
+ <?php echo $__env->renderComponent(); ?>
+<?php endif; ?>
+<?php if (isset($__attributesOriginal166a02a7c5ef5a9331faf66fa665c256)): ?>
+<?php $attributes = $__attributesOriginal166a02a7c5ef5a9331faf66fa665c256; ?>
+<?php unset($__attributesOriginal166a02a7c5ef5a9331faf66fa665c256); ?>
+<?php endif; ?>
+<?php if (isset($__componentOriginal166a02a7c5ef5a9331faf66fa665c256)): ?>
+<?php $component = $__componentOriginal166a02a7c5ef5a9331faf66fa665c256; ?>
+<?php unset($__componentOriginal166a02a7c5ef5a9331faf66fa665c256); ?>
+<?php endif; ?>
+<?php /**PATH C:\xampp\htdocs\prazzu\resources\views/filament/pages/atendimentos.blade.php ENDPATH**/ ?>

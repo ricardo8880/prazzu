@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class AtendimentosData
 {
@@ -30,6 +31,13 @@ class AtendimentosData
         'vencidos' => 'SLA vencido',
         'vence_hoje' => 'Vence hoje',
         'sem_sla' => 'Sem SLA',
+    ];
+
+    public const AGUARDANDO_OPTIONS = [
+        'todos' => 'Todos',
+        'cliente' => 'Cliente',
+        'escritorio' => 'Escritório',
+        'concluido' => 'Concluído',
     ];
 
     public static function data(array $filters = []): array
@@ -72,6 +80,7 @@ class AtendimentosData
             'statusOptions' => self::STATUS,
             'prioridadeOptions' => self::PRIORIDADES,
             'slaOptions' => self::SLA_OPTIONS,
+            'aguardandoOptions' => self::AGUARDANDO_OPTIONS,
         ];
     }
 
@@ -135,15 +144,24 @@ class AtendimentosData
                     ->values()
                     ->all();
 
+                $tipo = (string) $row->tipo;
+                $mensagem = (string) ($row->mensagem ?? '');
+                $operacional = self::timelineOperacionalMeta($tipo, $origem, $mensagem);
+
                 return [
                     'id' => (int) $row->id,
                     'origem' => $origem,
-                    'tipo' => $row->tipo,
-                    'tipo_label' => self::tipoInteracaoLabel((string) $row->tipo),
+                    'tipo' => $tipo,
+                    'tipo_label' => self::tipoInteracaoLabel($tipo),
                     'mensagem' => $row->mensagem,
                     'usuario' => $usuario,
                     'created_at' => $row->created_at ? Carbon::parse($row->created_at)->format('d/m/Y H:i') : '-',
                     'anexos' => $anexos,
+                    'operacional_titulo' => $operacional['titulo'],
+                    'operacional_detalhe' => $operacional['detalhe'],
+                    'operacional_icon' => $operacional['icon'],
+                    'operacional_tone' => $operacional['tone'],
+                    'operacional_actor' => $usuario,
                 ];
             })->all();
     }
@@ -299,6 +317,78 @@ class AtendimentosData
         };
     }
 
+    private static function timelineOperacionalMeta(string $tipo, string $origem, string $mensagem = ''): array
+    {
+        $isCliente = in_array($origem, ['cliente', 'portal', 'publico'], true);
+        $detalhe = trim($mensagem) !== '' ? Str::limit(trim($mensagem), 120) : '';
+
+        if ($isCliente && in_array($tipo, ['comentario', 'resposta', 'mensagem'], true)) {
+            return [
+                'titulo' => 'Cliente respondeu',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-person-lines-fill',
+                'tone' => 'warning',
+            ];
+        }
+
+        return match ($tipo) {
+            'abertura' => [
+                'titulo' => 'Atendimento criado',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-plus-circle',
+                'tone' => 'primary',
+            ],
+            'responsavel' => [
+                'titulo' => 'Responsável atualizado',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-person-check',
+                'tone' => 'info',
+            ],
+            'alteracao' => [
+                'titulo' => 'Atendimento atualizado',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-pencil-square',
+                'tone' => 'warning',
+            ],
+            'resposta' => [
+                'titulo' => 'Resposta enviada ao cliente',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-send',
+                'tone' => 'success',
+            ],
+            'comentario' => [
+                'titulo' => 'Comentário registrado',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-chat-left-text',
+                'tone' => 'neutral',
+            ],
+            'anexo' => [
+                'titulo' => 'Anexo registrado',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-paperclip',
+                'tone' => 'info',
+            ],
+            'resolucao' => [
+                'titulo' => 'Atendimento resolvido',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-check2-circle',
+                'tone' => 'success',
+            ],
+            'reabertura' => [
+                'titulo' => 'Atendimento reaberto',
+                'detalhe' => $detalhe,
+                'icon' => 'bi-arrow-counterclockwise',
+                'tone' => 'primary',
+            ],
+            default => [
+                'titulo' => self::tipoInteracaoLabel($tipo),
+                'detalhe' => $detalhe,
+                'icon' => 'bi-activity',
+                'tone' => 'neutral',
+            ],
+        };
+    }
+
     public static function slaHorasPorPrioridade(string $prioridade): int
     {
         return (int) (self::PRIORIDADES[$prioridade]['sla'] ?? self::PRIORIDADES['media']['sla']);
@@ -345,6 +435,15 @@ class AtendimentosData
             $query->whereIn('a.status', ['aberto', 'em_andamento', 'aguardando_cliente', 'aguardando_suporte']);
         } elseif ($status !== 'todos' && $status !== '') {
             $query->where('a.status', $status);
+        }
+
+        $aguardando = (string) ($filters['aguardando'] ?? 'todos');
+        if ($aguardando === 'cliente') {
+            $query->where('a.status', 'aguardando_cliente');
+        } elseif ($aguardando === 'escritorio') {
+            $query->whereIn('a.status', ['aberto', 'em_andamento', 'aguardando_suporte']);
+        } elseif ($aguardando === 'concluido') {
+            $query->whereIn('a.status', ['resolvido', 'fechado', 'cancelado']);
         }
 
         foreach (['prioridade', 'origem'] as $field) {
@@ -468,6 +567,7 @@ class AtendimentosData
         $isClosed = in_array($status, ['resolvido', 'fechado', 'cancelado'], true);
         $isLate = (bool) ($sla && ! $isClosed && $sla->isPast());
         $slaDiff = $sla ? $sla->diffForHumans(null, true) : null;
+        $aguardando = self::aguardandoMeta($status, $updated, $isClosed);
 
         return [
             'id' => (int) $row->id,
@@ -483,6 +583,11 @@ class AtendimentosData
             'status' => $status,
             'status_label' => self::statusLabel($status),
             'status_tone' => self::STATUS[$status]['tone'] ?? 'neutral',
+            'aguardando_key' => $aguardando['key'],
+            'aguardando_label' => $aguardando['label'],
+            'aguardando_tone' => $aguardando['tone'],
+            'tempo_aguardando' => $aguardando['tempo'],
+            'tempo_aguardando_detalhe' => $aguardando['detalhe'],
             'prioridade' => $prioridade,
             'prioridade_label' => self::prioridadeLabel($prioridade),
             'prioridade_tone' => self::PRIORIDADES[$prioridade]['tone'] ?? 'neutral',
@@ -508,6 +613,28 @@ class AtendimentosData
         ];
     }
 
+    private static function aguardandoMeta(string $status, ?Carbon $updated, bool $isClosed): array
+    {
+        $map = match ($status) {
+            'aguardando_cliente' => ['key' => 'cliente', 'label' => 'Cliente', 'tone' => 'warning'],
+            'aguardando_suporte' => ['key' => 'escritorio', 'label' => 'Escritório', 'tone' => 'danger'],
+            'aguardando_terceiro' => ['key' => 'terceiro', 'label' => 'Terceiro', 'tone' => 'info'],
+            'resolvido', 'fechado', 'cancelado' => ['key' => 'concluido', 'label' => 'Concluído', 'tone' => 'success'],
+            default => ['key' => 'escritorio', 'label' => 'Escritório', 'tone' => 'primary'],
+        };
+
+        $tempo = $updated ? $updated->diffForHumans(null, true) : '-';
+        $prefixo = $isClosed ? 'Concluído há' : 'Aguardando há';
+
+        return [
+            'key' => $map['key'],
+            'label' => $map['label'],
+            'tone' => $map['tone'],
+            'tempo' => $tempo,
+            'detalhe' => $tempo === '-' ? '-' : $prefixo . ' ' . $tempo,
+        ];
+    }
+
     private static function emptyData(bool $missingTable = false): array
     {
         return [
@@ -522,6 +649,7 @@ class AtendimentosData
             'statusOptions' => self::STATUS,
             'prioridadeOptions' => self::PRIORIDADES,
             'slaOptions' => self::SLA_OPTIONS,
+            'aguardandoOptions' => self::AGUARDANDO_OPTIONS,
         ];
     }
 

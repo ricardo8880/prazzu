@@ -4,8 +4,10 @@ namespace App\Filament\Pages;
 
 use App\Models\Atendimento;
 use App\Models\AtendimentoInteracao;
+use App\Models\ItemControle;
 use App\Support\AtendimentoPortalService;
 use App\Support\AtendimentosData;
+use App\Support\ComplianceModuleData;
 use App\Support\CachedSchema;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -33,6 +35,7 @@ class Atendimentos extends Page
     public string $prioridadeFilter = 'todos';
     public string $origemFilter = 'todos';
     public string $responsavelFilter = 'todos';
+    public string $aguardandoFilter = 'todos';
     public string $slaFilter = 'todos';
     public string $sortBy = 'recentes';
     public ?int $empresaFilter = null;
@@ -67,6 +70,8 @@ class Atendimentos extends Page
     public string $novaRespostaCliente = '';
     public $anexoRespostaCliente = null;
     public string $resolucaoTexto = '';
+    public string $motivoEncerramento = 'duvida_resolvida';
+    public string $observacaoEncerramento = '';
     public string $novoStatusDetalhe = 'aberto';
     public string $novaPrioridadeDetalhe = 'media';
     public ?int $novoResponsavelDetalhe = null;
@@ -81,6 +86,7 @@ class Atendimentos extends Page
     public function updatedPrioridadeFilter(): void { $this->loadData(true); }
     public function updatedOrigemFilter(): void { $this->loadData(true); }
     public function updatedResponsavelFilter(): void { $this->loadData(true); }
+    public function updatedAguardandoFilter(): void { $this->loadData(true); }
     public function updatedSlaFilter(): void { $this->loadData(true); }
     public function updatedSortBy(): void { $this->loadData(true); }
     public function updatedEmpresaFilter(): void { $this->loadData(true); }
@@ -138,6 +144,7 @@ class Atendimentos extends Page
             'prioridade' => $this->prioridadeFilter,
             'origem' => $this->origemFilter,
             'responsavel' => $this->responsavelFilter,
+            'aguardando' => $this->aguardandoFilter,
             'sla' => $this->slaFilter,
             'sort' => $this->sortBy,
             'empresa_id' => $this->empresaFilter ?: 0,
@@ -193,6 +200,7 @@ class Atendimentos extends Page
         $this->prioridadeFilter = 'todos';
         $this->origemFilter = 'todos';
         $this->responsavelFilter = 'todos';
+        $this->aguardandoFilter = 'todos';
         $this->slaFilter = 'todos';
         $this->empresaFilter = null;
         $this->sortBy = 'recentes';
@@ -395,6 +403,44 @@ class Atendimentos extends Page
 
         $this->aplicarStatus($atendimento, 'resolvido', Str::limit($resumo, 8000, ''));
         $this->resolucaoTexto = '';
+    }
+
+    public function encerrarComMotivo(): void
+    {
+        if (! $this->selectedAtendimentoId) {
+            return;
+        }
+
+        $motivos = [
+            'duvida_resolvida' => 'Dúvida resolvida',
+            'documento_recebido' => 'Documento recebido',
+            'pendencia_concluida' => 'Pendência concluída',
+            'erro_corrigido' => 'Erro corrigido',
+            'solicitacao_cancelada' => 'Solicitação cancelada',
+            'outro' => 'Outro motivo',
+        ];
+
+        $motivoKey = array_key_exists($this->motivoEncerramento, $motivos) ? $this->motivoEncerramento : 'outro';
+        $observacao = trim($this->observacaoEncerramento);
+
+        if ($motivoKey === 'outro' && mb_strlen($observacao) < 5) {
+            $this->notify('danger', 'Informe uma observação curta para encerrar como outro motivo.');
+            return;
+        }
+
+        $atendimento = $this->findAtendimentoAutorizado($this->selectedAtendimentoId);
+        if (! $atendimento) {
+            return;
+        }
+
+        $mensagem = 'Encerramento: ' . $motivos[$motivoKey] . '.';
+        if ($observacao !== '') {
+            $mensagem .= "\nObservação: " . Str::limit($observacao, 1200, '');
+        }
+
+        $this->aplicarStatus($atendimento, 'fechado', $mensagem);
+        $this->motivoEncerramento = 'duvida_resolvida';
+        $this->observacaoEncerramento = '';
     }
 
     public function reabrirAtendimento(int $id): void
@@ -739,6 +785,104 @@ class Atendimentos extends Page
         ];
     }
 
+    public function criarPendenciaDoAtendimento(): void
+    {
+        $atendimento = $this->selectedAtendimentoId ? $this->findAtendimentoAutorizado($this->selectedAtendimentoId) : null;
+        if (! $atendimento) {
+            return;
+        }
+
+        if (! $this->itemControlesDisponivel()) {
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($atendimento): void {
+                $item = $this->criarItemControleVinculado(
+                    $atendimento,
+                    'pendencia_compliance',
+                    'Pendência do atendimento #' . $atendimento->id . ' - ' . Str::limit((string) $atendimento->titulo, 120, ''),
+                    'Pendência criada a partir do atendimento #' . $atendimento->id . ".\n\n" . trim((string) ($atendimento->descricao ?: 'Sem descrição.')),
+                    false
+                );
+
+                if (! $atendimento->item_controle_id) {
+                    $atendimento->update(['item_controle_id' => $item->id, 'updated_at' => now()]);
+                } else {
+                    $atendimento->touch();
+                }
+
+                $this->registrarInteracao(
+                    $atendimento->id,
+                    'pendencia_criada',
+                    'Pendência criada a partir deste atendimento: #' . $item->id . ' - ' . $item->titulo . '.',
+                    ['item_controle_id' => $item->id, 'tipo' => 'pendencia_compliance']
+                );
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível criar a pendência a partir do atendimento.');
+            return;
+        }
+
+        $this->loadData(true);
+        $this->notify('success', 'Pendência criada e registrada na timeline do atendimento.');
+    }
+
+    public function solicitarDocumentoDoAtendimento(): void
+    {
+        $atendimento = $this->selectedAtendimentoId ? $this->findAtendimentoAutorizado($this->selectedAtendimentoId) : null;
+        if (! $atendimento) {
+            return;
+        }
+
+        if (! $this->itemControlesDisponivel()) {
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($atendimento): void {
+                $item = $this->criarItemControleVinculado(
+                    $atendimento,
+                    'documento',
+                    'Documento solicitado no atendimento #' . $atendimento->id,
+                    'Solicitação documental criada a partir do atendimento #' . $atendimento->id . '. ' . Str::limit(trim((string) $atendimento->titulo), 180, ''),
+                    true
+                );
+
+                $payloadAtendimento = ['status' => 'aguardando_cliente', 'updated_at' => now()];
+                if (! $atendimento->item_controle_id) {
+                    $payloadAtendimento['item_controle_id'] = $item->id;
+                }
+                if (! $atendimento->responsavel_id && auth()->id()) {
+                    $payloadAtendimento['responsavel_id'] = auth()->id();
+                }
+                if (! $atendimento->primeira_resposta_em) {
+                    $payloadAtendimento['primeira_resposta_em'] = now();
+                }
+
+                $atendimento->update($payloadAtendimento);
+
+                $this->registrarInteracao(
+                    $atendimento->id,
+                    'documento_solicitado',
+                    'Documento solicitado ao cliente e registrado em Documentos: #' . $item->id . ' - ' . $item->titulo . '.',
+                    ['item_controle_id' => $item->id, 'tipo' => 'documento', 'portal_ativo' => true]
+                );
+
+                $this->sincronizarPortalVinculado($atendimento->refresh(), 'aguardando_cliente');
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível solicitar o documento a partir do atendimento.');
+            return;
+        }
+
+        $this->loadData(true);
+        $this->notify('success', 'Documento solicitado e atendimento marcado como aguardando cliente.');
+    }
+
+
     public function adicionarInteracao(): void
     {
         if (! $this->selectedAtendimentoId) {
@@ -765,6 +909,83 @@ class Atendimentos extends Page
         $this->loadData(true);
         $this->notify('success', 'Interação adicionada.');
     }
+
+    private function itemControlesDisponivel(): bool
+    {
+        if (! CachedSchema::hasTable('item_controles')) {
+            $this->notify('danger', 'Tabela de pendências/documentos indisponível.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function criarItemControleVinculado(Atendimento $atendimento, string $tipo, string $titulo, string $descricao, bool $portalAtivo): ItemControle
+    {
+        $empresaId = (int) $atendimento->empresa_id;
+        $responsavelId = ComplianceModuleData::resolveResponsavelId(null, $empresaId);
+
+        if (! $empresaId || ! $responsavelId) {
+            throw new \RuntimeException('Empresa ou responsável indisponível para criar item de controle.');
+        }
+
+        $payload = [];
+        $this->setItemControlePayload($payload, 'titulo', Str::limit(trim($titulo), 255, ''));
+        $this->setItemControlePayload($payload, 'descricao', Str::limit(trim($descricao), 5000, ''));
+        $this->setItemControlePayload($payload, 'tipo', $tipo);
+        $this->setItemControlePayload($payload, 'status', 'pendente');
+        $this->setItemControlePayload($payload, 'prioridade', $this->prioridadeItemControle((string) $atendimento->prioridade));
+        $this->setItemControlePayload($payload, 'empresa_id', $empresaId);
+        $this->setItemControlePayload($payload, 'responsavel_id', $responsavelId);
+        $this->setItemControlePayload($payload, 'data_vencimento', now()->addDays($portalAtivo ? 3 : 2)->toDateString());
+        $this->setItemControlePayload($payload, 'portal_ativo', $portalAtivo);
+
+        if ($portalAtivo) {
+            $this->setItemControlePayload($payload, 'portal_cliente_nome', $this->nomeClienteAtendimento($atendimento));
+            $this->setItemControlePayload($payload, 'portal_cliente_email', $this->emailClienteAtendimento($atendimento));
+            $this->setItemControlePayload($payload, 'portal_expira_em', now()->addDays(7));
+            $this->setItemControlePayload($payload, 'portal_status', 'pendente');
+            $this->setItemControlePayload($payload, 'document_status', 'solicitado');
+        }
+
+        return ItemControle::query()->create($payload);
+    }
+
+    private function setItemControlePayload(array &$payload, string $column, mixed $value): void
+    {
+        if (CachedSchema::hasColumn('item_controles', $column)) {
+            $payload[$column] = $value;
+        }
+    }
+
+    private function prioridadeItemControle(string $prioridade): string
+    {
+        return in_array($prioridade, ['baixa', 'media', 'alta', 'urgente'], true) ? $prioridade : 'media';
+    }
+
+    private function nomeClienteAtendimento(Atendimento $atendimento): ?string
+    {
+        if ($atendimento->crm_cliente_id && CachedSchema::hasTable('crm_clientes')) {
+            $cliente = DB::table('crm_clientes')->where('id', $atendimento->crm_cliente_id)->first();
+            foreach (['nome', 'nome_fantasia', 'razao_social'] as $campo) {
+                if ($cliente && property_exists($cliente, $campo) && filled($cliente->{$campo})) {
+                    return (string) $cliente->{$campo};
+                }
+            }
+        }
+
+        if ($atendimento->empresa_id && CachedSchema::hasTable('empresas')) {
+            $empresa = DB::table('empresas')->where('id', $atendimento->empresa_id)->first();
+            foreach (['nome_fantasia', 'razao_social', 'nome'] as $campo) {
+                if ($empresa && property_exists($empresa, $campo) && filled($empresa->{$campo})) {
+                    return (string) $empresa->{$campo};
+                }
+            }
+        }
+
+        return null;
+    }
+
 
     private function aplicarStatus(Atendimento $atendimento, string $status, ?string $mensagemOperacional = null): void
     {
@@ -887,19 +1108,25 @@ Resumo: " . $mensagemOperacional;
         return $atendimento;
     }
 
-    private function registrarInteracao(int $atendimentoId, string $tipo, string $mensagem): void
+    private function registrarInteracao(int $atendimentoId, string $tipo, string $mensagem, ?array $metadata = null): void
     {
         if (! CachedSchema::hasTable('atendimento_interacoes')) {
             return;
         }
 
-        AtendimentoInteracao::query()->create([
+        $payload = [
             'atendimento_id' => $atendimentoId,
             'user_id' => auth()->id(),
             'origem' => 'interno',
             'tipo' => $tipo,
             'mensagem' => $mensagem,
-        ]);
+        ];
+
+        if ($metadata !== null) {
+            $payload['metadata'] = $metadata;
+        }
+
+        AtendimentoInteracao::query()->create($payload);
     }
 
     private function resetFormCriacao(): void
@@ -921,6 +1148,8 @@ Resumo: " . $mensagemOperacional;
         $this->novaPrioridadeDetalhe = (string) ($this->selectedAtendimento['prioridade'] ?? 'media');
         $this->novoResponsavelDetalhe = $this->selectedAtendimento['responsavel_id'] ?? null;
         $this->resolucaoTexto = '';
+        $this->motivoEncerramento = 'duvida_resolvida';
+        $this->observacaoEncerramento = '';
         $this->novaRespostaCliente = '';
         $this->anexoRespostaCliente = null;
     }
