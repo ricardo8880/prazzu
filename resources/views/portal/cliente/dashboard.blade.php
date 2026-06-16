@@ -1,26 +1,3 @@
-@php
-    use Illuminate\Support\Str;
-    use Illuminate\Support\Facades\Log;
-
-    $clienteNome = (string) ($cliente->nome ?? 'Cliente');
-    $iniciais = collect(explode(' ', trim($clienteNome)))->filter()->take(2)->map(fn ($parte) => substr($parte, 0, 1))->implode('') ?: 'C';
-    $empresaNome = $empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? 'Sua empresa';
-
-    Log::info('[PORTAL_CLIENTE_DEBUG][BLADE_RENDER]', [
-        'arquivo' => 'resources/views/portal/cliente/dashboard.blade.php',
-        'cliente_id' => $cliente->id ?? null,
-        'cliente_nome' => $cliente->nome ?? null,
-        'empresa' => $empresaNome ?? null,
-        'atendimento_atual' => $atendimentoAtual['id'] ?? null,
-        'abrir_formulario' => $abrirFormulario ?? null,
-        'total_atendimentos' => isset($atendimentos) ? count($atendimentos) : null,
-        'total_interacoes' => isset($interacoes) ? count($interacoes) : null,
-        'url' => request()->fullUrl(),
-        'method' => request()->method(),
-        'ip' => request()->ip(),
-        'user_agent' => request()->userAgent(),
-    ]);
-@endphp
     <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -272,6 +249,13 @@
 
         .portal-message-author { display: block; font-weight: 900; margin-bottom: 3px; font-size: .86rem; }
         .portal-message-time { display: block; margin-top: 8px; opacity: .75; font-size: .78rem; }
+        .portal-typing-status { display: none; align-items: center; gap: 8px; padding: 0 22px 14px; color: #64748b; font-size: .8rem; font-weight: 850; background: #f8fafc; }
+        .portal-typing-status.is-visible { display: flex; }
+        .portal-typing-dots { display: inline-flex; align-items: center; gap: 3px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; padding: 7px 10px; }
+        .portal-typing-dots i { width: 5px; height: 5px; border-radius: 999px; background: currentColor; opacity: .45; animation: portalTypingPulse 1s infinite ease-in-out; }
+        .portal-typing-dots i:nth-child(2) { animation-delay: .14s; }
+        .portal-typing-dots i:nth-child(3) { animation-delay: .28s; }
+        @keyframes portalTypingPulse { 0%, 80%, 100% { transform: translateY(0); opacity: .35; } 40% { transform: translateY(-3px); opacity: .95; } }
 
         .portal-empty {
             border: 1px dashed #cbd5e1;
@@ -711,40 +695,7 @@
             }
         };
 
-        window.portalClienteDebugLog = function (evento, detalhes) {
-            try {
-                var payload = {
-                    evento: evento || 'sem_evento',
-                    detalhes: detalhes || {},
-                    url: window.location.href
-                };
-
-                console.log('[PORTAL_CLIENTE_DEBUG]', payload);
-
-                fetch(@json(route('portal.cliente.debug-log')), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(payload),
-                    credentials: 'same-origin',
-                    keepalive: true
-                }).catch(function (error) {
-                    console.warn('[PORTAL_CLIENTE_DEBUG] falha ao enviar log', error);
-                });
-            } catch (error) {
-                console.warn('[PORTAL_CLIENTE_DEBUG] erro local', error);
-            }
-        };
-
-        window.portalClienteDebugLog('script_head_carregado', {
-            contexto: window.__PORTAL_CLIENTE_DEBUG_CONTEXT__,
-            ready_state: document.readyState,
-            href: window.location.href,
-            csrf_existe: !! document.querySelector('meta[name="csrf-token"]')
-        });
+        window.portalClienteDebugLog = function (evento, detalhes) { return; };
 
         window.addEventListener('error', function (event) {
             window.portalClienteDebugLog('javascript_error_global', {
@@ -1115,6 +1066,10 @@
                         </div>
 
                         @if ($atendimentoAtual)
+                            <div class="portal-typing-status" data-support-typing aria-live="polite">
+                                <span class="portal-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                                <span data-support-typing-text>Suporte está digitando...</span>
+                            </div>
                             <div class="portal-chat-composer">
                                 @if (! empty($atendimentoAtual['is_finalizado']))
                                     <div class="portal-chat-locked">Este atendimento está finalizado. Para falar novamente com o suporte, abra um novo atendimento.</div>
@@ -1290,6 +1245,7 @@
         var fileName = document.getElementById('portal-file-name');
         var socketConfig = @json($socketIoConfig ?? ['enabled' => false]);
         var portalAreaSocket = null;
+        var typingState = { active: false, lastSent: 0, stopTimer: null, supportTimer: null };
         var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-portal-tab]'));
         var tabPanels = Array.prototype.slice.call(document.querySelectorAll('.portal-tab-panel'));
@@ -1340,7 +1296,10 @@
 
         if (textarea) {
             resizeTextarea();
-            textarea.addEventListener('input', resizeTextarea);
+            textarea.addEventListener('input', function () {
+                resizeTextarea();
+                announceClienteLogadoTyping(textarea.value);
+            });
             textarea.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter') {
                     window.portalClienteDebugLog('keydown_enter_listener', { shift: !! event.shiftKey, isComposing: !! event.isComposing, tamanho: textarea.value.length });
@@ -1410,7 +1369,7 @@
                     ? '<div class="portal-attachment-list">' + msg.attachments.map(renderPortalAttachment).join('') + '</div>'
                     : '';
                 var text = escapeHtml(msg.text || '').replace(/\n/g, '<br>');
-            var avatar = isClient ? '{{ strtoupper(substr($clienteNome, 0, 1)) }}' : 'S';
+                var avatar = isClient ? '{{ strtoupper(substr($clienteNome, 0, 1)) }}' : 'S';
                 var author = escapeHtml(isClient ? 'Você' : (msg.author || 'Equipe de suporte'));
 
                 return '<article class="portal-message ' + (isClient ? 'is-client' : 'is-support') + '" data-interacao-id="' + escapeHtml(msg.id || '') + '">'
@@ -1445,6 +1404,43 @@
             chatBody.appendChild(artigo);
             chatBody.scrollTop = chatBody.scrollHeight;
             return artigo;
+        }
+
+        function setSupportTyping(isTyping, name) {
+            var box = document.querySelector('[data-support-typing]');
+            var text = document.querySelector('[data-support-typing-text]');
+            if (! box) return;
+            box.classList.toggle('is-visible', Boolean(isTyping));
+            if (text) text.textContent = (name || 'Suporte') + ' está digitando...';
+        }
+
+        function announceClienteLogadoTyping(value) {
+            if (! portalAreaSocket || ! portalAreaSocket.connected) return;
+
+            var hasText = String(value || '').trim() !== '';
+            var now = Date.now();
+
+            if (hasText && (! typingState.active || now - typingState.lastSent >= 1800)) {
+                typingState.active = true;
+                typingState.lastSent = now;
+                portalAreaSocket.emit('chat:typing:start', { nome: @json($clienteNome), room: socketConfig.room || '' });
+            }
+
+            window.clearTimeout(typingState.stopTimer);
+
+            if (! hasText) {
+                if (typingState.active) {
+                    typingState.active = false;
+                    portalAreaSocket.emit('chat:typing:stop', { room: socketConfig.room || '' });
+                }
+                return;
+            }
+
+            typingState.stopTimer = window.setTimeout(function () {
+                if (! portalAreaSocket || ! portalAreaSocket.connected || ! typingState.active) return;
+                typingState.active = false;
+                portalAreaSocket.emit('chat:typing:stop', { room: socketConfig.room || '' });
+            }, 1200);
         }
 
         function normalizarMensagemSocket(payload) {
@@ -1485,38 +1481,6 @@
             renderPortalMessages(atuais);
         }
 
-        function substituirMensagemPendente(pendingMessage, payload) {
-            var msg = normalizarMensagemSocket(payload);
-            if (! msg || ! pendingMessage || ! chatBody) return false;
-
-            var existente = chatBody.querySelector('[data-interacao-id="' + String(msg.id).replace(/"/g, '\"') + '"]');
-            if (existente && existente !== pendingMessage) {
-                pendingMessage.remove();
-                return true;
-            }
-
-            var attachments = Array.isArray(msg.attachments) && msg.attachments.length > 0
-                ? '<div class="portal-attachment-list">' + msg.attachments.map(renderPortalAttachment).join('') + '</div>'
-                : '';
-            var text = escapeHtml(msg.text || '').replace(/
-/g, '<br>');
-            var avatar = '{{ strtoupper(substr($clienteNome, 0, 1)) }}';
-            var author = escapeHtml('Você');
-
-            pendingMessage.className = 'portal-message is-client';
-            pendingMessage.setAttribute('data-interacao-id', escapeHtml(msg.id || ''));
-            pendingMessage.innerHTML = '<div class="portal-message-bubble">'
-                + '<span class="portal-message-author">' + author + '</span>'
-                + (text !== '' ? '<div class="portal-message-text">' + text + '</div>' : '')
-                + attachments
-                + '<span class="portal-message-time">' + escapeHtml(msg.time || 'agora') + '</span>'
-                + '</div>'
-                + '<div class="portal-message-avatar" aria-hidden="true">' + avatar + '</div>';
-
-            chatBody.scrollTop = chatBody.scrollHeight;
-            return true;
-        }
-
         function connectPortalClienteLogadoSocket() {
             if (! socketConfig || ! socketConfig.enabled || ! socketConfig.url || ! window.io) return;
 
@@ -1534,8 +1498,21 @@
             portalAreaSocket.on('chat:message:new', function (payload) {
                 if (payload && payload.origem !== 'cliente') {
                     adicionarMensagemSocket(payload);
+                    setSupportTyping(false);
                     portalAreaSocket.emit('chat:seen', { message_id: payload.id || null, room: socketConfig.room || '', at: new Date().toISOString() });
                 }
+            });
+
+            portalAreaSocket.on('chat:typing:start', function (payload) {
+                if (payload && payload.actor === 'cliente') return;
+                setSupportTyping(true, (payload && payload.nome) ? payload.nome : 'Suporte');
+                window.clearTimeout(typingState.supportTimer);
+                typingState.supportTimer = window.setTimeout(function () { setSupportTyping(false); }, 8000);
+            });
+
+            portalAreaSocket.on('chat:typing:stop', function (payload) {
+                if (payload && payload.actor === 'cliente') return;
+                setSupportTyping(false);
             });
 
             portalAreaSocket.on('connect_error', function (error) {
@@ -1631,13 +1608,13 @@
 
                     if (data && Array.isArray(data.messages)) {
                         renderPortalMessages(data.messages);
-                    } else if (data && data.chat_message) {
-                        substituirMensagemPendente(pendingMessage, data.chat_message);
                     }
 
                     if (data && data.chat_message && portalAreaSocket && portalAreaSocket.connected) {
                         data.chat_message.room = data.chat_message.room || socketConfig.room || '';
                         portalAreaSocket.emit('chat:message:new', data.chat_message);
+                        typingState.active = false;
+                        portalAreaSocket.emit('chat:typing:stop', { room: socketConfig.room || '' });
                     }
                 } catch (error) {
                     if (pendingMessage) {

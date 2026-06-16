@@ -46,7 +46,6 @@ class PortalClientePublicoController extends Controller
     }
 
 
-
     /**
      * Dados usados pelo front público para entrar na sala Socket.IO da empresa.
      * O socket valida a assinatura com o mesmo APP_KEY do Laravel.
@@ -108,12 +107,7 @@ class PortalClientePublicoController extends Controller
             'ack' => ['nullable'],
         ]);
 
-        Log::info('[PORTAL_CLIENTE_PUBLICO_DEBUG] ' . ($payload['step'] ?? 'browser'), array_merge([
-            'empresa_id' => (int) $empresa->id,
-            'token_hash' => hash('sha256', $token),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ], $payload));
+        
 
         return response()->json(['ok' => true]);
     }
@@ -138,13 +132,7 @@ class PortalClientePublicoController extends Controller
             'timestamp' => now()->timestamp,
         ], now()->addSeconds(10));
 
-        Log::info('[PORTAL_CHAT_CLIENTE_DIGITANDO] estado', [
-            'empresa_id' => (int) $empresa->id,
-            'token_hash' => hash('sha256', $token),
-            'nome_informado' => $nome !== '',
-            'ip' => $request->ip(),
-            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         return response()->json(['ok' => true]);
     }
@@ -158,14 +146,7 @@ class PortalClientePublicoController extends Controller
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
-        Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] inicio', [
-            'empresa_id' => (int) $empresa->id,
-            'token_hash' => hash('sha256', $token),
-            'ip' => $request->ip(),
-            'ajax' => $this->querRespostaJsonPortal($request),
-            'tamanho_mensagem' => strlen((string) $request->input('mensagem', '')),
-            'quantidade_anexos' => count(array_filter($request->file('anexos', []))),
-        ]);
+        
 
         $validator = Validator::make($request->all(), [
             'nome' => ['nullable', 'string', 'min:2', 'max:255', 'not_regex:/^\s*$/'],
@@ -211,12 +192,7 @@ class PortalClientePublicoController extends Controller
         });
 
         if ($validator->fails()) {
-            Log::warning('[PORTAL_CHAT_CLIENTE_ENVIO] validacao_falhou', [
-                'empresa_id' => (int) $empresa->id,
-                'token_hash' => hash('sha256', $token),
-                'erros' => $validator->errors()->toArray(),
-                'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-            ]);
+            
 
             if ($this->querRespostaJsonPortal($request)) {
                 return response()->json([
@@ -238,12 +214,7 @@ class PortalClientePublicoController extends Controller
         try {
             foreach ($arquivos as $arquivo) {
                 $inicioAnexo = microtime(true);
-                Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] anexo_inicio', [
-                    'empresa_id' => (int) $empresa->id,
-                    'nome' => $arquivo->getClientOriginalName(),
-                    'mime' => $arquivo->getClientMimeType(),
-                    'tamanho_bytes' => $arquivo->getSize(),
-                ]);
+                
 
                 $path = $arquivo->store('portal-cliente/chat', 'public');
 
@@ -260,11 +231,7 @@ class PortalClientePublicoController extends Controller
                     'download_url' => asset('storage/' . $path),
                 ];
 
-                Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] anexo_fim', [
-                    'empresa_id' => (int) $empresa->id,
-                    'path' => $path,
-                    'duracao_ms' => round((microtime(true) - $inicioAnexo) * 1000, 2),
-                ]);
+                
             }
 
             $mensagemCriada = null;
@@ -286,13 +253,7 @@ class PortalClientePublicoController extends Controller
                 $mensagemCriada = $mensagem;
             });
 
-            Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] transacao_fim', [
-                'empresa_id' => (int) $empresa->id,
-                'mensagem_id' => $mensagemCriada instanceof PortalMensagem ? (int) $mensagemCriada->id : null,
-                'quantidade_anexos' => count($anexosArmazenados),
-                'duracao_transacao_ms' => round((microtime(true) - $inicioTransacao) * 1000, 2),
-                'duracao_total_ate_salvar_ms' => round((microtime(true) - $inicio) * 1000, 2),
-            ]);
+            
 
             if ($mensagemCriada instanceof PortalMensagem) {
                 $mensagemIdAtendimento = (int) $mensagemCriada->id;
@@ -302,11 +263,7 @@ class PortalClientePublicoController extends Controller
                 app()->terminating(function () use ($mensagemIdAtendimento, $empresaIdAtendimento, $tokenHashAtendimento): void {
                     try {
                         $inicioAtendimento = microtime(true);
-                        Log::info('[PORTAL_CHAT_CLIENTE_ATENDIMENTO] inicio_terminating', [
-                            'empresa_id' => $empresaIdAtendimento,
-                            'mensagem_id' => $mensagemIdAtendimento,
-                            'token_hash' => $tokenHashAtendimento,
-                        ]);
+                        
 
                         $mensagemAtendimento = PortalMensagem::find($mensagemIdAtendimento);
 
@@ -314,20 +271,9 @@ class PortalClientePublicoController extends Controller
                             app(AtendimentoPortalService::class)->registrarMensagem($mensagemAtendimento);
                         }
 
-                        Log::info('[PORTAL_CHAT_CLIENTE_ATENDIMENTO] fim_terminating', [
-                            'empresa_id' => $empresaIdAtendimento,
-                            'mensagem_id' => $mensagemIdAtendimento,
-                            'duracao_ms' => round((microtime(true) - $inicioAtendimento) * 1000, 2),
-                        ]);
+                        
                     } catch (Throwable $atendimentoException) {
-                        Log::warning('Mensagem do portal público salva, mas não foi possível gerar/atualizar atendimento operacional.', [
-                            'empresa_id' => $empresaIdAtendimento,
-                            'mensagem_id' => $mensagemIdAtendimento,
-                            'token_hash' => $tokenHashAtendimento,
-                            'message' => $atendimentoException->getMessage(),
-                            'file' => $atendimentoException->getFile(),
-                            'line' => $atendimentoException->getLine(),
-                        ]);
+                        
                     }
                 });
             }
@@ -336,14 +282,7 @@ class PortalClientePublicoController extends Controller
                 $this->removerArquivoPublico((string) ($anexo['path'] ?? ''));
             }
 
-            Log::error('Falha ao enviar mensagem pelo portal público do cliente.', [
-                'empresa_id' => (int) $empresa->id,
-                'token_hash' => hash('sha256', $token),
-                'anexos' => array_map(fn (array $anexo): string => (string) ($anexo['path'] ?? ''), $anexosArmazenados),
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-            ]);
+            
 
             if ($this->querRespostaJsonPortal($request)) {
                 return response()->json([
@@ -358,13 +297,7 @@ class PortalClientePublicoController extends Controller
         }
 
 
-        Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] fim_resposta', [
-            'empresa_id' => (int) $empresa->id,
-            'token_hash' => hash('sha256', $token),
-            'mensagem_id' => $mensagemCriada instanceof PortalMensagem ? (int) $mensagemCriada->id : null,
-            'ajax' => $this->querRespostaJsonPortal($request),
-            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         if ($this->querRespostaJsonPortal($request)) {
             return response()->json([
@@ -387,7 +320,6 @@ class PortalClientePublicoController extends Controller
 
         return $this->redirectPortal($token, 'chat')->with('success', $anexosArmazenados === [] ? 'Mensagem enviada para a equipe.' : 'Mensagem e anexo(s) enviados para a equipe.');
     }
-
 
 
     public function mensagensNovas(Request $request, string $token): JsonResponse
@@ -425,15 +357,6 @@ class PortalClientePublicoController extends Controller
             })
             ->values();
 
-        if ($mensagens->isNotEmpty()) {
-            Log::info('[PORTAL_CLIENTE_PUBLICO_SYNC] mensagens_novas', [
-                'empresa_id' => $empresaId,
-                'token_hash' => hash('sha256', $token),
-                'after_id' => $afterId,
-                'quantidade' => $mensagens->count(),
-                'socket_fallback' => true,
-            ]);
-        }
 
         return response()->json([
             'ok' => true,
@@ -487,14 +410,7 @@ class PortalClientePublicoController extends Controller
         $supportTyping = $this->suporteEstaDigitando($empresaId);
         $supportTypingName = $this->nomeSuporteDigitando($empresaId);
 
-        Log::info('[PORTAL_CHAT_CLIENTE_ESTADO] fim', [
-            'empresa_id' => $empresaId,
-            'token_hash' => hash('sha256', $token),
-            'total_mensagens' => count($mensagens),
-            'ultimo_id' => collect($mensagens)->max('id'),
-            'suporte_digitando' => $supportTyping,
-            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         return response()->json([
             'ok' => true,
@@ -793,14 +709,7 @@ class PortalClientePublicoController extends Controller
                 }
             });
         } catch (Throwable $exception) {
-            Log::error('Falha ao abrir solicitação pelo portal público do cliente.', [
-                'empresa_id' => (int) $empresa->id,
-                'token_hash' => hash('sha256', $token),
-                'item_controle_id' => $data['item_controle_id'] ?? null,
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-            ]);
+            
 
             return $this->redirectPortal($token, 'solicitacao')
                 ->withInput()
@@ -885,14 +794,7 @@ class PortalClientePublicoController extends Controller
                 }
             });
         } catch (Throwable $exception) {
-            Log::error('Falha ao responder pendência pelo portal público do cliente.', [
-                'empresa_id' => (int) $empresa->id,
-                'solicitacao_id' => $solicitacao->id,
-                'token_hash' => hash('sha256', $token),
-                'message' => $exception->getMessage(),
-                'file' => $exception->getFile(),
-                'line' => $exception->getLine(),
-            ]);
+            
 
             return $this->redirectPortal($token, 'pendencias')
                 ->withInput()
@@ -901,7 +803,6 @@ class PortalClientePublicoController extends Controller
 
         return $this->redirectPortal($token, 'chat')->with('success', 'Resposta enviada para a equipe.');
     }
-
 
 
     /**

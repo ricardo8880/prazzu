@@ -19,41 +19,22 @@ class PortalClienteAreaController extends Controller
 {
     public function dashboard(): View
     {
-        Log::info('PORTAL_CLIENTE_DEBUG dashboard acessado', [
-            'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
-            'url' => request()->fullUrl(),
-            'user_agent' => request()->userAgent(),
-        ]);
+        
 
         return $this->renderArea();
     }
 
     public function atendimento(int|string $atendimento): View
     {
-        Log::info('PORTAL_CLIENTE_DEBUG atendimento acessado', [
-            'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
-            'atendimento_id' => (int) $atendimento,
-            'url' => request()->fullUrl(),
-            'user_agent' => request()->userAgent(),
-        ]);
+        
 
         return $this->renderArea((int) $atendimento);
     }
 
 
-
     public function mensagem(Request $request, int|string $atendimento): RedirectResponse|JsonResponse
     {
-        Log::info('PORTAL_CLIENTE_DEBUG mensagem POST recebido', [
-            'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
-            'atendimento_id' => (int) $atendimento,
-            'mensagem_len' => strlen((string) $request->input('mensagem', '')),
-            'tem_anexo' => $request->hasFile('anexos') || $request->hasFile('anexo'),
-            'headers' => [
-                'referer' => $request->headers->get('referer'),
-                'user_agent' => $request->userAgent(),
-            ],
-        ]);
+        
 
         $cliente = Auth::guard('portal_cliente')->user();
         abort_if(! $cliente || ! $cliente->empresa_id, 403, 'Cliente sem empresa vinculada.');
@@ -93,11 +74,7 @@ class PortalClienteAreaController extends Controller
                 'website.prohibited' => 'Requisição inválida. Atualize a página e tente novamente.',
             ]);
         } catch (\Illuminate\Validation\ValidationException $exception) {
-            Log::warning('PORTAL_CLIENTE_DEBUG mensagem falhou validacao', [
-                'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
-                'atendimento_id' => (int) $atendimento,
-                'errors' => $exception->errors(),
-            ]);
+            
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -110,11 +87,7 @@ class PortalClienteAreaController extends Controller
             throw $exception;
         }
 
-        Log::info('PORTAL_CLIENTE_DEBUG mensagem validada', [
-            'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
-            'atendimento_id' => $atendimentoId,
-            'payload_keys' => array_keys($payload),
-        ]);
+        
 
         $mensagem = trim((string) ($payload['mensagem'] ?? ''));
         $arquivosRecebidos = $request->file('anexos', []);
@@ -159,12 +132,7 @@ class PortalClienteAreaController extends Controller
             ];
         }
 
-        Log::info('PORTAL_CLIENTE_DEBUG mensagem antes transaction', [
-            'cliente_id' => (int) $cliente->id,
-            'atendimento_id' => $atendimentoId,
-            'mensagem_vazia' => $mensagem === '',
-            'total_anexos' => count($anexos),
-        ]);
+        
 
         $portalMensagem = null;
         $interacaoId = null;
@@ -234,11 +202,7 @@ class PortalClienteAreaController extends Controller
                 Storage::disk('public')->delete($caminhoGravado);
             }
 
-            Log::error('PORTAL_CLIENTE_DEBUG mensagem falhou ao gravar', [
-                'cliente_id' => (int) $cliente->id,
-                'atendimento_id' => $atendimentoId,
-                'erro' => $exception->getMessage(),
-            ]);
+            
 
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['ok' => false, 'message' => 'Não foi possível enviar sua mensagem agora. Tente novamente em alguns instantes.'], 500);
@@ -250,24 +214,14 @@ class PortalClienteAreaController extends Controller
                 ->withInput();
         }
 
-        Log::info('PORTAL_CLIENTE_DEBUG mensagem gravada com sucesso', [
-            'cliente_id' => (int) $cliente->id,
-            'atendimento_id' => $atendimentoId,
-        ]);
+        
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'ok' => true,
                 'message' => count($anexos) > 0 ? 'Mensagem e arquivo(s) enviados com sucesso.' : 'Mensagem enviada com sucesso.',
-                'chat_message' => $this->payloadSocketMensagemClienteLogado(
-                    $atendimentoId,
-                    $empresaId,
-                    $portalMensagem,
-                    $interacaoId,
-                    $mensagem,
-                    $anexos,
-                    $cliente->nome ?? 'Cliente'
-                ),
+                'messages' => $this->mensagensTempoReal($atendimentoId),
+                'chat_message' => $this->ultimaInteracaoSocketPayload($atendimentoId, $empresaId, $portalMensagem, $interacaoId),
             ]);
         }
 
@@ -280,14 +234,7 @@ class PortalClienteAreaController extends Controller
     {
         $cliente = Auth::guard('portal_cliente')->user();
 
-        Log::info('PORTAL_CLIENTE_FRONT_DEBUG', [
-            'cliente_id' => $cliente?->id,
-            'empresa_id' => $cliente?->empresa_id,
-            'evento' => (string) $request->input('evento', 'sem_evento'),
-            'detalhes' => $request->input('detalhes', []),
-            'url' => (string) $request->input('url', ''),
-            'user_agent' => $request->userAgent(),
-        ]);
+        
 
         return response()->json(['ok' => true]);
     }
@@ -428,11 +375,7 @@ class PortalClienteAreaController extends Controller
 
     private function renderArea(?int $atendimentoId = null, bool $abrirFormulario = false): View
     {
-        Log::info('PORTAL_CLIENTE_DEBUG renderArea inicio', [
-            'atendimento_id_param' => $atendimentoId,
-            'abrir_formulario' => $abrirFormulario,
-            'cliente_id' => optional(Auth::guard('portal_cliente')->user())->id,
-        ]);
+        
         $cliente = Auth::guard('portal_cliente')->user();
         abort_if(! $cliente || ! $cliente->empresa_id, 403, 'Cliente sem empresa vinculada.');
 
@@ -450,14 +393,7 @@ class PortalClienteAreaController extends Controller
             $atendimentoAtual = $atendimentos[0];
         }
 
-        Log::info('PORTAL_CLIENTE_DEBUG renderArea dados montados', [
-            'cliente_id' => (int) $cliente->id,
-            'empresa_id' => $empresaId,
-            'atendimentos_total' => count($atendimentos),
-            'atendimento_atual_id' => $atendimentoAtual['id'] ?? null,
-            'interacoes_total' => $atendimentoAtual ? count($this->interacoes((int) $atendimentoAtual['id'])) : 0,
-            'estrutura_disponivel' => Schema::hasTable('atendimentos') && Schema::hasTable('atendimento_interacoes'),
-        ]);
+        
 
         return view('portal.cliente.dashboard', [
             'cliente' => $cliente,
@@ -662,83 +598,6 @@ class PortalClienteAreaController extends Controller
                 ? route('portal.cliente.atendimentos.chat.estado', ['atendimento' => $atendimentoId])
                 : null,
         ];
-    }
-
-    /**
-     * Payload leve para o envio do cliente logado.
-     * Evita recarregar todo o histórico do atendimento antes de emitir o Socket.IO.
-     *
-     * @param  array<int, array<string, mixed>>  $anexos
-     * @return array<string, mixed>|null
-     */
-    private function payloadSocketMensagemClienteLogado(int $atendimentoId, int $empresaId, ?PortalMensagem $portalMensagem, ?int $interacaoId, string $mensagem, array $anexos, string $clienteNome): ?array
-    {
-        if (! $portalMensagem instanceof PortalMensagem || ! $interacaoId) {
-            return null;
-        }
-
-        $messageId = (int) $portalMensagem->id;
-        $room = 'empresa:' . $empresaId . ':atendimento:' . $atendimentoId;
-        $actor = 'cliente';
-        $agora = $portalMensagem->created_at ?: now();
-        $texto = trim($mensagem) !== '' ? trim($mensagem) : $this->textoAnexosParaMensagemPortal($anexos);
-
-        return [
-            'id' => $messageId,
-            'message_id' => $messageId,
-            'interaction_id' => (int) $interacaoId,
-            'source' => 'portal_mensagens',
-            'scope' => 'portal_cliente_logado',
-            'empresa_id' => $empresaId,
-            'atendimento_id' => $atendimentoId,
-            'room' => $room,
-            'room_scope' => 'atendimento',
-            'actor' => $actor,
-            'server_signature' => $this->socketMessageSignature($empresaId, $room, $actor, $messageId),
-            'origem' => 'cliente',
-            'nome' => trim($clienteNome) !== '' ? trim($clienteNome) : 'Cliente',
-            'tipo' => count($anexos) > 0 ? 'anexo' : 'resposta',
-            'mensagem' => $texto,
-            'created_at_label' => $this->dataHora($agora),
-            'attachments' => $this->formatarAnexosSocketClienteLogado($atendimentoId, (int) $interacaoId, $anexos),
-        ];
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $anexos
-     * @return array<int, array<string, mixed>>
-     */
-    private function formatarAnexosSocketClienteLogado(int $atendimentoId, int $interacaoId, array $anexos): array
-    {
-        if ($anexos === []) {
-            return [];
-        }
-
-        return collect($anexos)
-            ->filter(fn ($anexo) => is_array($anexo) && ! empty($anexo['caminho']))
-            ->map(function (array $anexo) use ($atendimentoId, $interacaoId): array {
-                $mime = (string) ($anexo['mime'] ?? 'application/octet-stream');
-                $tamanho = (int) ($anexo['tamanho'] ?? 0);
-
-                return [
-                    'name' => (string) ($anexo['nome_original'] ?? 'arquivo'),
-                    'ext' => strtoupper((string) ($anexo['extensao'] ?? 'ARQ')),
-                    'size' => $this->tamanhoArquivo($tamanho),
-                    'mime' => $mime,
-                    'url' => route('portal.cliente.atendimentos.anexo', [
-                        'atendimento' => $atendimentoId,
-                        'interacao' => $interacaoId,
-                    ]),
-                    'preview_url' => route('portal.cliente.atendimentos.anexo', [
-                        'atendimento' => $atendimentoId,
-                        'interacao' => $interacaoId,
-                        'preview' => 1,
-                    ]),
-                    'is_image' => Str::startsWith($mime, 'image/'),
-                ];
-            })
-            ->values()
-            ->all();
     }
 
     /**

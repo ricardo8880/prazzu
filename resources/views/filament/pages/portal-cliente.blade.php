@@ -625,6 +625,14 @@
         }
         .pc-bubble-content {
             min-width:0;
+            max-width:100%;
+        }
+        .pc-bubble-text,
+        .pc-bubble-head span:first-child {
+            min-width:0;
+            max-width:100%;
+            overflow-wrap:break-word;
+            word-break:normal;
         }
         .pc-bubble-head {
             display:flex;
@@ -960,7 +968,8 @@
             .pc-actions .pc-btn, .pc-actions a, .pc-actions button { flex:1 1 100%; }
             .pc-tabs { overflow-x:auto; padding:0 .9rem; }
             .pc-messages { padding:1rem .9rem; }
-            .pc-message, .pc-message.cliente { grid-template-columns:2.1rem minmax(0,1fr); }
+            .pc-message { grid-template-columns:2.1rem minmax(0,1fr); }
+            .pc-message.cliente { grid-template-columns:minmax(0,1fr); }
             .pc-message-avatar { width:2.1rem; height:2.1rem; }
             .pc-bubble-head { align-items:flex-start; flex-direction:column; gap:.18rem; }
             .pc-chat-composer { padding:.75rem .85rem .9rem; }

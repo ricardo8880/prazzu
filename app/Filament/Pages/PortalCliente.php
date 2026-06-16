@@ -149,12 +149,7 @@ class PortalCliente extends Page
     public function enviarMensagem(): void
     {
         $inicio = microtime(true);
-        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] inicio_enviarMensagem', [
-            'empresa_id' => $this->empresaSelecionadaId,
-            'user_id' => auth()->id(),
-            'tamanho_mensagem' => strlen((string) $this->chatMensagem),
-            'quantidade_anexos' => count($this->portalAnexos),
-        ]);
+        
 
         $this->validarMensagemComAnexos('chatMensagem');
 
@@ -171,22 +166,12 @@ class PortalCliente extends Page
         }
 
         $mensagem = PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->chatMensagem, 'interno', $this->salvarAnexosMensagem($empresaId)));
-        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] mensagem_salva_enviarMensagem', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'mensagem_id' => (int) $mensagem->id,
-            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         $this->reset(['chatMensagem', 'portalAnexos']);
         $this->atualizarConversa();
 
-        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] fim_enviarMensagem', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'mensagem_id' => (int) $mensagem->id,
-            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         Notification::make()->title('Mensagem enviada')->body('A resposta ficou visível no portal público do cliente.')->success()->send();
     }
@@ -194,12 +179,7 @@ class PortalCliente extends Page
     public function responderChat(): void
     {
         $inicio = microtime(true);
-        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] inicio_responderChat', [
-            'empresa_id' => $this->empresaSelecionadaId,
-            'user_id' => auth()->id(),
-            'tamanho_mensagem' => strlen((string) $this->respostaChat),
-            'quantidade_anexos' => count($this->portalAnexos),
-        ]);
+        
 
         $this->validarMensagemComAnexos('respostaChat');
 
@@ -216,21 +196,11 @@ class PortalCliente extends Page
         }
 
         $mensagem = PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->respostaChat, 'interno', $this->salvarAnexosMensagem($empresaId)));
-        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] mensagem_salva_responderChat', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'mensagem_id' => (int) $mensagem->id,
-            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
         $this->reset(['respostaChat', 'portalAnexos']);
         $this->atualizarConversa();
 
-        Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] fim_responderChat', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'mensagem_id' => (int) $mensagem->id,
-            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         Notification::make()->title('Resposta enviada')->body('A resposta ficou registrada no histórico do portal do cliente.')->success()->send();
     }

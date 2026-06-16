@@ -24,7 +24,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
-
 Route::middleware(['guest:portal_cliente', RedirectIfPortalClienteAuthenticated::class])->group(function (): void {
     Route::get('/portal-cliente/login', [PortalClienteAuthController::class, 'loginForm'])
         ->name('portal.cliente.login');
@@ -122,11 +121,7 @@ Route::middleware(['auth'])->group(function (): void {
             'ack' => ['nullable'],
         ]);
 
-        Log::info('[PORTAL_CHAT_EQUIPE_BROWSER] ' . ($payload['step'] ?? 'browser'), array_merge([
-            'user_id' => auth()->id(),
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ], $payload));
+        
 
         return response()->json(['ok' => true]);
     })->middleware('throttle:180,1')->name('admin.portal-cliente.debug-log');
@@ -261,15 +256,6 @@ Route::middleware(['auth'])->group(function (): void {
             })
             ->values();
 
-        if ($mensagens->isNotEmpty()) {
-            Log::info('[PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas', [
-                'empresa_id' => $empresaId,
-                'user_id' => auth()->id(),
-                'after_id' => $afterId,
-                'quantidade' => $mensagens->count(),
-                'socket_fallback' => true,
-            ]);
-        }
 
         return response()->json([
             'ok' => true,
@@ -278,11 +264,7 @@ Route::middleware(['auth'])->group(function (): void {
     })->middleware('throttle:120,1')->name('admin.portal-cliente.chat.mensagens-novas');
 
     Route::get('/admin/portal-cliente/mensagem', function () {
-        Log::warning('[PORTAL_CHAT_EQUIPE_SOCKET_ENVIO] get_na_rota_post_redirecionado', [
-            'user_id' => auth()->id(),
-            'ip' => request()->ip(),
-            'url' => request()->fullUrl(),
-        ]);
+        
 
         return redirect('/admin/portal-cliente');
     })->middleware('throttle:60,1')->name('admin.portal-cliente.chat.mensagem.get-redirect');
@@ -291,13 +273,7 @@ Route::middleware(['auth'])->group(function (): void {
         $inicio = microtime(true);
         $empresaId = $request->integer('empresa');
 
-        Log::info('[PORTAL_CHAT_EQUIPE_SOCKET_ENVIO] inicio', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'ip' => $request->ip(),
-            'tamanho_mensagem' => strlen((string) $request->input('mensagem', '')),
-            'quantidade_anexos' => count($request->file('portalAnexos', [])),
-        ]);
+        
 
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
@@ -382,14 +358,7 @@ Route::middleware(['auth'])->group(function (): void {
             'attachments' => $anexos->all(),
         ];
 
-        Log::info('[PORTAL_CHAT_EQUIPE_SOCKET_ENVIO] fim', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'mensagem_id' => (int) $mensagem->id,
-            'tem_socket_payload' => $chatMessage !== [],
-            'socket_event_esperado' => 'chat:message:new',
-            'duracao_total_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        
 
         $responsePayload = [
             'ok' => true,
@@ -398,12 +367,7 @@ Route::middleware(['auth'])->group(function (): void {
         ];
 
         if (! $request->expectsJson() && ! $request->ajax()) {
-            Log::warning('[PORTAL_CHAT_EQUIPE_SOCKET_ENVIO] post_normal_sem_ajax_redirecionado', [
-                'empresa_id' => $empresaId,
-                'user_id' => auth()->id(),
-                'mensagem_id' => (int) $mensagem->id,
-                'ip' => $request->ip(),
-            ]);
+            
 
             return redirect('/admin/portal-cliente')
                 ->with('success', 'Mensagem enviada.');
@@ -527,15 +491,10 @@ Route::post('/admin/auditoria/debug-log', function (\Illuminate\Http\Request $re
         'active_element' => ['nullable', 'array'],
     ]);
 
-    \Illuminate\Support\Facades\Log::warning('[AUDITORIA_DEBUG] browser:' . ($payload['step'] ?? 'unknown'), array_merge([
-        'auth_user_id' => auth()->id(),
-        'ip' => $request->ip(),
-        'user_agent' => $request->userAgent(),
-    ], $payload));
+    
 
     return response()->json(['ok' => true]);
 })->middleware(['auth'])->name('auditoria.debug-log');
-
 
 
 Route::get('/admin/auditoria-detalhada/exportar', AuditoriaDetalhadaExportController::class)

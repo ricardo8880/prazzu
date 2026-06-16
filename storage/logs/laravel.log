@@ -1,0 +1,13 @@
+[2026-06-16 18:06:37] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":72,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:06:38] local.INFO: [PORTAL_CHAT_EQUIPE_SOCKET_ENVIO] inicio {"empresa_id":4,"user_id":111,"ip":"127.0.0.1","tamanho_mensagem":5,"quantidade_anexos":0} 
+[2026-06-16 18:06:38] local.INFO: [PORTAL_CHAT_EQUIPE_SOCKET_ENVIO] fim {"empresa_id":4,"user_id":111,"mensagem_id":73,"tem_socket_payload":true,"socket_event_esperado":"chat:message:new","duracao_total_ms":37.86} 
+[2026-06-16 18:06:38] local.INFO: [PORTAL_CHAT_EQUIPE_BROWSER] chat_ajax_success {"user_id":111,"ip":"127.0.0.1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","step":"chat_ajax_success","page":"resources/views/filament/pages/portal-cliente.blade.php","timestamp":"2026-06-16T18:06:38.163Z","empresa_id":4,"socket_id":null,"socket_connected":false,"message_id":73} 
+[2026-06-16 18:06:47] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":73,"quantidade":1,"socket_fallback":true} 
+[2026-06-16 18:06:47] local.INFO: [PORTAL_CHAT_EQUIPE_BROWSER] socket_admin_sync_response {"user_id":111,"ip":"127.0.0.1","user_agent":"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36","step":"socket_admin_sync_response","page":"resources/views/filament/pages/portal-cliente.blade.php","timestamp":"2026-06-16T18:06:47.371Z","empresa_id":4,"socket_id":null,"socket_connected":false} 
+[2026-06-16 18:06:57] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:07:07] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:07:18] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:07:28] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:07:38] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:07:48] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 
+[2026-06-16 18:08:14] local.INFO: [PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas {"empresa_id":4,"user_id":111,"after_id":74,"quantidade":0,"socket_fallback":true} 

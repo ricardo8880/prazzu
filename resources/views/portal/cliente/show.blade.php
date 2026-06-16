@@ -274,7 +274,8 @@
             color: #061735;
             box-shadow: 0 6px 18px rgba(6,23,53,.04);
             white-space: pre-wrap;
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            word-break: normal;
             line-height: 1.45;
             font-size: 14px;
         }
@@ -1142,7 +1143,8 @@
         }
 
         .bubble-wrap {
-            width: fit-content;
+            width: auto;
+            min-width: 0;
             max-width: min(74%, 680px);
         }
 
@@ -1288,6 +1290,8 @@
 
         @media (max-width: 760px) {
             .bubble-wrap {
+                width: auto;
+                min-width: 0;
                 max-width: 86%;
             }
 
@@ -1971,54 +1975,7 @@
         }, 1200);
     }
 
-    function portalDebug(step, extra = {}) {
-        // Debug do navegador sem poluir storage/logs/laravel.log.
-        // Para voltar a gravar no Laravel temporariamente, execute no console:
-        // window.PORTAL_CHAT_DEBUG_LARAVEL = true
-        const now = Date.now();
-        const important = ['chat_ajax_error', 'chat_socket_emit_offline', 'socket_public_connect_error', 'socket_public_client_missing', 'socket_public_message_received'].includes(step);
-        if (!important && debugState.lastStep === step && now - debugState.lastSent < 15000) {
-            return;
-        }
-        debugState.lastStep = step;
-        debugState.lastSent = now;
-
-        const payload = {
-            step: step,
-            page: 'resources/views/portal/cliente/show.blade.php',
-            url: window.location.href,
-            pathname: window.location.pathname,
-            timestamp: new Date().toISOString(),
-            ...extra
-        };
-
-        if (window.PORTAL_CHAT_DEBUG === true || important) {
-            console.log('[PORTAL_CLIENTE_SHOW]', payload);
-        }
-
-        if (window.PORTAL_CHAT_DEBUG_LARAVEL !== true) {
-            return;
-        }
-
-        try {
-            if (!debugUrl) return;
-            fetch(debugUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload),
-                keepalive: true
-            }).catch(function (error) {
-                console.warn('[PORTAL_CLIENTE_SHOW] Falha ao gravar debug no Laravel log.', error);
-            });
-        } catch (error) {
-            console.warn('[PORTAL_CLIENTE_SHOW] Debug fetch indisponível.', error);
-        }
-    }
+    function portalDebug(step, extra = {}) { return; }
 
     function showClientToast(message, type = 'info') {
         const toast = document.querySelector('[data-client-toast]');
