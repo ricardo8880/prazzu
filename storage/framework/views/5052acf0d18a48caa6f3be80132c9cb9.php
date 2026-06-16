@@ -10,7 +10,7 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <?php if (! $__env->hasRenderedOnce('d938fbfa-3031-4610-9644-abc3cf7235f5')): $__env->markAsRenderedOnce('d938fbfa-3031-4610-9644-abc3cf7235f5'); ?>
+    <?php if (! $__env->hasRenderedOnce('cc07605c-6c80-441e-ae65-e0acbbb18133')): $__env->markAsRenderedOnce('cc07605c-6c80-441e-ae65-e0acbbb18133'); ?>
         <link rel="stylesheet" href="<?php echo e(asset('css/central-notificacoes.css')); ?>">
     <?php endif; ?>
 

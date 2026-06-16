@@ -636,6 +636,14 @@
         }
         .pc-bubble-content {
             min-width:0;
+            max-width:100%;
+        }
+        .pc-bubble-text,
+        .pc-bubble-head span:first-child {
+            min-width:0;
+            max-width:100%;
+            overflow-wrap:break-word;
+            word-break:normal;
         }
         .pc-bubble-head {
             display:flex;
@@ -971,7 +979,11 @@
             .pc-actions .pc-btn, .pc-actions a, .pc-actions button { flex:1 1 100%; }
             .pc-tabs { overflow-x:auto; padding:0 .9rem; }
             .pc-messages { padding:1rem .9rem; }
-            .pc-message, .pc-message.cliente { grid-template-columns:2.1rem minmax(0,1fr); }
+            .pc-message { grid-template-columns:2.1rem minmax(0,1fr); max-width:100%; min-width:0; }
+            .pc-message.cliente { grid-template-columns:minmax(0,1fr); }
+            .pc-message.cliente .pc-bubble { grid-template-columns:minmax(0,1fr); }
+            .pc-message.cliente .pc-message-avatar { display:none; }
+            .pc-bubble { max-width:100%; overflow-wrap:anywhere; }
             .pc-message-avatar { width:2.1rem; height:2.1rem; }
             .pc-bubble-head { align-items:flex-start; flex-direction:column; gap:.18rem; }
             .pc-chat-composer { padding:.75rem .85rem .9rem; }
@@ -1524,7 +1536,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
     </div>
 
     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($socketIoConfig['url'])): ?>
-        <script src="<?php echo e(rtrim($socketIoConfig['url'], '/')); ?>/socket.io/socket.io.js"></script>
+        <script id="portal-socket-io-client" src="<?php echo e(rtrim($socketIoConfig['url'], '/')); ?>/socket.io/socket.io.js" onload="window.__portalAdminSocketIoScriptLoaded=true" onerror="window.__portalAdminSocketIoScriptError=true"></script>
     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
     <script>
@@ -1533,7 +1545,6 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             const chat = document.getElementById('portalClienteChatBody');
             const socketConfig = <?php echo json_encode($socketIoConfig ?? [], 15, 512) ?>;
             const supportName = socketConfig?.nome || <?php echo json_encode(auth()->user()?->name ?: 'Suporte', 15, 512) ?>;
-            const adminDebugUrl = <?php echo json_encode(route('admin.portal-cliente.debug-log'), 15, 512) ?>;
             const adminSyncUrl = <?php echo json_encode(route('admin.portal-cliente.chat.mensagens-novas', ['empresa' => $empresaId]), 512) ?>;
             let socket = null;
             let sendingBusy = false;
@@ -1542,17 +1553,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             const typingState = { active: false, timer: null, stopTimer: null };
 
             function adminDebug(step, payload) {
-                const important = ['socket_admin_connected', 'socket_admin_connect_error', 'socket_admin_message_received', 'socket_admin_emit_ack', 'socket_admin_emit_start', 'socket_admin_sync_response', 'socket_admin_sync_error', 'chat_ajax_success', 'chat_ajax_error'].includes(step);
-                if (!important) return;
-                try {
-                    fetch(adminDebugUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
-                        body: JSON.stringify(Object.assign({ step, page: 'resources/views/filament/pages/portal-cliente.blade.php', empresa_id: socketConfig?.empresaId || null, socket_id: socket?.id || null, socket_connected: Boolean(socket && socket.connected), timestamp: new Date().toISOString() }, payload || {})),
-                        credentials: 'same-origin',
-                        keepalive: true,
-                    }).catch(function () {});
-                } catch (e) {}
+                return;
             }
 
             function escapeHtml(value) {
@@ -1634,6 +1635,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
             async function syncAdminMessages(reason) {
                 if (!adminSyncUrl || !window.fetch || adminOfflineSyncInFlight) return;
+                const forceSync = ['manual', 'socket_connect', 'socket_connected'].includes(String(reason || ''));
+                if (!forceSync && socket && socket.connected) {
+                    stopAdminOfflineSync();
+                    return;
+                }
                 adminOfflineSyncInFlight = true;
                 const afterId = latestAdminChatMessageId();
                 const url = new URL(adminSyncUrl, window.location.origin);
@@ -1659,15 +1665,22 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             }
 
             function startAdminOfflineSync(reason) {
-                if (adminOfflineSyncTimer) return;
-                window.setTimeout(function () { syncAdminMessages(reason || 'socket_offline'); }, 1200);
+                if (socket && socket.connected) return;
+                if (window.__portalAdminOfflineSyncTimer) {
+                    adminOfflineSyncTimer = window.__portalAdminOfflineSyncTimer;
+                    return;
+                }
+                window.setTimeout(function () { syncAdminMessages(reason || 'socket_offline'); }, 500);
                 adminOfflineSyncTimer = window.setInterval(function () { syncAdminMessages(reason || 'socket_offline'); }, 10000);
+                window.__portalAdminOfflineSyncTimer = adminOfflineSyncTimer;
             }
 
             function stopAdminOfflineSync() {
-                if (!adminOfflineSyncTimer) return;
-                window.clearInterval(adminOfflineSyncTimer);
+                const timer = adminOfflineSyncTimer || window.__portalAdminOfflineSyncTimer;
+                if (!timer) return;
+                window.clearInterval(timer);
                 adminOfflineSyncTimer = null;
+                window.__portalAdminOfflineSyncTimer = null;
             }
 
             function setSending(form, sending) {
@@ -1684,18 +1697,113 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 if (text) text.textContent = (name || 'Cliente') + ' está digitando...';
             }
 
+
+            async function persistAdminSeen(messageId) {
+                const id = Number(messageId || 0);
+                if (!id || !socketConfig?.seenUrl || !window.fetch) return;
+
+                try {
+                    await fetch(socketConfig.seenUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ empresa: socketConfig.empresaId, message_id: id }),
+                    });
+                } catch (error) {
+                    adminDebug('socket_admin_seen_persist_error', { message_id: id, erro: String(error && error.message ? error.message : error) });
+                }
+            }
+
             function emitSupportTyping(text) {
                 if (!socket || !socket.connected) return;
                 const hasText = String(text || '').trim() !== '';
                 if (hasText && !typingState.active) {
                     typingState.active = true;
-                    socket.emit('chat:typing:start', { nome: supportName, room: socketConfig.room || '' });
+                    socket.emit('chat:typing:start', { actor: socketConfig.actor || 'suporte', nome: supportName, room: socketConfig.room || '' });
                 }
                 window.clearTimeout(typingState.stopTimer);
                 typingState.stopTimer = window.setTimeout(function () {
                     typingState.active = false;
-                    socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
+                    socket.emit('chat:typing:stop', { actor: socketConfig.actor || 'suporte', nome: supportName, room: socketConfig.room || '' });
                 }, hasText ? 1200 : 0);
+            }
+
+            function loadSocketIoClient() {
+                return new Promise(function (resolve) {
+                    if (window.io) {
+                        resolve(true);
+                        return;
+                    }
+
+                    if (!socketConfig?.url) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const src = String(socketConfig.url).replace(/\/$/, '') + '/socket.io/socket.io.js';
+                    let script = document.getElementById('portal-socket-io-client')
+                        || Array.from(document.scripts).find(function (item) { return item.src === src; });
+
+                    const done = function (ok) {
+                        resolve(Boolean(ok && window.io));
+                    };
+
+                    if (!script) {
+                        script = document.createElement('script');
+                        script.id = 'portal-socket-io-client';
+                        script.src = src;
+                        script.async = false;
+                        document.head.appendChild(script);
+                    }
+
+                    if (window.__portalAdminSocketIoScriptLoaded || window.io) {
+                        done(true);
+                        return;
+                    }
+
+                    if (window.__portalAdminSocketIoScriptError) {
+                        done(false);
+                        return;
+                    }
+
+                    script.addEventListener('load', function () {
+                        window.__portalAdminSocketIoScriptLoaded = true;
+                        done(true);
+                    }, { once: true });
+
+                    script.addEventListener('error', function () {
+                        window.__portalAdminSocketIoScriptError = true;
+                        done(false);
+                    }, { once: true });
+
+                    window.setTimeout(function () {
+                        done(Boolean(window.io));
+                    }, 2500);
+                });
+            }
+
+            async function initializeAdminSocket() {
+                if (!socketConfig?.enabled || !socketConfig?.url) {
+                    startAdminOfflineSync('socket_disabled');
+                    return;
+                }
+
+                const loaded = await loadSocketIoClient();
+                if (!loaded || !window.io) {
+                    adminDebug('socket_admin_connect_error', {
+                        erro: window.__portalAdminSocketIoScriptError ? 'socket_io_client_load_error' : 'socket_io_client_missing',
+                        url: socketConfig.url,
+                    });
+                    startAdminOfflineSync('socket_client_missing');
+                    return;
+                }
+
+                connectSocket();
             }
 
             function connectSocket() {
@@ -1734,6 +1842,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     appendMessage(msg, false);
                     if (msg.class === 'cliente' && msg.id > 0) {
                         socket.emit('chat:seen', { message_id: msg.id, room: socketConfig.room || '', at: new Date().toISOString() });
+                        persistAdminSeen(msg.id);
                     }
                 });
 
@@ -1754,7 +1863,10 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     stopAdminOfflineSync();
                     const lastCliente = Array.from(document.querySelectorAll('#portalClienteChatBody .pc-message.cliente[data-message-id]'))
                         .reduce(function (max, row) { const id = Number(row.dataset.messageId || 0); return id > max ? id : max; }, 0);
-                    if (lastCliente > 0) socket.emit('chat:seen', { message_id: lastCliente, room: socketConfig.room || '', at: new Date().toISOString() });
+                    if (lastCliente > 0) {
+                        socket.emit('chat:seen', { message_id: lastCliente, room: socketConfig.room || '', at: new Date().toISOString() });
+                        persistAdminSeen(lastCliente);
+                    }
                     syncAdminMessages('socket_connect');
                 });
 
@@ -1769,7 +1881,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 });
             }
 
-            connectSocket();
+            initializeAdminSocket();
 
             async function enviarMensagemSuporte(form, event) {
                 if (event) event.preventDefault();
@@ -1807,10 +1919,12 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                         if (socket && socket.connected) {
                             adminDebug('socket_admin_emit_start', { message_id: Number(data.chat_message.id || data.chat_message.message_id || 0) });
                             data.chat_message.room = data.chat_message.room || socketConfig.room || '';
+                            data.chat_message.actor = data.chat_message.actor || socketConfig.actor || 'suporte';
+                            data.chat_message.class = data.chat_message.class || 'equipe';
                             socket.emit('chat:message:new', data.chat_message, function (ack) {
                                 adminDebug('socket_admin_emit_ack', { message_id: Number(data.chat_message.id || data.chat_message.message_id || 0), ack });
                             });
-                            socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
+                            socket.emit('chat:typing:stop', { actor: socketConfig.actor || 'suporte', nome: supportName, room: socketConfig.room || '' });
                         } else {
                             startAdminOfflineSync('after_send_socket_offline');
                         }

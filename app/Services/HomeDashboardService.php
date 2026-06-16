@@ -44,9 +44,20 @@ class HomeDashboardService
         $cacheKey = 'home-dashboard:v3:user:' . $this->user->id . ':empresa:' . ($this->user->empresa_id ?? 'global');
 
         return Cache::remember($cacheKey, now()->addSeconds(60), function (): array {
+            $urls = $this->safeValue(fn () => $this->urls(), []);
+            $resumoHoje = $this->safeValue(fn () => $this->resumoHoje(), []);
+            $minhasPendencias = $this->safeValue(fn () => $this->minhasPendencias(), []);
+            $vencimentosProximos = $this->safeValue(fn () => $this->vencimentosProximos(), []);
+            $aprovacoesAguardando = $this->safeValue(fn () => $this->aprovacoesAguardando(), []);
+            $itensAtrasados = $this->safeValue(fn () => $this->itensAtrasados(), []);
+            $resumoEmpresas = $this->safeValue(fn () => $this->resumoEmpresas(), []);
+            $notificacoes = $this->safeValue(fn () => $this->notificacoes(), []);
+            $documentosVencidos = $this->safeValue(fn () => $this->documentosVencidos(), []);
+            $documentosVencendo = $this->safeValue(fn () => $this->documentosVencendo(), []);
+
             return [
                 'usuario' => $this->user->name ?? 'Usuário',
-                'urls' => $this->safeValue(fn () => $this->urls(), []),
+                'urls' => $urls,
                 'kpis' => $this->safeValue(fn () => $this->kpis(), []),
                 'tarefas' => $this->safeValue(fn () => $this->tarefas(), ['tabs' => [], 'itens' => []]),
                 'kanban' => $this->safeValue(fn () => $this->kanban(), []),
@@ -58,20 +69,24 @@ class HomeDashboardService
                 'compliance' => $this->safeValue(fn () => $this->compliance(), []),
                 'assistente' => $this->safeValue(fn () => $this->assistente(), []),
                 'atividades' => $this->safeValue(fn () => $this->atividades(), []),
-                'resumoHoje' => $this->safeValue(fn () => $this->resumoHoje(), []),
-                'minhasPendencias' => $this->safeValue(fn () => $this->minhasPendencias(), []),
-                'vencimentosProximos' => $this->safeValue(fn () => $this->vencimentosProximos(), []),
-                'aprovacoesAguardando' => $this->safeValue(fn () => $this->aprovacoesAguardando(), []),
-                'itensAtrasados' => $this->safeValue(fn () => $this->itensAtrasados(), []),
+                'resumoHoje' => $resumoHoje,
+                'minhasPendencias' => $minhasPendencias,
+                'vencimentosProximos' => $vencimentosProximos,
+                'aprovacoesAguardando' => $aprovacoesAguardando,
+                'itensAtrasados' => $itensAtrasados,
                 'ultimosComentarios' => $this->safeValue(fn () => $this->ultimosComentarios(), []),
                 'atalhosRapidos' => $this->safeValue(fn () => $this->atalhosRapidos(), []),
-                'resumoEmpresas' => $this->safeValue(fn () => $this->resumoEmpresas(), []),
+                'resumoEmpresas' => $resumoEmpresas,
                 'fluxoOperacional' => $this->safeValue(fn () => $this->fluxoOperacional(), []),
-                'notificacoes' => $this->safeValue(fn () => $this->notificacoes(), []),
+                'notificacoes' => $notificacoes,
                 'notificacoes_total' => $this->safeValue(fn () => $this->notificacoesTotal(), 0),
-                'documentosVencidos' => $this->safeValue(fn () => $this->documentosVencidos(), []),
-                'documentosVencendo' => $this->safeValue(fn () => $this->documentosVencendo(), []),
+                'documentosVencidos' => $documentosVencidos,
+                'documentosVencendo' => $documentosVencendo,
                 'problemasAcao' => $this->safeValue(fn () => $this->problemasAcao(), []),
+                'filaPrioridade' => $this->safeValue(
+                    fn () => $this->filaPrioridade($itensAtrasados, $vencimentosProximos, $documentosVencidos, $documentosVencendo, $minhasPendencias, $aprovacoesAguardando, $urls),
+                    ['total' => 0, 'itens' => []]
+                ),
             ];
         });
     }
@@ -130,6 +145,69 @@ class HomeDashboardService
             'documentosVencidos' => [],
             'documentosVencendo' => [],
             'problemasAcao' => [],
+            'filaPrioridade' => ['total' => 0, 'itens' => []],
+        ];
+    }
+
+
+    private function filaPrioridade(
+        array $itensAtrasados,
+        array $vencimentosProximos,
+        array $documentosVencidos,
+        array $documentosVencendo,
+        array $minhasPendencias,
+        array $aprovacoesAguardando,
+        array $urls
+    ): array {
+        $fila = collect();
+
+        foreach ($itensAtrasados as $item) {
+            $fila->push($this->priorityRow($item, 10, 'Crítico', 'danger', 'Obrigação vencida', 'Item atrasado', $item['data'] ?? ($item['tempo'] ?? '-'), $item['tempo'] ?? 'Atrasado', $item['url'] ?? ($urls['prazos'] ?? '#'), 'Fiscal', 'obrigacoes_vencidas'));
+        }
+
+        foreach ($vencimentosProximos as $item) {
+            $fila->push($this->priorityRow($item, 8, 'Alto', 'warning', 'Vence hoje', 'Vencimento próximo', $item['data'] ?? '-', $item['tempo'] ?? 'Hoje', $item['url'] ?? ($urls['prazos'] ?? '#'), 'Fiscal', 'vencem_hoje'));
+        }
+
+        foreach ($documentosVencidos as $item) {
+            $fila->push($this->priorityRow($item, 7, 'Alto', 'warning', 'Sem documentos', 'Documento pendente', $item['data'] ?? '-', $item['tempo'] ?? 'Pendente', $item['url'] ?? ($urls['documentos'] ?? '#'), 'Documentos', 'sem_documentos'));
+        }
+
+        foreach ($documentosVencendo as $item) {
+            $fila->push($this->priorityRow($item, 6, 'Médio', 'warning', 'Sem documentos', 'Documento pendente', $item['data'] ?? '-', $item['tempo'] ?? 'Pendente', $item['url'] ?? ($urls['documentos'] ?? '#'), 'Documentos', 'sem_documentos'));
+        }
+
+        foreach ($minhasPendencias as $item) {
+            $fila->push($this->priorityRow($item, 5, ($item['badge'] ?? '') === 'danger' ? 'Crítico' : 'Médio', $item['badge'] ?? 'info', 'Pendência parada', 'Pendência operacional', $item['data'] ?? '-', $item['status'] ?? ($item['responsavel'] ?? '-'), $item['url'] ?? ($urls['minhasPendencias'] ?? '#'), 'Operacional', 'pendencias_paradas'));
+        }
+
+        foreach ($aprovacoesAguardando as $item) {
+            $fila->push($this->priorityRow($item, 4, 'Médio', 'info', 'Aprovação travada', 'Aprovação aguardando', '-', $item['tempo'] ?? 'Aguardando', $item['url'] ?? ($urls['centralAprovacoes'] ?? '#'), 'Aprovações', 'aprovacoes_travadas'));
+        }
+
+        $itens = $fila->sortByDesc('peso')->values();
+
+        return [
+            'total' => $itens->count(),
+            'itens' => $itens->all(),
+        ];
+    }
+
+    private function priorityRow(array $item, int $peso, string $prioridade, string $badge, string $tipo, string $descricaoPadrao, string $vencimento, string $atraso, string $url, string $areaPadrao, string $filtro): array
+    {
+        return [
+            'peso' => $peso,
+            'prioridade' => $prioridade,
+            'badge' => $badge,
+            'tipo' => $tipo,
+            'descricao' => $item['titulo'] ?? $descricaoPadrao,
+            'cliente' => $item['empresa'] ?? 'Sem empresa',
+            'vencimento' => $vencimento,
+            'atraso' => $atraso,
+            'url' => $url,
+            'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído',
+            'area' => $item['area'] ?? $areaPadrao,
+            'filtro' => $filtro,
         ];
     }
 

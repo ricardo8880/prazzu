@@ -11,7 +11,7 @@
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos.css')); ?>">
-    <?php if (! $__env->hasRenderedOnce('23b66a9d-26e8-4587-929b-798be19cfbd0')): $__env->markAsRenderedOnce('23b66a9d-26e8-4587-929b-798be19cfbd0'); ?>
+    <?php if (! $__env->hasRenderedOnce('b0766459-1058-413f-b684-1f4db732657e')): $__env->markAsRenderedOnce('b0766459-1058-413f-b684-1f4db732657e'); ?>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <?php endif; ?>
 

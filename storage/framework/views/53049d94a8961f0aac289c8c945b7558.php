@@ -72,7 +72,7 @@
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
     </div>
 
-    <?php if (! $__env->hasRenderedOnce('4792fec4-b03a-4053-8c41-6640cc5af690')): $__env->markAsRenderedOnce('4792fec4-b03a-4053-8c41-6640cc5af690'); ?>
+    <?php if (! $__env->hasRenderedOnce('bd280483-aea9-4649-9a39-de7868951675')): $__env->markAsRenderedOnce('bd280483-aea9-4649-9a39-de7868951675'); ?>
         <style>
             .prazzu-plan-consumption-config {
                 margin-top: 16px;

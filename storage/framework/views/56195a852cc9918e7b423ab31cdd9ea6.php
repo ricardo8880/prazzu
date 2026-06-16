@@ -45,7 +45,11 @@
             ['label' => 'Clientes em risco', 'value' => $clientesEmRisco, 'hint' => 'Alto risco de atraso', 'tone' => 'danger', 'icon' => 'shield-alert', 'filter' => 'clientes_risco', 'target' => 'clients'],
         ];
 
-        $filaPrioridade = collect();
+        $filaPrioridadeCompleta = collect($dashboard['filaPrioridade']['itens'] ?? []);
+        $filaPrioridadeTotal = (int) ($dashboard['filaPrioridade']['total'] ?? $filaPrioridadeCompleta->count());
+
+        if ($filaPrioridadeCompleta->isEmpty()) {
+            $filaPrioridade = collect();
 
         foreach ($itensAtrasados as $item) {
             $filaPrioridade->push(['peso' => 10, 'prioridade' => 'Crítico', 'badge' => 'danger', 'tipo' => 'Obrigação vencida', 'descricao' => $item['titulo'] ?? 'Item atrasado', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? ($item['tempo'] ?? '-'), 'atraso' => $item['tempo'] ?? 'Atrasado', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído', 'area' => $item['area'] ?? 'Fiscal', 'filtro' => 'obrigacoes_vencidas']);
@@ -71,8 +75,10 @@
             $filaPrioridade->push(['peso' => 4, 'prioridade' => 'Médio', 'badge' => 'info', 'tipo' => 'Aprovação travada', 'descricao' => $aprovacao['titulo'] ?? 'Aprovação aguardando', 'cliente' => $aprovacao['empresa'] ?? 'Sem empresa', 'vencimento' => '-', 'atraso' => $aprovacao['tempo'] ?? 'Aguardando', 'url' => $aprovacao['url'] ?? ($urls['centralAprovacoes'] ?? '#'), 'responsavel' => $aprovacao['responsavel'] ?? 'Sem responsável atribuído', 'area' => $aprovacao['area'] ?? 'Aprovações', 'filtro' => 'aprovacoes_travadas']);
         }
 
-        $filaPrioridadeTotal = $filaPrioridade->count();
-        $filaPrioridadeCompleta = $filaPrioridade->sortByDesc('peso')->values();
+            $filaPrioridadeTotal = $filaPrioridade->count();
+            $filaPrioridadeCompleta = $filaPrioridade->sortByDesc('peso')->values();
+        }
+
         $filaPrioridade = $filaPrioridadeCompleta->take(7)->values();
 
         $clientesMaiorRisco = collect($resumoEmpresas ?? [])->map(function ($empresa) use ($urls) {
@@ -179,6 +185,18 @@
                         <table class="pz-priority-table">
                             <thead><tr><th>Prioridade</th><th>Tipo</th><th>Descrição</th><th>Cliente</th><th>Vencimento / Data</th><th>Dias em atraso</th></tr></thead>
                             <tbody>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $filaPrioridade; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <tr class="pz-clickable-row pz-server-priority-row" x-show="false" data-href="<?php echo e($item['url'] ?? '#'); ?>" onclick="window.location.href=this.dataset.href || '#'">
+                                        <td><span class="pz-priority-badge pz-priority-<?php echo e($item['badge'] ?? 'info'); ?>"><?php echo e($item['prioridade'] ?? 'Médio'); ?></span></td>
+                                        <td><?php echo e($item['tipo'] ?? '-'); ?></td>
+                                        <td><strong><?php echo e($item['descricao'] ?? '-'); ?></strong></td>
+                                        <td><?php echo e($item['cliente'] ?? 'Sem empresa'); ?></td>
+                                        <td><strong><?php echo e($item['vencimento'] ?? '-'); ?></strong></td>
+                                        <td class="pz-delay-cell"><?php echo e($item['atraso'] ?? '-'); ?></td>
+                                    </tr>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                    <tr class="pz-server-priority-row" x-show="false"><td colspan="6" class="pz-empty-cell">Nenhuma prioridade crítica encontrada para hoje.</td></tr>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 <template x-for="item in visiblePriorityItems()" :key="(item.tipo || '') + '-' + (item.descricao || '') + '-' + (item.cliente || '')">
                                     <tr class="pz-clickable-row" @click="openPriority(item)">
                                         <td><span class="pz-priority-badge" :class="'pz-priority-' + (item.badge || 'info')" x-text="item.prioridade || 'Médio'"></span></td>

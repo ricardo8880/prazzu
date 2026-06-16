@@ -1,26 +1,3 @@
-<?php
-    use Illuminate\Support\Str;
-    use Illuminate\Support\Facades\Log;
-
-    $clienteNome = (string) ($cliente->nome ?? 'Cliente');
-    $iniciais = collect(explode(' ', trim($clienteNome)))->filter()->take(2)->map(fn ($parte) => substr($parte, 0, 1))->implode('') ?: 'C';
-    $empresaNome = $empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? 'Sua empresa';
-
-    Log::info('[PORTAL_CLIENTE_DEBUG][BLADE_RENDER]', [
-        'arquivo' => 'resources/views/portal/cliente/dashboard.blade.php',
-        'cliente_id' => $cliente->id ?? null,
-        'cliente_nome' => $cliente->nome ?? null,
-        'empresa' => $empresaNome ?? null,
-        'atendimento_atual' => $atendimentoAtual['id'] ?? null,
-        'abrir_formulario' => $abrirFormulario ?? null,
-        'total_atendimentos' => isset($atendimentos) ? count($atendimentos) : null,
-        'total_interacoes' => isset($interacoes) ? count($interacoes) : null,
-        'url' => request()->fullUrl(),
-        'method' => request()->method(),
-        'ip' => request()->ip(),
-        'user_agent' => request()->userAgent(),
-    ]);
-?>
     <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -272,6 +249,13 @@
 
         .portal-message-author { display: block; font-weight: 900; margin-bottom: 3px; font-size: .86rem; }
         .portal-message-time { display: block; margin-top: 8px; opacity: .75; font-size: .78rem; }
+        .portal-typing-status { display: none; align-items: center; gap: 8px; padding: 0 22px 14px; color: #64748b; font-size: .8rem; font-weight: 850; background: #f8fafc; }
+        .portal-typing-status.is-visible { display: flex; }
+        .portal-typing-dots { display: inline-flex; align-items: center; gap: 3px; border: 1px solid #e2e8f0; border-radius: 999px; background: #fff; padding: 7px 10px; }
+        .portal-typing-dots i { width: 5px; height: 5px; border-radius: 999px; background: currentColor; opacity: .45; animation: portalTypingPulse 1s infinite ease-in-out; }
+        .portal-typing-dots i:nth-child(2) { animation-delay: .14s; }
+        .portal-typing-dots i:nth-child(3) { animation-delay: .28s; }
+        @keyframes portalTypingPulse { 0%, 80%, 100% { transform: translateY(0); opacity: .35; } 40% { transform: translateY(-3px); opacity: .95; } }
 
         .portal-empty {
             border: 1px dashed #cbd5e1;
@@ -674,160 +658,7 @@
     </style>
 
     <script>
-        window.__PORTAL_CLIENTE_DEBUG_CONTEXT__ = {
-            blade: 'resources/views/portal/cliente/dashboard.blade.php',
-            cliente_id: <?php echo json_encode($cliente->id ?? null, 15, 512) ?>,
-            atendimento_id: <?php echo json_encode($atendimentoAtual['id'] ?? null, 15, 512) ?>,
-            protocolo: <?php echo json_encode($atendimentoAtual['protocolo'] ?? null, 15, 512) ?>,
-            abrir_formulario: <?php echo json_encode($abrirFormulario ?? false, 15, 512) ?>
-        };
-
-        window.portalClienteDescreverElemento = function (elemento) {
-            try {
-                if (! elemento) return null;
-                var texto = (elemento.innerText || elemento.value || elemento.getAttribute('aria-label') || elemento.getAttribute('title') || '').toString().trim();
-                if (texto.length > 160) texto = texto.substring(0, 160) + '...';
-
-                return {
-                    tag: elemento.tagName || null,
-                    id: elemento.id || null,
-                    name: elemento.getAttribute ? elemento.getAttribute('name') : null,
-                    type: elemento.getAttribute ? elemento.getAttribute('type') : null,
-                    classe: elemento.className ? elemento.className.toString() : null,
-                    texto: texto,
-                    href: elemento.getAttribute ? elemento.getAttribute('href') : null,
-                    action: elemento.getAttribute ? elemento.getAttribute('action') : null,
-                    data_portal_tab: elemento.getAttribute ? elemento.getAttribute('data-portal-tab') : null,
-                    data_tab: elemento.getAttribute ? elemento.getAttribute('data-tab') : null,
-                    data_tab_content: elemento.getAttribute ? elemento.getAttribute('data-tab-content') : null,
-                    onclick: elemento.getAttribute ? elemento.getAttribute('onclick') : null,
-                    disabled: !! elemento.disabled,
-                    hidden: !! elemento.hidden,
-                    display: window.getComputedStyle ? window.getComputedStyle(elemento).display : null,
-                    visibility: window.getComputedStyle ? window.getComputedStyle(elemento).visibility : null
-                };
-            } catch (error) {
-                return { erro_descrever_elemento: error && error.message ? error.message : String(error) };
-            }
-        };
-
-        window.portalClienteDebugLog = function (evento, detalhes) {
-            try {
-                var payload = {
-                    evento: evento || 'sem_evento',
-                    detalhes: detalhes || {},
-                    url: window.location.href
-                };
-
-                console.log('[PORTAL_CLIENTE_DEBUG]', payload);
-
-                fetch(<?php echo json_encode(route('portal.cliente.debug-log'), 15, 512) ?>, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(payload),
-                    credentials: 'same-origin',
-                    keepalive: true
-                }).catch(function (error) {
-                    console.warn('[PORTAL_CLIENTE_DEBUG] falha ao enviar log', error);
-                });
-            } catch (error) {
-                console.warn('[PORTAL_CLIENTE_DEBUG] erro local', error);
-            }
-        };
-
-        window.portalClienteDebugLog('script_head_carregado', {
-            contexto: window.__PORTAL_CLIENTE_DEBUG_CONTEXT__,
-            ready_state: document.readyState,
-            href: window.location.href,
-            csrf_existe: !! document.querySelector('meta[name="csrf-token"]')
-        });
-
-        window.addEventListener('error', function (event) {
-            window.portalClienteDebugLog('javascript_error_global', {
-                message: event.message || null,
-                filename: event.filename || null,
-                lineno: event.lineno || null,
-                colno: event.colno || null,
-                error: event.error && event.error.stack ? event.error.stack : null
-            });
-        });
-
-        window.addEventListener('unhandledrejection', function (event) {
-            window.portalClienteDebugLog('javascript_promise_rejection', {
-                reason: event.reason && event.reason.stack ? event.reason.stack : String(event.reason || '')
-            });
-        });
-
-        document.addEventListener('click', function (event) {
-            var alvo = event.target;
-            var clicavel = alvo && alvo.closest ? alvo.closest('button, a, input, textarea, select, label, [data-portal-tab], [data-tab], [onclick], form') : alvo;
-            window.portalClienteDebugLog('click_global_capture', {
-                alvo: window.portalClienteDescreverElemento(alvo),
-                clicavel: window.portalClienteDescreverElemento(clicavel),
-                defaultPrevented: !! event.defaultPrevented,
-                button: event.button,
-                ctrlKey: !! event.ctrlKey,
-                shiftKey: !! event.shiftKey,
-                altKey: !! event.altKey,
-                metaKey: !! event.metaKey
-            });
-        }, true);
-
-        document.addEventListener('mousedown', function (event) {
-            var alvo = event.target;
-            var clicavel = alvo && alvo.closest ? alvo.closest('button, a, input, textarea, select, label, [data-portal-tab], [data-tab], [onclick], form') : alvo;
-            window.portalClienteDebugLog('mousedown_global_capture', {
-                alvo: window.portalClienteDescreverElemento(alvo),
-                clicavel: window.portalClienteDescreverElemento(clicavel),
-                button: event.button
-            });
-        }, true);
-
-        document.addEventListener('submit', function (event) {
-            window.portalClienteDebugLog('submit_global_capture', {
-                form: window.portalClienteDescreverElemento(event.target),
-                action: event.target && event.target.getAttribute ? event.target.getAttribute('action') : null,
-                method: event.target && event.target.getAttribute ? event.target.getAttribute('method') : null,
-                defaultPrevented: !! event.defaultPrevented
-            });
-        }, true);
-
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Enter') {
-                window.portalClienteDebugLog('keydown_enter_global_capture', {
-                    alvo: window.portalClienteDescreverElemento(event.target),
-                    defaultPrevented: !! event.defaultPrevented,
-                    shiftKey: !! event.shiftKey,
-                    ctrlKey: !! event.ctrlKey,
-                    isComposing: !! event.isComposing,
-                    value_length: event.target && typeof event.target.value === 'string' ? event.target.value.length : null
-                });
-            }
-        }, true);
-
-        document.addEventListener('keyup', function (event) {
-            if (event.key === 'Enter') {
-                window.portalClienteDebugLog('keyup_enter_global_capture', {
-                    alvo: window.portalClienteDescreverElemento(event.target),
-                    defaultPrevented: !! event.defaultPrevented,
-                    shiftKey: !! event.shiftKey,
-                    value_length: event.target && typeof event.target.value === 'string' ? event.target.value.length : null
-                });
-            }
-        }, true);
-
-        document.addEventListener('change', function (event) {
-            window.portalClienteDebugLog('change_global_capture', {
-                alvo: window.portalClienteDescreverElemento(event.target),
-                value_length: event.target && typeof event.target.value === 'string' ? event.target.value.length : null,
-                files: event.target && event.target.files ? event.target.files.length : null
-            });
-        }, true);
-
+        window.portalClienteDebugLog = function () { return; };
 
         window.portalClienteAtivarAba = function (tabName) {
             window.portalClienteDebugLog('ativar_aba_chamado', { tab: tabName });
@@ -1119,6 +950,10 @@
                         </div>
 
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($atendimentoAtual): ?>
+                            <div class="portal-typing-status" data-support-typing aria-live="polite">
+                                <span class="portal-typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                                <span data-support-typing-text>Suporte está digitando...</span>
+                            </div>
                             <div class="portal-chat-composer">
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($atendimentoAtual['is_finalizado'])): ?>
                                     <div class="portal-chat-locked">Este atendimento está finalizado. Para falar novamente com o suporte, abra um novo atendimento.</div>
@@ -1322,6 +1157,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         var fileName = document.getElementById('portal-file-name');
         var socketConfig = <?php echo json_encode($socketIoConfig ?? ['enabled' => false], 15, 512) ?>;
         var portalAreaSocket = null;
+        var typingState = { active: false, lastSent: 0, stopTimer: null, supportTimer: null };
         var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-portal-tab]'));
         var tabPanels = Array.prototype.slice.call(document.querySelectorAll('.portal-tab-panel'));
@@ -1372,7 +1208,10 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
         if (textarea) {
             resizeTextarea();
-            textarea.addEventListener('input', resizeTextarea);
+            textarea.addEventListener('input', function () {
+                resizeTextarea();
+                announceClienteLogadoTyping(textarea.value);
+            });
             textarea.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter') {
                     window.portalClienteDebugLog('keydown_enter_listener', { shift: !! event.shiftKey, isComposing: !! event.isComposing, tamanho: textarea.value.length });
@@ -1479,12 +1318,51 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             return artigo;
         }
 
+        function setSupportTyping(isTyping, name) {
+            var box = document.querySelector('[data-support-typing]');
+            var text = document.querySelector('[data-support-typing-text]');
+            if (! box) return;
+            box.classList.toggle('is-visible', Boolean(isTyping));
+            if (text) text.textContent = (name || 'Suporte') + ' está digitando...';
+        }
+
+        function announceClienteLogadoTyping(value) {
+            if (! portalAreaSocket || ! portalAreaSocket.connected) return;
+
+            var hasText = String(value || '').trim() !== '';
+            var now = Date.now();
+
+            if (hasText && (! typingState.active || now - typingState.lastSent >= 1800)) {
+                typingState.active = true;
+                typingState.lastSent = now;
+                portalAreaSocket.emit('chat:typing:start', { nome: <?php echo json_encode($clienteNome, 15, 512) ?>, room: socketConfig.room || '' });
+            }
+
+            window.clearTimeout(typingState.stopTimer);
+
+            if (! hasText) {
+                if (typingState.active) {
+                    typingState.active = false;
+                    portalAreaSocket.emit('chat:typing:stop', { room: socketConfig.room || '' });
+                }
+                return;
+            }
+
+            typingState.stopTimer = window.setTimeout(function () {
+                if (! portalAreaSocket || ! portalAreaSocket.connected || ! typingState.active) return;
+                typingState.active = false;
+                portalAreaSocket.emit('chat:typing:stop', { room: socketConfig.room || '' });
+            }, 1200);
+        }
+
         function normalizarMensagemSocket(payload) {
             if (! payload || String(payload.scope || '') !== 'portal_cliente_logado') return null;
             if (Number(payload.atendimento_id || 0) !== Number(socketConfig.atendimentoId || 0)) return null;
 
             return {
-                id: payload.id || ('socket-' + Date.now()),
+                id: payload.interaction_id || payload.id || ('socket-' + Date.now()),
+                message_id: payload.id || payload.message_id || null,
+                source: payload.source || 'atendimento_interacoes',
                 is_cliente: payload.origem === 'cliente',
                 author: payload.nome || (payload.origem === 'cliente' ? 'Você' : 'Equipe de suporte'),
                 text: payload.mensagem || '',
@@ -1532,8 +1410,21 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             portalAreaSocket.on('chat:message:new', function (payload) {
                 if (payload && payload.origem !== 'cliente') {
                     adicionarMensagemSocket(payload);
+                    setSupportTyping(false);
                     portalAreaSocket.emit('chat:seen', { message_id: payload.id || null, room: socketConfig.room || '', at: new Date().toISOString() });
                 }
+            });
+
+            portalAreaSocket.on('chat:typing:start', function (payload) {
+                if (payload && payload.actor === 'cliente') return;
+                setSupportTyping(true, (payload && payload.nome) ? payload.nome : 'Suporte');
+                window.clearTimeout(typingState.supportTimer);
+                typingState.supportTimer = window.setTimeout(function () { setSupportTyping(false); }, 8000);
+            });
+
+            portalAreaSocket.on('chat:typing:stop', function (payload) {
+                if (payload && payload.actor === 'cliente') return;
+                setSupportTyping(false);
             });
 
             portalAreaSocket.on('connect_error', function (error) {
@@ -1634,6 +1525,8 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                     if (data && data.chat_message && portalAreaSocket && portalAreaSocket.connected) {
                         data.chat_message.room = data.chat_message.room || socketConfig.room || '';
                         portalAreaSocket.emit('chat:message:new', data.chat_message);
+                        typingState.active = false;
+                        portalAreaSocket.emit('chat:typing:stop', { room: socketConfig.room || '' });
                     }
                 } catch (error) {
                     if (pendingMessage) {

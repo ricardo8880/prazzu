@@ -274,7 +274,8 @@
             color: #061735;
             box-shadow: 0 6px 18px rgba(6,23,53,.04);
             white-space: pre-wrap;
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            word-break: normal;
             line-height: 1.45;
             font-size: 14px;
         }
@@ -1142,7 +1143,8 @@
         }
 
         .bubble-wrap {
-            width: fit-content;
+            width: auto;
+            min-width: 0;
             max-width: min(74%, 680px);
         }
 
@@ -1288,6 +1290,8 @@
 
         @media (max-width: 760px) {
             .bubble-wrap {
+                width: auto;
+                min-width: 0;
                 max-width: 86%;
             }
 
@@ -1568,7 +1572,7 @@
         /* AJUSTE FINAL UX CHAT - precisa ficar por último para vencer estilos mobile anteriores */
         .bubble-wrap { width: fit-content; max-width: min(74%, 680px); }
         .message-row.cliente .bubble-wrap { margin-left: auto; }
-        .bubble { display: inline-block; width: auto; max-width: 100%; min-width: 0; padding: 9px 12px 7px; border-radius: 16px; line-height: 1.42; }
+        .bubble { display: inline-block; width: auto; max-width: 100%; min-width: 0; padding: 9px 12px 7px; border-radius: 16px; line-height: 1.42; overflow-wrap:anywhere; word-break:normal; }
         .message-row.cliente .bubble { background: #0f3f93; border-bottom-right-radius: 5px; }
         .message-row.equipe .bubble { background: #f1f4f8; border-bottom-left-radius: 5px; }
         .message-row.cliente .bubble-name { display: none; }
@@ -1584,7 +1588,9 @@
         .composer.is-processing .send-button::before { content: ''; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.55); border-right-color: #fff; animation: pcSpin .75s linear infinite; }
 
         @media (max-width: 760px) {
-            .bubble-wrap { max-width: 86%; }
+            .message-row { max-width:100%; min-width:0; }
+            .bubble-wrap { max-width: min(86%, calc(100vw - 56px)); min-width:0; }
+            .message-row.cliente .bubble-wrap { max-width: min(86%, calc(100vw - 28px)); }
             .bubble { padding: 8px 11px 6px; border-radius: 15px; font-size: 14px; }
             .message-row.cliente .bubble { border-bottom-right-radius: 5px; }
             .message-row.equipe .bubble { border-bottom-left-radius: 5px; }
@@ -1979,11 +1985,11 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
-    const debugUrl = '<?php echo e(route('portal.cliente.debug-log.publico', ['token' => $token])); ?>';
     const portalChatSocketConfig = <?php echo json_encode($socketIoConfig ?? [], 15, 512) ?>;
     let portalChatSocket = null;
     let portalSocketRetryTimer = null;
     let portalOfflineSyncTimer = null;
+    let portalOfflineSyncInFlight = false;
 
     const typingState = { timer: null, stopTimer: null, lastSent: 0, active: false };
     const debugState = { lastSent: 0, lastStep: null };
@@ -1998,65 +2004,18 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         if (!typingState.active || now - typingState.lastSent >= 1800) {
             typingState.active = true;
             typingState.lastSent = now;
-            portalChatSocket.emit('chat:typing:start', { nome: nome, room: portalChatSocketConfig.room || '' });
+            portalChatSocket.emit('chat:typing:start', { actor: portalChatSocketConfig.actor || 'cliente', nome: nome || 'Cliente', room: portalChatSocketConfig.room || '' });
         }
 
         window.clearTimeout(typingState.stopTimer);
         typingState.stopTimer = window.setTimeout(function () {
             if (!portalChatSocket || !portalChatSocket.connected || !typingState.active) return;
             typingState.active = false;
-            portalChatSocket.emit('chat:typing:stop', { room: portalChatSocketConfig.room || '' });
+            portalChatSocket.emit('chat:typing:stop', { actor: portalChatSocketConfig.actor || 'cliente', nome: nome || 'Cliente', room: portalChatSocketConfig.room || '' });
         }, 1200);
     }
 
-    function portalDebug(step, extra = {}) {
-        // Debug do navegador sem poluir storage/logs/laravel.log.
-        // Para voltar a gravar no Laravel temporariamente, execute no console:
-        // window.PORTAL_CHAT_DEBUG_LARAVEL = true
-        const now = Date.now();
-        const important = ['chat_ajax_error', 'chat_socket_emit_offline', 'socket_public_connect_error', 'socket_public_client_missing', 'socket_public_message_received'].includes(step);
-        if (!important && debugState.lastStep === step && now - debugState.lastSent < 15000) {
-            return;
-        }
-        debugState.lastStep = step;
-        debugState.lastSent = now;
-
-        const payload = {
-            step: step,
-            page: 'resources/views/portal/cliente/show.blade.php',
-            url: window.location.href,
-            pathname: window.location.pathname,
-            timestamp: new Date().toISOString(),
-            ...extra
-        };
-
-        if (window.PORTAL_CHAT_DEBUG === true || important) {
-            console.log('[PORTAL_CLIENTE_SHOW]', payload);
-        }
-
-        if (window.PORTAL_CHAT_DEBUG_LARAVEL !== true) {
-            return;
-        }
-
-        try {
-            if (!debugUrl) return;
-            fetch(debugUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify(payload),
-                keepalive: true
-            }).catch(function (error) {
-                console.warn('[PORTAL_CLIENTE_SHOW] Falha ao gravar debug no Laravel log.', error);
-            });
-        } catch (error) {
-            console.warn('[PORTAL_CLIENTE_SHOW] Debug fetch indisponível.', error);
-        }
-    }
+    function portalDebug(step, extra = {}) { return; }
 
     function showClientToast(message, type = 'info') {
         const toast = document.querySelector('[data-client-toast]');
@@ -2487,14 +2446,14 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
     }
 
     function normalizeRealtimeMessage(payload) {
-        const origem = String(payload?.origem || '').toLowerCase();
-        const messageClass = payload?.class || (['cliente', 'portal_cliente', 'client'].includes(origem) ? 'cliente' : 'equipe');
+        const origem = String(payload?.origem || payload?.actor || payload?.class || '').toLowerCase();
+        const messageClass = payload?.class || (['cliente', 'portal_cliente', 'client', 'publico'].includes(origem) ? 'cliente' : 'equipe');
 
         return {
             id: payload?.id || payload?.message_id || '',
             class: messageClass === 'cliente' ? 'cliente' : 'equipe',
             author: payload?.author || payload?.usuario_nome || payload?.nome || (messageClass === 'cliente' ? 'Cliente' : 'Equipe'),
-            text: payload?.text || payload?.mensagem || '',
+            text: payload?.text || payload?.mensagem_texto || payload?.mensagem || '',
             time: payload?.time || payload?.created_at_label || 'agora',
             attachments: Array.isArray(payload?.attachments) ? payload.attachments : (Array.isArray(payload?.anexos) ? payload.anexos : []),
         };
@@ -2585,15 +2544,18 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
     }
 
     async function syncPublicMessagesWhenSocketOffline(reason = 'offline') {
-        if (portalChatSocket && portalChatSocket.connected) return;
-        if (!portalChatSocketConfig?.syncUrl || !window.fetch) return;
+        if (portalChatSocket && portalChatSocket.connected) {
+            stopPublicOfflineSync();
+            return;
+        }
+        if (!portalChatSocketConfig?.syncUrl || !window.fetch || portalOfflineSyncInFlight) return;
 
+        portalOfflineSyncInFlight = true;
         const afterId = latestChatMessageId();
         const url = new URL(portalChatSocketConfig.syncUrl, window.location.origin);
         url.searchParams.set('after_id', String(afterId));
 
         try {
-            portalDebug('socket_public_sync_start', { after_id: afterId, reason });
             const response = await fetch(url.toString(), {
                 method: 'GET',
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -2601,29 +2563,59 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             });
             const data = await response.json().catch(function () { return null; });
             const messages = Array.isArray(data?.messages) ? data.messages : [];
-            portalDebug('socket_public_sync_response', { status: response.status, after_id: afterId, quantidade: messages.length, reason });
             messages.forEach(function (message) {
                 appendRealtimeChatMessage(message);
             });
         } catch (error) {
-            portalDebug('socket_public_sync_error', { erro: String(error && error.message ? error.message : error), reason });
+            // Fallback silencioso: evita poluir laravel.log/console enquanto o socket estiver offline.
+        } finally {
+            portalOfflineSyncInFlight = false;
         }
     }
 
     function startPublicOfflineSync(reason = 'socket_offline') {
-        if (portalOfflineSyncTimer) return;
+        if (portalChatSocket && portalChatSocket.connected) return;
+        if (window.__portalPublicOfflineSyncTimer) {
+            portalOfflineSyncTimer = window.__portalPublicOfflineSyncTimer;
+            return;
+        }
         portalDebug('socket_public_offline_sync_enabled', { reason });
         portalOfflineSyncTimer = window.setInterval(function () {
             syncPublicMessagesWhenSocketOffline(reason);
-        }, 3000);
+        }, 10000);
+        window.__portalPublicOfflineSyncTimer = portalOfflineSyncTimer;
         syncPublicMessagesWhenSocketOffline(reason);
     }
 
     function stopPublicOfflineSync() {
-        if (!portalOfflineSyncTimer) return;
-        window.clearInterval(portalOfflineSyncTimer);
+        const timer = portalOfflineSyncTimer || window.__portalPublicOfflineSyncTimer;
+        if (!timer) return;
+        window.clearInterval(timer);
         portalOfflineSyncTimer = null;
+        window.__portalPublicOfflineSyncTimer = null;
         portalDebug('socket_public_offline_sync_disabled');
+    }
+
+
+    async function persistPublicSeen(messageId) {
+        const id = Number(messageId || 0);
+        if (!id || !portalChatSocketConfig?.seenUrl || !window.fetch) return;
+
+        try {
+            await fetch(portalChatSocketConfig.seenUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ message_id: id }),
+            });
+        } catch (error) {
+            portalDebug('socket_public_seen_persist_error', { message_id: id, erro: String(error && error.message ? error.message : error) });
+        }
     }
 
     function lastEquipeMessageId() {
@@ -2671,6 +2663,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             const ultimoEquipe = lastEquipeMessageId();
             if (ultimoEquipe > 0) {
                 portalChatSocket.emit('chat:seen', { message_id: ultimoEquipe, room: portalChatSocketConfig.room || '', at: new Date().toISOString() });
+                persistPublicSeen(ultimoEquipe);
             }
         });
 
@@ -2691,6 +2684,7 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             setSupportTyping(false);
             if (msg.class === 'equipe' && Number(msg.id || 0) > 0) {
                 portalChatSocket.emit('chat:seen', { message_id: Number(msg.id), room: portalChatSocketConfig.room || '', at: new Date().toISOString() });
+                persistPublicSeen(Number(msg.id));
             }
         });
 
@@ -2806,10 +2800,12 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 if (portalChatSocket && portalChatSocket.connected && responseData?.chat_message) {
                     portalDebug('chat_socket_emit_start', { message_id: Number(responseData.chat_message.id || 0), socket_connected: true, socket_id: portalChatSocket.id });
                     responseData.chat_message.room = responseData.chat_message.room || portalChatSocketConfig.room || '';
+                    responseData.chat_message.actor = responseData.chat_message.actor || portalChatSocketConfig.actor || 'cliente';
+                    responseData.chat_message.class = responseData.chat_message.class || 'cliente';
                     portalChatSocket.emit('chat:message:new', responseData.chat_message, function (ack) {
                         portalDebug('chat_socket_emit_ack', { message_id: Number(responseData.chat_message.id || 0), socket_connected: Boolean(portalChatSocket && portalChatSocket.connected), socket_id: portalChatSocket?.id || null, ack: ack || null });
                     });
-                    portalChatSocket.emit('chat:typing:stop', { room: portalChatSocketConfig.room || '' });
+                    portalChatSocket.emit('chat:typing:stop', { actor: portalChatSocketConfig.actor || 'cliente', room: portalChatSocketConfig.room || '' });
                 } else if (responseData?.chat_message) {
                     portalDebug('chat_socket_emit_offline', { message_id: Number(responseData.chat_message.id || 0), socket_connected: Boolean(portalChatSocket && portalChatSocket.connected), socket_id: portalChatSocket?.id || null });
                     startPublicOfflineSync('emit_offline_after_send');

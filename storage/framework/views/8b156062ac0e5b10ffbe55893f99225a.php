@@ -10,7 +10,7 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <?php if (! $__env->hasRenderedOnce('b9c89fbd-9f8c-4cb7-8d6d-58ab4193999b')): $__env->markAsRenderedOnce('b9c89fbd-9f8c-4cb7-8d6d-58ab4193999b'); ?>
+    <?php if (! $__env->hasRenderedOnce('6c2c4e0c-1625-4337-9f18-370cf4827bfe')): $__env->markAsRenderedOnce('6c2c4e0c-1625-4337-9f18-370cf4827bfe'); ?>
         <link rel="stylesheet" href="<?php echo e(asset('css/system-health-dashboard.css')); ?>?v=20260518">
     <?php endif; ?>
 

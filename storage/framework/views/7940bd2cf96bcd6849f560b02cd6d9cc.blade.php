@@ -1,1 +1,0 @@
-@include("filament.partials.white-label-login-panel")

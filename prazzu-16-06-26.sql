@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 16-Jun-2026 às 13:40
+-- Tempo de geração: 16-Jun-2026 às 20:46
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.2.12
 
@@ -260,7 +260,35 @@ INSERT INTO `atendimentos` (`id`, `empresa_id`, `crm_cliente_id`, `portal_solici
 (11, 21, 1, NULL, 22, NULL, NULL, NULL, 'Mensagem do portal - ricardo empresa', 'teste,', 'aberto', 'media', 'portal', 'portal', 48, '2026-05-27 20:18:19', NULL, NULL, NULL, '2026-05-25 23:18:19', '2026-05-25 23:18:19'),
 (12, 21, 1, NULL, 23, NULL, NULL, NULL, 'Mensagem do portal - ricardo empresa', 'teste 17:18', 'aberto', 'media', 'portal', 'portal', 48, '2026-05-27 20:18:35', NULL, NULL, NULL, '2026-05-25 23:18:35', '2026-05-25 23:18:35'),
 (13, 21, 1, NULL, 24, NULL, NULL, NULL, 'Mensagem do portal - ricardo empresa', 'oi', 'aberto', 'media', 'portal', 'portal', 48, '2026-05-27 20:19:03', NULL, NULL, NULL, '2026-05-25 23:19:03', '2026-05-25 23:19:03'),
-(14, 21, 1, NULL, 25, NULL, NULL, NULL, 'Mensagem do portal - ricardo empresa', 'ouasufbae', 'aberto', 'media', 'portal', 'portal', 48, '2026-05-27 20:19:47', NULL, NULL, NULL, '2026-05-25 23:19:47', '2026-05-25 23:19:47');
+(14, 21, 1, NULL, 25, NULL, NULL, NULL, 'Mensagem do portal - ricardo empresa', 'ouasufbae', 'aberto', 'media', 'portal', 'portal', 48, '2026-05-27 20:19:47', NULL, NULL, NULL, '2026-05-25 23:19:47', '2026-05-25 23:19:47'),
+(15, 4, 11, NULL, 28, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:46:10', NULL, NULL, NULL, '2026-06-16 14:46:10', '2026-06-16 14:46:10'),
+(16, 4, 11, NULL, 29, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'eaaas', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:46:18', NULL, NULL, NULL, '2026-06-16 14:46:18', '2026-06-16 14:46:18'),
+(17, 4, 11, NULL, 30, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teaas', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:46:23', NULL, NULL, NULL, '2026-06-16 14:46:23', '2026-06-16 14:46:23'),
+(18, 4, 11, NULL, 37, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teasfae', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:54:17', NULL, NULL, NULL, '2026-06-16 14:54:17', '2026-06-16 14:54:17'),
+(19, 4, 11, NULL, 38, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'aeafsf', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:54:32', NULL, NULL, NULL, '2026-06-16 14:54:32', '2026-06-16 14:54:32'),
+(20, 4, 11, NULL, 39, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'agaesgeaegaaegegaaegeageageeagage', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:54:35', NULL, NULL, NULL, '2026-06-16 14:54:35', '2026-06-16 14:54:35'),
+(21, 4, 11, NULL, 40, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:55:38', NULL, NULL, NULL, '2026-06-16 14:55:38', '2026-06-16 14:55:38'),
+(22, 4, 11, NULL, 41, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:56:02', NULL, NULL, NULL, '2026-06-16 14:56:02', '2026-06-16 14:56:02'),
+(23, 4, 11, NULL, 42, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 11:56:14', NULL, NULL, NULL, '2026-06-16 14:56:14', '2026-06-16 14:56:14'),
+(24, 4, 11, NULL, 44, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 14:19:29', NULL, NULL, NULL, '2026-06-16 17:19:29', '2026-06-16 17:19:29'),
+(25, 4, 11, NULL, 46, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'awdfafvaefadsfsd', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 14:19:51', NULL, NULL, NULL, '2026-06-16 17:19:51', '2026-06-16 17:19:51'),
+(26, 4, 11, NULL, 48, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'aqui também', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 14:20:22', NULL, NULL, NULL, '2026-06-16 17:20:22', '2026-06-16 17:20:22'),
+(27, 4, 11, NULL, 50, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste2', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 14:23:15', NULL, NULL, NULL, '2026-06-16 17:23:15', '2026-06-16 17:23:15'),
+(28, 4, 11, NULL, 52, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste2', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:29:04', NULL, NULL, NULL, '2026-06-16 20:29:04', '2026-06-16 20:29:04'),
+(29, 4, 11, NULL, 54, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste 4', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:29:41', NULL, NULL, NULL, '2026-06-16 20:29:41', '2026-06-16 20:29:41'),
+(30, 4, 11, NULL, 56, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:35:43', NULL, NULL, NULL, '2026-06-16 20:35:43', '2026-06-16 20:35:43'),
+(31, 4, 11, NULL, 57, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teasfae', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:35:49', NULL, NULL, NULL, '2026-06-16 20:35:49', '2026-06-16 20:35:49'),
+(32, 4, 11, NULL, 60, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:42:46', NULL, NULL, NULL, '2026-06-16 20:42:46', '2026-06-16 20:42:46'),
+(33, 4, 11, NULL, 61, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'asfasfas', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:42:55', NULL, NULL, NULL, '2026-06-16 20:42:55', '2026-06-16 20:42:55'),
+(34, 4, 11, NULL, 64, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:52:10', NULL, NULL, NULL, '2026-06-16 20:52:10', '2026-06-16 20:52:10'),
+(35, 4, 11, NULL, 66, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 17:53:35', NULL, NULL, NULL, '2026-06-16 20:53:35', '2026-06-16 20:53:35'),
+(36, 4, 11, NULL, 68, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:06:06', NULL, NULL, NULL, '2026-06-16 21:06:06', '2026-06-16 21:06:06'),
+(37, 4, 11, NULL, 70, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:06:16', NULL, NULL, NULL, '2026-06-16 21:06:16', '2026-06-16 21:06:16'),
+(38, 4, 11, NULL, 72, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:06:25', NULL, NULL, NULL, '2026-06-16 21:06:25', '2026-06-16 21:06:25'),
+(39, 4, 11, NULL, 74, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:06:41', NULL, NULL, NULL, '2026-06-16 21:06:41', '2026-06-16 21:06:41'),
+(40, 4, 11, NULL, 76, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:41:33', NULL, NULL, NULL, '2026-06-16 21:41:33', '2026-06-16 21:41:33'),
+(41, 4, 11, NULL, 78, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'teste', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:41:50', NULL, NULL, NULL, '2026-06-16 21:41:50', '2026-06-16 21:41:50'),
+(42, 4, 11, NULL, 80, NULL, NULL, NULL, 'Mensagem do portal - Alpha', 'testeaas', 'aberto', 'media', 'portal', 'portal', 48, '2026-06-18 18:42:10', NULL, NULL, NULL, '2026-06-16 21:42:10', '2026-06-16 21:42:10');
 
 -- --------------------------------------------------------
 
@@ -299,7 +327,35 @@ INSERT INTO `atendimento_interacoes` (`id`, `atendimento_id`, `user_id`, `origem
 (13, 11, NULL, 'cliente', 'abertura', 'Cliente: ricardo empresa <ricardo-s-a@hotmail.com>\n\nteste,', '{\"portal_mensagem_id\":22,\"nome\":\"ricardo empresa\",\"email\":\"ricardo-s-a@hotmail.com\"}', '2026-05-25 23:18:19', '2026-05-25 23:18:19'),
 (14, 12, NULL, 'cliente', 'abertura', 'Cliente: ricardo empresa <ricardo-s-a@hotmail.com>\n\nteste 17:18', '{\"portal_mensagem_id\":23,\"nome\":\"ricardo empresa\",\"email\":\"ricardo-s-a@hotmail.com\"}', '2026-05-25 23:18:35', '2026-05-25 23:18:35'),
 (15, 13, NULL, 'cliente', 'abertura', 'Cliente: ricardo empresa <ricardo-s-a@hotmail.com>\n\noi', '{\"portal_mensagem_id\":24,\"nome\":\"ricardo empresa\",\"email\":\"ricardo-s-a@hotmail.com\"}', '2026-05-25 23:19:03', '2026-05-25 23:19:03'),
-(16, 14, NULL, 'cliente', 'abertura', 'Cliente: ricardo empresa <ricardo-s-a@hotmail.com>\n\nouasufbae', '{\"portal_mensagem_id\":25,\"nome\":\"ricardo empresa\",\"email\":\"ricardo-s-a@hotmail.com\"}', '2026-05-25 23:19:47', '2026-05-25 23:19:47');
+(16, 14, NULL, 'cliente', 'abertura', 'Cliente: ricardo empresa <ricardo-s-a@hotmail.com>\n\nouasufbae', '{\"portal_mensagem_id\":25,\"nome\":\"ricardo empresa\",\"email\":\"ricardo-s-a@hotmail.com\"}', '2026-05-25 23:19:47', '2026-05-25 23:19:47'),
+(17, 15, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":28,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:46:10', '2026-06-16 14:46:10'),
+(18, 16, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\neaaas', '{\"portal_mensagem_id\":29,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:46:18', '2026-06-16 14:46:18'),
+(19, 17, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteaas', '{\"portal_mensagem_id\":30,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:46:23', '2026-06-16 14:46:23'),
+(20, 18, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteasfae', '{\"portal_mensagem_id\":37,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:54:17', '2026-06-16 14:54:17'),
+(21, 19, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\naeafsf', '{\"portal_mensagem_id\":38,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:54:32', '2026-06-16 14:54:32'),
+(22, 20, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nagaesgeaegaaegegaaegeageageeagage', '{\"portal_mensagem_id\":39,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:54:35', '2026-06-16 14:54:35'),
+(23, 21, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":40,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:55:38', '2026-06-16 14:55:38'),
+(24, 22, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":41,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:56:02', '2026-06-16 14:56:02'),
+(25, 23, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":42,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 14:56:14', '2026-06-16 14:56:14'),
+(26, 24, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":44,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 17:19:29', '2026-06-16 17:19:29'),
+(27, 25, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nawdfafvaefadsfsd', '{\"portal_mensagem_id\":46,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 17:19:51', '2026-06-16 17:19:51'),
+(28, 26, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\naqui também', '{\"portal_mensagem_id\":48,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 17:20:22', '2026-06-16 17:20:22'),
+(29, 27, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste2', '{\"portal_mensagem_id\":50,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 17:23:15', '2026-06-16 17:23:15'),
+(30, 28, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste2', '{\"portal_mensagem_id\":52,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:29:04', '2026-06-16 20:29:04'),
+(31, 29, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste 4', '{\"portal_mensagem_id\":54,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:29:41', '2026-06-16 20:29:41'),
+(32, 30, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":56,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:35:43', '2026-06-16 20:35:43'),
+(33, 31, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteasfae', '{\"portal_mensagem_id\":57,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:35:49', '2026-06-16 20:35:49'),
+(34, 32, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":60,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:42:46', '2026-06-16 20:42:46'),
+(35, 33, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nasfasfas', '{\"portal_mensagem_id\":61,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:42:55', '2026-06-16 20:42:55'),
+(36, 34, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":64,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:52:10', '2026-06-16 20:52:10'),
+(37, 35, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":66,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 20:53:35', '2026-06-16 20:53:35'),
+(38, 36, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":68,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:06:06', '2026-06-16 21:06:06'),
+(39, 37, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":70,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:06:16', '2026-06-16 21:06:16'),
+(40, 38, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":72,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:06:25', '2026-06-16 21:06:25'),
+(41, 39, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":74,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:06:41', '2026-06-16 21:06:41'),
+(42, 40, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":76,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:41:33', '2026-06-16 21:41:33'),
+(43, 41, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\nteste', '{\"portal_mensagem_id\":78,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:41:50', '2026-06-16 21:41:50'),
+(44, 42, NULL, 'cliente', 'abertura', 'Cliente: Alpha <alpha@email.com>\n\ntesteaas', '{\"portal_mensagem_id\":80,\"nome\":\"Alpha\",\"email\":\"alpha@email.com\"}', '2026-06-16 21:42:10', '2026-06-16 21:42:10');
 
 -- --------------------------------------------------------
 
@@ -506,6 +562,44 @@ CREATE TABLE `automation_rules` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura da tabela `backup_client_portal_messages`
+--
+
+CREATE TABLE `backup_client_portal_messages` (
+  `id` bigint(20) NOT NULL DEFAULT 0,
+  `client_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) DEFAULT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachment` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `read_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `backup_prazzu_client_messages`
+--
+
+CREATE TABLE `backup_prazzu_client_messages` (
+  `id` bigint(20) UNSIGNED NOT NULL DEFAULT 0,
+  `empresa_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_controle_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `client_name` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `client_email` varchar(180) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `message` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `attachment_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `direction` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'internal_to_client',
+  `read_at` datetime DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura da tabela `cache`
 --
 
@@ -600,23 +694,6 @@ CREATE TABLE `cliente_portal_users` (
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `ultimo_acesso_em` timestamp NULL DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `client_portal_messages`
---
-
-CREATE TABLE `client_portal_messages` (
-  `id` bigint(20) NOT NULL,
-  `client_id` bigint(20) NOT NULL,
-  `user_id` bigint(20) DEFAULT NULL,
-  `message` text NOT NULL,
-  `attachment` varchar(255) DEFAULT NULL,
-  `read_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1801,30 +1878,12 @@ CREATE TABLE `portal_mensagens` (
 --
 
 INSERT INTO `portal_mensagens` (`id`, `empresa_id`, `item_controle_id`, `user_id`, `nome`, `email`, `mensagem`, `origem`, `conversa_status`, `visualizada_em`, `created_at`, `updated_at`) VALUES
-(1, 21, NULL, NULL, 'Cliente', 'cliente@empresa.com.br', 'Olá, gostaria de confirmar se a próxima entrega continua prevista para esta semana.', 'cliente', 'aberta', NULL, '2026-05-08 17:19:14', '2026-05-08 17:19:14'),
-(2, 21, NULL, NULL, 'Equipe Interna', 'equipe@sistema.com.br', 'Sim, a entrega segue prevista. Assim que finalizar, vamos mover para aprovação no portal.', 'interno', 'aberta', NULL, '2026-05-08 17:19:14', '2026-05-08 17:19:14'),
-(3, 21, NULL, NULL, 'Cliente', 'cliente@empresa.com.br', 'Perfeito, obrigado pelo retorno.', 'cliente', 'aberta', NULL, '2026-05-08 17:19:14', '2026-05-08 17:19:14'),
-(4, 22, NULL, 111, 'admin', 'admin@admin.com', 'oiii', 'cliente', 'aberta', NULL, '2026-05-08 20:40:43', '2026-05-08 20:40:43'),
-(5, 21, 61, NULL, 'Cliente Teste', 'cliente.teste@empresa.com', 'Bom dia! Consegui ver o layout no portal. Vou revisar os textos hoje.', 'cliente', 'aberta', NULL, '2026-05-05 17:59:01', '2026-05-08 17:59:01'),
-(6, 21, 61, NULL, 'Equipe Prazzu', 'equipe@prazzu.com', 'Perfeito. Deixamos o layout marcado como pronto para revisão. Qualquer ajuste pode ser enviado por aqui.', 'interno', 'aberta', NULL, '2026-05-05 17:59:01', '2026-05-08 17:59:01'),
-(7, 21, 62, NULL, 'Cliente Teste', 'cliente.teste@empresa.com', 'Também quero validar se o formulário está enviando para o e-mail comercial.', 'cliente', 'aberta', NULL, '2026-05-06 17:59:01', '2026-05-08 17:59:01'),
-(8, 21, 62, NULL, 'Equipe Prazzu', 'equipe@prazzu.com', 'Já deixamos essa validação em andamento. Assim que concluirmos, atualizamos o status no portal.', 'interno', 'aberta', NULL, '2026-05-07 17:59:01', '2026-05-08 17:59:01'),
-(9, 21, NULL, NULL, 'Cliente Teste', 'cliente.teste@empresa.com', 'Obrigado, agora ficou bem mais fácil acompanhar tudo pelo portal.', 'cliente', 'aberta', NULL, '2026-05-08 17:59:01', '2026-05-08 17:59:01'),
-(10, 13, NULL, NULL, 'ricardo', 'ricardo-s-a@hotmail.com', 'preciso de ajuda para resolver um assunto', 'cliente', 'finalizada', '2026-05-12 23:23:02', '2026-05-12 23:19:04', '2026-05-12 23:23:02'),
-(11, 13, NULL, 111, 'admin', 'admin@admin.com', 'olá no que podemos ajudar', 'interno', 'finalizada', '2026-05-12 23:23:02', '2026-05-12 23:19:53', '2026-05-12 23:23:02'),
-(12, 21, NULL, NULL, 'ricardo', 'ricardo-s-a@hotmail.com', 'teste de hoije', 'cliente', 'aberta', NULL, '2026-05-25 20:09:56', '2026-05-25 20:09:56'),
-(13, 4, NULL, NULL, 'Alpha', 'alpha@email.com', 'teste', 'cliente', 'finalizada', '2026-06-16 14:26:54', '2026-05-25 20:54:21', '2026-06-16 14:26:54'),
-(15, 4, NULL, NULL, 'Alpha', 'alpha@email.com', 'teste', 'cliente', 'finalizada', '2026-06-16 14:26:54', '2026-05-25 21:58:19', '2026-06-16 14:26:54'),
-(16, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'sss', 'cliente', 'aberta', NULL, '2026-05-25 22:08:15', '2026-05-25 22:08:15'),
-(17, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste', 'cliente', 'aberta', NULL, '2026-05-25 22:27:07', '2026-05-25 22:27:07'),
-(18, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste', 'cliente', 'aberta', NULL, '2026-05-25 23:05:06', '2026-05-25 23:05:06'),
-(19, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste', 'cliente', 'aberta', NULL, '2026-05-25 23:10:30', '2026-05-25 23:10:30'),
-(20, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste', 'cliente', 'aberta', NULL, '2026-05-25 23:10:37', '2026-05-25 23:10:37'),
-(21, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste', 'cliente', 'aberta', NULL, '2026-05-25 23:16:22', '2026-05-25 23:16:22'),
-(22, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste,', 'cliente', 'aberta', NULL, '2026-05-25 23:18:19', '2026-05-25 23:18:19'),
-(23, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'teste 17:18', 'cliente', 'aberta', NULL, '2026-05-25 23:18:35', '2026-05-25 23:18:35'),
-(24, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'oi', 'cliente', 'aberta', NULL, '2026-05-25 23:19:03', '2026-05-25 23:19:03'),
-(25, 21, NULL, NULL, 'ricardo empresa', 'ricardo-s-a@hotmail.com', 'ouasufbae', 'cliente', 'aberta', NULL, '2026-05-25 23:19:47', '2026-05-25 23:19:47');
+(75, 4, NULL, 111, 'admin', 'admin@admin.com', 'teste', 'interno', 'aberta', NULL, '2026-06-16 21:41:21', '2026-06-16 21:41:21'),
+(76, 4, NULL, NULL, 'Alpha', 'alpha@email.com', 'teste', 'cliente', 'aberta', NULL, '2026-06-16 21:41:33', '2026-06-16 21:41:33'),
+(77, 4, NULL, 111, 'admin', 'admin@admin.com', 'teste', 'interno', 'aberta', NULL, '2026-06-16 21:41:37', '2026-06-16 21:41:37'),
+(78, 4, NULL, NULL, 'Alpha', 'alpha@email.com', 'teste', 'cliente', 'aberta', NULL, '2026-06-16 21:41:50', '2026-06-16 21:41:50'),
+(79, 4, NULL, 111, 'admin', 'admin@admin.com', 'teste', 'interno', 'aberta', NULL, '2026-06-16 21:41:58', '2026-06-16 21:41:58'),
+(80, 4, NULL, NULL, 'Alpha', 'alpha@email.com', 'testeaas', 'cliente', 'aberta', NULL, '2026-06-16 21:42:10', '2026-06-16 21:42:10');
 
 -- --------------------------------------------------------
 
@@ -1948,27 +2007,6 @@ CREATE TABLE `prazzu_billing_rules` (
   `action_type` varchar(80) NOT NULL DEFAULT 'notify',
   `message` text DEFAULT NULL,
   `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `prazzu_client_messages`
---
-
-CREATE TABLE `prazzu_client_messages` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `empresa_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `item_controle_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `user_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `client_name` varchar(180) DEFAULT NULL,
-  `client_email` varchar(180) DEFAULT NULL,
-  `message` text NOT NULL,
-  `attachment_path` varchar(255) DEFAULT NULL,
-  `direction` varchar(20) NOT NULL DEFAULT 'internal_to_client',
-  `read_at` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -2870,12 +2908,6 @@ ALTER TABLE `cliente_portal_users`
   ADD KEY `cliente_portal_users_ativo_idx` (`ativo`);
 
 --
--- Índices para tabela `client_portal_messages`
---
-ALTER TABLE `client_portal_messages`
-  ADD PRIMARY KEY (`id`);
-
---
 -- Índices para tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -3352,14 +3384,6 @@ ALTER TABLE `prazzu_billing_rules`
   ADD KEY `idx_prazzu_billing_rules_active` (`active`);
 
 --
--- Índices para tabela `prazzu_client_messages`
---
-ALTER TABLE `prazzu_client_messages`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_prazzu_client_messages_empresa` (`empresa_id`),
-  ADD KEY `idx_prazzu_client_messages_item` (`item_controle_id`);
-
---
 -- Índices para tabela `prazzu_client_portal_messages`
 --
 ALTER TABLE `prazzu_client_portal_messages`
@@ -3664,13 +3688,13 @@ ALTER TABLE `assinaturas`
 -- AUTO_INCREMENT de tabela `atendimentos`
 --
 ALTER TABLE `atendimentos`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT de tabela `atendimento_interacoes`
 --
 ALTER TABLE `atendimento_interacoes`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT de tabela `auditoria_detalhada`
@@ -3707,12 +3731,6 @@ ALTER TABLE `categoria_item_controle_checklist_templates`
 --
 ALTER TABLE `cliente_portal_users`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `client_portal_messages`
---
-ALTER TABLE `client_portal_messages`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `comentarios`
@@ -3940,7 +3958,7 @@ ALTER TABLE `portal_documentos`
 -- AUTO_INCREMENT de tabela `portal_mensagens`
 --
 ALTER TABLE `portal_mensagens`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
 
 --
 -- AUTO_INCREMENT de tabela `portal_solicitacoes`
@@ -3970,12 +3988,6 @@ ALTER TABLE `prazzu_billing_locks`
 -- AUTO_INCREMENT de tabela `prazzu_billing_rules`
 --
 ALTER TABLE `prazzu_billing_rules`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `prazzu_client_messages`
---
-ALTER TABLE `prazzu_client_messages`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --

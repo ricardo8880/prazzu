@@ -34,7 +34,11 @@
             ['label' => 'Clientes em risco', 'value' => $clientesEmRisco, 'hint' => 'Alto risco de atraso', 'tone' => 'danger', 'icon' => 'shield-alert', 'filter' => 'clientes_risco', 'target' => 'clients'],
         ];
 
-        $filaPrioridade = collect();
+        $filaPrioridadeCompleta = collect($dashboard['filaPrioridade']['itens'] ?? []);
+        $filaPrioridadeTotal = (int) ($dashboard['filaPrioridade']['total'] ?? $filaPrioridadeCompleta->count());
+
+        if ($filaPrioridadeCompleta->isEmpty()) {
+            $filaPrioridade = collect();
 
         foreach ($itensAtrasados as $item) {
             $filaPrioridade->push(['peso' => 10, 'prioridade' => 'Crítico', 'badge' => 'danger', 'tipo' => 'Obrigação vencida', 'descricao' => $item['titulo'] ?? 'Item atrasado', 'cliente' => $item['empresa'] ?? 'Sem empresa', 'vencimento' => $item['data'] ?? ($item['tempo'] ?? '-'), 'atraso' => $item['tempo'] ?? 'Atrasado', 'url' => $item['url'] ?? ($urls['prazos'] ?? '#'), 'responsavel' => $item['responsavel'] ?? 'Sem responsável atribuído', 'area' => $item['area'] ?? 'Fiscal', 'filtro' => 'obrigacoes_vencidas']);
@@ -60,8 +64,10 @@
             $filaPrioridade->push(['peso' => 4, 'prioridade' => 'Médio', 'badge' => 'info', 'tipo' => 'Aprovação travada', 'descricao' => $aprovacao['titulo'] ?? 'Aprovação aguardando', 'cliente' => $aprovacao['empresa'] ?? 'Sem empresa', 'vencimento' => '-', 'atraso' => $aprovacao['tempo'] ?? 'Aguardando', 'url' => $aprovacao['url'] ?? ($urls['centralAprovacoes'] ?? '#'), 'responsavel' => $aprovacao['responsavel'] ?? 'Sem responsável atribuído', 'area' => $aprovacao['area'] ?? 'Aprovações', 'filtro' => 'aprovacoes_travadas']);
         }
 
-        $filaPrioridadeTotal = $filaPrioridade->count();
-        $filaPrioridadeCompleta = $filaPrioridade->sortByDesc('peso')->values();
+            $filaPrioridadeTotal = $filaPrioridade->count();
+            $filaPrioridadeCompleta = $filaPrioridade->sortByDesc('peso')->values();
+        }
+
         $filaPrioridade = $filaPrioridadeCompleta->take(7)->values();
 
         $clientesMaiorRisco = collect($resumoEmpresas ?? [])->map(function ($empresa) use ($urls) {
@@ -168,6 +174,18 @@
                         <table class="pz-priority-table">
                             <thead><tr><th>Prioridade</th><th>Tipo</th><th>Descrição</th><th>Cliente</th><th>Vencimento / Data</th><th>Dias em atraso</th></tr></thead>
                             <tbody>
+                                @forelse($filaPrioridade as $item)
+                                    <tr class="pz-clickable-row pz-server-priority-row" x-show="false" data-href="{{ $item['url'] ?? '#' }}" onclick="window.location.href=this.dataset.href || '#'">
+                                        <td><span class="pz-priority-badge pz-priority-{{ $item['badge'] ?? 'info' }}">{{ $item['prioridade'] ?? 'Médio' }}</span></td>
+                                        <td>{{ $item['tipo'] ?? '-' }}</td>
+                                        <td><strong>{{ $item['descricao'] ?? '-' }}</strong></td>
+                                        <td>{{ $item['cliente'] ?? 'Sem empresa' }}</td>
+                                        <td><strong>{{ $item['vencimento'] ?? '-' }}</strong></td>
+                                        <td class="pz-delay-cell">{{ $item['atraso'] ?? '-' }}</td>
+                                    </tr>
+                                @empty
+                                    <tr class="pz-server-priority-row" x-show="false"><td colspan="6" class="pz-empty-cell">Nenhuma prioridade crítica encontrada para hoje.</td></tr>
+                                @endforelse
                                 <template x-for="item in visiblePriorityItems()" :key="(item.tipo || '') + '-' + (item.descricao || '') + '-' + (item.cliente || '')">
                                     <tr class="pz-clickable-row" @click="openPriority(item)">
                                         <td><span class="pz-priority-badge" :class="'pz-priority-' + (item.badge || 'info')" x-text="item.prioridade || 'Médio'"></span></td>
