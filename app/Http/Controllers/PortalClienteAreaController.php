@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PortalMensagem;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -57,7 +58,7 @@ class PortalClienteAreaController extends Controller
         $cliente = Auth::guard('portal_cliente')->user();
         abort_if(! $cliente || ! $cliente->empresa_id, 403, 'Cliente sem empresa vinculada.');
 
-        abort_if(! Schema::hasTable('atendimentos') || ! Schema::hasTable('atendimento_interacoes'), 503, 'Estrutura de atendimentos indisponível.');
+        abort_if(! Schema::hasTable('atendimentos') || ! Schema::hasTable('atendimento_interacoes') || ! Schema::hasTable('portal_mensagens'), 503, 'Estrutura de atendimentos/portal indisponível.');
 
         $empresaId = (int) $cliente->empresa_id;
         $atendimentoId = (int) $atendimento;
@@ -165,11 +166,36 @@ class PortalClienteAreaController extends Controller
             'total_anexos' => count($anexos),
         ]);
 
+        $portalMensagem = null;
+        $interacaoId = null;
+
         try {
-            DB::transaction(function () use ($atendimentoId, $cliente, $mensagem, $anexos): void {
+            [$portalMensagem, $interacaoId] = DB::transaction(function () use ($atendimentoId, $atendimentoAtual, $cliente, $empresaId, $mensagem, $anexos): array {
                 $agora = now();
 
-                DB::table('atendimento_interacoes')->insert([
+                $portalMensagemPayload = [
+                    'empresa_id' => $empresaId,
+                    'user_id' => null,
+                    'nome' => (string) ($cliente->nome ?? 'Cliente'),
+                    'email' => (string) ($cliente->email ?? ''),
+                    'mensagem' => $mensagem !== '' ? $mensagem : $this->textoAnexosParaMensagemPortal($anexos),
+                    'origem' => 'cliente',
+                    'created_at' => $agora,
+                    'updated_at' => $agora,
+                ];
+
+                if (Schema::hasColumn('portal_mensagens', 'item_controle_id') && ! empty($atendimentoAtual['item_controle_id'])) {
+                    $portalMensagemPayload['item_controle_id'] = (int) $atendimentoAtual['item_controle_id'];
+                }
+
+                if (Schema::hasColumn('portal_mensagens', 'conversa_status')) {
+                    $portalMensagemPayload['conversa_status'] = 'aberta';
+                }
+
+                /** @var PortalMensagem $mensagemPortal */
+                $mensagemPortal = PortalMensagem::query()->create($portalMensagemPayload);
+
+                $novoInteracaoId = DB::table('atendimento_interacoes')->insertGetId([
                     'atendimento_id' => $atendimentoId,
                     'user_id' => null,
                     'origem' => 'cliente',
@@ -180,18 +206,28 @@ class PortalClienteAreaController extends Controller
                         'portal_cliente_nome' => (string) ($cliente->nome ?? ''),
                         'portal_cliente_email' => (string) ($cliente->email ?? ''),
                         'origem' => 'portal_cliente_logado',
+                        'portal_mensagem_id' => (int) $mensagemPortal->id,
+                        'source' => 'portal_mensagens',
                         'anexos' => $anexos,
                     ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                     'created_at' => $agora,
                     'updated_at' => $agora,
                 ]);
 
+                $atendimentoUpdate = [
+                    'status' => 'em_andamento',
+                    'updated_at' => $agora,
+                ];
+
+                if (Schema::hasColumn('atendimentos', 'portal_mensagem_id')) {
+                    $atendimentoUpdate['portal_mensagem_id'] = (int) $mensagemPortal->id;
+                }
+
                 DB::table('atendimentos')
                     ->where('id', $atendimentoId)
-                    ->update([
-                        'status' => 'em_andamento',
-                        'updated_at' => $agora,
-                    ]);
+                    ->update($atendimentoUpdate);
+
+                return [$mensagemPortal, (int) $novoInteracaoId];
             });
         } catch (\Throwable $exception) {
             foreach ($arquivosGravados as $caminhoGravado) {
@@ -224,29 +260,13 @@ class PortalClienteAreaController extends Controller
                 'ok' => true,
                 'message' => count($anexos) > 0 ? 'Mensagem e arquivo(s) enviados com sucesso.' : 'Mensagem enviada com sucesso.',
                 'messages' => $this->mensagensTempoReal($atendimentoId),
+                'chat_message' => $this->ultimaInteracaoSocketPayload($atendimentoId, $empresaId, $portalMensagem, $interacaoId),
             ]);
         }
 
         return redirect()
             ->route('portal.cliente.atendimentos.show', ['atendimento' => $atendimentoId])
             ->with('success', count($anexos) > 0 ? 'Mensagem e arquivo(s) enviados com sucesso.' : 'Mensagem enviada com sucesso.');
-    }
-
-    public function estadoChat(int|string $atendimento): JsonResponse
-    {
-        $cliente = Auth::guard('portal_cliente')->user();
-        abort_if(! $cliente || ! $cliente->empresa_id, 403, 'Cliente sem empresa vinculada.');
-        abort_if(! Schema::hasTable('atendimentos') || ! Schema::hasTable('atendimento_interacoes'), 503, 'Estrutura de atendimentos indisponível.');
-
-        $empresaId = (int) $cliente->empresa_id;
-        $atendimentoId = (int) $atendimento;
-        $atendimentoAtual = $this->atendimentoDaEmpresa($empresaId, $atendimentoId);
-        abort_if(! $atendimentoAtual, 404, 'Atendimento não encontrado para este cliente.');
-
-        return response()->json([
-            'ok' => true,
-            'messages' => $this->mensagensTempoReal($atendimentoId),
-        ]);
     }
 
     public function debugLog(Request $request): \Illuminate\Http\JsonResponse
@@ -442,6 +462,7 @@ class PortalClienteAreaController extends Controller
             'estruturaDisponivel' => Schema::hasTable('atendimentos') && Schema::hasTable('atendimento_interacoes'),
             'abrirFormulario' => $abrirFormulario,
             'prioridades' => $this->prioridadesFormulario(),
+            'socketIoConfig' => $this->socketIoConfigClienteLogado($empresaId, (int) ($atendimentoAtual['id'] ?? 0)),
         ]);
     }
 
@@ -475,6 +496,7 @@ class PortalClienteAreaController extends Controller
                 'a.responsavel_id',
                 'a.portal_solicitacao_id',
                 'a.portal_mensagem_id',
+                'a.item_controle_id',
                 'a.created_at',
                 'a.updated_at',
                 'a.sla_limite_em',
@@ -522,6 +544,7 @@ class PortalClienteAreaController extends Controller
                 'a.responsavel_id',
                 'a.portal_solicitacao_id',
                 'a.portal_mensagem_id',
+                'a.item_controle_id',
                 'a.created_at',
                 'a.updated_at',
                 'a.sla_limite_em',
@@ -600,6 +623,134 @@ class PortalClienteAreaController extends Controller
             })
             ->values()
             ->all();
+    }
+
+    /**
+     * Configuração usada pelo cliente logado para autenticar no Socket.IO.
+     * Mantém o mesmo padrão HMAC usado pelo portal público e pelo painel da equipe.
+     *
+     * @return array<string, mixed>
+     */
+    private function socketIoConfigClienteLogado(int $empresaId, int $atendimentoId = 0): array
+    {
+        $cliente = Auth::guard('portal_cliente')->user();
+        $actor = 'cliente';
+        $token = 'portal_cliente_logado:' . (int) ($cliente?->id ?? 0);
+        $secret = (string) config('app.key');
+        $room = $atendimentoId > 0
+            ? 'empresa:' . $empresaId . ':atendimento:' . $atendimentoId
+            : 'empresa:' . $empresaId . ':portal-cliente:' . (int) ($cliente?->id ?? 0);
+
+        return [
+            'enabled' => $empresaId > 0 && $token !== 'portal_cliente_logado:0',
+            'url' => rtrim((string) env('VITE_SOCKET_IO_URL', env('SOCKET_IO_URL', 'http://127.0.0.1:3001')), '/'),
+            'empresaId' => $empresaId,
+            'atendimentoId' => $atendimentoId,
+            'room' => $room,
+            'roomScope' => $atendimentoId > 0 ? 'atendimento' : 'portal-cliente',
+            'actor' => $actor,
+            'token' => $token,
+            'signature' => hash_hmac('sha256', $empresaId . '|' . $actor . '|' . $token . '|' . $room, $secret),
+            'syncUrl' => $atendimentoId > 0
+                ? route('portal.cliente.atendimentos.chat.estado', ['atendimento' => $atendimentoId])
+                : null,
+        ];
+    }
+
+    /**
+     * Última interação no formato aceito pelo listener Socket.IO do portal logado.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function ultimaInteracaoSocketPayload(int $atendimentoId, int $empresaId, ?PortalMensagem $portalMensagem = null, ?int $interacaoId = null): ?array
+    {
+        $atendimento = $this->atendimentoDaEmpresa($empresaId, $atendimentoId);
+
+        if (! $atendimento || ! Schema::hasTable('atendimento_interacoes')) {
+            return null;
+        }
+
+        $query = DB::table('atendimento_interacoes')
+            ->where('atendimento_id', $atendimentoId);
+
+        if ($interacaoId) {
+            $query->where('id', $interacaoId);
+        }
+
+        $interacao = $query
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first(['id', 'atendimento_id', 'user_id', 'origem', 'tipo', 'mensagem', 'metadata', 'created_at']);
+
+        if (! $interacao) {
+            return null;
+        }
+
+        $item = (array) $interacao;
+        $item['created_at_label'] = $this->dataHora($item['created_at'] ?? null);
+        $item['is_cliente'] = in_array((string) ($item['origem'] ?? ''), ['cliente', 'portal', 'publico'], true)
+            || (! empty($item['metadata']) && str_contains((string) $item['metadata'], 'portal_mensagem_id'));
+        $item['anexos'] = $this->anexosDaInteracao($item);
+
+        $metadata = $this->metadataArray($item['metadata'] ?? null);
+        $portalMensagemId = $portalMensagem instanceof PortalMensagem
+            ? (int) $portalMensagem->id
+            : (int) ($metadata['portal_mensagem_id'] ?? 0);
+
+        $messageId = $portalMensagemId > 0 ? $portalMensagemId : (int) ($item['id'] ?? 0);
+        $room = 'empresa:' . $empresaId . ':atendimento:' . $atendimentoId;
+        $actor = $item['is_cliente'] ? 'cliente' : 'suporte';
+
+        return [
+            'id' => $messageId,
+            'message_id' => $messageId,
+            'interaction_id' => (int) ($item['id'] ?? 0),
+            'source' => $portalMensagemId > 0 ? 'portal_mensagens' : 'atendimento_interacoes',
+            'scope' => 'portal_cliente_logado',
+            'empresa_id' => $empresaId,
+            'atendimento_id' => $atendimentoId,
+            'room' => $room,
+            'room_scope' => 'atendimento',
+            'actor' => $actor,
+            'server_signature' => $this->socketMessageSignature($empresaId, $room, $actor, $messageId),
+            'origem' => $item['is_cliente'] ? 'cliente' : 'suporte',
+            'nome' => $item['is_cliente'] ? 'Você' : 'Equipe de suporte',
+            'tipo' => (string) ($item['tipo'] ?? 'resposta'),
+            'mensagem' => (string) ($item['mensagem'] ?? ''),
+            'created_at_label' => (string) ($item['created_at_label'] ?? ''),
+            'attachments' => collect($item['anexos'] ?? [])->map(function (array $anexo): array {
+                return [
+                    'name' => (string) ($anexo['nome_original'] ?? 'arquivo'),
+                    'ext' => strtoupper((string) ($anexo['extensao'] ?? 'ARQ')),
+                    'size' => (string) ($anexo['tamanho_label'] ?? ''),
+                    'mime' => (string) ($anexo['mime'] ?? ''),
+                    'url' => (string) ($anexo['download_url'] ?? '#'),
+                    'preview_url' => (string) ($anexo['preview_url'] ?? ''),
+                    'is_image' => (bool) ($anexo['is_imagem'] ?? false),
+                ];
+            })->values()->all(),
+        ];
+    }
+
+
+    private function socketMessageSignature(int $empresaId, string $room, string $actor, int $messageId): string
+    {
+        return hash_hmac('sha256', $empresaId . '|' . $room . '|' . $actor . '|' . $messageId, (string) config('app.key'));
+    }
+
+    private function textoAnexosParaMensagemPortal(array $anexos): string
+    {
+        if ($anexos === []) {
+            return '';
+        }
+
+        $nomes = collect($anexos)
+            ->map(fn (array $anexo): string => trim((string) ($anexo['nome_original'] ?? $anexo['nome_arquivo'] ?? 'arquivo')))
+            ->filter()
+            ->values()
+            ->all();
+
+        return 'Anexo(s) enviado(s): ' . implode(', ', $nomes);
     }
 
     private function metadataArray(mixed $metadata): array

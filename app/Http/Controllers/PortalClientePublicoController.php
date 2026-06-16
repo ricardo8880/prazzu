@@ -36,12 +36,42 @@ class PortalClientePublicoController extends Controller
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
 
-        return view('portal.cliente.show', PortalClienteData::data((int) $empresa->id, true) + [
+        $empresaId = (int) $empresa->id;
+
+        return view('portal.cliente.show', PortalClienteData::data($empresaId, true) + [
             'token' => $token,
             'modoPublico' => true,
+            'socketIoConfig' => $this->socketIoConfigCliente($empresaId, $token),
         ]);
     }
 
+
+
+    /**
+     * Dados usados pelo front público para entrar na sala Socket.IO da empresa.
+     * O socket valida a assinatura com o mesmo APP_KEY do Laravel.
+     *
+     * @return array<string, mixed>
+     */
+    private function socketIoConfigCliente(int $empresaId, string $token): array
+    {
+        $actor = 'cliente';
+        $secret = (string) config('app.key');
+        $room = 'empresa:' . $empresaId . ':portal';
+
+        return [
+            'enabled' => true,
+            'url' => rtrim((string) env('VITE_SOCKET_IO_URL', env('SOCKET_IO_URL', 'http://127.0.0.1:3001')), '/'),
+            'empresaId' => $empresaId,
+            'actor' => $actor,
+            'token' => $token,
+            'room' => $room,
+            'roomScope' => 'portal',
+            'signature' => hash_hmac('sha256', $empresaId . '|' . $actor . '|' . $token . '|' . $room, $secret),
+            'syncUrl' => route('portal.cliente.mensagens-novas', ['token' => $token]),
+            'seenUrl' => url('/portal/cliente/' . $token . '/mensagem-visualizada'),
+        ];
+    }
 
     public function debugLog(Request $request, string $token): \Illuminate\Http\JsonResponse
     {
@@ -73,6 +103,9 @@ class PortalClientePublicoController extends Controller
             'ultimo_id' => ['nullable', 'integer'],
             'erro' => ['nullable', 'string', 'max:1000'],
             'fase' => ['nullable', 'string', 'max:120'],
+            'socket_id' => ['nullable', 'string', 'max:120'],
+            'socket_connected' => ['nullable', 'boolean'],
+            'ack' => ['nullable'],
         ]);
 
         Log::info('[PORTAL_CLIENTE_PUBLICO_DEBUG] ' . ($payload['step'] ?? 'browser'), array_merge([
@@ -324,7 +357,6 @@ class PortalClientePublicoController extends Controller
                 ->withErrors(['mensagem' => 'Não foi possível enviar a mensagem agora. Tente novamente em instantes.']);
         }
 
-        Cache::forget($this->cacheKeyClienteDigitando((int) $empresa->id));
 
         Log::info('[PORTAL_CHAT_CLIENTE_ENVIO] fim_resposta', [
             'empresa_id' => (int) $empresa->id,
@@ -346,7 +378,8 @@ class PortalClientePublicoController extends Controller
                         'nome' => $mensagemCriada->nome,
                         'mensagem_texto' => $mensagemCriada->mensagem,
                         'created_at_label' => optional($mensagemCriada->created_at)->format('d/m/Y H:i') ?: 'agora',
-                        'attachments' => [],
+                        'attachments' => $anexosArmazenados,
+                        'room' => 'empresa:' . (int) $empresa->id . ':portal',
                     ])
                     : null,
             ]);
@@ -355,6 +388,86 @@ class PortalClientePublicoController extends Controller
         return $this->redirectPortal($token, 'chat')->with('success', $anexosArmazenados === [] ? 'Mensagem enviada para a equipe.' : 'Mensagem e anexo(s) enviados para a equipe.');
     }
 
+
+
+    public function mensagensNovas(Request $request, string $token): JsonResponse
+    {
+        $empresa = $this->empresaPorToken($token);
+
+        abort_if(! $empresa, 404);
+        abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
+
+        $empresaId = (int) $empresa->id;
+        $afterId = max(0, $request->integer('after_id'));
+
+        $mensagens = PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->when($afterId > 0, fn ($query) => $query->where('id', '>', $afterId))
+            ->orderBy('id')
+            ->limit(50)
+            ->get()
+            ->map(function (PortalMensagem $mensagem): array {
+                $origem = strtolower((string) $mensagem->origem);
+                $classe = in_array($origem, ['interno', 'suporte', 'equipe'], true) ? 'equipe' : 'cliente';
+
+                return $this->formatarMensagemTempoReal([
+                    'id' => $mensagem->id,
+                    'origem' => $mensagem->origem,
+                    'css_class' => $classe,
+                    'nome' => $mensagem->nome ?: ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
+                    'mensagem_texto' => $mensagem->mensagem,
+                    'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
+                    'attachments' => [],
+                    'room' => 'empresa:' . (int) $mensagem->empresa_id . ':portal',
+                    'room_scope' => 'portal',
+                ]);
+            })
+            ->values();
+
+        Log::info('[PORTAL_CLIENTE_PUBLICO_SYNC] mensagens_novas', [
+            'empresa_id' => $empresaId,
+            'token_hash' => hash('sha256', $token),
+            'after_id' => $afterId,
+            'quantidade' => $mensagens->count(),
+            'socket_fallback' => true,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'messages' => $mensagens,
+        ]);
+    }
+
+
+    public function mensagemVisualizada(Request $request, string $token): JsonResponse
+    {
+        $empresa = $this->empresaPorToken($token);
+
+        abort_if(! $empresa, 404);
+        abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
+
+        $data = $request->validate([
+            'message_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $empresaId = (int) $empresa->id;
+        $messageId = (int) $data['message_id'];
+
+        Cache::put($this->cacheKeyVisualizadoCliente($empresaId), $messageId, now()->addHours(8));
+
+        if (CachedSchema::hasColumn('portal_mensagens', 'visualizada_em')) {
+            PortalMensagem::query()
+                ->where('empresa_id', $empresaId)
+                ->where('origem', 'interno')
+                ->where('id', '<=', $messageId)
+                ->whereNull('visualizada_em')
+                ->update(['visualizada_em' => now()]);
+        }
+
+        return response()->json(['ok' => true]);
+    }
 
     public function estadoChat(string $token): JsonResponse
     {
@@ -404,6 +517,15 @@ class PortalClientePublicoController extends Controller
 
         if ($ultimoIdEquipe) {
             Cache::put($this->cacheKeyVisualizadoCliente($empresaId), (int) $ultimoIdEquipe, now()->addHours(8));
+
+            if (CachedSchema::hasColumn('portal_mensagens', 'visualizada_em')) {
+                PortalMensagem::query()
+                    ->where('empresa_id', $empresaId)
+                    ->where('origem', 'interno')
+                    ->whereNull('visualizada_em')
+                    ->where('id', '<=', (int) $ultimoIdEquipe)
+                    ->update(['visualizada_em' => now()]);
+            }
         }
     }
 
@@ -456,6 +578,8 @@ class PortalClientePublicoController extends Controller
                 'mensagem_texto' => $mensagem->mensagem,
                 'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
                 'attachments' => [],
+                'room' => 'empresa:' . $empresaId . ':portal',
+                'room_scope' => 'portal',
             ]))
             ->values()
             ->all();
@@ -464,25 +588,139 @@ class PortalClientePublicoController extends Controller
     private function formatarMensagemTempoReal(array $mensagem): array
     {
         $classe = (string) ($mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente'));
-        $texto = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
+        $textoOriginal = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
+        $anexos = $this->normalizarAnexosMensagem($mensagem['attachments'] ?? []);
+
+        if ($anexos === []) {
+            $anexos = $this->extrairAnexosMensagem($textoOriginal);
+        }
+
+        $texto = $this->removerBlocoAnexosMensagem($textoOriginal);
         $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ($classe === 'equipe' ? 'Equipe' : 'Cliente')));
 
+        $id = (int) ($mensagem['id'] ?? 0);
+        $room = (string) ($mensagem['room'] ?? '');
+        $actor = $classe === 'equipe' ? 'suporte' : 'cliente';
+        $empresaId = $this->empresaIdFromRoom($room);
+
         return [
-            'id' => (int) ($mensagem['id'] ?? 0),
+            'id' => $id,
+            'message_id' => $id,
             'source' => (string) ($mensagem['source'] ?? 'portal_mensagens'),
             'class' => $classe === 'equipe' ? 'equipe' : 'cliente',
+            'actor' => $actor,
             'author' => $nome !== '' ? $nome : ($classe === 'equipe' ? 'Equipe' : 'Cliente'),
             'text' => $texto,
             'time' => (string) ($mensagem['created_at_label'] ?? ''),
-            'attachments' => collect($mensagem['attachments'] ?? [])->map(fn ($anexo): array => [
-                'url' => (string) ($anexo['url'] ?? ''),
-                'name' => (string) ($anexo['nome'] ?? 'Anexo'),
-                'size' => (string) ($anexo['size_label'] ?? ($anexo['mime_type'] ?? 'arquivo')),
-                'is_image' => (bool) ($anexo['is_image'] ?? false),
-            ])->values()->all(),
+            'room' => $room,
+            'room_scope' => (string) ($mensagem['room_scope'] ?? 'portal'),
+            'server_signature' => $empresaId > 0 && $id > 0 && $room !== ''
+                ? $this->socketMessageSignature($empresaId, $room, $actor, $id)
+                : null,
+            'attachments' => $anexos,
         ];
     }
 
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function normalizarAnexosMensagem(mixed $anexos): array
+    {
+        if (! is_iterable($anexos)) {
+            return [];
+        }
+
+        return collect($anexos)
+            ->map(function (mixed $anexo): array {
+                $item = is_array($anexo) ? $anexo : [];
+                $url = (string) ($item['url'] ?? $item['download_url'] ?? $item['preview_url'] ?? '');
+                $mime = (string) ($item['mime_type'] ?? $item['mime'] ?? '');
+                $sizeBytes = (int) ($item['size'] ?? $item['tamanho_bytes'] ?? 0);
+
+                return [
+                    'url' => $url,
+                    'name' => (string) ($item['name'] ?? $item['nome'] ?? $item['nome_original'] ?? 'Anexo'),
+                    'size' => (string) ($item['size_label'] ?? ($sizeBytes > 0 ? $this->formatarBytes($sizeBytes) : ($mime !== '' ? $mime : 'arquivo'))),
+                    'mime_type' => $mime,
+                    'is_image' => (bool) ($item['is_image'] ?? $item['is_imagem'] ?? str_starts_with($mime, 'image/')),
+                ];
+            })
+            ->filter(fn (array $anexo): bool => trim((string) ($anexo['url'] ?? '')) !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Extrai anexos gravados no texto legado: "- nome | url | mime | bytes".
+     * @return array<int, array<string, mixed>>
+     */
+    private function extrairAnexosMensagem(string $texto): array
+    {
+        if ($texto === '' || ! str_contains($texto, 'Anexos enviados:')) {
+            return [];
+        }
+
+        preg_match_all('/^-\s*(.+?)\s*\|\s*(https?:\/\/\S+)(?:\s*\|\s*([^|\r\n]+))?(?:\s*\|\s*([^\r\n]+))?/mi', $texto, $matches, PREG_SET_ORDER);
+
+        return collect($matches)
+            ->map(function (array $match): array {
+                $nome = trim((string) ($match[1] ?? 'Anexo')) ?: 'Anexo';
+                $url = trim((string) ($match[2] ?? ''));
+                $mime = trim((string) ($match[3] ?? ''));
+                $size = (int) trim((string) ($match[4] ?? '0'));
+
+                return [
+                    'url' => $url,
+                    'name' => $nome,
+                    'size' => $size > 0 ? $this->formatarBytes($size) : ($mime !== '' ? $mime : 'arquivo'),
+                    'mime_type' => $mime,
+                    'is_image' => str_starts_with($mime, 'image/'),
+                ];
+            })
+            ->filter(fn (array $anexo): bool => $anexo['url'] !== '')
+            ->values()
+            ->all();
+    }
+
+    private function removerBlocoAnexosMensagem(string $texto): string
+    {
+        if ($texto === '' || ! str_contains($texto, 'Anexos enviados:')) {
+            return $texto;
+        }
+
+        $limpo = preg_replace('/\n?Anexos enviados:\s*(?:\n-\s*.+?(?:\r?\n|$))+/si', '', $texto) ?? $texto;
+
+        return trim($limpo) !== '' ? trim($limpo) : 'Arquivo(s) enviado(s).';
+    }
+
+    private function formatarBytes(int $bytes): string
+    {
+        if ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 1, ',', '.') . ' MB';
+        }
+
+        if ($bytes >= 1024) {
+            return number_format($bytes / 1024, 1, ',', '.') . ' KB';
+        }
+
+        return $bytes . ' B';
+    }
+
+
+    private function empresaIdFromRoom(string $room): int
+    {
+        if (preg_match('/^empresa:(\d+):/', $room, $matches) !== 1) {
+            return 0;
+        }
+
+        return (int) $matches[1];
+    }
+
+    private function socketMessageSignature(int $empresaId, string $room, string $actor, int $messageId): string
+    {
+        return hash_hmac('sha256', $empresaId . '|' . $room . '|' . $actor . '|' . $messageId, (string) config('app.key'));
+    }
 
     public function solicitacao(Request $request, string $token): RedirectResponse
     {

@@ -1149,7 +1149,7 @@
                     <button type="button" class="pc-tab" :class="activeSection === 'anotacoes' ? 'is-active' : ''" :aria-selected="activeSection === 'anotacoes'" role="tab" x-on:click="setSection('anotacoes')">Anotações</button>
                 </nav>
 
-                <main class="pc-messages" id="portalClienteChatBody" data-chat-state-url="<?php echo e(route('admin.portal-cliente.chat.estado', ['empresa' => $empresaId])); ?>" x-show="activeSection === 'conversa'" x-cloak x-ref="chatBody" x-init="scrollChat(true)" x-on:scroll.passive="watchScroll()">
+                <main class="pc-messages" id="portalClienteChatBody" x-show="activeSection === 'conversa'" x-cloak x-ref="chatBody" x-init="scrollChat(true)" x-on:scroll.passive="watchScroll()">
                     <?php $dataAnteriorMensagem = null; ?>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $mensagensChat; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mensagem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                         <?php
@@ -1318,18 +1318,20 @@
                         </div>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                    <form wire:submit.prevent="responderChat" data-admin-chat-form data-send-url="<?php echo e(route('admin.portal-cliente.chat.mensagem', ['empresa' => $empresaId])); ?>">
+                    <form method="POST" action="javascript:void(0)" enctype="multipart/form-data" data-admin-chat-form data-send-url="<?php echo e(route('admin.portal-cliente.chat.mensagem', ['empresa' => $empresaId])); ?>" onsubmit="event.preventDefault(); window.portalClienteEnviarMensagemSuporte && window.portalClienteEnviarMensagemSuporte(this); return false;">
+                        <?php echo csrf_field(); ?>
+                        <input type="hidden" name="empresa" value="<?php echo e($empresaId); ?>">
                         <div class="pc-composer-tabs" role="tablist" aria-label="Modo de mensagem">
                             <button type="button" class="pc-composer-tab is-active" role="tab" aria-selected="true">Responder</button>
                             <button type="button" class="pc-composer-tab" role="tab" aria-selected="false" disabled title="Mensagem interna ficará para o próximo lote funcional">Mensagem interna</button>
                         </div>
                         <div class="pc-composer-box">
-                            <textarea class="pc-composer-textarea" x-ref="replyTextarea" wire:model.defer="respostaChat" data-admin-chat-textarea placeholder="Digite sua mensagem..." aria-label="Mensagem de resposta para o cliente" x-on:input="grow($event.target); window.portalClienteAvisarSuporteDigitando && window.portalClienteAvisarSuporteDigitando($event.target.value)" x-on:keydown.enter="if (!$event.shiftKey && !$event.isComposing) { $event.preventDefault(); const form = $event.target.closest('form'); if (form && $event.target.value.trim().length > 0) form.requestSubmit(); }"></textarea>
+                            <textarea class="pc-composer-textarea" x-ref="replyTextarea" name="mensagem" data-admin-chat-textarea placeholder="Digite sua mensagem..." aria-label="Mensagem de resposta para o cliente" x-on:input="grow($event.target); window.portalClienteAvisarSuporteDigitando && window.portalClienteAvisarSuporteDigitando($event.target.value)" x-on:keydown.enter="if (!$event.shiftKey && !$event.isComposing) { $event.preventDefault(); const form = $event.target.closest('form'); if (form && $event.target.value.trim().length > 0 && window.portalClienteEnviarMensagemSuporte) window.portalClienteEnviarMensagemSuporte(form); }"></textarea>
                             <div class="pc-composer-row">
                                 <div class="pc-composer-tools">
                                     <label class="pc-file-trigger pc-icon-btn" title="Anexar arquivo">
                                         📎 Anexar
-                                        <input type="file" wire:model="portalAnexos" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" aria-label="Anexar arquivos na conversa">
+                                        <input type="file" name="portalAnexos[]" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv" aria-label="Anexar arquivos na conversa">
                                     </label>
                                     <button type="button" class="pc-icon-btn" :class="quickReplyOpen ? 'is-active' : ''" title="Inserir resposta rápida" x-on:click="quickReplyOpen = !quickReplyOpen">▱ Resposta rápida</button>
                                     <div class="pc-quick-replies-panel" x-show="quickReplyOpen" x-cloak x-on:click.outside="quickReplyOpen = false">
@@ -1338,7 +1340,7 @@
                                         </template>
                                     </div>
                                 </div>
-                                <button type="submit" class="pc-btn pc-btn-send-split" wire:loading.attr="disabled" wire:target="responderChat,portalAnexos" data-admin-chat-submit>
+                                <button type="button" class="pc-btn pc-btn-send-split" wire:loading.attr="disabled" wire:target="responderChat,portalAnexos" data-admin-chat-submit>
                                     <span wire:loading.remove wire:target="responderChat" data-send-label>Enviar</span>
                                     <span class="pc-send-loading" wire:loading.inline-flex wire:target="responderChat" data-send-loading><i></i> Enviando</span>
                                 </button>
@@ -1521,60 +1523,36 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         </div>
     </div>
 
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($socketIoConfig['url'])): ?>
+        <script src="<?php echo e(rtrim($socketIoConfig['url'], '/')); ?>/socket.io/socket.io.js"></script>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
     <script>
         (function () {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
             const chat = document.getElementById('portalClienteChatBody');
-            const stateUrl = chat?.dataset.chatStateUrl;
-            const typingUrl = '<?php echo e(route('admin.portal-cliente.digitando', ['empresa' => $empresaId])); ?>';
-            const typingState = { lastSent: 0, timer: null };
-            const knownMessageIds = new Set();
-            let lastSignature = '';
-            let pollTimer = null;
-            let pollingBusy = false;
+            const socketConfig = <?php echo json_encode($socketIoConfig ?? [], 15, 512) ?>;
+            const supportName = socketConfig?.nome || <?php echo json_encode(auth()->user()?->name ?: 'Suporte', 15, 512) ?>;
+            const adminDebugUrl = <?php echo json_encode(route('admin.portal-cliente.debug-log'), 15, 512) ?>;
+            const adminSyncUrl = <?php echo json_encode(route('admin.portal-cliente.chat.mensagens-novas', ['empresa' => $empresaId]), 512) ?>;
+            let socket = null;
             let sendingBusy = false;
+            let adminOfflineSyncTimer = null;
+            let adminOfflineSyncInFlight = false;
+            const typingState = { active: false, timer: null, stopTimer: null };
 
-
-            function setSending(form, sending) {
-                sendingBusy = Boolean(sending);
-                if (!form) return;
-                const button = form.querySelector('[data-admin-chat-submit]');
-                const label = form.querySelector('[data-send-label]');
-                const loading = form.querySelector('[data-send-loading]');
-                if (button) button.disabled = Boolean(sending);
-                if (label) label.style.display = sending ? 'none' : '';
-                if (loading) loading.style.display = sending ? 'inline-flex' : 'none';
-            }
-
-            function appendMessageHtml(html) {
-                if (!chat || !html) return;
-                const empty = chat.querySelector('.pc-empty');
-                if (empty) empty.remove();
-                chat.insertAdjacentHTML('beforeend', html);
-                chat.scrollTop = chat.scrollHeight;
-            }
-
-            function appendOptimisticMessage(text) {
-                const tempId = 'tmp-' + Date.now();
-                const author = <?php echo json_encode(auth()->user()?->name ?: 'Suporte', 15, 512) ?>;
-                const html = '<article class="pc-message equipe is-sending" data-message-id="' + tempId + '">'
-                    + '<div class="pc-message-avatar" title="' + escapeHtml(author) + '">' + initials(author, 'EQ') + '</div>'
-                    + '<div class="pc-bubble"><div class="pc-bubble-content"><div class="pc-bubble-head"><span>' + escapeHtml(author) + ' (Suporte)</span><span>agora</span></div>'
-                    + '<div class="pc-bubble-text">' + escapeHtml(text) + '</div>'
-                    + '<div class="pc-message-status-line"><span>Resposta do suporte</span><span data-seen-status>Enviando...</span></div>'
-                    + '</div></div></article>';
-                appendMessageHtml(html);
-                return tempId;
-            }
-
-            function markOptimisticMessage(tempId, status, serverId) {
-                const row = chat?.querySelector('[data-message-id="' + tempId + '"]');
-                if (!row) return;
-                const seen = row.querySelector('[data-seen-status]');
-                row.classList.remove('is-sending');
-                row.classList.toggle('is-failed', status === 'failed');
-                if (serverId) row.dataset.messageId = String(serverId);
-                if (seen) seen.textContent = status === 'failed' ? 'Falha ao enviar' : 'Enviada';
+            function adminDebug(step, payload) {
+                const important = ['socket_admin_connected', 'socket_admin_connect_error', 'socket_admin_message_received', 'socket_admin_emit_ack', 'socket_admin_emit_start', 'socket_admin_sync_response', 'socket_admin_sync_error', 'chat_ajax_success', 'chat_ajax_error'].includes(step);
+                if (!important) return;
+                try {
+                    fetch(adminDebugUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+                        body: JSON.stringify(Object.assign({ step, page: 'resources/views/filament/pages/portal-cliente.blade.php', empresa_id: socketConfig?.empresaId || null, socket_id: socket?.id || null, socket_connected: Boolean(socket && socket.connected), timestamp: new Date().toISOString() }, payload || {})),
+                        credentials: 'same-origin',
+                        keepalive: true,
+                    }).catch(function () {});
+                } catch (e) {}
             }
 
             function escapeHtml(value) {
@@ -1588,182 +1566,333 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 return (clean ? clean.slice(0, 2) : fallback).toUpperCase();
             }
 
+            function normalizeMessage(payload) {
+                const origem = String(payload?.origem || payload?.actor || payload?.class || '').toLowerCase();
+                const isCliente = origem === 'cliente' || origem === 'portal_cliente' || origem === 'client' || payload?.class === 'cliente';
+                return {
+                    id: Number(payload?.id || payload?.message_id || 0),
+                    class: isCliente ? 'cliente' : 'equipe',
+                    author: payload?.author || payload?.nome || (isCliente ? 'Cliente' : 'Equipe'),
+                    text: payload?.text || payload?.mensagem_texto || payload?.mensagem || '',
+                    time: payload?.time || payload?.created_at_label || payload?.created_at || 'agora',
+                    attachments: Array.isArray(payload?.attachments) ? payload.attachments : [],
+                };
+            }
+
             function renderAttachment(anexo) {
                 const url = escapeHtml(anexo.url || '#');
                 const name = escapeHtml(anexo.name || anexo.nome || 'Anexo');
-                const size = escapeHtml(anexo.size || anexo.size_label || anexo.mime_type || 'arquivo');
+                const size = escapeHtml(anexo.size_label || anexo.size || anexo.mime_type || 'arquivo');
                 return '<a class="pc-attachment" href="' + url + '" target="_blank" rel="noopener" download>'
                     + '<span>' + (anexo.is_image ? '🖼️' : '📄') + '</span>'
                     + '<span><strong>' + name + '</strong><span>' + size + '</span></span><span>↗</span></a>';
             }
 
-            function renderMessage(msg) {
+            function renderMessage(payload, optimistic) {
+                const msg = normalizeMessage(payload);
                 const isCliente = msg.class === 'cliente';
-                const author = msg.author || (isCliente ? 'Cliente' : 'Equipe');
-                const id = Number(msg.id || 0);
-                const attach = Array.isArray(msg.attachments) && msg.attachments.length
-                    ? '<div class="pc-attachments">' + msg.attachments.map(renderAttachment).join('') + '</div>'
-                    : '';
-                return '<article class="pc-message ' + (isCliente ? 'cliente' : 'equipe') + '" data-message-id="' + id + '">'
-                    + (!isCliente ? '<div class="pc-message-avatar" title="' + escapeHtml(author) + '">' + initials(author, 'EQ') + '</div>' : '')
+                const attach = msg.attachments.length ? '<div class="pc-attachments">' + msg.attachments.map(renderAttachment).join('') + '</div>' : '';
+                const rowId = msg.id > 0 ? msg.id : ('tmp-' + Date.now());
+                return '<article class="pc-message ' + (isCliente ? 'cliente' : 'equipe') + (optimistic ? ' is-sending' : '') + '" data-message-id="' + rowId + '">'
+                    + (!isCliente ? '<div class="pc-message-avatar" title="' + escapeHtml(msg.author) + '">' + initials(msg.author, 'EQ') + '</div>' : '')
                     + '<div class="pc-bubble">'
-                    + (isCliente ? '<div class="pc-message-avatar" title="' + escapeHtml(author) + '">' + initials(author, 'CL') + '</div>' : '')
-                    + '<div class="pc-bubble-content"><div class="pc-bubble-head"><span>' + escapeHtml(author) + ' ' + (isCliente ? '(Cliente)' : '(Suporte)') + '</span><span>' + escapeHtml(msg.time || '') + '</span></div>'
+                    + (isCliente ? '<div class="pc-message-avatar" title="' + escapeHtml(msg.author) + '">' + initials(msg.author, 'CL') + '</div>' : '')
+                    + '<div class="pc-bubble-content"><div class="pc-bubble-head"><span>' + escapeHtml(msg.author) + ' ' + (isCliente ? '(Cliente)' : '(Suporte)') + '</span><span>' + escapeHtml(msg.time) + '</span></div>'
                     + (msg.text ? '<div class="pc-bubble-text">' + escapeHtml(msg.text) + '</div>' : '')
                     + attach
-                    + '<div class="pc-message-status-line"><span>' + (isCliente ? 'Mensagem do cliente' : 'Resposta do suporte') + '</span><span data-seen-status>Enviada</span></div>'
+                    + '<div class="pc-message-status-line"><span>' + (isCliente ? 'Mensagem do cliente' : 'Resposta do suporte') + '</span><span data-seen-status>' + (optimistic ? 'Enviando...' : (isCliente ? 'Aguardando leitura' : 'Enviada')) + '</span></div>'
                     + '</div></div></article>';
             }
 
-            function updateTyping(isTyping, name) {
+            function appendMessage(payload, optimistic) {
+                if (!chat) return null;
+                const msg = normalizeMessage(payload);
+                if (msg.id > 0 && chat.querySelector('[data-message-id="' + msg.id + '"]')) return chat.querySelector('[data-message-id="' + msg.id + '"]');
+                const empty = chat.querySelector('.pc-empty');
+                if (empty) empty.remove();
+                chat.insertAdjacentHTML('beforeend', renderMessage(msg, optimistic));
+                chat.scrollTop = chat.scrollHeight;
+                return chat.lastElementChild;
+            }
+
+            function replaceOptimistic(row, payload) {
+                if (!row) return;
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = renderMessage(payload, false).trim();
+                row.replaceWith(wrapper.firstElementChild);
+                chat.scrollTop = chat.scrollHeight;
+            }
+
+
+            function latestAdminChatMessageId() {
+                if (!chat) return 0;
+                return Array.from(chat.querySelectorAll('[data-message-id]')).reduce(function (max, row) {
+                    const id = Number(row.dataset.messageId || 0);
+                    return Number.isFinite(id) && id > max ? id : max;
+                }, 0);
+            }
+
+            async function syncAdminMessages(reason) {
+                if (!adminSyncUrl || !window.fetch || adminOfflineSyncInFlight) return;
+                adminOfflineSyncInFlight = true;
+                const afterId = latestAdminChatMessageId();
+                const url = new URL(adminSyncUrl, window.location.origin);
+                url.searchParams.set('after_id', String(afterId));
+
+                try {
+                    const response = await fetch(url.toString(), {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        credentials: 'same-origin',
+                    });
+                    const data = await response.json().catch(function () { return null; });
+                    const messages = Array.isArray(data?.messages) ? data.messages : [];
+                    if (messages.length > 0) {
+                        adminDebug('socket_admin_sync_response', { after_id: afterId, quantidade: messages.length, reason: reason || 'manual' });
+                    }
+                    messages.forEach(function (message) { appendMessage(message, false); });
+                } catch (error) {
+                    adminDebug('socket_admin_sync_error', { erro: String(error && error.message ? error.message : error), reason: reason || 'manual' });
+                } finally {
+                    adminOfflineSyncInFlight = false;
+                }
+            }
+
+            function startAdminOfflineSync(reason) {
+                if (adminOfflineSyncTimer) return;
+                window.setTimeout(function () { syncAdminMessages(reason || 'socket_offline'); }, 1200);
+                adminOfflineSyncTimer = window.setInterval(function () { syncAdminMessages(reason || 'socket_offline'); }, 10000);
+            }
+
+            function stopAdminOfflineSync() {
+                if (!adminOfflineSyncTimer) return;
+                window.clearInterval(adminOfflineSyncTimer);
+                adminOfflineSyncTimer = null;
+            }
+
+            function setSending(form, sending) {
+                sendingBusy = Boolean(sending);
+                const button = form?.querySelector('[data-admin-chat-submit]');
+                if (button) button.disabled = Boolean(sending);
+            }
+
+            function updateClientTyping(active, name) {
                 const box = document.querySelector('[data-cliente-typing]');
                 const text = document.querySelector('[data-cliente-typing-text]');
                 if (!box) return;
-                box.style.display = isTyping ? 'flex' : 'none';
+                box.style.display = active ? 'flex' : 'none';
                 if (text) text.textContent = (name || 'Cliente') + ' está digitando...';
             }
 
-            function updateSeen(supportSeenUntil, clientSeenUntil) {
-                document.querySelectorAll('#portalClienteChatBody [data-message-id]').forEach(function (row) {
-                    const id = Number(row.dataset.messageId || 0);
-                    const status = row.querySelector('[data-seen-status]');
-                    if (!status || !id) return;
-                    const isCliente = row.classList.contains('cliente');
-                    if (isCliente && Number(supportSeenUntil || 0) >= id) status.textContent = '✓✓ Visualizado pelo suporte';
-                    else if (!isCliente && Number(clientSeenUntil || 0) >= id) status.textContent = '✓✓ Visualizado pelo cliente';
-                    else status.textContent = isCliente ? 'Aguardando leitura' : 'Enviada';
-                });
-            }
 
-            function renderMessages(messages, supportSeenUntil, clientSeenUntil) {
-                if (!chat || !Array.isArray(messages)) return;
+            async function persistAdminSeen(messageId) {
+                const id = Number(messageId || 0);
+                if (!id || !socketConfig?.seenUrl || !window.fetch) return;
 
-                const serverIds = messages.map(function (message) { return String(message.id || ''); }).join('|');
-                const domRows = Array.from(chat.querySelectorAll('[data-message-id]'));
-                const domIds = domRows
-                    .filter(function (row) { return !String(row.dataset.messageId || '').startsWith('tmp-'); })
-                    .map(function (row) { return String(row.dataset.messageId || ''); })
-                    .join('|');
-                const signature = messages.map(function (m) { return [m.id, m.class, m.time, m.text].join(':'); }).join('|');
-                const hasSendingRows = domRows.some(function (row) { return row.classList.contains('is-sending'); });
-
-                console.info('[PORTAL_CHAT_EQUIPE_RENDER]', {
-                    domIds: domIds,
-                    serverIds: serverIds,
-                    totalDom: domRows.length,
-                    totalServer: messages.length,
-                    hasSendingRows: hasSendingRows
-                });
-
-                if (serverIds === domIds && signature === lastSignature && !hasSendingRows) {
-                    updateSeen(supportSeenUntil, clientSeenUntil);
-                    return;
-                }
-
-                if (messages.length === 0) {
-                    chat.innerHTML = '<div class="pc-empty">Nenhuma mensagem ainda.</div>';
-                    knownMessageIds.clear();
-                    lastSignature = signature;
-                    updateSeen(supportSeenUntil, clientSeenUntil);
-                    return;
-                }
-
-                chat.innerHTML = messages.map(renderMessage).join('');
-                knownMessageIds.clear();
-                messages.forEach(function (message) {
-                    if (message.id) knownMessageIds.add(Number(message.id));
-                });
-                lastSignature = signature;
-                chat.scrollTop = chat.scrollHeight;
-                updateSeen(supportSeenUntil, clientSeenUntil);
-            }
-
-            async function pollChatState() {
-                if (!stateUrl || !window.fetch || document.hidden || pollingBusy) return;
-                pollingBusy = true;
                 try {
-                    const response = await fetch(stateUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' });
-                    if (!response.ok) return;
-                    const data = await response.json();
-                    if (!data || !data.ok) return;
-                    renderMessages(data.messages || [], data.support_seen_until_id || 0, data.client_seen_until_id || 0);
-                    updateTyping(Boolean(data.client_typing), data.client_typing_name || 'Cliente');
-                } catch (error) {} finally { pollingBusy = false; }
+                    await fetch(socketConfig.seenUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ empresa: socketConfig.empresaId, message_id: id }),
+                    });
+                } catch (error) {
+                    adminDebug('socket_admin_seen_persist_error', { message_id: id, erro: String(error && error.message ? error.message : error) });
+                }
             }
 
-            async function sendAdminMessage(form) {
-                if (!form || sendingBusy || !window.fetch) return false;
-                const textarea = form.querySelector('[data-admin-chat-textarea]');
-                const fileInput = form.querySelector('input[type=\"file\"]');
-                const message = (textarea?.value || '').trim();
-                if (!message && (!fileInput || !fileInput.files || fileInput.files.length === 0)) return false;
-                if (fileInput && fileInput.files && fileInput.files.length > 0) return true;
+            function emitSupportTyping(text) {
+                if (!socket || !socket.connected) return;
+                const hasText = String(text || '').trim() !== '';
+                if (hasText && !typingState.active) {
+                    typingState.active = true;
+                    socket.emit('chat:typing:start', { nome: supportName, room: socketConfig.room || '' });
+                }
+                window.clearTimeout(typingState.stopTimer);
+                typingState.stopTimer = window.setTimeout(function () {
+                    typingState.active = false;
+                    socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
+                }, hasText ? 1200 : 0);
+            }
 
+            function connectSocket() {
+                if (!socketConfig?.enabled || !socketConfig?.url) {
+                    startAdminOfflineSync('socket_disabled');
+                    return;
+                }
+
+                if (!window.io) {
+                    adminDebug('socket_admin_connect_error', { erro: 'socket_io_client_missing', url: socketConfig.url });
+                    startAdminOfflineSync('socket_client_missing');
+                    return;
+                }
+
+                socket = window.io(socketConfig.url, {
+                    transports: ['websocket', 'polling'],
+                    withCredentials: true,
+                    auth: {
+                        empresaId: socketConfig.empresaId,
+                        actor: socketConfig.actor || 'suporte',
+                        token: socketConfig.token || '',
+                        signature: socketConfig.signature || '',
+                        room: socketConfig.room || '',
+                    },
+                });
+
+                socket.on('chat:connected', function (payload) {
+                    adminDebug('socket_admin_connected', { socket_id: socket.id, payload });
+                    stopAdminOfflineSync();
+                    syncAdminMessages('socket_connected');
+                });
+
+                socket.on('chat:message:new', function (payload) {
+                    const msg = normalizeMessage(payload);
+                    adminDebug('socket_admin_message_received', { message_id: msg.id, origem: payload?.origem || null, actor: payload?.actor || null, class: msg.class });
+                    appendMessage(msg, false);
+                    if (msg.class === 'cliente' && msg.id > 0) {
+                        socket.emit('chat:seen', { message_id: msg.id, room: socketConfig.room || '', at: new Date().toISOString() });
+                        persistAdminSeen(msg.id);
+                    }
+                });
+
+                socket.on('chat:typing:start', function (payload) {
+                    if (payload?.actor === 'suporte') return;
+                    updateClientTyping(true, payload?.nome || 'Cliente');
+                    window.clearTimeout(window.__clienteTypingTimer);
+                    window.__clienteTypingTimer = window.setTimeout(function () { updateClientTyping(false); }, 8000);
+                });
+
+                socket.on('chat:typing:stop', function (payload) {
+                    if (payload?.actor === 'suporte') return;
+                    updateClientTyping(false);
+                });
+
+                socket.on('connect', function () {
+                    adminDebug('socket_admin_connected', { socket_id: socket.id, transport: socket.io?.engine?.transport?.name || null });
+                    stopAdminOfflineSync();
+                    const lastCliente = Array.from(document.querySelectorAll('#portalClienteChatBody .pc-message.cliente[data-message-id]'))
+                        .reduce(function (max, row) { const id = Number(row.dataset.messageId || 0); return id > max ? id : max; }, 0);
+                    if (lastCliente > 0) {
+                        socket.emit('chat:seen', { message_id: lastCliente, room: socketConfig.room || '', at: new Date().toISOString() });
+                        persistAdminSeen(lastCliente);
+                    }
+                    syncAdminMessages('socket_connect');
+                });
+
+                socket.on('connect_error', function (error) {
+                    adminDebug('socket_admin_connect_error', { erro: String(error && error.message ? error.message : error) });
+                    startAdminOfflineSync('socket_connect_error');
+                });
+
+                socket.on('disconnect', function (reason) {
+                    adminDebug('socket_admin_connect_error', { erro: 'disconnect: ' + String(reason || '') });
+                    startAdminOfflineSync('socket_disconnect');
+                });
+            }
+
+            connectSocket();
+
+            async function enviarMensagemSuporte(form, event) {
+                if (event) event.preventDefault();
+                if (!form || sendingBusy || !window.fetch || !window.FormData) return false;
+
+                const textarea = form.querySelector('[data-admin-chat-textarea]');
+                const message = textarea?.value.trim() || '';
+                const files = form.querySelector('input[type="file"]')?.files || [];
+                if (!message && files.length === 0) {
+                    textarea?.focus();
+                    return false;
+                }
+
+                const optimistic = appendMessage({ origem: 'interno', nome: supportName, mensagem: message, attachments: files.length ? [{ nome: files.length + ' anexo(s)', size_label: 'enviando' }] : [] }, true);
+                const payload = new FormData(form);
+                payload.set('mensagem', message);
+
+                textarea.value = '';
+                textarea.dispatchEvent(new Event('input', { bubbles: true }));
                 setSending(form, true);
-                const tempId = appendOptimisticMessage(message);
-                if (textarea) { textarea.value = ''; textarea.dispatchEvent(new Event('input', { bubbles: true })); }
 
                 try {
                     const response = await fetch(form.dataset.sendUrl, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
-                        body: JSON.stringify({ mensagem: message }),
-                        credentials: 'same-origin'
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': csrfToken },
+                        body: payload,
+                        credentials: 'same-origin',
                     });
                     const data = await response.json().catch(function () { return null; });
-                    if (!response.ok || !data || !data.ok) throw new Error(data?.message || 'Falha ao enviar');
-                    markOptimisticMessage(tempId, 'sent', data.message_id || null);
-                    if (Array.isArray(data.messages)) renderMessages(data.messages, data.support_seen_until_id || 0, data.client_seen_until_id || 0);
-                    else pollChatState();
-                    return false;
+                    if (!response.ok || !data || data.ok === false) throw new Error(data?.message || 'Falha ao enviar');
+
+                    adminDebug('chat_ajax_success', { message_id: Number(data?.message_id || data?.chat_message?.id || 0) });
+                    if (data.chat_message) {
+                        replaceOptimistic(optimistic, data.chat_message);
+                        if (socket && socket.connected) {
+                            adminDebug('socket_admin_emit_start', { message_id: Number(data.chat_message.id || data.chat_message.message_id || 0) });
+                            data.chat_message.room = data.chat_message.room || socketConfig.room || '';
+                            socket.emit('chat:message:new', data.chat_message, function (ack) {
+                                adminDebug('socket_admin_emit_ack', { message_id: Number(data.chat_message.id || data.chat_message.message_id || 0), ack });
+                            });
+                            socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
+                        } else {
+                            startAdminOfflineSync('after_send_socket_offline');
+                        }
+                    } else if (data.message_id) {
+                        optimistic?.classList.remove('is-sending');
+                        optimistic.dataset.messageId = String(data.message_id);
+                    }
+                    form.querySelector('input[type="file"]') && (form.querySelector('input[type="file"]').value = '');
                 } catch (error) {
-                    markOptimisticMessage(tempId, 'failed');
-                    if (textarea) { textarea.value = message; textarea.focus(); }
-                    return false;
+                    adminDebug('chat_ajax_error', { erro: String(error && error.message ? error.message : error) });
+                    optimistic?.classList.remove('is-sending');
+                    optimistic?.classList.add('is-failed');
+                    const status = optimistic?.querySelector('[data-seen-status]');
+                    if (status) status.textContent = 'Falha ao enviar';
+                    textarea.value = message;
+                    textarea.focus();
                 } finally {
                     setSending(form, false);
                 }
+
+                return false;
             }
 
-            document.querySelectorAll('[data-admin-chat-form]').forEach(function (form) {
-                form.addEventListener('submit', async function (event) {
-                    const fileInput = form.querySelector('input[type=\"file\"]');
-                    if (fileInput && fileInput.files && fileInput.files.length > 0) return;
+            window.portalClienteEnviarMensagemSuporte = enviarMensagemSuporte;
 
+            document.addEventListener('submit', function (event) {
+                const form = event.target?.closest?.('[data-admin-chat-form]');
+                if (!form) return;
+                event.preventDefault();
+                event.stopPropagation();
+                enviarMensagemSuporte(form, event);
+                return false;
+            }, true);
+
+            document.querySelectorAll('[data-admin-chat-form]').forEach(function (form) {
+                const fallbackSendUrl = form.dataset.sendUrl || '<?php echo e(route('admin.portal-cliente.chat.mensagem', ['empresa' => $empresaId])); ?>';
+                form.dataset.sendUrl = fallbackSendUrl;
+                form.setAttribute('action', 'javascript:void(0)');
+                form.setAttribute('method', 'POST');
+                form.removeAttribute('target');
+
+                const textarea = form.querySelector('[data-admin-chat-textarea]');
+                const button = form.querySelector('[data-admin-chat-submit]');
+
+                textarea?.addEventListener('input', function () {
+                    emitSupportTyping(textarea.value);
+                });
+
+                button?.addEventListener('click', function (event) {
                     event.preventDefault();
-                    await sendAdminMessage(form);
+                    enviarMensagemSuporte(form, event);
                 });
             });
 
-            window.portalClienteAvisarSuporteDigitando = function (text) {
-                if (!typingUrl || !window.fetch) return;
-
-                const sendTyping = function () {
-                    const now = Date.now();
-                    if (now - typingState.lastSent < 2500) return;
-                    typingState.lastSent = now;
-                    fetch(typingUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest' },
-                        body: JSON.stringify({ text: text || '' }),
-                        credentials: 'same-origin',
-                        keepalive: true
-                    }).catch(function () {});
-                };
-
-                if (Date.now() - typingState.lastSent >= 2500) {
-                    sendTyping();
-                    return;
-                }
-
-                window.clearTimeout(typingState.timer);
-                typingState.timer = window.setTimeout(sendTyping, 350);
-            };
-
-            pollChatState();
-            pollTimer = window.setInterval(pollChatState, 1000);
-            document.addEventListener('visibilitychange', function () { if (!document.hidden) pollChatState(); });
-            document.addEventListener('livewire:navigated', function () { if (pollTimer) window.clearInterval(pollTimer); });
+            window.portalClienteAvisarSuporteDigitando = emitSupportTyping;
+            document.addEventListener('livewire:navigated', function () { if (socket) socket.disconnect(); });
         })();
     </script>
 

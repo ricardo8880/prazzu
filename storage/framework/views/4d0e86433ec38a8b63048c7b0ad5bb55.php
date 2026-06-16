@@ -1973,62 +1973,49 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
 </div>
 <div class="client-toast" data-client-toast role="status" aria-live="polite"></div>
 
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($socketIoConfig['url'])): ?>
+    <script src="<?php echo e(rtrim($socketIoConfig['url'], '/')); ?>/socket.io/socket.io.js" onload="window.__portalSocketIoScriptLoaded=true" onerror="window.__portalSocketIoScriptError=true"></script>
+<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
 <script>
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
     const debugUrl = '<?php echo e(route('portal.cliente.debug-log.publico', ['token' => $token])); ?>';
-    const typingUrl = '<?php echo e(route('portal.cliente.digitando', ['token' => $token])); ?>';
-    const chatStateUrl = '<?php echo e(route('portal.cliente.chat.estado', ['token' => $token])); ?>';
+    const portalChatSocketConfig = <?php echo json_encode($socketIoConfig ?? [], 15, 512) ?>;
+    let portalChatSocket = null;
+    let portalSocketRetryTimer = null;
+    let portalOfflineSyncTimer = null;
 
-
-    const typingState = { timer: null, lastSent: 0 };
+    const typingState = { timer: null, stopTimer: null, lastSent: 0, active: false };
     const debugState = { lastSent: 0, lastStep: null };
     let clientChatSendingBusy = false;
 
     function announceClientTyping(form) {
-        if (!typingUrl || !window.fetch) return;
+        if (!portalChatSocket || !portalChatSocket.connected) return;
 
-        const sendTyping = function () {
-            const now = Date.now();
-            if (now - typingState.lastSent < 2500) return;
+        const now = Date.now();
+        const nome = form?.querySelector('[name="nome"]')?.value || '';
+
+        if (!typingState.active || now - typingState.lastSent >= 1800) {
+            typingState.active = true;
             typingState.lastSent = now;
-            const nome = form?.querySelector('[name="nome"]')?.value || '';
-
-            try {
-                const typingStartedAt = performance.now();
-                fetch(typingUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ nome: nome }),
-                    credentials: 'same-origin',
-                    keepalive: true
-                }).then(function (response) {
-                    portalDebug('cliente_typing_response', { status: response.status, duration_ms: Math.round(performance.now() - typingStartedAt) });
-                }).catch(function (error) {
-                    portalDebug('cliente_typing_error', { erro: String(error && error.message ? error.message : error), duration_ms: Math.round(performance.now() - typingStartedAt) });
-                });
-            } catch (error) {
-                portalDebug('cliente_typing_exception', { erro: String(error && error.message ? error.message : error) });
-            }
-        };
-
-        if (Date.now() - typingState.lastSent >= 2500) {
-            sendTyping();
-            return;
+            portalChatSocket.emit('chat:typing:start', { nome: nome, room: portalChatSocketConfig.room || '' });
         }
 
-        window.clearTimeout(typingState.timer);
-        typingState.timer = window.setTimeout(sendTyping, 350);
+        window.clearTimeout(typingState.stopTimer);
+        typingState.stopTimer = window.setTimeout(function () {
+            if (!portalChatSocket || !portalChatSocket.connected || !typingState.active) return;
+            typingState.active = false;
+            portalChatSocket.emit('chat:typing:stop', { room: portalChatSocketConfig.room || '' });
+        }, 1200);
     }
 
     function portalDebug(step, extra = {}) {
+        // Debug do navegador sem poluir storage/logs/laravel.log.
+        // Para voltar a gravar no Laravel temporariamente, execute no console:
+        // window.PORTAL_CHAT_DEBUG_LARAVEL = true
         const now = Date.now();
-        const important = ['chat_ajax_error', 'chat_ajax_success', 'chat_submit', 'chat_ajax_start', 'chat_ajax_response', 'chat_poll_response', 'chat_poll_error', 'cliente_typing_response', 'cliente_typing_error'].includes(step);
-        if (!important && debugState.lastStep === step && now - debugState.lastSent < 8000) {
+        const important = ['chat_ajax_error', 'chat_socket_emit_offline', 'socket_public_connect_error', 'socket_public_client_missing', 'socket_public_message_received'].includes(step);
+        if (!important && debugState.lastStep === step && now - debugState.lastSent < 15000) {
             return;
         }
         debugState.lastStep = step;
@@ -2043,7 +2030,13 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
             ...extra
         };
 
-        console.log('[PORTAL_CLIENTE_SHOW]', payload);
+        if (window.PORTAL_CHAT_DEBUG === true || important) {
+            console.log('[PORTAL_CLIENTE_SHOW]', payload);
+        }
+
+        if (window.PORTAL_CHAT_DEBUG_LARAVEL !== true) {
+            return;
+        }
 
         try {
             if (!debugUrl) return;
@@ -2493,51 +2486,265 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
         if (text) text.textContent = (name || 'Suporte') + ' está digitando...';
     }
 
+    function normalizeRealtimeMessage(payload) {
+        const origem = String(payload?.origem || '').toLowerCase();
+        const messageClass = payload?.class || (['cliente', 'portal_cliente', 'client'].includes(origem) ? 'cliente' : 'equipe');
 
-    let publicChatPollingBusy = false;
+        return {
+            id: payload?.id || payload?.message_id || '',
+            class: messageClass === 'cliente' ? 'cliente' : 'equipe',
+            author: payload?.author || payload?.usuario_nome || payload?.nome || (messageClass === 'cliente' ? 'Cliente' : 'Equipe'),
+            text: payload?.text || payload?.mensagem || '',
+            time: payload?.time || payload?.created_at_label || 'agora',
+            attachments: Array.isArray(payload?.attachments) ? payload.attachments : (Array.isArray(payload?.anexos) ? payload.anexos : []),
+        };
+    }
 
-    async function pollPublicChatState() {
-        if (!chatStateUrl || !window.fetch || document.hidden || publicChatPollingBusy) return;
-        publicChatPollingBusy = true;
+    function appendRealtimeChatMessage(payload) {
+        const msg = normalizeRealtimeMessage(payload);
+        if (!msg.id) return;
+
+        const chat = document.getElementById('chatHistorico');
+        if (!chat) return;
+
+        if (chat.querySelector('[data-message-id="' + CSS.escape(String(msg.id)) + '"]')) {
+            return;
+        }
+
+        const empty = chat.querySelector('.empty-chat');
+        if (empty) empty.remove();
+
+        const classe = msg.class === 'equipe' ? 'equipe' : 'cliente';
+        const row = document.createElement('div');
+        row.className = 'message-row ' + classe;
+        row.dataset.messageId = String(msg.id);
+        row.dataset.messageClass = classe;
+
+        const avatar = document.createElement('span');
+        avatar.className = 'message-avatar';
+        avatar.setAttribute('aria-hidden', 'true');
+        const author = String(msg.author || (classe === 'equipe' ? 'Equipe' : 'Cliente'));
+        avatar.textContent = author.slice(0, 2).toUpperCase();
+
+        const wrap = document.createElement('div');
+        wrap.className = 'bubble-wrap';
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+
+        if (classe !== 'cliente') {
+            const name = document.createElement('span');
+            name.className = 'bubble-name';
+            name.textContent = author;
+            bubble.appendChild(name);
+        }
+
+        if (msg.text) {
+            const text = document.createElement('span');
+            text.textContent = msg.text;
+            bubble.appendChild(text);
+        }
+
+        const time = document.createElement('span');
+        time.className = 'bubble-time';
+        time.textContent = (msg.time || 'agora') + (classe === 'cliente' ? ' ✓✓' : '');
+        bubble.appendChild(time);
+
+        if (classe === 'cliente') {
+            const seen = document.createElement('span');
+            seen.className = 'chat-seen-status';
+            seen.dataset.seenStatus = '1';
+            seen.style.display = 'none';
+            seen.textContent = 'Visualizado pelo suporte';
+            bubble.appendChild(seen);
+        }
+
+        wrap.appendChild(bubble);
+
+        if (Array.isArray(msg.attachments) && msg.attachments.length > 0) {
+            const grid = document.createElement('div');
+            grid.className = 'attachment-grid';
+            grid.setAttribute('aria-label', 'Anexos da mensagem');
+            grid.innerHTML = msg.attachments.map(renderAttachmentCard).join('');
+            wrap.appendChild(grid);
+        }
+
+        row.appendChild(avatar);
+        row.appendChild(wrap);
+        chat.appendChild(row);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+
+    function latestChatMessageId() {
+        const rows = Array.from(document.querySelectorAll('#chatHistorico [data-message-id]'));
+        return rows.reduce(function (max, row) {
+            const id = Number(row.dataset.messageId || 0);
+            return Number.isFinite(id) && id > max ? id : max;
+        }, 0);
+    }
+
+    async function syncPublicMessagesWhenSocketOffline(reason = 'offline') {
+        if (portalChatSocket && portalChatSocket.connected) return;
+        if (!portalChatSocketConfig?.syncUrl || !window.fetch) return;
+
+        const afterId = latestChatMessageId();
+        const url = new URL(portalChatSocketConfig.syncUrl, window.location.origin);
+        url.searchParams.set('after_id', String(afterId));
+
         try {
-            const pollStartedAt = performance.now();
-            const response = await fetch(chatStateUrl, {
+            portalDebug('socket_public_sync_start', { after_id: afterId, reason });
+            const response = await fetch(url.toString(), {
+                method: 'GET',
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                credentials: 'same-origin'
+                credentials: 'same-origin',
             });
-            if (!response.ok) {
-                portalDebug('chat_poll_response', { status: response.status, duration_ms: Math.round(performance.now() - pollStartedAt), fase: 'http_not_ok' });
-                return;
-            }
-            const data = await response.json();
-            if (!data || !data.ok) {
-                portalDebug('chat_poll_response', { status: response.status, duration_ms: Math.round(performance.now() - pollStartedAt), fase: 'json_not_ok' });
-                return;
-            }
-            renderChatMessages(data.messages || [], data.client_seen_until_id || 0);
-            setSupportTyping(Boolean(data.support_typing), data.support_typing_name || 'Suporte');
-            portalDebug('chat_poll_response', {
-                status: response.status,
-                duration_ms: Math.round(performance.now() - pollStartedAt),
-                total_mensagens: Array.isArray(data.messages) ? data.messages.length : 0,
-                ultimo_id: Array.isArray(data.messages) && data.messages.length ? Number(data.messages[data.messages.length - 1].id || 0) : 0,
-                fase: 'ok'
+            const data = await response.json().catch(function () { return null; });
+            const messages = Array.isArray(data?.messages) ? data.messages : [];
+            portalDebug('socket_public_sync_response', { status: response.status, after_id: afterId, quantidade: messages.length, reason });
+            messages.forEach(function (message) {
+                appendRealtimeChatMessage(message);
             });
         } catch (error) {
-            portalDebug('chat_poll_error', { erro: String(error && error.message ? error.message : error) });
-        } finally {
-            publicChatPollingBusy = false;
+            portalDebug('socket_public_sync_error', { erro: String(error && error.message ? error.message : error), reason });
         }
     }
 
-    pollPublicChatState();
-    window.setInterval(pollPublicChatState, 1000);
-    document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) pollPublicChatState();
-    });
+    function startPublicOfflineSync(reason = 'socket_offline') {
+        if (portalOfflineSyncTimer) return;
+        portalDebug('socket_public_offline_sync_enabled', { reason });
+        portalOfflineSyncTimer = window.setInterval(function () {
+            syncPublicMessagesWhenSocketOffline(reason);
+        }, 3000);
+        syncPublicMessagesWhenSocketOffline(reason);
+    }
+
+    function stopPublicOfflineSync() {
+        if (!portalOfflineSyncTimer) return;
+        window.clearInterval(portalOfflineSyncTimer);
+        portalOfflineSyncTimer = null;
+        portalDebug('socket_public_offline_sync_disabled');
+    }
+
+
+    async function persistPublicSeen(messageId) {
+        const id = Number(messageId || 0);
+        if (!id || !portalChatSocketConfig?.seenUrl || !window.fetch) return;
+
+        try {
+            await fetch(portalChatSocketConfig.seenUrl, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ message_id: id }),
+            });
+        } catch (error) {
+            portalDebug('socket_public_seen_persist_error', { message_id: id, erro: String(error && error.message ? error.message : error) });
+        }
+    }
+
+    function lastEquipeMessageId() {
+        const rows = Array.from(document.querySelectorAll('#chatHistorico .message-row.equipe[data-message-id]'));
+        return rows.reduce(function (max, row) {
+            const id = Number(row.dataset.messageId || 0);
+            return id > max ? id : max;
+        }, 0);
+    }
+
+    function connectPublicChatSocket() {
+        if (!portalChatSocketConfig?.enabled || !portalChatSocketConfig?.url) {
+            portalDebug('socket_public_disabled');
+            return;
+        }
+
+        if (!window.io) {
+            portalDebug('socket_public_client_missing', { url: portalChatSocketConfig.url, script_error: Boolean(window.__portalSocketIoScriptError), script_loaded: Boolean(window.__portalSocketIoScriptLoaded) });
+            startPublicOfflineSync('socket_client_missing');
+            window.clearTimeout(portalSocketRetryTimer);
+            portalSocketRetryTimer = window.setTimeout(function () {
+                portalDebug('socket_public_script_retry', { url: portalChatSocketConfig.url });
+                connectPublicChatSocket();
+            }, 2500);
+            return;
+        }
+
+        if (portalChatSocket && (portalChatSocket.connected || portalChatSocket.active)) return;
+
+        portalChatSocket = window.io(portalChatSocketConfig.url, {
+            transports: ['websocket', 'polling'],
+            withCredentials: true,
+            auth: {
+                empresaId: portalChatSocketConfig.empresaId,
+                actor: portalChatSocketConfig.actor || 'cliente',
+                token: portalChatSocketConfig.token || '',
+                signature: portalChatSocketConfig.signature || '',
+                room: portalChatSocketConfig.room || '',
+            },
+        });
+
+        portalChatSocket.on('connect', function () {
+            stopPublicOfflineSync();
+            portalDebug('socket_public_connected', { socket_id: portalChatSocket.id });
+            const ultimoEquipe = lastEquipeMessageId();
+            if (ultimoEquipe > 0) {
+                portalChatSocket.emit('chat:seen', { message_id: ultimoEquipe, room: portalChatSocketConfig.room || '', at: new Date().toISOString() });
+                persistPublicSeen(ultimoEquipe);
+            }
+        });
+
+        portalChatSocket.on('connect_error', function (error) {
+            portalDebug('socket_public_connect_error', { erro: String(error && error.message ? error.message : error) });
+            startPublicOfflineSync('socket_connect_error');
+        });
+
+        portalChatSocket.on('disconnect', function (reason) {
+            portalDebug('socket_public_disconnect', { reason: String(reason || '') });
+            startPublicOfflineSync('socket_disconnect');
+        });
+
+        portalChatSocket.on('chat:message:new', function (payload) {
+            const msg = normalizeRealtimeMessage(payload);
+            portalDebug('socket_public_message_received', { message_id: Number(msg.id || 0), socket_connected: Boolean(portalChatSocket && portalChatSocket.connected), socket_id: portalChatSocket?.id || null });
+            appendRealtimeChatMessage(payload);
+            setSupportTyping(false);
+            if (msg.class === 'equipe' && Number(msg.id || 0) > 0) {
+                portalChatSocket.emit('chat:seen', { message_id: Number(msg.id), room: portalChatSocketConfig.room || '', at: new Date().toISOString() });
+                persistPublicSeen(Number(msg.id));
+            }
+        });
+
+        portalChatSocket.on('chat:typing:start', function (payload) {
+            if (payload?.actor === 'cliente') return;
+            setSupportTyping(true, payload?.nome || 'Suporte');
+            window.clearTimeout(window.__supportTypingTimer);
+            window.__supportTypingTimer = window.setTimeout(function () { setSupportTyping(false); }, 8000);
+        });
+
+        portalChatSocket.on('chat:typing:stop', function (payload) {
+            if (payload?.actor === 'cliente') return;
+            setSupportTyping(false);
+        });
+
+        portalChatSocket.on('chat:seen', function (payload) {
+            if (payload?.actor === 'cliente') return;
+            updateSeenStatus(Number(payload?.message_id || 0));
+        });
+    }
+
+    connectPublicChatSocket();
 
 
     document.querySelectorAll('[data-chat-form]').forEach(function (form) {
+        const textarea = form.querySelector('.js-chat-message');
+        textarea?.addEventListener('input', function () {
+            announceClientTyping(form);
+        });
+
         form.addEventListener('submit', async function (event) {
             if (clientChatSendingBusy) {
                 event.preventDefault();
@@ -2620,12 +2827,17 @@ unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendB
                 if (responseData?.chat_message) {
                     applyServerMessageToOptimistic(optimisticRow, responseData.chat_message);
                 }
-                portalDebug('chat_after_success_poll', {
-                    message_id: Number(responseData?.chat_message?.id || responseData?.message_id || 0),
-                    fase: 'poll_imediato'
-                });
-                pollPublicChatState();
-                window.setTimeout(pollPublicChatState, 350);
+                if (portalChatSocket && portalChatSocket.connected && responseData?.chat_message) {
+                    portalDebug('chat_socket_emit_start', { message_id: Number(responseData.chat_message.id || 0), socket_connected: true, socket_id: portalChatSocket.id });
+                    responseData.chat_message.room = responseData.chat_message.room || portalChatSocketConfig.room || '';
+                    portalChatSocket.emit('chat:message:new', responseData.chat_message, function (ack) {
+                        portalDebug('chat_socket_emit_ack', { message_id: Number(responseData.chat_message.id || 0), socket_connected: Boolean(portalChatSocket && portalChatSocket.connected), socket_id: portalChatSocket?.id || null, ack: ack || null });
+                    });
+                    portalChatSocket.emit('chat:typing:stop', { room: portalChatSocketConfig.room || '' });
+                } else if (responseData?.chat_message) {
+                    portalDebug('chat_socket_emit_offline', { message_id: Number(responseData.chat_message.id || 0), socket_connected: Boolean(portalChatSocket && portalChatSocket.connected), socket_id: portalChatSocket?.id || null });
+                    startPublicOfflineSync('emit_offline_after_send');
+                }
                 setInlineFeedback(form, '', 'success');
                 portalDebug('chat_ajax_success', { status: response.status, duration_ms: Math.round(performance.now() - submitStartedAt), message_id: Number(responseData?.chat_message?.id || responseData?.message_id || 0) });
             } catch (error) {

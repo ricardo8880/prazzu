@@ -1,0 +1,1 @@
+<?php echo $__env->make("components.global-search", array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\prazzu\storage\framework\views/56fb3852e655fe6c6953e0e8e873dcd8.blade.php ENDPATH**/ ?>

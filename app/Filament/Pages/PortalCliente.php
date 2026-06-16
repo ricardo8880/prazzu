@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Renderless;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
@@ -87,135 +86,30 @@ class PortalCliente extends Page
 
     public function atualizarConversa(): void
     {
-        $this->atualizarEstadoDigitando();
-        $this->registrarVisualizacaoSuporte();
-        $this->atualizarVisualizacoesChat();
+        // Atualização em tempo real agora é feita pelo Socket.IO.
     }
 
     #[Renderless]
     public function registrarSuporteDigitando(?string $texto = null): void
     {
-        $inicio = microtime(true);
-        $empresaId = $this->empresaIdAtualDaTela();
-
-        if (! $empresaId) {
-            Log::warning('[PORTAL_CHAT_LIVEWIRE_SUPORTE_DIGITANDO] empresa_ausente', [
-                'user_id' => auth()->id(),
-                'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-            ]);
-            return;
-        }
-
-        if (trim((string) $texto) === '') {
-            Cache::forget($this->cacheKeySuporteDigitando($empresaId));
-            Log::info('[PORTAL_CHAT_LIVEWIRE_SUPORTE_DIGITANDO] limpo', [
-                'empresa_id' => $empresaId,
-                'user_id' => auth()->id(),
-                'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-            ]);
-            return;
-        }
-
-        Cache::put($this->cacheKeySuporteDigitando($empresaId), [
-            'nome' => auth()->user()?->name ?: 'Suporte',
-            'timestamp' => now()->timestamp,
-        ], now()->addSeconds(10));
-
-        Log::info('[PORTAL_CHAT_LIVEWIRE_SUPORTE_DIGITANDO] ativo', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'tamanho_texto' => strlen((string) $texto),
-            'duracao_ms' => round((microtime(true) - $inicio) * 1000, 2),
-        ]);
+        // Digitando agora é emitido pelo Socket.IO no frontend.
     }
 
     private function atualizarEstadoDigitando(): void
     {
-        $empresaId = $this->empresaIdAtualDaTela();
-
-        if (! $empresaId) {
-            $this->clienteDigitando = false;
-            $this->clienteDigitandoNome = null;
-            return;
-        }
-
-        $estado = Cache::get($this->cacheKeyClienteDigitando($empresaId));
-
-        if (! is_array($estado)) {
-            $this->clienteDigitando = false;
-            $this->clienteDigitandoNome = null;
-            return;
-        }
-
-        $timestamp = (int) ($estado['timestamp'] ?? 0);
-
-        if ($timestamp < now()->subSeconds(8)->timestamp) {
-            Cache::forget($this->cacheKeyClienteDigitando($empresaId));
-            $this->clienteDigitando = false;
-            $this->clienteDigitandoNome = null;
-            return;
-        }
-
-        $nome = trim((string) ($estado['nome'] ?? 'Cliente'));
-
-        $this->clienteDigitando = true;
-        $this->clienteDigitandoNome = $nome !== '' ? $nome : 'Cliente';
+        $this->clienteDigitando = false;
+        $this->clienteDigitandoNome = null;
     }
 
     private function registrarVisualizacaoSuporte(): void
     {
-        $empresaId = $this->empresaIdAtualDaTela();
-
-        if (! $empresaId || ! CachedSchema::hasTable('portal_mensagens')) {
-            return;
-        }
-
-        $ultimoIdCliente = PortalMensagem::query()
-            ->where('empresa_id', $empresaId)
-            ->where(function ($query): void {
-                $query->where('origem', 'cliente')
-                    ->orWhere('origem', 'portal_cliente')
-                    ->orWhere('origem', 'client');
-            })
-            ->max('id');
-
-        if ($ultimoIdCliente) {
-            Cache::put($this->cacheKeyVisualizadoSuporte($empresaId), (int) $ultimoIdCliente, now()->addHours(8));
-        }
+        // Visualização em tempo real agora é emitida pelo Socket.IO.
     }
 
     private function atualizarVisualizacoesChat(): void
     {
-        $empresaId = $this->empresaIdAtualDaTela();
-
-        if (! $empresaId) {
-            $this->clienteVisualizouAteId = null;
-            $this->suporteVisualizouAteId = null;
-            return;
-        }
-
-        $this->clienteVisualizouAteId = Cache::get($this->cacheKeyVisualizadoCliente($empresaId));
-        $this->suporteVisualizouAteId = Cache::get($this->cacheKeyVisualizadoSuporte($empresaId));
-    }
-
-    private function cacheKeyClienteDigitando(int $empresaId): string
-    {
-        return 'portal_cliente_digitando_empresa_' . $empresaId;
-    }
-
-    private function cacheKeySuporteDigitando(int $empresaId): string
-    {
-        return 'portal_suporte_digitando_empresa_' . $empresaId;
-    }
-
-    private function cacheKeyVisualizadoCliente(int $empresaId): string
-    {
-        return 'portal_cliente_visualizou_suporte_empresa_' . $empresaId;
-    }
-
-    private function cacheKeyVisualizadoSuporte(int $empresaId): string
-    {
-        return 'portal_suporte_visualizou_cliente_empresa_' . $empresaId;
+        $this->clienteVisualizouAteId = null;
+        $this->suporteVisualizouAteId = null;
     }
 
     public function criarSolicitacao(): void
@@ -277,8 +171,6 @@ class PortalCliente extends Page
         }
 
         $mensagem = PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->chatMensagem, 'interno', $this->salvarAnexosMensagem($empresaId)));
-        Cache::forget($this->cacheKeySuporteDigitando($empresaId));
-
         Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] mensagem_salva_enviarMensagem', [
             'empresa_id' => $empresaId,
             'user_id' => auth()->id(),
@@ -324,8 +216,6 @@ class PortalCliente extends Page
         }
 
         $mensagem = PortalMensagem::create($this->payloadMensagem($empresaId, (string) $this->respostaChat, 'interno', $this->salvarAnexosMensagem($empresaId)));
-        Cache::forget($this->cacheKeySuporteDigitando($empresaId));
-
         Log::info('[PORTAL_CHAT_LIVEWIRE_ENVIO] mensagem_salva_responderChat', [
             'empresa_id' => $empresaId,
             'user_id' => auth()->id(),
@@ -347,7 +237,7 @@ class PortalCliente extends Page
 
     public function finalizarConversa(): void
     {
-        if (! CachedSchema::hasTable('portal_mensagens') && ! CachedSchema::hasTable('prazzu_client_portal_messages')) {
+        if (! CachedSchema::hasTable('portal_mensagens')) {
             $this->notificarTabelaAusente('portal_mensagens');
             return;
         }
@@ -359,33 +249,18 @@ class PortalCliente extends Page
             return;
         }
 
-        $mensagensAtivasIds = collect();
+        $mensagensAtivasIds = PortalMensagem::query()
+            ->where('empresa_id', $empresaId)
+            ->when(
+                CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
+                fn ($query) => $query->where('conversa_status', 'aberta'),
+                fn ($query) => CachedSchema::hasColumn('portal_mensagens', 'visualizada_em') ? $query->whereNull('visualizada_em') : $query
+            )
+            ->oldest()
+            ->limit(120)
+            ->pluck('id');
 
-        if (CachedSchema::hasTable('portal_mensagens')) {
-            $mensagensAtivasIds = PortalMensagem::query()
-                ->where('empresa_id', $empresaId)
-                ->when(
-                    CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
-                    fn ($query) => $query->where('conversa_status', 'aberta'),
-                    fn ($query) => CachedSchema::hasColumn('portal_mensagens', 'visualizada_em') ? $query->whereNull('visualizada_em') : $query
-                )
-                ->oldest()
-                ->limit(80)
-                ->pluck('id');
-        }
-
-        $mensagensLegadasAtivasIds = collect();
-
-        if (CachedSchema::hasTable('prazzu_client_portal_messages') && CachedSchema::hasColumn('prazzu_client_portal_messages', 'read_at')) {
-            $mensagensLegadasAtivasIds = DB::table('prazzu_client_portal_messages')
-                ->where('empresa_id', $empresaId)
-                ->whereNull('read_at')
-                ->oldest()
-                ->limit(80)
-                ->pluck('id');
-        }
-
-        if ($mensagensAtivasIds->isEmpty() && $mensagensLegadasAtivasIds->isEmpty()) {
+        if ($mensagensAtivasIds->isEmpty()) {
             Notification::make()
                 ->title('Nenhuma conversa ativa')
                 ->body('Não há mensagens abertas para finalizar neste cliente.')
@@ -394,38 +269,67 @@ class PortalCliente extends Page
             return;
         }
 
-        if ($mensagensAtivasIds->isNotEmpty()) {
-            $update = [
-                'updated_at' => now(),
-            ];
+        $update = [
+            'updated_at' => now(),
+        ];
 
-            if (CachedSchema::hasColumn('portal_mensagens', 'visualizada_em')) {
-                $update['visualizada_em'] = now();
-            }
-
-            if (CachedSchema::hasColumn('portal_mensagens', 'conversa_status')) {
-                $update['conversa_status'] = 'finalizada';
-            }
-
-            DB::table('portal_mensagens')
-                ->where('empresa_id', $empresaId)
-                ->whereIn('id', $mensagensAtivasIds->all())
-                ->update($update);
+        if (CachedSchema::hasColumn('portal_mensagens', 'visualizada_em')) {
+            $update['visualizada_em'] = now();
         }
 
-        if ($mensagensLegadasAtivasIds->isNotEmpty()) {
-            DB::table('prazzu_client_portal_messages')
-                ->where('empresa_id', $empresaId)
-                ->whereIn('id', $mensagensLegadasAtivasIds->all())
-                ->update(['read_at' => now(), 'updated_at' => now()]);
+        if (CachedSchema::hasColumn('portal_mensagens', 'conversa_status')) {
+            $update['conversa_status'] = 'finalizada';
         }
 
-        Notification::make()->title('Conversa finalizada')->body('As mensagens abertas exibidas na tela saíram da fila ativa, mas continuam salvas como histórico no banco.')->success()->send();
+        DB::table('portal_mensagens')
+            ->where('empresa_id', $empresaId)
+            ->whereIn('id', $mensagensAtivasIds->all())
+            ->update($update);
+
+        Notification::make()
+            ->title('Conversa finalizada')
+            ->body('As mensagens abertas exibidas na tela saíram da fila ativa, mas continuam salvas em portal_mensagens.')
+            ->success()
+            ->send();
     }
 
     protected function getViewData(): array
     {
-        return PortalClienteData::data($this->empresaIdAtualDaTela(), true);
+        $empresaId = $this->empresaIdAtualDaTela();
+
+        return array_merge(PortalClienteData::data($empresaId, true), [
+            'socketIoConfig' => $this->socketIoConfigEquipe($empresaId),
+        ]);
+    }
+
+    /**
+     * Configuração do Socket.IO usada pela tela da equipe.
+     * A assinatura evita que um cliente entre em sala de outra empresa sem conhecer o segredo da aplicação.
+     */
+    private function socketIoConfigEquipe(?int $empresaId): array
+    {
+        if (! $empresaId) {
+            return ['enabled' => false];
+        }
+
+        $actor = 'suporte';
+        $secret = (string) config('app.key');
+        $token = 'admin:' . (auth()->id() ?: '0');
+        $room = 'empresa:' . $empresaId . ':portal';
+
+        return [
+            'enabled' => true,
+            'url' => rtrim((string) env('VITE_SOCKET_IO_URL', env('SOCKET_IO_URL', 'http://127.0.0.1:3001')), '/'),
+            'empresaId' => $empresaId,
+            'actor' => $actor,
+            'nome' => auth()->user()?->name ?: 'Suporte',
+            'token' => $token,
+            'room' => $room,
+            'roomScope' => 'portal',
+            'signature' => hash_hmac('sha256', $empresaId . '|' . $actor . '|' . $token . '|' . $room, $secret),
+            'syncUrl' => route('admin.portal-cliente.chat.mensagens-novas'),
+            'seenUrl' => url('/admin/portal-cliente/mensagem-visualizada'),
+        ];
     }
 
     private function empresaIdAtualDaTela(bool $notificar = false): ?int

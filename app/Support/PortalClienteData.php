@@ -409,32 +409,10 @@ class PortalClienteData
             );
         }
 
-        if (CachedSchema::hasTable('prazzu_client_portal_messages')) {
-            $query = DB::table('prazzu_client_portal_messages')
-                ->where('empresa_id', $empresaId)
-                ->orderBy('created_at')
-                ->limit(80);
 
-            if ($somenteAtivas && CachedSchema::hasColumn('prazzu_client_portal_messages', 'read_at')) {
-                $query->whereNull('read_at');
-            }
+        // Lote 5: o chat passa a ter uma única fonte de verdade.
+        // Mensagens legadas de prazzu_client_portal_messages/client_portal_messages não entram mais no fluxo do Portal Cliente.
 
-            $mensagens = $mensagens->merge(
-                $query->get()->map(fn ($mensagem) => self::formatarMensagemChat([
-                    'id' => $mensagem->id,
-                    'source' => 'prazzu_client_portal_messages',
-                    'nome' => $mensagem->client_name ?? 'Cliente',
-                    'email' => $mensagem->client_email ?? null,
-                    'mensagem' => trim((string) ($mensagem->message ?? '')) . (! empty($mensagem->attachment) ? "
-
-Anexo enviado: " . $mensagem->attachment : ''),
-                    'origem' => 'cliente',
-                    'conversa_status' => empty($mensagem->read_at ?? null) ? 'aberta' : 'finalizada',
-                    'created_at' => $mensagem->created_at ?? null,
-                    'created_at_label' => self::formatarDataHora($mensagem->created_at ?? null),
-                ]))
-            );
-        }
 
         return $mensagens
             ->filter(fn (array $mensagem): bool => trim((string) ($mensagem['mensagem'] ?? '')) !== '')

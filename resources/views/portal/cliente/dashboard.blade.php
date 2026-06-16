@@ -1269,6 +1269,10 @@
     @endif
 </main>
 
+@if(! empty($socketIoConfig['url']))
+    <script src="{{ rtrim($socketIoConfig['url'], '/') }}/socket.io/socket.io.js"></script>
+@endif
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         window.portalClienteDebugLog('dom_carregado', {
@@ -1284,9 +1288,9 @@
         var sendButton = document.getElementById('portal-chat-send');
         var fileInput = document.getElementById('portal-chat-file');
         var fileName = document.getElementById('portal-file-name');
-        var chatStateUrl = @json($atendimentoAtual ? route('portal.cliente.atendimentos.chat.estado', ['atendimento' => $atendimentoAtual['id']]) : null);
+        var socketConfig = @json($socketIoConfig ?? ['enabled' => false]);
+        var portalAreaSocket = null;
         var csrfToken = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
-        var chatPollingBusy = false;
         var tabButtons = Array.prototype.slice.call(document.querySelectorAll('[data-portal-tab]'));
         var tabPanels = Array.prototype.slice.call(document.querySelectorAll('.portal-tab-panel'));
 
@@ -1443,29 +1447,72 @@
             return artigo;
         }
 
-        async function atualizarChatClienteLogado() {
-            if (! chatStateUrl || ! window.fetch || document.hidden || chatPollingBusy) return;
-            chatPollingBusy = true;
-            try {
-                var response = await fetch(chatStateUrl, {
-                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                    credentials: 'same-origin'
-                });
-                if (! response.ok) return;
-                var data = await response.json();
-                if (data && data.ok) renderPortalMessages(data.messages || []);
-            } catch (error) {
-                window.portalClienteDebugLog('chat_estado_erro', { erro: error && error.message ? error.message : String(error) });
-            } finally {
-                chatPollingBusy = false;
-            }
+        function normalizarMensagemSocket(payload) {
+            if (! payload || String(payload.scope || '') !== 'portal_cliente_logado') return null;
+            if (Number(payload.atendimento_id || 0) !== Number(socketConfig.atendimentoId || 0)) return null;
+
+            return {
+                id: payload.interaction_id || payload.id || ('socket-' + Date.now()),
+                message_id: payload.id || payload.message_id || null,
+                source: payload.source || 'atendimento_interacoes',
+                is_cliente: payload.origem === 'cliente',
+                author: payload.nome || (payload.origem === 'cliente' ? 'Você' : 'Equipe de suporte'),
+                text: payload.mensagem || '',
+                attachments: Array.isArray(payload.attachments) ? payload.attachments : [],
+                time: payload.created_at_label || 'agora'
+            };
         }
 
-        atualizarChatClienteLogado();
-        window.setInterval(atualizarChatClienteLogado, 1200);
-        document.addEventListener('visibilitychange', function () {
-            if (! document.hidden) atualizarChatClienteLogado();
-        });
+        function adicionarMensagemSocket(payload) {
+            var msg = normalizarMensagemSocket(payload);
+            if (! msg || ! chatBody) return;
+
+            var existente = chatBody.querySelector('[data-interacao-id="' + String(msg.id).replace(/"/g, '\\"') + '"]');
+            if (existente) return;
+
+            var atuais = Array.prototype.slice.call(chatBody.querySelectorAll('[data-interacao-id]')).map(function (el) {
+                return {
+                    id: el.getAttribute('data-interacao-id'),
+                    is_cliente: el.classList.contains('is-client'),
+                    author: el.querySelector('.portal-message-author') ? el.querySelector('.portal-message-author').textContent : '',
+                    text: el.querySelector('.portal-message-text') ? el.querySelector('.portal-message-text').textContent : '',
+                    attachments: [],
+                    time: el.querySelector('.portal-message-time') ? el.querySelector('.portal-message-time').textContent : ''
+                };
+            });
+
+            atuais.push(msg);
+            renderPortalMessages(atuais);
+        }
+
+        function connectPortalClienteLogadoSocket() {
+            if (! socketConfig || ! socketConfig.enabled || ! socketConfig.url || ! window.io) return;
+
+            portalAreaSocket = window.io(socketConfig.url, {
+                transports: ['websocket', 'polling'],
+                auth: {
+                    empresaId: socketConfig.empresaId,
+                    actor: socketConfig.actor || 'cliente',
+                    token: socketConfig.token || '',
+                    signature: socketConfig.signature || '',
+                    room: socketConfig.room || ''
+                }
+            });
+
+            portalAreaSocket.on('chat:message:new', function (payload) {
+                if (payload && payload.origem !== 'cliente') {
+                    adicionarMensagemSocket(payload);
+                    portalAreaSocket.emit('chat:seen', { message_id: payload.id || null, room: socketConfig.room || '', at: new Date().toISOString() });
+                }
+            });
+
+            portalAreaSocket.on('connect_error', function (error) {
+                window.portalClienteDebugLog('socket_cliente_logado_erro', { erro: String(error && error.message ? error.message : error) });
+            });
+        }
+
+        connectPortalClienteLogadoSocket();
+
 
         if (fileInput && fileName) {
             fileInput.addEventListener('change', function () {
@@ -1552,8 +1599,11 @@
 
                     if (data && Array.isArray(data.messages)) {
                         renderPortalMessages(data.messages);
-                    } else {
-                        await atualizarChatClienteLogado();
+                    }
+
+                    if (data && data.chat_message && portalAreaSocket && portalAreaSocket.connected) {
+                        data.chat_message.room = data.chat_message.room || socketConfig.room || '';
+                        portalAreaSocket.emit('chat:message:new', data.chat_message);
                     }
                 } catch (error) {
                     if (pendingMessage) {

@@ -167,7 +167,7 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => auth()->check()
-                    ? Blade::render('@include("components.global-search") @include("components.chat-widget")')
+                    ? Blade::render('@include("components.global-search")')
                     : ''
             )
 
