@@ -1410,7 +1410,7 @@
                     ? '<div class="portal-attachment-list">' + msg.attachments.map(renderPortalAttachment).join('') + '</div>'
                     : '';
                 var text = escapeHtml(msg.text || '').replace(/\n/g, '<br>');
-                var avatar = isClient ? '{{ strtoupper(substr($clienteNome, 0, 1)) }}' : 'S';
+            var avatar = isClient ? '{{ strtoupper(substr($clienteNome, 0, 1)) }}' : 'S';
                 var author = escapeHtml(isClient ? 'Você' : (msg.author || 'Equipe de suporte'));
 
                 return '<article class="portal-message ' + (isClient ? 'is-client' : 'is-support') + '" data-interacao-id="' + escapeHtml(msg.id || '') + '">'
@@ -1483,6 +1483,38 @@
 
             atuais.push(msg);
             renderPortalMessages(atuais);
+        }
+
+        function substituirMensagemPendente(pendingMessage, payload) {
+            var msg = normalizarMensagemSocket(payload);
+            if (! msg || ! pendingMessage || ! chatBody) return false;
+
+            var existente = chatBody.querySelector('[data-interacao-id="' + String(msg.id).replace(/"/g, '\"') + '"]');
+            if (existente && existente !== pendingMessage) {
+                pendingMessage.remove();
+                return true;
+            }
+
+            var attachments = Array.isArray(msg.attachments) && msg.attachments.length > 0
+                ? '<div class="portal-attachment-list">' + msg.attachments.map(renderPortalAttachment).join('') + '</div>'
+                : '';
+            var text = escapeHtml(msg.text || '').replace(/
+/g, '<br>');
+            var avatar = '{{ strtoupper(substr($clienteNome, 0, 1)) }}';
+            var author = escapeHtml('Você');
+
+            pendingMessage.className = 'portal-message is-client';
+            pendingMessage.setAttribute('data-interacao-id', escapeHtml(msg.id || ''));
+            pendingMessage.innerHTML = '<div class="portal-message-bubble">'
+                + '<span class="portal-message-author">' + author + '</span>'
+                + (text !== '' ? '<div class="portal-message-text">' + text + '</div>' : '')
+                + attachments
+                + '<span class="portal-message-time">' + escapeHtml(msg.time || 'agora') + '</span>'
+                + '</div>'
+                + '<div class="portal-message-avatar" aria-hidden="true">' + avatar + '</div>';
+
+            chatBody.scrollTop = chatBody.scrollHeight;
+            return true;
         }
 
         function connectPortalClienteLogadoSocket() {
@@ -1599,6 +1631,8 @@
 
                     if (data && Array.isArray(data.messages)) {
                         renderPortalMessages(data.messages);
+                    } else if (data && data.chat_message) {
+                        substituirMensagemPendente(pendingMessage, data.chat_message);
                     }
 
                     if (data && data.chat_message && portalAreaSocket && portalAreaSocket.connected) {

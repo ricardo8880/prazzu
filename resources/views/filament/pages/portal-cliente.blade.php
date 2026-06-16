@@ -1492,7 +1492,7 @@
     </div>
 
     @if(! empty($socketIoConfig['url']))
-        <script src="{{ rtrim($socketIoConfig['url'], '/') }}/socket.io/socket.io.js"></script>
+        <script id="portal-socket-io-client" src="{{ rtrim($socketIoConfig['url'], '/') }}/socket.io/socket.io.js" onload="window.__portalAdminSocketIoScriptLoaded=true" onerror="window.__portalAdminSocketIoScriptError=true"></script>
     @endif
 
     <script>
@@ -1602,6 +1602,11 @@
 
             async function syncAdminMessages(reason) {
                 if (!adminSyncUrl || !window.fetch || adminOfflineSyncInFlight) return;
+                const forceSync = ['manual', 'socket_connect', 'socket_connected'].includes(String(reason || ''));
+                if (!forceSync && socket && socket.connected) {
+                    stopAdminOfflineSync();
+                    return;
+                }
                 adminOfflineSyncInFlight = true;
                 const afterId = latestAdminChatMessageId();
                 const url = new URL(adminSyncUrl, window.location.origin);
@@ -1627,15 +1632,22 @@
             }
 
             function startAdminOfflineSync(reason) {
-                if (adminOfflineSyncTimer) return;
-                window.setTimeout(function () { syncAdminMessages(reason || 'socket_offline'); }, 1200);
+                if (socket && socket.connected) return;
+                if (window.__portalAdminOfflineSyncTimer) {
+                    adminOfflineSyncTimer = window.__portalAdminOfflineSyncTimer;
+                    return;
+                }
+                window.setTimeout(function () { syncAdminMessages(reason || 'socket_offline'); }, 500);
                 adminOfflineSyncTimer = window.setInterval(function () { syncAdminMessages(reason || 'socket_offline'); }, 10000);
+                window.__portalAdminOfflineSyncTimer = adminOfflineSyncTimer;
             }
 
             function stopAdminOfflineSync() {
-                if (!adminOfflineSyncTimer) return;
-                window.clearInterval(adminOfflineSyncTimer);
+                const timer = adminOfflineSyncTimer || window.__portalAdminOfflineSyncTimer;
+                if (!timer) return;
+                window.clearInterval(timer);
                 adminOfflineSyncTimer = null;
+                window.__portalAdminOfflineSyncTimer = null;
             }
 
             function setSending(form, sending) {
@@ -1686,6 +1698,79 @@
                     typingState.active = false;
                     socket.emit('chat:typing:stop', { nome: supportName, room: socketConfig.room || '' });
                 }, hasText ? 1200 : 0);
+            }
+
+            function loadSocketIoClient() {
+                return new Promise(function (resolve) {
+                    if (window.io) {
+                        resolve(true);
+                        return;
+                    }
+
+                    if (!socketConfig?.url) {
+                        resolve(false);
+                        return;
+                    }
+
+                    const src = String(socketConfig.url).replace(/\/$/, '') + '/socket.io/socket.io.js';
+                    let script = document.getElementById('portal-socket-io-client')
+                        || Array.from(document.scripts).find(function (item) { return item.src === src; });
+
+                    const done = function (ok) {
+                        resolve(Boolean(ok && window.io));
+                    };
+
+                    if (!script) {
+                        script = document.createElement('script');
+                        script.id = 'portal-socket-io-client';
+                        script.src = src;
+                        script.async = false;
+                        document.head.appendChild(script);
+                    }
+
+                    if (window.__portalAdminSocketIoScriptLoaded || window.io) {
+                        done(true);
+                        return;
+                    }
+
+                    if (window.__portalAdminSocketIoScriptError) {
+                        done(false);
+                        return;
+                    }
+
+                    script.addEventListener('load', function () {
+                        window.__portalAdminSocketIoScriptLoaded = true;
+                        done(true);
+                    }, { once: true });
+
+                    script.addEventListener('error', function () {
+                        window.__portalAdminSocketIoScriptError = true;
+                        done(false);
+                    }, { once: true });
+
+                    window.setTimeout(function () {
+                        done(Boolean(window.io));
+                    }, 2500);
+                });
+            }
+
+            async function initializeAdminSocket() {
+                if (!socketConfig?.enabled || !socketConfig?.url) {
+                    startAdminOfflineSync('socket_disabled');
+                    return;
+                }
+
+                const loaded = await loadSocketIoClient();
+                if (!loaded || !window.io) {
+                    adminDebug('socket_admin_connect_error', {
+                        erro: window.__portalAdminSocketIoScriptError ? 'socket_io_client_load_error' : 'socket_io_client_missing',
+                        url: socketConfig.url,
+                    });
+                    startAdminOfflineSync('socket_client_missing');
+                    return;
+                }
+
+                connectSocket();
             }
 
             function connectSocket() {
@@ -1763,7 +1848,7 @@
                 });
             }
 
-            connectSocket();
+            initializeAdminSocket();
 
             async function enviarMensagemSuporte(form, event) {
                 if (event) event.preventDefault();

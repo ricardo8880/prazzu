@@ -259,8 +259,15 @@ class PortalClienteAreaController extends Controller
             return response()->json([
                 'ok' => true,
                 'message' => count($anexos) > 0 ? 'Mensagem e arquivo(s) enviados com sucesso.' : 'Mensagem enviada com sucesso.',
-                'messages' => $this->mensagensTempoReal($atendimentoId),
-                'chat_message' => $this->ultimaInteracaoSocketPayload($atendimentoId, $empresaId, $portalMensagem, $interacaoId),
+                'chat_message' => $this->payloadSocketMensagemClienteLogado(
+                    $atendimentoId,
+                    $empresaId,
+                    $portalMensagem,
+                    $interacaoId,
+                    $mensagem,
+                    $anexos,
+                    $cliente->nome ?? 'Cliente'
+                ),
             ]);
         }
 
@@ -655,6 +662,83 @@ class PortalClienteAreaController extends Controller
                 ? route('portal.cliente.atendimentos.chat.estado', ['atendimento' => $atendimentoId])
                 : null,
         ];
+    }
+
+    /**
+     * Payload leve para o envio do cliente logado.
+     * Evita recarregar todo o histórico do atendimento antes de emitir o Socket.IO.
+     *
+     * @param  array<int, array<string, mixed>>  $anexos
+     * @return array<string, mixed>|null
+     */
+    private function payloadSocketMensagemClienteLogado(int $atendimentoId, int $empresaId, ?PortalMensagem $portalMensagem, ?int $interacaoId, string $mensagem, array $anexos, string $clienteNome): ?array
+    {
+        if (! $portalMensagem instanceof PortalMensagem || ! $interacaoId) {
+            return null;
+        }
+
+        $messageId = (int) $portalMensagem->id;
+        $room = 'empresa:' . $empresaId . ':atendimento:' . $atendimentoId;
+        $actor = 'cliente';
+        $agora = $portalMensagem->created_at ?: now();
+        $texto = trim($mensagem) !== '' ? trim($mensagem) : $this->textoAnexosParaMensagemPortal($anexos);
+
+        return [
+            'id' => $messageId,
+            'message_id' => $messageId,
+            'interaction_id' => (int) $interacaoId,
+            'source' => 'portal_mensagens',
+            'scope' => 'portal_cliente_logado',
+            'empresa_id' => $empresaId,
+            'atendimento_id' => $atendimentoId,
+            'room' => $room,
+            'room_scope' => 'atendimento',
+            'actor' => $actor,
+            'server_signature' => $this->socketMessageSignature($empresaId, $room, $actor, $messageId),
+            'origem' => 'cliente',
+            'nome' => trim($clienteNome) !== '' ? trim($clienteNome) : 'Cliente',
+            'tipo' => count($anexos) > 0 ? 'anexo' : 'resposta',
+            'mensagem' => $texto,
+            'created_at_label' => $this->dataHora($agora),
+            'attachments' => $this->formatarAnexosSocketClienteLogado($atendimentoId, (int) $interacaoId, $anexos),
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $anexos
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatarAnexosSocketClienteLogado(int $atendimentoId, int $interacaoId, array $anexos): array
+    {
+        if ($anexos === []) {
+            return [];
+        }
+
+        return collect($anexos)
+            ->filter(fn ($anexo) => is_array($anexo) && ! empty($anexo['caminho']))
+            ->map(function (array $anexo) use ($atendimentoId, $interacaoId): array {
+                $mime = (string) ($anexo['mime'] ?? 'application/octet-stream');
+                $tamanho = (int) ($anexo['tamanho'] ?? 0);
+
+                return [
+                    'name' => (string) ($anexo['nome_original'] ?? 'arquivo'),
+                    'ext' => strtoupper((string) ($anexo['extensao'] ?? 'ARQ')),
+                    'size' => $this->tamanhoArquivo($tamanho),
+                    'mime' => $mime,
+                    'url' => route('portal.cliente.atendimentos.anexo', [
+                        'atendimento' => $atendimentoId,
+                        'interacao' => $interacaoId,
+                    ]),
+                    'preview_url' => route('portal.cliente.atendimentos.anexo', [
+                        'atendimento' => $atendimentoId,
+                        'interacao' => $interacaoId,
+                        'preview' => 1,
+                    ]),
+                    'is_image' => Str::startsWith($mime, 'image/'),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**

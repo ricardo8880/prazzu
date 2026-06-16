@@ -261,13 +261,15 @@ Route::middleware(['auth'])->group(function (): void {
             })
             ->values();
 
-        Log::info('[PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas', [
-            'empresa_id' => $empresaId,
-            'user_id' => auth()->id(),
-            'after_id' => $afterId,
-            'quantidade' => $mensagens->count(),
-            'socket_fallback' => true,
-        ]);
+        if ($mensagens->isNotEmpty()) {
+            Log::info('[PORTAL_CHAT_EQUIPE_SYNC] mensagens_novas', [
+                'empresa_id' => $empresaId,
+                'user_id' => auth()->id(),
+                'after_id' => $afterId,
+                'quantidade' => $mensagens->count(),
+                'socket_fallback' => true,
+            ]);
+        }
 
         return response()->json([
             'ok' => true,

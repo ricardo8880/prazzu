@@ -425,13 +425,15 @@ class PortalClientePublicoController extends Controller
             })
             ->values();
 
-        Log::info('[PORTAL_CLIENTE_PUBLICO_SYNC] mensagens_novas', [
-            'empresa_id' => $empresaId,
-            'token_hash' => hash('sha256', $token),
-            'after_id' => $afterId,
-            'quantidade' => $mensagens->count(),
-            'socket_fallback' => true,
-        ]);
+        if ($mensagens->isNotEmpty()) {
+            Log::info('[PORTAL_CLIENTE_PUBLICO_SYNC] mensagens_novas', [
+                'empresa_id' => $empresaId,
+                'token_hash' => hash('sha256', $token),
+                'after_id' => $afterId,
+                'quantidade' => $mensagens->count(),
+                'socket_fallback' => true,
+            ]);
+        }
 
         return response()->json([
             'ok' => true,

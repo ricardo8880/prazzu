@@ -2573,18 +2573,25 @@
     }
 
     function startPublicOfflineSync(reason = 'socket_offline') {
-        if (portalOfflineSyncTimer) return;
+        if (portalChatSocket && portalChatSocket.connected) return;
+        if (window.__portalPublicOfflineSyncTimer) {
+            portalOfflineSyncTimer = window.__portalPublicOfflineSyncTimer;
+            return;
+        }
         portalDebug('socket_public_offline_sync_enabled', { reason });
         portalOfflineSyncTimer = window.setInterval(function () {
             syncPublicMessagesWhenSocketOffline(reason);
-        }, 3000);
+        }, 10000);
+        window.__portalPublicOfflineSyncTimer = portalOfflineSyncTimer;
         syncPublicMessagesWhenSocketOffline(reason);
     }
 
     function stopPublicOfflineSync() {
-        if (!portalOfflineSyncTimer) return;
-        window.clearInterval(portalOfflineSyncTimer);
+        const timer = portalOfflineSyncTimer || window.__portalPublicOfflineSyncTimer;
+        if (!timer) return;
+        window.clearInterval(timer);
         portalOfflineSyncTimer = null;
+        window.__portalPublicOfflineSyncTimer = null;
         portalDebug('socket_public_offline_sync_disabled');
     }
 
