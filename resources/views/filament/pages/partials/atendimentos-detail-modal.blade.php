@@ -1,5 +1,5 @@
         <div class="at-modal" x-show="detalhe" x-cloak>
-            <div class="at-modal-card wide at-ticket-modal-shell" @click.outside="detalhe = false">
+            <div class="at-modal-card wide at-ticket-modal-shell" @click.outside="$wire.fecharDetalhe()">
                 @if($selectedAtendimento)
                     @php
                         $clienteInicial = mb_strtoupper(mb_substr(trim($selectedAtendimento['empresa_nome'] ?? 'Cliente'), 0, 1));
@@ -13,6 +13,19 @@
                             ->values();
                         $primeiroLogCliente = collect($timeline)->first(fn ($log) => in_array(($log['origem'] ?? ''), ['cliente', 'portal', 'publico'], true));
                         $eventosOperacionais = collect($timeline)->reverse()->values();
+                        $temResponsavel = ! empty($selectedAtendimento['responsavel_id']);
+                        $temCanalResposta = ! empty($selectedAtendimento['portal_solicitacao_id'])
+                            || ! empty($selectedAtendimento['portal_mensagem_id'])
+                            || (trim((string) $clienteEmail) !== '' && $clienteEmail !== 'Sem e-mail');
+                        $proximaAcao = match (true) {
+                            $statusFechado => ['tone' => 'neutral', 'icon' => 'bi-arrow-counterclockwise', 'titulo' => 'Atendimento finalizado', 'texto' => 'Reabra somente se precisar continuar a conversa ou registrar uma nova ação.'],
+                            ! $temResponsavel => ['tone' => 'warning', 'icon' => 'bi-person-check', 'titulo' => 'Definir responsável', 'texto' => 'Assuma ou atribua este atendimento antes de resolver, encerrar ou solicitar documentos.'],
+                            ! $temCanalResposta => ['tone' => 'danger', 'icon' => 'bi-exclamation-triangle', 'titulo' => 'Cliente sem canal de resposta', 'texto' => 'Cadastre e-mail ou vínculo de portal antes de enviar uma resposta ao cliente.'],
+                            ! empty($selectedAtendimento['sla_vencido']) => ['tone' => 'danger', 'icon' => 'bi-alarm', 'titulo' => 'SLA vencido', 'texto' => 'Priorize este atendimento e registre a ação tomada para manter rastreabilidade.'],
+                            $statusAtual === \App\Support\AtendimentoStatus::AGUARDANDO_CLIENTE => ['tone' => 'warning', 'icon' => 'bi-hourglass-split', 'titulo' => 'Aguardar cliente', 'texto' => 'Acompanhe o retorno do cliente; se necessário, envie reforço ou solicite documento.'],
+                            $statusAtual === \App\Support\AtendimentoStatus::ABERTO => ['tone' => 'primary', 'icon' => 'bi-play-circle', 'titulo' => 'Iniciar atendimento', 'texto' => 'Marque como em andamento, responda o cliente ou atribua um responsável.'],
+                            default => ['tone' => 'primary', 'icon' => 'bi-chat-dots', 'titulo' => 'Continuar atendimento', 'texto' => 'Responda, solicite documento, crie pendência ou resolva quando concluir.'],
+                        };
                     @endphp
 
                     <header class="at-ticket-modal-head">
@@ -29,42 +42,51 @@
                         </div>
 
                         <div class="at-ticket-modal-actions">
-                            <details class="at-ticket-control">
-                                <summary><i class="bi bi-record-circle" aria-hidden="true"></i> Marcar como... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
-                                <div class="at-ticket-control-panel">
-                                    <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'em_andamento')"><span class="at-dot primary"></span> Em andamento</button>
-                                    <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'aguardando_cliente')"><span class="at-dot warning"></span> Aguardando cliente</button>
-                                    <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Resolvido</button>
-                                    <button type="button" wire:click="encerrarComMotivo" class="danger"><span class="at-dot danger"></span> Encerrar com motivo</button>
-                                </div>
-                            </details>
+                            @if(! $statusFechado)
+                                <details class="at-ticket-control">
+                                    <summary><i class="bi bi-record-circle" aria-hidden="true"></i> Alterar status <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+                                    <div class="at-ticket-control-panel">
+                                        @if($statusAtual !== \App\Support\AtendimentoStatus::EM_ANDAMENTO)
+                                            <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'em_andamento')"><span class="at-dot primary"></span> Em andamento</button>
+                                        @endif
+                                        @if($statusAtual !== \App\Support\AtendimentoStatus::AGUARDANDO_CLIENTE)
+                                            <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'aguardando_cliente')"><span class="at-dot warning"></span> Aguardando cliente</button>
+                                        @endif
+                                        @if($statusAtual !== \App\Support\AtendimentoStatus::RESOLVIDO)
+                                            <button type="button" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Resolvido</button>
+                                        @endif
+                                    </div>
+                                </details>
 
-                            <details class="at-ticket-control">
-                                <summary><i class="bi bi-person-plus" aria-hidden="true"></i> Atribuir a... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
-                                <div class="at-ticket-control-panel">
-                                    @foreach($responsaveis as $resp)
-                                        <button type="button" wire:click="atribuirResponsavelDetalhe({{ $resp['id'] }})"><i class="bi bi-person" aria-hidden="true"></i> {{ $resp['nome'] }}</button>
-                                    @endforeach
-                                    @if(empty($responsaveis))
-                                        <button type="button" disabled><i class="bi bi-info-circle" aria-hidden="true"></i> Nenhum responsável disponível</button>
-                                    @endif
-                                </div>
-                            </details>
+                                <details class="at-ticket-control">
+                                    <summary><i class="bi bi-person-plus" aria-hidden="true"></i> Atribuir a... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+                                    <div class="at-ticket-control-panel">
+                                        @foreach($responsaveis as $resp)
+                                            <button type="button" wire:click="atribuirResponsavelDetalhe({{ $resp['id'] }})"><i class="bi bi-person" aria-hidden="true"></i> {{ $resp['nome'] }}</button>
+                                        @endforeach
+                                        @if(empty($responsaveis))
+                                            <button type="button" disabled><i class="bi bi-info-circle" aria-hidden="true"></i> Nenhum responsável disponível</button>
+                                        @endif
+                                    </div>
+                                </details>
+                            @else
+                                <button type="button" class="at-ticket-header-action" wire:click="reabrirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir</button>
+                            @endif
 
                             <details class="at-ticket-control at-ticket-more-control">
                                 <summary class="at-ticket-icon-summary" title="Mais opções"><i class="bi bi-three-dots" aria-hidden="true"></i></summary>
                                 <div class="at-ticket-control-panel at-ticket-more-panel">
                                     <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('#{{ $selectedAtendimento['id'] }}')"><i class="bi bi-clipboard" aria-hidden="true"></i> Copiar protocolo</button>
-                                    @if(! $selectedAtendimento['responsavel_id'])
+                                    @if(! $statusFechado && ! $selectedAtendimento['responsavel_id'])
                                         <button type="button" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
                                     @endif
-                                    <button type="button" wire:click="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
-                                    <button type="button" wire:click="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
-                                    <button type="button" wire:click="reabrirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir atendimento</button>
-                                    <button type="button" class="danger" wire:click="encerrarComMotivo"><i class="bi bi-x-octagon" aria-hidden="true"></i> Encerrar com motivo</button>
+                                    @if(! $statusFechado)
+                                        <button type="button" wire:click="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
+                                        <button type="button" wire:click="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
+                                    @endif
                                 </div>
                             </details>
-                            <button type="button" class="at-ticket-icon-btn" title="Fechar" @click="detalhe = false"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                            <button type="button" class="at-ticket-icon-btn" title="Fechar" wire:click="fecharDetalhe"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                         </div>
                     </header>
 
@@ -135,7 +157,7 @@
                         <main class="at-ticket-center">
                             <header class="at-ticket-conversation-head">
                                 <span>Conversa</span>
-                                <span class="at-ticket-order-select">Ordenar: Mais antigos <i class="bi bi-chevron-down" aria-hidden="true"></i></span>
+                                <span class="at-ticket-order-select">Mais antigos primeiro</span>
                             </header>
 
                             <div class="at-ticket-chat-scroll">
@@ -186,7 +208,7 @@
                                 </div>
                             </div>
 
-                            @if(! $statusFechado)
+                            @if(! $statusFechado && $temCanalResposta)
                                 <section class="at-ticket-reply-box">
                                     <textarea wire:model="novaRespostaCliente" placeholder="Digite sua resposta..."></textarea>
                                     <div class="at-ticket-reply-actions">
@@ -195,7 +217,6 @@
                                                 <i class="bi bi-paperclip" aria-hidden="true"></i>
                                                 <input type="file" wire:model="anexoRespostaCliente" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,image/jpeg,image/png,image/webp,application/pdf">
                                             </label>
-                                            <button type="button" class="at-ticket-icon-btn" title="Emoji"><i class="bi bi-emoji-smile" aria-hidden="true"></i></button>
                                             <select class="at-ticket-quick-select" wire:change="$set('novaRespostaCliente', $event.target.value)">
                                                 <option value="">Respostas rápidas</option>
                                                 <option value="Olá! Recebemos sua mensagem e já estamos analisando o problema. Em breve retorno com mais informações.">Recebemos sua mensagem</option>
@@ -216,6 +237,8 @@
                                     <small class="at-ticket-reply-hint" wire:loading.remove wire:target="anexoRespostaCliente">Pressione o botão para enviar ao portal do cliente</small>
                                     <small class="at-ticket-reply-hint" wire:loading wire:target="anexoRespostaCliente">Carregando anexo...</small>
                                 </section>
+                            @elseif(! $statusFechado && ! $temCanalResposta)
+                                <div class="at-ticket-finalized danger"><strong>Cliente sem canal de resposta.</strong><br>Cadastre e-mail ou vínculo de portal antes de enviar mensagem.</div>
                             @else
                                 <div class="at-ticket-finalized">Atendimento finalizado. Reabra para responder ao cliente.</div>
                             @endif
@@ -231,7 +254,12 @@
                                         <small>{{ $clienteEmail }}</small>
                                     </div>
                                 </div>
-                                <button type="button" class="at-ticket-side-btn"><i class="bi bi-person" aria-hidden="true"></i> Ver perfil do cliente <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></button>
+                                <div class="at-ticket-mini-info">
+                                    <span>Empresa ID</span><strong>#{{ $selectedAtendimento['empresa_id'] ?? '-' }}</strong>
+                                    @if(!empty($selectedAtendimento['crm_cliente_id']))
+                                        <span>Cliente CRM</span><strong>#{{ $selectedAtendimento['crm_cliente_id'] }}</strong>
+                                    @endif
+                                </div>
                             </section>
 
                             <section class="at-ticket-panel">
@@ -244,10 +272,29 @@
                                     </div>
                                 </div>
                                 @if(! $selectedAtendimento['responsavel_id'])
-                                    <button type="button" class="at-ticket-side-btn" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                    @if(! $statusFechado)
+                                        <button type="button" class="at-ticket-side-btn" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                    @else
+                                        <div class="at-ticket-hint">Atendimento fechado sem responsável.</div>
+                                    @endif
                                 @else
-                                    <button type="button" class="at-ticket-side-btn" wire:click="salvarDetalhe"><i class="bi bi-person-gear" aria-hidden="true"></i> Alterar responsável</button>
+                                    @if(! $statusFechado)
+                                        <div class="at-ticket-hint">Para trocar o responsável, use o menu <strong>Atribuir a...</strong> no topo.</div>
+                                    @else
+                                        <div class="at-ticket-hint">Atendimento fechado. Reabra para alterar o responsável.</div>
+                                    @endif
                                 @endif
+                            </section>
+
+                            <section class="at-ticket-panel at-ticket-next-panel tone-{{ $proximaAcao['tone'] }}">
+                                <header class="at-ticket-panel-header">Próxima ação recomendada</header>
+                                <div class="at-ticket-next-action">
+                                    <span><i class="bi {{ $proximaAcao['icon'] }}" aria-hidden="true"></i></span>
+                                    <div>
+                                        <strong>{{ $proximaAcao['titulo'] }}</strong>
+                                        <p>{{ $proximaAcao['texto'] }}</p>
+                                    </div>
+                                </div>
                             </section>
 
                             @if(! $statusFechado)
@@ -274,18 +321,27 @@
                                 </section>
                             @endif
 
-                            <section class="at-ticket-panel">
-                                <header class="at-ticket-panel-header">Ações rápidas</header>
-                                <div class="at-ticket-quick-list">
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'em_andamento')"><span class="at-dot primary"></span> Marcar como em andamento</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'aguardando_cliente')"><span class="at-dot warning"></span> Marcar como aguardando</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="criarPendenciaDoAtendimento" wire:loading.attr="disabled" wire:target="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="solicitarDocumentoDoAtendimento" wire:loading.attr="disabled" wire:target="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="reabrirAtendimento({{ $selectedAtendimento['id'] }})"><span class="at-dot info"></span> Reabrir atendimento</button>
-                                    <button type="button" class="at-ticket-quick-btn danger" wire:click="encerrarComMotivo"><span class="at-dot danger"></span> Encerrar com motivo</button>
-                                </div>
-                            </section>
+                            @if(! $statusFechado)
+                                <section class="at-ticket-panel">
+                                    <header class="at-ticket-panel-header">Ações rápidas</header>
+                                    <div class="at-ticket-quick-list">
+                                        @if(! $selectedAtendimento['responsavel_id'])
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                        @endif
+                                        @if($statusAtual !== \App\Support\AtendimentoStatus::EM_ANDAMENTO)
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'em_andamento')"><span class="at-dot primary"></span> Marcar como em andamento</button>
+                                        @endif
+                                        @if($statusAtual !== \App\Support\AtendimentoStatus::AGUARDANDO_CLIENTE)
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'aguardando_cliente')"><span class="at-dot warning"></span> Marcar como aguardando cliente</button>
+                                        @endif
+                                        @if($statusAtual !== \App\Support\AtendimentoStatus::RESOLVIDO)
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
+                                        @endif
+                                        <button type="button" class="at-ticket-quick-btn" wire:click="criarPendenciaDoAtendimento" wire:loading.attr="disabled" wire:target="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência interna</button>
+                                        <button type="button" class="at-ticket-quick-btn" wire:click="solicitarDocumentoDoAtendimento" wire:loading.attr="disabled" wire:target="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento no portal</button>
+                                    </div>
+                                </section>
+                            @endif
 
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Histórico de status</header>
@@ -307,7 +363,7 @@
                             <span class="at-ticket-modal-title-icon"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></span>
                             <div><h2>Carregando atendimento...</h2><p>Aguarde enquanto os dados são preparados.</p></div>
                         </div>
-                        <button type="button" class="at-ticket-icon-btn" title="Fechar" @click="detalhe = false"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                        <button type="button" class="at-ticket-icon-btn" title="Fechar" wire:click="fecharDetalhe"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                     </header>
                 @endif
             </div>

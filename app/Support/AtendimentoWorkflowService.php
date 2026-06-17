@@ -48,7 +48,15 @@ class AtendimentoWorkflowService
             $this->registrarInteracao(
                 (int) $atendimento->id,
                 'responsavel',
-                'Atendimento assumido por ' . (auth()->user()?->name ?: 'usuário interno') . '.'
+                'Atendimento assumido por ' . (auth()->user()?->name ?: 'usuário interno') . '.',
+                [
+                    'acao' => 'assumir_atendimento',
+                    'status_anterior' => (string) $atendimento->status,
+                    'status_novo' => (string) $payload['status'],
+                    'responsavel_anterior_id' => $atendimento->responsavel_id,
+                    'responsavel_novo_id' => auth()->id(),
+                    'origem_coluna' => 'sistema',
+                ]
             );
         });
     }
@@ -83,7 +91,13 @@ class AtendimentoWorkflowService
                 $mensagem .= "\n\nResumo: " . $mensagemOperacional;
             }
 
-            $this->registrarInteracao((int) $atendimento->id, $tipo, $mensagem);
+            $this->registrarInteracao((int) $atendimento->id, $tipo, $mensagem, [
+                'acao' => 'alterar_status',
+                'status_anterior' => $statusAnterior,
+                'status_novo' => $status,
+                'responsavel_id' => $atendimento->responsavel_id,
+                'origem_coluna' => 'sistema',
+            ]);
             $this->sincronizarPortalVinculado($atendimento->refresh(), $status, $mensagemOperacional);
         });
     }
@@ -137,12 +151,14 @@ class AtendimentoWorkflowService
             return;
         }
 
+        $metadata = is_array($metadata) ? $metadata : [];
         $origem = 'interno';
-        if (is_array($metadata ?? null) && isset($metadata['origem_coluna'])) {
+        if (isset($metadata['origem_coluna'])) {
             $origemInformada = (string) $metadata['origem_coluna'];
             if (in_array($origemInformada, ['interno', 'suporte', 'sistema', 'cliente', 'portal', 'publico'], true)) {
                 $origem = $origemInformada;
             }
+            unset($metadata['origem_coluna']);
         }
 
         $payload = [
@@ -151,14 +167,30 @@ class AtendimentoWorkflowService
             'origem' => $origem,
             'tipo' => $tipo,
             'mensagem' => $mensagem,
+            'metadata' => $this->metadataAuditoria($metadata),
         ];
 
-        if ($metadata !== null) {
-            unset($metadata['origem_coluna']);
-            $payload['metadata'] = $metadata;
-        }
-
         AtendimentoInteracao::query()->create($payload);
+    }
+
+    private function metadataAuditoria(array $metadata): array
+    {
+        $user = auth()->user();
+        $request = request();
+
+        $metadata['auditoria'] = [
+            'registrado_em' => now()->toDateTimeString(),
+            'usuario_id' => $user?->id,
+            'usuario_nome' => $user?->name,
+            'usuario_email' => $user?->email,
+            'ip' => $request?->ip(),
+            'user_agent' => $request?->userAgent(),
+            'origem_interface' => $metadata['origem_interface'] ?? 'filament_atendimentos_popup_abrir',
+        ];
+
+        unset($metadata['origem_interface']);
+
+        return $metadata;
     }
 
     public function usuarioResponsavelValido(int $userId): bool

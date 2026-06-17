@@ -1,5 +1,5 @@
         <div class="at-modal" x-show="detalhe" x-cloak>
-            <div class="at-modal-card wide at-ticket-modal-shell" @click.outside="detalhe = false">
+            <div class="at-modal-card wide at-ticket-modal-shell" @click.outside="$wire.fecharDetalhe()">
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($selectedAtendimento): ?>
                     <?php
                         $clienteInicial = mb_strtoupper(mb_substr(trim($selectedAtendimento['empresa_nome'] ?? 'Cliente'), 0, 1));
@@ -13,6 +13,19 @@
                             ->values();
                         $primeiroLogCliente = collect($timeline)->first(fn ($log) => in_array(($log['origem'] ?? ''), ['cliente', 'portal', 'publico'], true));
                         $eventosOperacionais = collect($timeline)->reverse()->values();
+                        $temResponsavel = ! empty($selectedAtendimento['responsavel_id']);
+                        $temCanalResposta = ! empty($selectedAtendimento['portal_solicitacao_id'])
+                            || ! empty($selectedAtendimento['portal_mensagem_id'])
+                            || (trim((string) $clienteEmail) !== '' && $clienteEmail !== 'Sem e-mail');
+                        $proximaAcao = match (true) {
+                            $statusFechado => ['tone' => 'neutral', 'icon' => 'bi-arrow-counterclockwise', 'titulo' => 'Atendimento finalizado', 'texto' => 'Reabra somente se precisar continuar a conversa ou registrar uma nova ação.'],
+                            ! $temResponsavel => ['tone' => 'warning', 'icon' => 'bi-person-check', 'titulo' => 'Definir responsável', 'texto' => 'Assuma ou atribua este atendimento antes de resolver, encerrar ou solicitar documentos.'],
+                            ! $temCanalResposta => ['tone' => 'danger', 'icon' => 'bi-exclamation-triangle', 'titulo' => 'Cliente sem canal de resposta', 'texto' => 'Cadastre e-mail ou vínculo de portal antes de enviar uma resposta ao cliente.'],
+                            ! empty($selectedAtendimento['sla_vencido']) => ['tone' => 'danger', 'icon' => 'bi-alarm', 'titulo' => 'SLA vencido', 'texto' => 'Priorize este atendimento e registre a ação tomada para manter rastreabilidade.'],
+                            $statusAtual === \App\Support\AtendimentoStatus::AGUARDANDO_CLIENTE => ['tone' => 'warning', 'icon' => 'bi-hourglass-split', 'titulo' => 'Aguardar cliente', 'texto' => 'Acompanhe o retorno do cliente; se necessário, envie reforço ou solicite documento.'],
+                            $statusAtual === \App\Support\AtendimentoStatus::ABERTO => ['tone' => 'primary', 'icon' => 'bi-play-circle', 'titulo' => 'Iniciar atendimento', 'texto' => 'Marque como em andamento, responda o cliente ou atribua um responsável.'],
+                            default => ['tone' => 'primary', 'icon' => 'bi-chat-dots', 'titulo' => 'Continuar atendimento', 'texto' => 'Responda, solicite documento, crie pendência ou resolva quando concluir.'],
+                        };
                     ?>
 
                     <header class="at-ticket-modal-head">
@@ -30,42 +43,51 @@
                         </div>
 
                         <div class="at-ticket-modal-actions">
-                            <details class="at-ticket-control">
-                                <summary><i class="bi bi-record-circle" aria-hidden="true"></i> Marcar como... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
-                                <div class="at-ticket-control-panel">
-                                    <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'em_andamento')"><span class="at-dot primary"></span> Em andamento</button>
-                                    <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'aguardando_cliente')"><span class="at-dot warning"></span> Aguardando cliente</button>
-                                    <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'resolvido')"><span class="at-dot success"></span> Resolvido</button>
-                                    <button type="button" wire:click="encerrarComMotivo" class="danger"><span class="at-dot danger"></span> Encerrar com motivo</button>
-                                </div>
-                            </details>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
+                                <details class="at-ticket-control">
+                                    <summary><i class="bi bi-record-circle" aria-hidden="true"></i> Alterar status <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+                                    <div class="at-ticket-control-panel">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($statusAtual !== \App\Support\AtendimentoStatus::EM_ANDAMENTO): ?>
+                                            <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'em_andamento')"><span class="at-dot primary"></span> Em andamento</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($statusAtual !== \App\Support\AtendimentoStatus::AGUARDANDO_CLIENTE): ?>
+                                            <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'aguardando_cliente')"><span class="at-dot warning"></span> Aguardando cliente</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($statusAtual !== \App\Support\AtendimentoStatus::RESOLVIDO): ?>
+                                            <button type="button" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'resolvido')"><span class="at-dot success"></span> Resolvido</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </div>
+                                </details>
 
-                            <details class="at-ticket-control">
-                                <summary><i class="bi bi-person-plus" aria-hidden="true"></i> Atribuir a... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
-                                <div class="at-ticket-control-panel">
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $responsaveis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                                        <button type="button" wire:click="atribuirResponsavelDetalhe(<?php echo e($resp['id']); ?>)"><i class="bi bi-person" aria-hidden="true"></i> <?php echo e($resp['nome']); ?></button>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(empty($responsaveis)): ?>
-                                        <button type="button" disabled><i class="bi bi-info-circle" aria-hidden="true"></i> Nenhum responsável disponível</button>
-                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                </div>
-                            </details>
+                                <details class="at-ticket-control">
+                                    <summary><i class="bi bi-person-plus" aria-hidden="true"></i> Atribuir a... <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+                                    <div class="at-ticket-control-panel">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $responsaveis; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $resp): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <button type="button" wire:click="atribuirResponsavelDetalhe(<?php echo e($resp['id']); ?>)"><i class="bi bi-person" aria-hidden="true"></i> <?php echo e($resp['nome']); ?></button>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(empty($responsaveis)): ?>
+                                            <button type="button" disabled><i class="bi bi-info-circle" aria-hidden="true"></i> Nenhum responsável disponível</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    </div>
+                                </details>
+                            <?php else: ?>
+                                <button type="button" class="at-ticket-header-action" wire:click="reabrirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir</button>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                             <details class="at-ticket-control at-ticket-more-control">
                                 <summary class="at-ticket-icon-summary" title="Mais opções"><i class="bi bi-three-dots" aria-hidden="true"></i></summary>
                                 <div class="at-ticket-control-panel at-ticket-more-panel">
                                     <button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText('#<?php echo e($selectedAtendimento['id']); ?>')"><i class="bi bi-clipboard" aria-hidden="true"></i> Copiar protocolo</button>
-                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $selectedAtendimento['responsavel_id']): ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado && ! $selectedAtendimento['responsavel_id']): ?>
                                         <button type="button" wire:click="assumirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
                                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                                    <button type="button" wire:click="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
-                                    <button type="button" wire:click="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
-                                    <button type="button" wire:click="reabrirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i> Reabrir atendimento</button>
-                                    <button type="button" class="danger" wire:click="encerrarComMotivo"><i class="bi bi-x-octagon" aria-hidden="true"></i> Encerrar com motivo</button>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
+                                        <button type="button" wire:click="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
+                                        <button type="button" wire:click="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </details>
-                            <button type="button" class="at-ticket-icon-btn" title="Fechar" @click="detalhe = false"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                            <button type="button" class="at-ticket-icon-btn" title="Fechar" wire:click="fecharDetalhe"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                         </div>
                     </header>
 
@@ -136,7 +158,7 @@
                         <main class="at-ticket-center">
                             <header class="at-ticket-conversation-head">
                                 <span>Conversa</span>
-                                <span class="at-ticket-order-select">Ordenar: Mais antigos <i class="bi bi-chevron-down" aria-hidden="true"></i></span>
+                                <span class="at-ticket-order-select">Mais antigos primeiro</span>
                             </header>
 
                             <div class="at-ticket-chat-scroll">
@@ -187,7 +209,7 @@
                                 </div>
                             </div>
 
-                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado && $temCanalResposta): ?>
                                 <section class="at-ticket-reply-box">
                                     <textarea wire:model="novaRespostaCliente" placeholder="Digite sua resposta..."></textarea>
                                     <div class="at-ticket-reply-actions">
@@ -196,7 +218,6 @@
                                                 <i class="bi bi-paperclip" aria-hidden="true"></i>
                                                 <input type="file" wire:model="anexoRespostaCliente" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,image/jpeg,image/png,image/webp,application/pdf">
                                             </label>
-                                            <button type="button" class="at-ticket-icon-btn" title="Emoji"><i class="bi bi-emoji-smile" aria-hidden="true"></i></button>
                                             <select class="at-ticket-quick-select" wire:change="$set('novaRespostaCliente', $event.target.value)">
                                                 <option value="">Respostas rápidas</option>
                                                 <option value="Olá! Recebemos sua mensagem e já estamos analisando o problema. Em breve retorno com mais informações.">Recebemos sua mensagem</option>
@@ -217,6 +238,8 @@
                                     <small class="at-ticket-reply-hint" wire:loading.remove wire:target="anexoRespostaCliente">Pressione o botão para enviar ao portal do cliente</small>
                                     <small class="at-ticket-reply-hint" wire:loading wire:target="anexoRespostaCliente">Carregando anexo...</small>
                                 </section>
+                            <?php elseif(! $statusFechado && ! $temCanalResposta): ?>
+                                <div class="at-ticket-finalized danger"><strong>Cliente sem canal de resposta.</strong><br>Cadastre e-mail ou vínculo de portal antes de enviar mensagem.</div>
                             <?php else: ?>
                                 <div class="at-ticket-finalized">Atendimento finalizado. Reabra para responder ao cliente.</div>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
@@ -232,7 +255,12 @@
                                         <small><?php echo e($clienteEmail); ?></small>
                                     </div>
                                 </div>
-                                <button type="button" class="at-ticket-side-btn"><i class="bi bi-person" aria-hidden="true"></i> Ver perfil do cliente <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i></button>
+                                <div class="at-ticket-mini-info">
+                                    <span>Empresa ID</span><strong>#<?php echo e($selectedAtendimento['empresa_id'] ?? '-'); ?></strong>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(!empty($selectedAtendimento['crm_cliente_id'])): ?>
+                                        <span>Cliente CRM</span><strong>#<?php echo e($selectedAtendimento['crm_cliente_id']); ?></strong>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                </div>
                             </section>
 
                             <section class="at-ticket-panel">
@@ -245,10 +273,29 @@
                                     </div>
                                 </div>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $selectedAtendimento['responsavel_id']): ?>
-                                    <button type="button" class="at-ticket-side-btn" wire:click="assumirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
+                                        <button type="button" class="at-ticket-side-btn" wire:click="assumirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                    <?php else: ?>
+                                        <div class="at-ticket-hint">Atendimento fechado sem responsável.</div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 <?php else: ?>
-                                    <button type="button" class="at-ticket-side-btn" wire:click="salvarDetalhe"><i class="bi bi-person-gear" aria-hidden="true"></i> Alterar responsável</button>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
+                                        <div class="at-ticket-hint">Para trocar o responsável, use o menu <strong>Atribuir a...</strong> no topo.</div>
+                                    <?php else: ?>
+                                        <div class="at-ticket-hint">Atendimento fechado. Reabra para alterar o responsável.</div>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </section>
+
+                            <section class="at-ticket-panel at-ticket-next-panel tone-<?php echo e($proximaAcao['tone']); ?>">
+                                <header class="at-ticket-panel-header">Próxima ação recomendada</header>
+                                <div class="at-ticket-next-action">
+                                    <span><i class="bi <?php echo e($proximaAcao['icon']); ?>" aria-hidden="true"></i></span>
+                                    <div>
+                                        <strong><?php echo e($proximaAcao['titulo']); ?></strong>
+                                        <p><?php echo e($proximaAcao['texto']); ?></p>
+                                    </div>
+                                </div>
                             </section>
 
                             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
@@ -275,18 +322,27 @@
                                 </section>
                             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                            <section class="at-ticket-panel">
-                                <header class="at-ticket-panel-header">Ações rápidas</header>
-                                <div class="at-ticket-quick-list">
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'em_andamento')"><span class="at-dot primary"></span> Marcar como em andamento</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'aguardando_cliente')"><span class="at-dot warning"></span> Marcar como aguardando</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="criarPendenciaDoAtendimento" wire:loading.attr="disabled" wire:target="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="solicitarDocumentoDoAtendimento" wire:loading.attr="disabled" wire:target="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
-                                    <button type="button" class="at-ticket-quick-btn" wire:click="reabrirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><span class="at-dot info"></span> Reabrir atendimento</button>
-                                    <button type="button" class="at-ticket-quick-btn danger" wire:click="encerrarComMotivo"><span class="at-dot danger"></span> Encerrar com motivo</button>
-                                </div>
-                            </section>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $statusFechado): ?>
+                                <section class="at-ticket-panel">
+                                    <header class="at-ticket-panel-header">Ações rápidas</header>
+                                    <div class="at-ticket-quick-list">
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! $selectedAtendimento['responsavel_id']): ?>
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="assumirAtendimento(<?php echo e($selectedAtendimento['id']); ?>)"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($statusAtual !== \App\Support\AtendimentoStatus::EM_ANDAMENTO): ?>
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'em_andamento')"><span class="at-dot primary"></span> Marcar como em andamento</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($statusAtual !== \App\Support\AtendimentoStatus::AGUARDANDO_CLIENTE): ?>
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'aguardando_cliente')"><span class="at-dot warning"></span> Marcar como aguardando cliente</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($statusAtual !== \App\Support\AtendimentoStatus::RESOLVIDO): ?>
+                                            <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido(<?php echo e($selectedAtendimento['id']); ?>, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
+                                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                        <button type="button" class="at-ticket-quick-btn" wire:click="criarPendenciaDoAtendimento" wire:loading.attr="disabled" wire:target="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência interna</button>
+                                        <button type="button" class="at-ticket-quick-btn" wire:click="solicitarDocumentoDoAtendimento" wire:loading.attr="disabled" wire:target="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento no portal</button>
+                                    </div>
+                                </section>
+                            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                             <section class="at-ticket-panel">
                                 <header class="at-ticket-panel-header">Histórico de status</header>
@@ -308,7 +364,7 @@
                             <span class="at-ticket-modal-title-icon"><i class="bi bi-chat-dots-fill" aria-hidden="true"></i></span>
                             <div><h2>Carregando atendimento...</h2><p>Aguarde enquanto os dados são preparados.</p></div>
                         </div>
-                        <button type="button" class="at-ticket-icon-btn" title="Fechar" @click="detalhe = false"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                        <button type="button" class="at-ticket-icon-btn" title="Fechar" wire:click="fecharDetalhe"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
                     </header>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </div>

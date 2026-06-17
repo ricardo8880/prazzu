@@ -3,12 +3,12 @@
 namespace App\Filament\Pages;
 
 use App\Models\Atendimento;
-use App\Models\AtendimentoInteracao;
-use App\Support\AtendimentoActionService;
+use App\Models\ItemControle;
 use App\Support\AtendimentoPortalService;
 use App\Support\AtendimentoStatus;
 use App\Support\AtendimentoWorkflowService;
 use App\Support\AtendimentosData;
+use App\Support\ComplianceModuleData;
 use App\Support\CachedSchema;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -292,22 +292,32 @@ class Atendimentos extends Page
                     'sla_limite_em' => now()->addHours($slaHoras),
                 ]);
 
-                AtendimentoInteracao::query()->create([
-                    'atendimento_id' => $atendimento->id,
-                    'user_id' => auth()->id(),
-                    'origem' => 'interno',
-                    'tipo' => 'abertura',
-                    'mensagem' => 'Atendimento criado manualmente. ' . $descricao,
-                ]);
+                $this->registrarInteracao(
+                    (int) $atendimento->id,
+                    'abertura',
+                    'Atendimento criado manualmente. ' . $descricao,
+                    [
+                        'acao' => 'criar_atendimento',
+                        'empresa_id' => $empresaId,
+                        'crm_cliente_id' => $clienteId,
+                        'responsavel_id' => $responsavelId,
+                        'status_novo' => AtendimentoStatus::ABERTO,
+                        'prioridade_nova' => $prioridade,
+                        'origem_coluna' => 'interno',
+                    ]
+                );
 
                 if ($responsavelId) {
-                    AtendimentoInteracao::query()->create([
-                        'atendimento_id' => $atendimento->id,
-                        'user_id' => auth()->id(),
-                        'origem' => 'sistema',
-                        'tipo' => 'responsavel',
-                        'mensagem' => 'Responsável definido na abertura do atendimento.',
-                    ]);
+                    $this->registrarInteracao(
+                        (int) $atendimento->id,
+                        'responsavel',
+                        'Responsável definido na abertura do atendimento.',
+                        [
+                            'acao' => 'definir_responsavel_abertura',
+                            'responsavel_novo_id' => $responsavelId,
+                            'origem_coluna' => 'sistema',
+                        ]
+                    );
                 }
 
                 return $atendimento;
@@ -341,12 +351,24 @@ class Atendimentos extends Page
     public function fecharDetalhe(): void
     {
         $this->detailModalAberto = false;
+        $this->selectedAtendimento = null;
+        $this->selectedAtendimentoId = null;
+        $this->timeline = [];
+        $this->novaInteracao = '';
+        $this->novaRespostaCliente = '';
+        $this->anexoRespostaCliente = null;
+        $this->resolucaoTexto = '';
+        $this->motivoEncerramento = 'duvida_resolvida';
+        $this->observacaoEncerramento = '';
+        $this->novoStatusDetalhe = AtendimentoStatus::ABERTO;
+        $this->novaPrioridadeDetalhe = 'media';
+        $this->novoResponsavelDetalhe = null;
     }
 
     public function assumirAtendimento(int $id): void
     {
         $atendimento = $this->findAtendimentoAutorizado($id);
-        if (! $atendimento) {
+        if (! $atendimento || ! $this->atendimentoPermiteAcaoOperacional($atendimento, 'assumir o atendimento')) {
             return;
         }
 
@@ -374,6 +396,10 @@ class Atendimentos extends Page
             return;
         }
 
+        if (! $this->acaoStatusPermitida($atendimento, $status)) {
+            return;
+        }
+
         $this->aplicarStatus($atendimento, $status);
     }
 
@@ -395,7 +421,7 @@ class Atendimentos extends Page
         }
 
         $atendimento = $this->findAtendimentoAutorizado($this->selectedAtendimentoId);
-        if (! $atendimento) {
+        if (! $atendimento || ! $this->acaoStatusPermitida($atendimento, AtendimentoStatus::RESOLVIDO)) {
             return;
         }
 
@@ -427,7 +453,7 @@ class Atendimentos extends Page
         }
 
         $atendimento = $this->findAtendimentoAutorizado($this->selectedAtendimentoId);
-        if (! $atendimento) {
+        if (! $atendimento || ! $this->acaoStatusPermitida($atendimento, AtendimentoStatus::FECHADO)) {
             return;
         }
 
@@ -443,7 +469,17 @@ class Atendimentos extends Page
 
     public function reabrirAtendimento(int $id): void
     {
-        $this->mudarStatusRapido($id, AtendimentoStatus::EM_ANDAMENTO);
+        $atendimento = $this->findAtendimentoAutorizado($id);
+        if (! $atendimento) {
+            return;
+        }
+
+        if (! AtendimentoStatus::isClosed((string) $atendimento->status)) {
+            $this->notify('info', 'Este atendimento já está aberto. Use as ações de andamento, resolução ou encerramento.');
+            return;
+        }
+
+        $this->aplicarStatus($atendimento, AtendimentoStatus::EM_ANDAMENTO);
     }
 
     public function aguardarCliente(int $id): void
@@ -462,21 +498,64 @@ class Atendimentos extends Page
             return;
         }
 
-        try {
-            $resultado = $this->actions()->salvarDetalhe(
-                $atendimento,
-                $this->novoStatusDetalhe,
-                $this->novaPrioridadeDetalhe,
-                $this->novoResponsavelDetalhe ? (int) $this->novoResponsavelDetalhe : null,
-            );
-        } catch (Throwable $exception) {
-            report($exception);
-            $this->notify('danger', 'Não foi possível atualizar o atendimento.');
+        if (AtendimentoStatus::isClosed((string) $atendimento->status)) {
+            $this->notify('danger', 'Atendimento finalizado. Reabra antes de alterar detalhes.');
             return;
         }
 
+        $status = AtendimentoStatus::exists($this->novoStatusDetalhe) ? $this->novoStatusDetalhe : $atendimento->status;
+        $prioridade = array_key_exists($this->novaPrioridadeDetalhe, AtendimentosData::PRIORIDADES) ? $this->novaPrioridadeDetalhe : $atendimento->prioridade;
+        $responsavelId = $this->usuarioResponsavelValido((int) $this->novoResponsavelDetalhe) ? (int) $this->novoResponsavelDetalhe : null;
+
+        if ($status !== $atendimento->status && ! $this->acaoStatusPermitida($atendimento, $status, $responsavelId)) {
+            return;
+        }
+
+        $payload = [
+            'status' => $status,
+            'prioridade' => $prioridade,
+            'responsavel_id' => $responsavelId,
+        ];
+
+        $this->aplicarCamposStatus($atendimento, $status, $payload);
+
+        if ($prioridade !== $atendimento->prioridade && ! AtendimentoStatus::isClosed($status)) {
+            $slaHoras = AtendimentosData::slaHorasPorPrioridade($prioridade);
+            $payload['sla_horas'] = $slaHoras;
+            $payload['sla_limite_em'] = now()->addHours($slaHoras);
+        }
+
+        $mudancas = [];
+        $metadataMudancas = ['acao' => 'salvar_detalhes_popup'];
+        if ($status !== $atendimento->status) {
+            $mudancas[] = 'status de ' . AtendimentosData::statusLabel($atendimento->status) . ' para ' . AtendimentosData::statusLabel($status);
+            $metadataMudancas['status_anterior'] = (string) $atendimento->status;
+            $metadataMudancas['status_novo'] = $status;
+        }
+        if ($prioridade !== $atendimento->prioridade) {
+            $mudancas[] = 'prioridade de ' . AtendimentosData::prioridadeLabel($atendimento->prioridade) . ' para ' . AtendimentosData::prioridadeLabel($prioridade);
+            $metadataMudancas['prioridade_anterior'] = (string) $atendimento->prioridade;
+            $metadataMudancas['prioridade_nova'] = $prioridade;
+        }
+        if ((int) $responsavelId !== (int) $atendimento->responsavel_id) {
+            $mudancas[] = 'responsável de ' . $this->nomeUsuarioPorId($atendimento->responsavel_id) . ' para ' . $this->nomeUsuarioPorId($responsavelId);
+            $metadataMudancas['responsavel_anterior_id'] = $atendimento->responsavel_id;
+            $metadataMudancas['responsavel_novo_id'] = $responsavelId;
+        }
+
+        if (empty($mudancas)) {
+            $this->notify('success', 'Nenhuma alteração pendente.');
+            return;
+        }
+
+        DB::transaction(function () use ($atendimento, $payload, $status, $mudancas, $metadataMudancas): void {
+            $atendimento->update($payload);
+            $this->registrarInteracao($atendimento->id, 'alteracao', 'Atualização: ' . implode(', ', $mudancas) . '.', $metadataMudancas);
+            $this->sincronizarPortalVinculado($atendimento->refresh(), $status);
+        });
+
         $this->loadData(true);
-        $this->notify($resultado['changed'] ? 'success' : 'success', $resultado['message']);
+        $this->notify('success', 'Atendimento atualizado.');
     }
 
     public function atribuirResponsavelDetalhe(int $responsavelId): void
@@ -501,6 +580,16 @@ class Atendimentos extends Page
         }
 
         $mensagem = trim($this->novaRespostaCliente);
+
+        $atendimento = $this->findAtendimentoAutorizado($this->selectedAtendimentoId);
+        if (! $atendimento) {
+            return;
+        }
+
+        if (! $this->atendimentoPodeReceberRespostaCliente($atendimento)) {
+            return;
+        }
+
         $anexo = $this->prepararAnexoRespostaCliente();
         if ($anexo === false) {
             return;
@@ -511,18 +600,44 @@ class Atendimentos extends Page
             return;
         }
 
-        $atendimento = $this->findAtendimentoAutorizado($this->selectedAtendimentoId);
-        if (! $atendimento) {
-            return;
-        }
+        DB::transaction(function () use ($atendimento, $mensagem, $anexo): void {
+            $agora = now();
+            $payload = [
+                'status' => AtendimentoStatus::AGUARDANDO_CLIENTE,
+                'updated_at' => $agora,
+            ];
 
-        try {
-            $this->actions()->responderCliente($atendimento, $mensagem, $anexo ?: null);
-        } catch (Throwable $exception) {
-            report($exception);
-            $this->notify('danger', $exception->getMessage() ?: 'Não foi possível responder ao cliente.');
-            return;
-        }
+            if (! $atendimento->responsavel_id && auth()->id()) {
+                $payload['responsavel_id'] = auth()->id();
+            }
+
+            if (! $atendimento->primeira_resposta_em) {
+                $payload['primeira_resposta_em'] = $agora;
+            }
+
+            $atendimento->update($payload);
+
+            $this->registrarInteracao(
+                (int) $atendimento->id,
+                'resposta',
+                Str::limit($mensagem !== '' ? $mensagem : 'Resposta enviada apenas com anexo.', 12000, ''),
+                [
+                    'acao' => 'responder_cliente',
+                    'origem' => 'painel_interno_suporte',
+                    'status_anterior' => (string) $atendimento->status,
+                    'status_novo' => AtendimentoStatus::AGUARDANDO_CLIENTE,
+                    'responsavel_anterior_id' => $atendimento->responsavel_id,
+                    'responsavel_novo_id' => $payload['responsavel_id'] ?? $atendimento->responsavel_id,
+                    'primeira_resposta_registrada' => ! (bool) $atendimento->primeira_resposta_em,
+                    'visivel_cliente' => true,
+                    'suporte_nome' => auth()->user()?->name,
+                    'suporte_email' => auth()->user()?->email,
+                    'anexos' => $anexo ? [$anexo] : [],
+                ]
+            );
+
+            $this->sincronizarPortalVinculado($atendimento->refresh(), AtendimentoStatus::AGUARDANDO_CLIENTE);
+        });
 
         $this->notificarClienteResposta($atendimento->refresh(), $mensagem, (bool) $anexo);
 
@@ -687,7 +802,18 @@ class Atendimentos extends Page
 
         $nomeSeguro = Str::uuid()->toString() . ($extensao !== '' ? '.' . $extensao : '');
         $pasta = 'portal_cliente_anexos/' . $atendimentoId;
-        $caminho = $arquivo->storeAs($pasta, $nomeSeguro, 'public');
+        try {
+            $caminho = $arquivo->storeAs($pasta, $nomeSeguro, 'public');
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível salvar o anexo. Tente novamente.');
+            return false;
+        }
+
+        if (! is_string($caminho) || $caminho === '' || ! Storage::disk('public')->exists($caminho)) {
+            $this->notify('danger', 'O upload do anexo não foi concluído. Remova o arquivo e tente novamente.');
+            return false;
+        }
 
         return [
             'nome_original' => $nomeOriginal,
@@ -703,7 +829,7 @@ class Atendimentos extends Page
     public function criarPendenciaDoAtendimento(): void
     {
         $atendimento = $this->selectedAtendimentoId ? $this->findAtendimentoAutorizado($this->selectedAtendimentoId) : null;
-        if (! $atendimento) {
+        if (! $atendimento || ! $this->atendimentoPermiteAcaoOperacional($atendimento, 'criar pendência')) {
             return;
         }
 
@@ -712,7 +838,28 @@ class Atendimentos extends Page
         }
 
         try {
-            $this->actions()->criarPendencia($atendimento);
+            DB::transaction(function () use ($atendimento): void {
+                $item = $this->criarItemControleVinculado(
+                    $atendimento,
+                    'pendencia_compliance',
+                    'Pendência do atendimento #' . $atendimento->id . ' - ' . Str::limit((string) $atendimento->titulo, 120, ''),
+                    'Pendência criada a partir do atendimento #' . $atendimento->id . ".\n\n" . trim((string) ($atendimento->descricao ?: 'Sem descrição.')),
+                    false
+                );
+
+                if (! $atendimento->item_controle_id) {
+                    $atendimento->update(['item_controle_id' => $item->id, 'updated_at' => now()]);
+                } else {
+                    $atendimento->touch();
+                }
+
+                $this->registrarInteracao(
+                    $atendimento->id,
+                    'pendencia_criada',
+                    'Pendência criada a partir deste atendimento: #' . $item->id . ' - ' . $item->titulo . '.',
+                    ['item_controle_id' => $item->id, 'tipo' => 'pendencia_compliance']
+                );
+            });
         } catch (Throwable $exception) {
             report($exception);
             $this->notify('danger', 'Não foi possível criar a pendência a partir do atendimento.');
@@ -726,7 +873,12 @@ class Atendimentos extends Page
     public function solicitarDocumentoDoAtendimento(): void
     {
         $atendimento = $this->selectedAtendimentoId ? $this->findAtendimentoAutorizado($this->selectedAtendimentoId) : null;
-        if (! $atendimento) {
+        if (! $atendimento || ! $this->atendimentoPermiteAcaoOperacional($atendimento, 'solicitar documento')) {
+            return;
+        }
+
+        if (! $this->clienteTemCanalResposta($atendimento)) {
+            $this->notify('danger', 'Não há e-mail/portal do cliente para solicitar documento com segurança. Corrija o cadastro antes.');
             return;
         }
 
@@ -735,7 +887,37 @@ class Atendimentos extends Page
         }
 
         try {
-            $this->actions()->solicitarDocumento($atendimento);
+            DB::transaction(function () use ($atendimento): void {
+                $item = $this->criarItemControleVinculado(
+                    $atendimento,
+                    'documento',
+                    'Documento solicitado no atendimento #' . $atendimento->id,
+                    'Solicitação documental criada a partir do atendimento #' . $atendimento->id . '. ' . Str::limit(trim((string) $atendimento->titulo), 180, ''),
+                    true
+                );
+
+                $payloadAtendimento = ['status' => AtendimentoStatus::AGUARDANDO_CLIENTE, 'updated_at' => now()];
+                if (! $atendimento->item_controle_id) {
+                    $payloadAtendimento['item_controle_id'] = $item->id;
+                }
+                if (! $atendimento->responsavel_id && auth()->id()) {
+                    $payloadAtendimento['responsavel_id'] = auth()->id();
+                }
+                if (! $atendimento->primeira_resposta_em) {
+                    $payloadAtendimento['primeira_resposta_em'] = now();
+                }
+
+                $atendimento->update($payloadAtendimento);
+
+                $this->registrarInteracao(
+                    $atendimento->id,
+                    'documento_solicitado',
+                    'Documento solicitado ao cliente e registrado em Documentos: #' . $item->id . ' - ' . $item->titulo . '.',
+                    ['item_controle_id' => $item->id, 'tipo' => 'documento', 'portal_ativo' => true]
+                );
+
+                $this->sincronizarPortalVinculado($atendimento->refresh(), AtendimentoStatus::AGUARDANDO_CLIENTE);
+            });
         } catch (Throwable $exception) {
             report($exception);
             $this->notify('danger', 'Não foi possível solicitar o documento a partir do atendimento.');
@@ -764,17 +946,25 @@ class Atendimentos extends Page
             return;
         }
 
-        try {
-            $this->actions()->adicionarComentario($atendimento, $mensagem);
-        } catch (Throwable $exception) {
-            report($exception);
-            $this->notify('danger', 'Não foi possível adicionar a interação.');
-            return;
+        $this->registrarInteracao($atendimento->id, 'comentario', $mensagem);
+        if (! $atendimento->primeira_resposta_em && auth()->id()) {
+            $atendimento->update(['primeira_resposta_em' => now()]);
         }
 
         $this->novaInteracao = '';
         $this->loadData(true);
         $this->notify('success', 'Interação adicionada.');
+    }
+
+    private function nomeUsuarioPorId(null|int|string $userId): string
+    {
+        $id = (int) $userId;
+        if ($id <= 0 || ! CachedSchema::hasTable('users')) {
+            return 'Sem responsável';
+        }
+
+        $nome = DB::table('users')->where('id', $id)->value('name');
+        return $nome ? (string) $nome : 'Usuário #' . $id;
     }
 
     private function itemControlesDisponivel(): bool
@@ -787,11 +977,112 @@ class Atendimentos extends Page
         return true;
     }
 
+    private function criarItemControleVinculado(Atendimento $atendimento, string $tipo, string $titulo, string $descricao, bool $portalAtivo): ItemControle
+    {
+        $empresaId = (int) $atendimento->empresa_id;
+        $responsavelId = ComplianceModuleData::resolveResponsavelId(null, $empresaId);
+
+        if (! $empresaId || ! $responsavelId) {
+            throw new \RuntimeException('Empresa ou responsável indisponível para criar item de controle.');
+        }
+
+        $payload = [];
+        $this->setItemControlePayload($payload, 'titulo', Str::limit(trim($titulo), 255, ''));
+        $this->setItemControlePayload($payload, 'descricao', Str::limit(trim($descricao), 5000, ''));
+        $this->setItemControlePayload($payload, 'tipo', $tipo);
+        $this->setItemControlePayload($payload, 'status', 'pendente');
+        $this->setItemControlePayload($payload, 'prioridade', $this->prioridadeItemControle((string) $atendimento->prioridade));
+        $this->setItemControlePayload($payload, 'empresa_id', $empresaId);
+        $this->setItemControlePayload($payload, 'responsavel_id', $responsavelId);
+        $this->setItemControlePayload($payload, 'data_vencimento', now()->addDays($portalAtivo ? 3 : 2)->toDateString());
+        $this->setItemControlePayload($payload, 'portal_ativo', $portalAtivo);
+
+        if ($portalAtivo) {
+            $this->setItemControlePayload($payload, 'portal_cliente_nome', $this->nomeClienteAtendimento($atendimento));
+            $this->setItemControlePayload($payload, 'portal_cliente_email', $this->emailClienteAtendimento($atendimento));
+            $this->setItemControlePayload($payload, 'portal_expira_em', now()->addDays(7));
+            $this->setItemControlePayload($payload, 'portal_status', 'pendente');
+            $this->setItemControlePayload($payload, 'document_status', 'solicitado');
+        }
+
+        return ItemControle::query()->create($payload);
+    }
+
+    private function setItemControlePayload(array &$payload, string $column, mixed $value): void
+    {
+        if (CachedSchema::hasColumn('item_controles', $column)) {
+            $payload[$column] = $value;
+        }
+    }
+
+    private function prioridadeItemControle(string $prioridade): string
+    {
+        return in_array($prioridade, ['baixa', 'media', 'alta', 'urgente'], true) ? $prioridade : 'media';
+    }
+
     private function nomeClienteAtendimento(Atendimento $atendimento): ?string
     {
         return $this->workflow()->nomeClienteAtendimento($atendimento);
     }
 
+
+    private function acaoStatusPermitida(Atendimento $atendimento, string $novoStatus, ?int $responsavelIdOverride = null): bool
+    {
+        $statusAtual = (string) $atendimento->status;
+
+        if (AtendimentoStatus::isClosed($statusAtual) && $novoStatus !== AtendimentoStatus::EM_ANDAMENTO) {
+            $this->notify('danger', 'Atendimento finalizado. Reabra antes de executar novas ações.');
+            return false;
+        }
+
+        if (in_array($novoStatus, [AtendimentoStatus::RESOLVIDO, AtendimentoStatus::FECHADO], true)) {
+            $responsavelId = $responsavelIdOverride ?: (int) $atendimento->responsavel_id;
+            if (! $responsavelId) {
+                $this->notify('danger', 'Atribua um responsável antes de resolver ou encerrar o atendimento.');
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function atendimentoPermiteAcaoOperacional(Atendimento $atendimento, string $acao): bool
+    {
+        if (AtendimentoStatus::isClosed((string) $atendimento->status)) {
+            $this->notify('danger', 'Atendimento finalizado. Reabra antes de ' . $acao . '.');
+            return false;
+        }
+
+        if (! (int) $atendimento->empresa_id || ! AtendimentosData::usuarioPodeAcessarEmpresa((int) $atendimento->empresa_id)) {
+            $this->notify('danger', 'Empresa inválida ou sem permissão para ' . $acao . '.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function atendimentoPodeReceberRespostaCliente(Atendimento $atendimento): bool
+    {
+        if (! $this->atendimentoPermiteAcaoOperacional($atendimento, 'responder ao cliente')) {
+            return false;
+        }
+
+        if (! $this->clienteTemCanalResposta($atendimento)) {
+            $this->notify('danger', 'Não há e-mail/portal do cliente para enviar resposta com segurança. Corrija o cadastro antes de responder.');
+            return false;
+        }
+
+        return true;
+    }
+
+    private function clienteTemCanalResposta(Atendimento $atendimento): bool
+    {
+        if (filter_var($this->emailClienteAtendimento($atendimento), FILTER_VALIDATE_EMAIL)) {
+            return true;
+        }
+
+        return (bool) $atendimento->portal_solicitacao_id || (bool) $atendimento->portal_mensagem_id;
+    }
 
     private function aplicarStatus(Atendimento $atendimento, string $status, ?string $mensagemOperacional = null): void
     {
@@ -899,12 +1190,6 @@ class Atendimentos extends Page
         }
 
         return true;
-    }
-
-
-    private function actions(): AtendimentoActionService
-    {
-        return app(AtendimentoActionService::class);
     }
 
     private function workflow(): AtendimentoWorkflowService

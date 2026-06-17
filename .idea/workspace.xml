@@ -6,13 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/15-06-2026.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Atendimentos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Atendimentos.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Support/AtendimentoWorkflowService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AtendimentoWorkflowService.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Support/AtendimentosData.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AtendimentosData.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/8beyZLRhPRSqDUXI4H8nqbvn1vjhlIxUiRnqdeHe" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/urhSWaJq5TyLxmelTz2oKP2h87RqZrImQKZBJjrh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/DM1gn0qwH5ypt0iglqr2XmbC0Jbds8FT3wEIn1pM" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/DM1gn0qwH5ypt0iglqr2XmbC0Jbds8FT3wEIn1pM" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -237,7 +232,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1781695741322</updated>
-      <workItem from="1781695742244" duration="2488000" />
+      <workItem from="1781695742244" duration="3966000" />
     </task>
     <servers />
   </component>

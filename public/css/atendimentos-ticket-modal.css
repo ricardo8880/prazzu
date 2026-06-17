@@ -1204,3 +1204,113 @@
 .at-ticket-meta-line-spaced {
     margin-top: .35rem;
 }
+
+/* Lote 4 - UX operacional do popup Abrir */
+.at-ticket-header-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-height: 38px;
+    padding: .55rem .85rem;
+    border: 1px solid #c7d2fe;
+    border-radius: .7rem;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: .8rem;
+    font-weight: 950;
+    cursor: pointer;
+}
+
+.at-ticket-header-action:hover {
+    background: #e0e7ff;
+    border-color: #a5b4fc;
+}
+
+.at-ticket-mini-info {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: .35rem .6rem;
+    margin: 0 .9rem .9rem;
+    padding: .68rem .72rem;
+    border: 1px solid #e5e7eb;
+    border-radius: .72rem;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .76rem;
+    font-weight: 850;
+}
+
+.at-ticket-mini-info strong {
+    color: #0f172a;
+    font-weight: 950;
+}
+
+.at-ticket-hint {
+    margin: 0 .9rem .9rem;
+    padding: .7rem .75rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: .72rem;
+    background: #f8fafc;
+    color: #475569;
+    font-size: .76rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.at-ticket-next-panel {
+    border-color: #dbeafe !important;
+}
+
+.at-ticket-next-panel.tone-warning { border-color: #fde68a !important; }
+.at-ticket-next-panel.tone-danger { border-color: #fecaca !important; }
+.at-ticket-next-panel.tone-neutral { border-color: #e2e8f0 !important; }
+
+.at-ticket-next-action {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: .68rem;
+    align-items: start;
+    padding: .82rem .9rem .9rem;
+}
+
+.at-ticket-next-action > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 1rem;
+}
+
+.at-ticket-next-panel.tone-warning .at-ticket-next-action > span { background: #fffbeb; color: #d97706; }
+.at-ticket-next-panel.tone-danger .at-ticket-next-action > span { background: #fef2f2; color: #dc2626; }
+.at-ticket-next-panel.tone-neutral .at-ticket-next-action > span { background: #f1f5f9; color: #64748b; }
+
+.at-ticket-next-action strong {
+    display: block;
+    color: #0f172a;
+    font-size: .88rem;
+    font-weight: 950;
+}
+
+.at-ticket-next-action p {
+    margin: .18rem 0 0;
+    color: #475569;
+    font-size: .77rem;
+    font-weight: 780;
+    line-height: 1.38;
+}
+
+.at-ticket-finalized.danger {
+    background: #fff1f2 !important;
+    color: #9f1239 !important;
+    border: 1px solid #fecdd3;
+}
+
+.at-ticket-order-select {
+    cursor: default !important;
+}
