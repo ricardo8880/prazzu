@@ -101,13 +101,19 @@ class AtendimentosData
             return [];
         }
 
-        return DB::table('atendimento_interacoes as ai')
-            ->leftJoin('users as u', 'u.id', '=', 'ai.user_id')
+        $query = DB::table('atendimento_interacoes as ai')
             ->where('ai.atendimento_id', $atendimentoId)
             ->orderBy('ai.created_at')
-            ->limit(80)
-            ->select('ai.*', 'u.name as usuario_nome', 'u.email as usuario_email')
-            ->get()
+            ->limit(80);
+
+        if (CachedSchema::hasTable('users')) {
+            $query->leftJoin('users as u', 'u.id', '=', 'ai.user_id')
+                ->select('ai.*', 'u.name as usuario_nome', 'u.email as usuario_email');
+        } else {
+            $query->select('ai.*', DB::raw('NULL as usuario_nome'), DB::raw('NULL as usuario_email'));
+        }
+
+        return $query->get()
             ->map(function ($row) {
                 $metadata = self::metadataArray($row->metadata ?? null);
                 $origem = (string) ($row->origem ?? 'sistema');
@@ -214,14 +220,23 @@ class AtendimentosData
 
     public static function clientesDisponiveis(?User $user = null): array
     {
-        if (! CachedSchema::hasTable('crm_clientes')) {
+        if (! CachedSchema::hasTable('crm_clientes') || ! CachedSchema::hasTable('empresas')) {
             return [];
         }
 
         $user ??= auth()->user();
         $query = DB::table('crm_clientes as cc')
             ->join('empresas as e', 'e.id', '=', 'cc.empresa_id')
-            ->select('cc.id', 'cc.empresa_id', 'cc.situacao', 'cc.risco_churn', 'e.razao_social', 'e.nome_fantasia', 'e.email')
+            ->select([
+                'cc.id',
+                'cc.empresa_id',
+                DB::raw(self::selectIfColumn('crm_clientes', 'situacao', 'cc.situacao', 'NULL') . ' as situacao'),
+                DB::raw(self::selectIfColumn('crm_clientes', 'risco_churn', 'cc.risco_churn', 'NULL') . ' as risco_churn'),
+                'e.razao_social',
+                'e.nome_fantasia',
+                'e.email',
+                DB::raw(self::selectIfColumn('empresas', 'crm_contato_email', 'e.crm_contato_email', 'NULL') . ' as crm_contato_email'),
+            ])
             ->orderBy('e.nome_fantasia')
             ->orderBy('e.razao_social');
         self::applyTenantScope($query, $user, 'cc.empresa_id');
@@ -230,7 +245,7 @@ class AtendimentosData
             'id' => (int) $cliente->id,
             'empresa_id' => (int) $cliente->empresa_id,
             'nome' => $cliente->nome_fantasia ?: $cliente->razao_social ?: 'Cliente #' . $cliente->id,
-            'email' => $cliente->email,
+            'email' => filter_var((string) $cliente->crm_contato_email, FILTER_VALIDATE_EMAIL) ? $cliente->crm_contato_email : $cliente->email,
             'situacao' => $cliente->situacao,
             'risco' => $cliente->risco_churn,
         ])->all();
@@ -388,19 +403,35 @@ class AtendimentosData
 
     private static function baseQuery(?User $user)
     {
-        $query = DB::table('atendimentos as a')
-            ->leftJoin('empresas as e', 'e.id', '=', 'a.empresa_id')
-            ->leftJoin('users as u', 'u.id', '=', 'a.responsavel_id')
-            ->leftJoin('crm_clientes as cc', 'cc.id', '=', 'a.crm_cliente_id')
-            ->select([
-                'a.*',
-                DB::raw('COALESCE(e.nome_fantasia, e.razao_social, CONCAT("Empresa #", a.empresa_id)) as empresa_nome'),
-                'e.email as empresa_email',
-                'u.name as responsavel_nome',
-                'u.email as responsavel_email',
-                'cc.risco_churn as cliente_risco',
-                'cc.situacao as cliente_situacao',
-            ]);
+        $query = DB::table('atendimentos as a');
+
+        $hasEmpresas = CachedSchema::hasTable('empresas');
+        $hasUsers = CachedSchema::hasTable('users');
+        $hasCrmClientes = CachedSchema::hasTable('crm_clientes');
+
+        if ($hasEmpresas) {
+            $query->leftJoin('empresas as e', 'e.id', '=', 'a.empresa_id');
+        }
+
+        if ($hasUsers) {
+            $query->leftJoin('users as u', 'u.id', '=', 'a.responsavel_id');
+        }
+
+        if ($hasCrmClientes) {
+            $query->leftJoin('crm_clientes as cc', 'cc.id', '=', 'a.crm_cliente_id');
+        }
+
+        $select = ['a.*'];
+        $select[] = DB::raw($hasEmpresas
+            ? 'COALESCE(e.nome_fantasia, e.razao_social, CONCAT("Empresa #", a.empresa_id)) as empresa_nome'
+            : 'CONCAT("Empresa #", a.empresa_id) as empresa_nome');
+        $select[] = DB::raw($hasEmpresas ? 'e.email as empresa_email' : 'NULL as empresa_email');
+        $select[] = DB::raw($hasUsers ? 'u.name as responsavel_nome' : 'NULL as responsavel_nome');
+        $select[] = DB::raw($hasUsers ? 'u.email as responsavel_email' : 'NULL as responsavel_email');
+        $select[] = DB::raw($hasCrmClientes && CachedSchema::hasColumn('crm_clientes', 'risco_churn') ? 'cc.risco_churn as cliente_risco' : 'NULL as cliente_risco');
+        $select[] = DB::raw($hasCrmClientes && CachedSchema::hasColumn('crm_clientes', 'situacao') ? 'cc.situacao as cliente_situacao' : 'NULL as cliente_situacao');
+
+        $query->select($select);
 
         self::applyTenantScope($query, $user);
 
@@ -413,20 +444,29 @@ class AtendimentosData
         if ($search !== '') {
             $query->where(function ($inner) use ($search) {
                 $inner->where('a.titulo', 'like', "%{$search}%")
-                    ->orWhere('a.descricao', 'like', "%{$search}%")
-                    ->orWhere('e.razao_social', 'like', "%{$search}%")
-                    ->orWhere('e.nome_fantasia', 'like', "%{$search}%")
-                    ->orWhere('e.email', 'like', "%{$search}%")
-                    ->orWhere('u.name', 'like', "%{$search}%")
-                    ->orWhere('u.email', 'like', "%{$search}%");
+                    ->orWhere('a.descricao', 'like', "%{$search}%");
+
+                if (CachedSchema::hasTable('empresas')) {
+                    $inner->orWhere('e.razao_social', 'like', "%{$search}%")
+                        ->orWhere('e.nome_fantasia', 'like', "%{$search}%")
+                        ->orWhere('e.email', 'like', "%{$search}%");
+                }
+
+                if (CachedSchema::hasTable('users')) {
+                    $inner->orWhere('u.name', 'like', "%{$search}%")
+                        ->orWhere('u.email', 'like', "%{$search}%");
+                }
             });
         }
 
-        $status = (string) ($filters['status'] ?? 'todos');
-        if ($status === 'ativos') {
+        $statusFilter = (string) ($filters['status'] ?? 'todos');
+        if ($statusFilter === 'ativos') {
             $query->whereIn('a.status', AtendimentoStatus::ACTIVE);
-        } elseif ($status !== 'todos' && $status !== '') {
-            $query->where('a.status', $status);
+        } else {
+            $status = AtendimentoStatus::normalize($statusFilter, 'todos');
+            if ($status !== 'todos' && $status !== '') {
+                $query->where('a.status', $status);
+            }
         }
 
         $aguardando = (string) ($filters['aguardando'] ?? 'todos');
@@ -438,11 +478,14 @@ class AtendimentosData
             $query->whereIn('a.status', AtendimentoStatus::CLOSED);
         }
 
-        foreach (['prioridade', 'origem'] as $field) {
-            $value = (string) ($filters[$field] ?? 'todos');
-            if ($value !== 'todos' && $value !== '') {
-                $query->where("a.{$field}", $value);
-            }
+        $prioridade = (string) ($filters['prioridade'] ?? 'todos');
+        if ($prioridade !== 'todos' && array_key_exists($prioridade, self::PRIORIDADES)) {
+            $query->where('a.prioridade', $prioridade);
+        }
+
+        $origem = (string) ($filters['origem'] ?? 'todos');
+        if ($origem !== 'todos' && in_array($origem, ['manual', 'portal', 'whatsapp', 'email', 'telefone'], true)) {
+            $query->where('a.origem', $origem);
         }
 
         $responsavel = (string) ($filters['responsavel'] ?? 'todos');
@@ -649,6 +692,12 @@ class AtendimentosData
             'slaOptions' => self::SLA_OPTIONS,
             'aguardandoOptions' => self::AGUARDANDO_OPTIONS,
         ];
+    }
+
+
+    private static function selectIfColumn(string $table, string $column, string $expression, string $fallback): string
+    {
+        return CachedSchema::hasColumn($table, $column) ? $expression : $fallback;
     }
 
     private static function applyTenantScope($query, ?User $user, string $column = 'a.empresa_id'): void

@@ -137,15 +137,24 @@ class AtendimentoWorkflowService
             return;
         }
 
+        $origem = 'interno';
+        if (is_array($metadata ?? null) && isset($metadata['origem_coluna'])) {
+            $origemInformada = (string) $metadata['origem_coluna'];
+            if (in_array($origemInformada, ['interno', 'suporte', 'sistema', 'cliente', 'portal', 'publico'], true)) {
+                $origem = $origemInformada;
+            }
+        }
+
         $payload = [
             'atendimento_id' => $atendimentoId,
             'user_id' => auth()->id(),
-            'origem' => 'interno',
+            'origem' => $origem,
             'tipo' => $tipo,
             'mensagem' => $mensagem,
         ];
 
         if ($metadata !== null) {
+            unset($metadata['origem_coluna']);
             $payload['metadata'] = $metadata;
         }
 
@@ -169,48 +178,12 @@ class AtendimentoWorkflowService
 
     public function emailClienteAtendimento(Atendimento $atendimento): ?string
     {
-        if ($atendimento->crm_cliente_id && CachedSchema::hasTable('crm_clientes')) {
-            $cliente = DB::table('crm_clientes')->where('id', $atendimento->crm_cliente_id)->first();
-            foreach (['email', 'email_financeiro', 'email_responsavel'] as $campo) {
-                if ($cliente && property_exists($cliente, $campo) && filter_var($cliente->{$campo}, FILTER_VALIDATE_EMAIL)) {
-                    return (string) $cliente->{$campo};
-                }
-            }
-        }
-
-        if ($atendimento->empresa_id && CachedSchema::hasTable('empresas')) {
-            $empresa = DB::table('empresas')->where('id', $atendimento->empresa_id)->first();
-            foreach (['email', 'email_financeiro', 'email_responsavel'] as $campo) {
-                if ($empresa && property_exists($empresa, $campo) && filter_var($empresa->{$campo}, FILTER_VALIDATE_EMAIL)) {
-                    return (string) $empresa->{$campo};
-                }
-            }
-        }
-
-        return null;
+        return AtendimentoClienteResolver::emailPorAtendimento($atendimento);
     }
 
     public function nomeClienteAtendimento(Atendimento $atendimento): ?string
     {
-        if ($atendimento->crm_cliente_id && CachedSchema::hasTable('crm_clientes')) {
-            $cliente = DB::table('crm_clientes')->where('id', $atendimento->crm_cliente_id)->first();
-            foreach (['nome', 'nome_fantasia', 'razao_social'] as $campo) {
-                if ($cliente && property_exists($cliente, $campo) && filled($cliente->{$campo})) {
-                    return (string) $cliente->{$campo};
-                }
-            }
-        }
-
-        if ($atendimento->empresa_id && CachedSchema::hasTable('empresas')) {
-            $empresa = DB::table('empresas')->where('id', $atendimento->empresa_id)->first();
-            foreach (['nome_fantasia', 'razao_social', 'nome'] as $campo) {
-                if ($empresa && property_exists($empresa, $campo) && filled($empresa->{$campo})) {
-                    return (string) $empresa->{$campo};
-                }
-            }
-        }
-
-        return null;
+        return AtendimentoClienteResolver::nomePorAtendimento($atendimento);
     }
 
     public function enviarEmailSeguro(string $to, string $subject, string $body): void
