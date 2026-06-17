@@ -989,15 +989,55 @@
                         <div id="portal-tab-pendencias" class="portal-tab-panel" style="display:none;" hidden>
                             <div class="portal-info-wrap">
                                 <div class="portal-info-card">
-                                    <h3>Pendências do atendimento</h3>
+                                    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+                                        <div>
+                                            <h3>Meus tickets</h3>
+                                            <p>Cada problema fica separado em um ticket próprio. Abra um novo ticket quando quiser tratar outro assunto com o suporte.</p>
+                                        </div>
+                                        <a class="portal-primary-action" href="{{ route('portal.cliente.atendimentos.create') }}" style="width:auto;margin-top:0;white-space:nowrap;">+ Novo problema</a>
+                                    </div>
+                                </div>
+
+                                <div class="portal-info-card">
+                                    <h3>Tickets para acompanhamento</h3>
+
+                                    <div class="portal-ticket-list" style="max-height:none;margin-top:14px;padding-right:0;">
+                                        @forelse ($atendimentos as $ticket)
+                                            <a class="portal-ticket-item {{ ($atendimentoAtual['id'] ?? null) === $ticket['id'] ? 'is-active' : '' }}" href="{{ $ticket['url'] }}#tab-atendimento">
+                                                <div class="portal-ticket-top">
+                                                    <div>
+                                                        <div class="portal-ticket-title">{{ $ticket['protocolo'] }} · {{ $ticket['titulo'] }}</div>
+                                                        <p class="portal-ticket-desc">{{ Str::limit($ticket['descricao'] ?: 'Sem descrição registrada.', 120) }}</p>
+                                                    </div>
+                                                    <span class="portal-badge {{ $ticket['status_badge'] }}">{{ $ticket['status_label'] }}</span>
+                                                </div>
+                                                <div class="portal-ticket-meta">
+                                                    <span>{{ $ticket['prioridade_label'] }}</span>
+                                                    <span>•</span>
+                                                    <span>{{ $ticket['interacoes_total'] }} interação(ões)</span>
+                                                    <span>•</span>
+                                                    <span>Atualizado {{ $ticket['updated_at_label'] }}</span>
+                                                </div>
+                                            </a>
+                                        @empty
+                                            <div class="portal-empty">
+                                                <strong>Nenhum ticket aberto ainda.</strong><br>
+                                                Clique em “Novo problema” para abrir o primeiro atendimento.
+                                            </div>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <div class="portal-info-card">
+                                    <h3>Pendência do ticket selecionado</h3>
                                     @if (! empty($atendimentoAtual['is_finalizado']))
-                                        <p>Este atendimento está finalizado e não possui pendências abertas para o cliente.</p>
+                                        <p>Este ticket está finalizado. Para tratar outro assunto, clique em “Novo problema”.</p>
                                     @elseif (($atendimentoAtual['status'] ?? '') === 'aguardando_cliente')
-                                        <p>O suporte está aguardando uma resposta sua. Envie uma mensagem na aba Atendimento para dar continuidade.</p>
+                                        <p>O suporte está aguardando uma resposta sua neste ticket. Envie uma mensagem na aba Atendimento para dar continuidade.</p>
                                     @elseif (($atendimentoAtual['status'] ?? '') === 'aguardando_suporte')
-                                        <p>Sua solicitação já foi enviada. Agora o atendimento está aguardando análise da equipe de suporte.</p>
+                                        <p>Sua solicitação já foi enviada. Agora este ticket está aguardando análise da equipe de suporte.</p>
                                     @else
-                                        <p>Não existe nenhuma ação obrigatória para você neste momento. Acompanhe as atualizações pela aba Atendimento.</p>
+                                        <p>Não existe nenhuma ação obrigatória para você neste ticket no momento. Acompanhe as atualizações pela aba Atendimento.</p>
                                     @endif
                                 </div>
 

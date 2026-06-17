@@ -21,9 +21,7 @@ class AtendimentoPortalService
 
         try {
             return DB::transaction(function () use ($mensagem): Atendimento {
-                $atendimento = Atendimento::query()
-                    ->where('portal_mensagem_id', $mensagem->id)
-                    ->first();
+                $atendimento = $this->localizarAtendimentoDaMensagem($mensagem);
 
                 if (! $atendimento) {
                     $atendimento = Atendimento::query()->create([
@@ -47,13 +45,39 @@ class AtendimentoPortalService
                         'portal_mensagem_id' => (int) $mensagem->id,
                         'nome' => $mensagem->nome,
                         'email' => $mensagem->email,
+                        'origem_coluna' => 'cliente',
+                    ]);
+
+                    return $atendimento->refresh();
+                }
+
+                if (! $this->mensagemJaRegistrada($mensagem)) {
+                    $payload = ['updated_at' => now()];
+
+                    if ($atendimento->status === AtendimentoStatus::AGUARDANDO_CLIENTE) {
+                        $payload['status'] = AtendimentoStatus::EM_ANDAMENTO;
+                    }
+
+                    // Mantém uma referência rápida para a última mensagem do portal sem criar outro ticket.
+                    if ((int) $atendimento->portal_mensagem_id !== (int) $mensagem->id) {
+                        $payload['portal_mensagem_id'] = (int) $mensagem->id;
+                    }
+
+                    $atendimento->update($payload);
+
+                    $this->registrarInteracao($atendimento->refresh(), 'resposta', $this->textoMensagem($mensagem), [
+                        'portal_mensagem_id' => (int) $mensagem->id,
+                        'nome' => $mensagem->nome,
+                        'email' => $mensagem->email,
+                        'origem_coluna' => 'cliente',
+                        'acao' => 'mensagem_portal_vinculada_ao_ticket_existente',
                     ]);
                 }
 
-                return $atendimento;
+                return $atendimento->refresh();
             });
         } catch (Throwable $exception) {
-            Log::error('Falha ao gerar atendimento a partir de mensagem do portal.', [
+            Log::error('Falha ao registrar mensagem do portal no atendimento.', [
                 'portal_mensagem_id' => $mensagem->id,
                 'empresa_id' => $mensagem->empresa_id,
                 'message' => $exception->getMessage(),
@@ -221,6 +245,106 @@ class AtendimentoPortalService
         }
 
         return ['solicitacoes' => $criadasSolicitacoes, 'mensagens' => $criadasMensagens];
+    }
+
+
+    private function localizarAtendimentoDaMensagem(PortalMensagem $mensagem): ?Atendimento
+    {
+        $mensagemId = (int) $mensagem->id;
+        $empresaId = (int) $mensagem->empresa_id;
+        $itemControleId = $mensagem->item_controle_id ? (int) $mensagem->item_controle_id : null;
+        $atendimentoId = isset($mensagem->atendimento_id) && $mensagem->atendimento_id ? (int) $mensagem->atendimento_id : null;
+
+        if ($atendimentoId && $empresaId > 0) {
+            $atendimento = Atendimento::query()
+                ->whereKey($atendimentoId)
+                ->where('empresa_id', $empresaId)
+                ->first();
+
+            if ($atendimento) {
+                return $atendimento;
+            }
+        }
+
+        if ($mensagemId > 0) {
+            $atendimento = Atendimento::query()
+                ->where('portal_mensagem_id', $mensagemId)
+                ->first();
+
+            if ($atendimento) {
+                return $atendimento;
+            }
+        }
+
+        if ($empresaId <= 0) {
+            return null;
+        }
+
+        // Quando a mensagem veio de um item/tarefa/documento do portal, esse vínculo é a forma mais segura.
+        if ($itemControleId) {
+            $atendimento = Atendimento::query()
+                ->where('empresa_id', $empresaId)
+                ->where('item_controle_id', $itemControleId)
+                ->whereIn('status', AtendimentoStatus::ACTIVE)
+                ->latest('updated_at')
+                ->latest('id')
+                ->first();
+
+            if ($atendimento) {
+                return $atendimento;
+            }
+        }
+
+        $email = trim(strtolower((string) $mensagem->email));
+        if ($email !== '' && CachedSchema::hasTable('portal_mensagens')) {
+            $mensagemIdsMesmoCliente = PortalMensagem::query()
+                ->where('empresa_id', $empresaId)
+                ->whereRaw('LOWER(email) = ?', [$email])
+                ->orderByDesc('id')
+                ->limit(50)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+
+            if ($mensagemIdsMesmoCliente !== []) {
+                $atendimento = Atendimento::query()
+                    ->where('empresa_id', $empresaId)
+                    ->whereIn('portal_mensagem_id', $mensagemIdsMesmoCliente)
+                    ->whereIn('status', AtendimentoStatus::ACTIVE)
+                    ->latest('updated_at')
+                    ->latest('id')
+                    ->first();
+
+                if ($atendimento) {
+                    return $atendimento;
+                }
+            }
+        }
+
+        // Fallback para o chat público/legado: se ainda existe um ticket ativo recente da empresa,
+        // a mensagem entra nele. Novo problema/ticket deve vir pelo fluxo de solicitação.
+        return Atendimento::query()
+            ->where('empresa_id', $empresaId)
+            ->where('origem', 'portal')
+            ->whereIn('status', AtendimentoStatus::ACTIVE)
+            ->latest('updated_at')
+            ->latest('id')
+            ->first();
+    }
+
+    private function mensagemJaRegistrada(PortalMensagem $mensagem): bool
+    {
+        if (! CachedSchema::hasTable('atendimento_interacoes')) {
+            return false;
+        }
+
+        return AtendimentoInteracao::query()
+            ->where(function ($query) use ($mensagem): void {
+                $id = (int) $mensagem->id;
+                $query->where('metadata->portal_mensagem_id', $id)
+                    ->orWhere('metadata->portal_mensagem_id', (string) $id);
+            })
+            ->exists();
     }
 
     private function tabelasDisponiveis(): bool

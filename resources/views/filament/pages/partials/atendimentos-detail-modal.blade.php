@@ -81,6 +81,7 @@
                                         <button type="button" wire:click="assumirAtendimento({{ $selectedAtendimento['id'] }})"><i class="bi bi-person-check" aria-hidden="true"></i> Assumir atendimento</button>
                                     @endif
                                     @if(! $statusFechado)
+                                        <button type="button" wire:click="criarTarefaDoAtendimento"><i class="bi bi-check2-square" aria-hidden="true"></i> Criar tarefa</button>
                                         <button type="button" wire:click="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência</button>
                                         <button type="button" wire:click="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento</button>
                                     @endif
@@ -101,6 +102,7 @@
                                     <div class="at-ticket-detail-row"><i class="bi bi-envelope" aria-hidden="true"></i><span>Assunto</span><strong>{{ $selectedAtendimento['titulo'] ?? '-' }}</strong></div>
                                     <div class="at-ticket-detail-row"><i class="bi bi-stars" aria-hidden="true"></i><span>Prioridade</span><strong>{{ $selectedAtendimento['prioridade_label'] ?? '-' }}</strong></div>
                                     <div class="at-ticket-detail-row"><i class="bi bi-arrow-repeat" aria-hidden="true"></i><span>Status</span><strong>{{ $selectedAtendimento['status_label'] ?? '-' }}</strong></div>
+                                    <div class="at-ticket-detail-row"><i class="bi bi-check2-square" aria-hidden="true"></i><span>Tarefas</span><strong>{{ $selectedAtendimento['tarefas_count'] ?? 0 }}</strong></div>
                                     <div class="at-ticket-detail-row"><i class="bi bi-hourglass-split" aria-hidden="true"></i><span>Aguardando</span><strong>{{ $selectedAtendimento['aguardando_label'] ?? '-' }}</strong></div>
                                     <div class="at-ticket-detail-row"><i class="bi bi-stopwatch" aria-hidden="true"></i><span>Tempo aguardando</span><strong>{{ $selectedAtendimento['tempo_aguardando_detalhe'] ?? '-' }}</strong></div>
                                     <div class="at-ticket-detail-row"><i class="bi bi-clock" aria-hidden="true"></i><span>SLA</span><strong class="{{ !empty($selectedAtendimento['sla_vencido']) ? 'at-ticket-sla-danger' : 'at-ticket-sla-ok' }}">{{ !empty($selectedAtendimento['sla_vencido']) ? $selectedAtendimento['sla_texto'] : 'Dentro do prazo' }}</strong></div>
@@ -215,7 +217,7 @@
                                         <div class="at-ticket-reply-left">
                                             <label class="at-ticket-upload-control" title="Anexar arquivo">
                                                 <i class="bi bi-paperclip" aria-hidden="true"></i>
-                                                <input type="file" wire:model="anexoRespostaCliente" accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,image/jpeg,image/png,image/webp,application/pdf">
+                                                <input type="file" wire:model="portalAnexos" multiple accept=".jpg,.jpeg,.png,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,image/jpeg,image/png,image/webp,application/pdf">
                                             </label>
                                             <select class="at-ticket-quick-select" wire:change="$set('novaRespostaCliente', $event.target.value)">
                                                 <option value="">Respostas rápidas</option>
@@ -227,15 +229,18 @@
                                             </select>
                                         </div>
                                         <div class="at-ticket-reply-right">
-                                            <button type="button" class="at-ticket-send-btn" wire:click="responderCliente" wire:loading.attr="disabled" wire:target="responderCliente,anexoRespostaCliente">
+                                            <button type="button" class="at-ticket-send-btn" wire:click="responderCliente" wire:loading.attr="disabled" wire:target="responderCliente,portalAnexos">
                                                 <i class="bi bi-send" aria-hidden="true"></i>
-                                                <span wire:loading.remove wire:target="responderCliente,anexoRespostaCliente">Enviar resposta</span>
-                                                <span wire:loading wire:target="responderCliente,anexoRespostaCliente">Enviando...</span>
+                                                <span wire:loading.remove wire:target="responderCliente,portalAnexos">Enviar resposta</span>
+                                                <span wire:loading wire:target="responderCliente,portalAnexos">Enviando...</span>
                                             </button>
                                         </div>
                                     </div>
-                                    <small class="at-ticket-reply-hint" wire:loading.remove wire:target="anexoRespostaCliente">Pressione o botão para enviar ao portal do cliente</small>
-                                    <small class="at-ticket-reply-hint" wire:loading wire:target="anexoRespostaCliente">Carregando anexo...</small>
+                                    <small class="at-ticket-reply-hint" wire:loading.remove wire:target="portalAnexos">Pressione o botão para enviar ao portal do cliente</small>
+                                    <small class="at-ticket-reply-hint" wire:loading wire:target="portalAnexos">Carregando anexo...</small>
+                                    @error('novaRespostaCliente') <small class="at-ticket-reply-hint danger">{{ $message }}</small> @enderror
+                                    @error('portalAnexos') <small class="at-ticket-reply-hint danger">{{ $message }}</small> @enderror
+                                    @error('portalAnexos.*') <small class="at-ticket-reply-hint danger">{{ $message }}</small> @enderror
                                 </section>
                             @elseif(! $statusFechado && ! $temCanalResposta)
                                 <div class="at-ticket-finalized danger"><strong>Cliente sem canal de resposta.</strong><br>Cadastre e-mail ou vínculo de portal antes de enviar mensagem.</div>
@@ -337,6 +342,7 @@
                                         @if($statusAtual !== \App\Support\AtendimentoStatus::RESOLVIDO)
                                             <button type="button" class="at-ticket-quick-btn" wire:click="mudarStatusRapido({{ $selectedAtendimento['id'] }}, 'resolvido')"><span class="at-dot success"></span> Marcar como resolvido</button>
                                         @endif
+                                        <button type="button" class="at-ticket-quick-btn" wire:click="criarTarefaDoAtendimento" wire:loading.attr="disabled" wire:target="criarTarefaDoAtendimento"><i class="bi bi-check2-square" aria-hidden="true"></i> Criar tarefa do ticket</button>
                                         <button type="button" class="at-ticket-quick-btn" wire:click="criarPendenciaDoAtendimento" wire:loading.attr="disabled" wire:target="criarPendenciaDoAtendimento"><i class="bi bi-clipboard-plus" aria-hidden="true"></i> Criar pendência interna</button>
                                         <button type="button" class="at-ticket-quick-btn" wire:click="solicitarDocumentoDoAtendimento" wire:loading.attr="disabled" wire:target="solicitarDocumentoDoAtendimento"><i class="bi bi-file-earmark-plus" aria-hidden="true"></i> Solicitar documento no portal</button>
                                     </div>

@@ -55,8 +55,16 @@ class AtendimentosData
                 ->groupBy('atendimento_id')
                 ->pluck('total', 'atendimento_id');
 
+        $tarefasCount = empty($ids) || ! CachedSchema::hasTable('item_controles') || ! CachedSchema::hasColumn('item_controles', 'atendimento_id')
+            ? collect()
+            : DB::table('item_controles')
+                ->select('atendimento_id', DB::raw('COUNT(*) as total'))
+                ->whereIn('atendimento_id', $ids)
+                ->groupBy('atendimento_id')
+                ->pluck('total', 'atendimento_id');
+
         $atendimentos = $rows
-            ->map(fn ($row) => self::formatAtendimento($row, (int) ($interacoesCount[$row->id] ?? 0)))
+            ->map(fn ($row) => self::formatAtendimento($row, (int) ($interacoesCount[$row->id] ?? 0), (int) ($tarefasCount[$row->id] ?? 0)))
             ->values()
             ->all();
 
@@ -92,7 +100,11 @@ class AtendimentosData
             ? (int) DB::table('atendimento_interacoes')->where('atendimento_id', $atendimentoId)->count()
             : 0;
 
-        return self::formatAtendimento($row, $interacoesCount);
+        $tarefasCount = CachedSchema::hasTable('item_controles') && CachedSchema::hasColumn('item_controles', 'atendimento_id')
+            ? (int) DB::table('item_controles')->where('atendimento_id', $atendimentoId)->count()
+            : 0;
+
+        return self::formatAtendimento($row, $interacoesCount, $tarefasCount);
     }
 
     public static function timeline(int $atendimentoId): array
@@ -598,7 +610,7 @@ class AtendimentosData
         ])->values()->all();
     }
 
-    private static function formatAtendimento(object $row, int $interacoesCount): array
+    private static function formatAtendimento(object $row, int $interacoesCount, int $tarefasCount = 0): array
     {
         $created = $row->created_at ? Carbon::parse($row->created_at) : null;
         $updated = $row->updated_at ? Carbon::parse($row->updated_at) : null;
@@ -651,6 +663,7 @@ class AtendimentosData
             'cliente_situacao' => $row->cliente_situacao,
             'cliente_risco' => $row->cliente_risco,
             'interacoes_count' => $interacoesCount,
+            'tarefas_count' => $tarefasCount,
         ];
     }
 

@@ -29,6 +29,7 @@ class ItemControle extends Model
         'data_vencimento',
         'data_conclusao',
         'empresa_id',
+        'atendimento_id',
         'responsavel_id',
         'observacao',
         'portal_ativo',
@@ -80,6 +81,7 @@ class ItemControle extends Model
         'data_vencimento' => 'date',
         'data_conclusao' => 'date',
         'categoria_id' => 'integer',
+        'atendimento_id' => 'integer',
         'portal_ativo' => 'boolean',
         'portal_expira_em' => 'datetime',
         'sla_horas' => 'integer',
@@ -132,6 +134,11 @@ class ItemControle extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function atendimento()
+    {
+        return $this->belongsTo(Atendimento::class, 'atendimento_id');
     }
 
     public function responsavel()

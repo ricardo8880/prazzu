@@ -30,7 +30,7 @@ class PortalClientePublicoController extends Controller
     {
     }
 
-    public function show(string $token): View
+    public function show(Request $request, string $token): View
     {
         $empresa = $this->empresaPorToken($token);
 
@@ -39,7 +39,9 @@ class PortalClientePublicoController extends Controller
 
         $empresaId = (int) $empresa->id;
 
-        return view('portal.cliente.show', PortalClienteData::data($empresaId, true) + [
+        $atendimentoId = $request->integer('ticket') ?: null;
+
+        return view('portal.cliente.show', PortalClienteData::data($empresaId, true, $atendimentoId) + [
             'token' => $token,
             'modoPublico' => true,
             'socketIoConfig' => $this->socketIoConfigCliente($empresaId, $token),
@@ -152,6 +154,7 @@ class PortalClientePublicoController extends Controller
         $validator = Validator::make($request->all(), [
             'nome' => ['nullable', 'string', 'min:2', 'max:255', 'not_regex:/^\s*$/'],
             'email' => ['nullable', 'email', 'max:255'],
+            'atendimento_id' => ['nullable', 'integer', 'min:1'],
             'mensagem' => ['nullable', 'string', 'max:5000'],
             'anexos' => ['nullable', 'array', 'max:5'],
             'anexos.*' => ['bail', 'file', 'max:' . ItemControleAnexoUploader::MAX_SIZE_KB, 'mimes:' . implode(',', ItemControleAnexoUploader::ALLOWED_EXTENSIONS), 'mimetypes:' . implode(',', ItemControleAnexoUploader::ALLOWED_MIME_TYPES)],
@@ -209,6 +212,9 @@ class PortalClientePublicoController extends Controller
         $data = $validator->validated();
         $data['nome'] = trim((string) ($data['nome'] ?? '')) ?: ($empresa->nome_fantasia ?? $empresa->razao_social ?? 'Cliente do portal');
         $data['email'] = trim((string) ($data['email'] ?? '')) ?: ($empresa->email ?? null);
+        $atendimentoSelecionado = $this->atendimentoPublicoDaEmpresa((int) $empresa->id, $data['atendimento_id'] ?? null);
+        $atendimentoSelecionadoId = $atendimentoSelecionado ? (int) $atendimentoSelecionado->id : null;
+        $itemControleSelecionadoId = $atendimentoSelecionado && ! empty($atendimentoSelecionado->item_controle_id) ? (int) $atendimentoSelecionado->item_controle_id : null;
         $arquivos = array_values(array_filter($request->file('anexos', [])));
         $anexosArmazenados = [];
 
@@ -238,7 +244,7 @@ class PortalClientePublicoController extends Controller
             $mensagemCriada = null;
 
             $inicioTransacao = microtime(true);
-            DB::transaction(function () use ($empresa, $data, $anexosArmazenados, &$mensagemCriada): void {
+            DB::transaction(function () use ($empresa, $data, $anexosArmazenados, $atendimentoSelecionadoId, $itemControleSelecionadoId, &$mensagemCriada): void {
                 $texto = trim((string) ($data['mensagem'] ?? ''));
                 $textoFinal = $this->mensagemComAnexos($texto, $anexosArmazenados);
 
@@ -246,7 +252,9 @@ class PortalClientePublicoController extends Controller
                     (int) $empresa->id,
                     trim((string) $data['nome']),
                     $data['email'] ?? null,
-                    $textoFinal
+                    $textoFinal,
+                    $itemControleSelecionadoId,
+                    $atendimentoSelecionadoId
                 ));
 
                 $this->registrarDocumentosDoChat((int) $empresa->id, $mensagem, $anexosArmazenados);
@@ -314,6 +322,7 @@ class PortalClientePublicoController extends Controller
                         'created_at_label' => optional($mensagemCriada->created_at)->format('d/m/Y H:i') ?: 'agora',
                         'attachments' => $anexosArmazenados,
                         'room' => 'empresa:' . (int) $empresa->id . ':portal',
+                        'atendimento_id' => $atendimentoSelecionadoId,
                     ])
                     : null,
             ]);
@@ -333,9 +342,11 @@ class PortalClientePublicoController extends Controller
 
         $empresaId = (int) $empresa->id;
         $afterId = max(0, $request->integer('after_id'));
+        $atendimentoId = $this->atendimentoPublicoDaEmpresa($empresaId, $request->integer('atendimento_id'))?->id;
 
         $mensagens = PortalMensagem::query()
             ->where('empresa_id', $empresaId)
+            ->when($atendimentoId && CachedSchema::hasColumn('portal_mensagens', 'atendimento_id'), fn ($query) => $query->where('atendimento_id', (int) $atendimentoId))
             ->when($afterId > 0, fn ($query) => $query->where('id', '>', $afterId))
             ->orderBy('id')
             ->limit(50)
@@ -354,6 +365,7 @@ class PortalClientePublicoController extends Controller
                     'attachments' => [],
                     'room' => 'empresa:' . (int) $mensagem->empresa_id . ':portal',
                     'room_scope' => 'portal',
+                    'atendimento_id' => $mensagem->atendimento_id ?? null,
                 ]);
             })
             ->values();
@@ -395,7 +407,7 @@ class PortalClientePublicoController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function estadoChat(string $token): JsonResponse
+    public function estadoChat(Request $request, string $token): JsonResponse
     {
         $inicio = microtime(true);
         $empresa = $this->empresaPorToken($token);
@@ -404,10 +416,11 @@ class PortalClientePublicoController extends Controller
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
 
         $empresaId = (int) $empresa->id;
+        $atendimentoId = $this->atendimentoPublicoDaEmpresa($empresaId, $request->integer('atendimento_id'))?->id;
 
-        $this->registrarVisualizacaoCliente($empresaId);
+        $this->registrarVisualizacaoCliente($empresaId, $atendimentoId ? (int) $atendimentoId : null);
 
-        $mensagens = $this->mensagensTempoReal($empresaId);
+        $mensagens = $this->mensagensTempoReal($empresaId, $atendimentoId ? (int) $atendimentoId : null);
         $supportTyping = $this->suporteEstaDigitando($empresaId);
         $supportTypingName = $this->nomeSuporteDigitando($empresaId);
 
@@ -423,7 +436,7 @@ class PortalClientePublicoController extends Controller
         ]);
     }
 
-    private function registrarVisualizacaoCliente(int $empresaId): void
+    private function registrarVisualizacaoCliente(int $empresaId, ?int $atendimentoId = null): void
     {
         if (! CachedSchema::hasTable('portal_mensagens')) {
             return;
@@ -432,6 +445,7 @@ class PortalClientePublicoController extends Controller
         $ultimoIdEquipe = PortalMensagem::query()
             ->where('empresa_id', $empresaId)
             ->where('origem', 'interno')
+            ->when($atendimentoId && CachedSchema::hasColumn('portal_mensagens', 'atendimento_id'), fn ($query) => $query->where('atendimento_id', (int) $atendimentoId))
             ->max('id');
 
         if ($ultimoIdEquipe) {
@@ -441,6 +455,7 @@ class PortalClientePublicoController extends Controller
                 PortalMensagem::query()
                     ->where('empresa_id', $empresaId)
                     ->where('origem', 'interno')
+                    ->when($atendimentoId && CachedSchema::hasColumn('portal_mensagens', 'atendimento_id'), fn ($query) => $query->where('atendimento_id', (int) $atendimentoId))
                     ->whereNull('visualizada_em')
                     ->where('id', '<=', (int) $ultimoIdEquipe)
                     ->update(['visualizada_em' => now()]);
@@ -474,7 +489,7 @@ class PortalClientePublicoController extends Controller
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function mensagensTempoReal(int $empresaId): array
+    private function mensagensTempoReal(int $empresaId, ?int $atendimentoId = null): array
     {
         if (! CachedSchema::hasTable('portal_mensagens')) {
             return [];
@@ -482,6 +497,7 @@ class PortalClientePublicoController extends Controller
 
         return PortalMensagem::query()
             ->where('empresa_id', $empresaId)
+            ->when($atendimentoId && CachedSchema::hasColumn('portal_mensagens', 'atendimento_id'), fn ($query) => $query->where('atendimento_id', (int) $atendimentoId))
             ->when(
                 CachedSchema::hasColumn('portal_mensagens', 'conversa_status'),
                 fn ($query) => $query->where('conversa_status', 'aberta')
@@ -498,7 +514,8 @@ class PortalClientePublicoController extends Controller
                 'created_at_label' => optional($mensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
                 'attachments' => [],
                 'room' => 'empresa:' . $empresaId . ':portal',
-                'room_scope' => 'portal',
+                'room_scope' => $atendimentoId ? 'atendimento' : 'portal',
+                'atendimento_id' => $mensagem->atendimento_id ?? $atendimentoId,
             ]))
             ->values()
             ->all();
@@ -692,7 +709,7 @@ class PortalClientePublicoController extends Controller
                 ->withErrors(['solicitacao' => 'Não foi possível abrir a solicitação agora. Tente novamente em instantes.']);
         }
 
-        return $this->redirectPortal($token, 'chat')->with('success', 'Solicitação aberta com sucesso. A equipe já recebeu seu pedido.');
+        return $this->redirectPortal($token, 'pendencias')->with('success', 'Ticket aberto com sucesso. A equipe já recebeu seu pedido.');
     }
 
 
@@ -857,6 +874,18 @@ class PortalClientePublicoController extends Controller
         }
     }
 
+    private function atendimentoPublicoDaEmpresa(int $empresaId, int|string|null $atendimentoId): ?object
+    {
+        if (blank($atendimentoId) || ! CachedSchema::hasTable('atendimentos')) {
+            return null;
+        }
+
+        return DB::table('atendimentos')
+            ->where('id', (int) $atendimentoId)
+            ->where('empresa_id', $empresaId)
+            ->first();
+    }
+
     private function itemPortalDaEmpresa(int $empresaId, int|string|null $itemControleId): ?ItemControle
     {
         if (blank($itemControleId) || ! CachedSchema::hasTable('item_controles')) {
@@ -880,7 +909,7 @@ class PortalClientePublicoController extends Controller
     }
 
 
-    private function payloadMensagemCliente(int $empresaId, string $nome, ?string $email, string $mensagem, ?int $itemControleId = null): array
+    private function payloadMensagemCliente(int $empresaId, string $nome, ?string $email, string $mensagem, ?int $itemControleId = null, ?int $atendimentoId = null): array
     {
         $payload = [
             'empresa_id' => $empresaId,
@@ -889,6 +918,10 @@ class PortalClientePublicoController extends Controller
             'mensagem' => $mensagem,
             'origem' => 'cliente',
         ];
+
+        if ($atendimentoId && CachedSchema::hasColumn('portal_mensagens', 'atendimento_id')) {
+            $payload['atendimento_id'] = $atendimentoId;
+        }
 
         if ($itemControleId && CachedSchema::hasColumn('portal_mensagens', 'item_controle_id')) {
             $payload['item_controle_id'] = $itemControleId;

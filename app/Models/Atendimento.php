@@ -87,6 +87,12 @@ class Atendimento extends Model
         return $this->hasMany(AtendimentoInteracao::class)->latest();
     }
 
+
+    public function tarefas(): HasMany
+    {
+        return $this->hasMany(ItemControle::class, 'atendimento_id')->latest();
+    }
+
     public function isAberto(): bool
     {
         return AtendimentoStatus::isActive((string) $this->status);

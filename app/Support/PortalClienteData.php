@@ -17,11 +17,14 @@ class PortalClienteData
     private const STATUS_CONCLUIDOS = ['concluido', 'concluida', 'concluído', 'concluída', 'finalizado', 'finalizada', 'cancelado', 'cancelada'];
     private const STATUS_VISIVEIS_CLIENTE = ['pronto_revisao', 'pronto_para_revisao', 'em_aprovacao', 'aprovacao', 'concluido', 'concluida'];
 
-    public static function data(?int $empresaId = null, bool $somenteAtivos = true): array
+    public static function data(?int $empresaId = null, bool $somenteAtivos = true, ?int $atendimentoId = null): array
     {
         $empresaId ??= self::empresaIdAtual();
         $items = self::items($empresaId);
         $visiveis = self::itemsVisiveisParaCliente($items);
+        $clienteTickets = self::ticketsCliente($empresaId);
+        $selectedAtendimentoId = self::atendimentoSelecionadoId($clienteTickets, $atendimentoId);
+        $selectedTicket = self::ticketPorId($clienteTickets, $selectedAtendimentoId);
 
         return [
             'empresa' => self::empresaAtual($empresaId),
@@ -36,7 +39,10 @@ class PortalClienteData
             'documents' => self::documentos($empresaId),
             'meetingNotes' => self::atas($empresaId),
             'supportQueue' => self::solicitacoes($empresaId),
-            'chat' => self::mensagens($empresaId, $somenteAtivos),
+            'clienteTickets' => $clienteTickets,
+            'selectedAtendimentoId' => $selectedAtendimentoId,
+            'selectedTicket' => $selectedTicket,
+            'chat' => self::mensagens($empresaId, $somenteAtivos, $selectedAtendimentoId),
             'nextDelivery' => self::proximaEntrega($items),
             'timeline' => self::timeline($items),
             'approvalHistory' => self::historicoAprovacoes($items),
@@ -373,7 +379,71 @@ class PortalClienteData
             ->all();
     }
 
-    private static function mensagens(?int $empresaId, bool $somenteAtivas = true): array
+
+    private static function ticketsCliente(?int $empresaId): array
+    {
+        if (! $empresaId || ! CachedSchema::hasTable('atendimentos')) {
+            return self::solicitacoes($empresaId);
+        }
+
+        $select = ['id', 'portal_solicitacao_id', 'item_controle_id', 'titulo', 'descricao', 'status', 'prioridade', 'created_at', 'updated_at'];
+        foreach (['fechado_em', 'resolvido_em'] as $column) {
+            if (CachedSchema::hasColumn('atendimentos', $column)) {
+                $select[] = $column;
+            }
+        }
+
+        return DB::table('atendimentos')
+            ->select($select)
+            ->where('empresa_id', $empresaId)
+            ->orderByDesc(CachedSchema::hasColumn('atendimentos', 'updated_at') ? 'updated_at' : 'id')
+            ->limit(60)
+            ->get()
+            ->map(function (object $ticket): array {
+                $row = (array) $ticket;
+                $row['status_label'] = self::labelStatus($row['status'] ?? null);
+                $row['created_at_label'] = self::formatarDataHora($row['created_at'] ?? null);
+                $row['updated_at_label'] = self::formatarDataHora($row['updated_at'] ?? null);
+                $row['ticket_label'] = '#ATD-' . str_pad((string) ($row['id'] ?? 0), 5, '0', STR_PAD_LEFT);
+                $row['is_done'] = in_array(self::normalizarStatus($row['status'] ?? null), self::STATUS_CONCLUIDOS, true)
+                    || ! empty($row['fechado_em'] ?? null)
+                    || ! empty($row['resolvido_em'] ?? null);
+
+                return $row;
+            })
+            ->values()
+            ->all();
+    }
+
+    private static function atendimentoSelecionadoId(array $tickets, ?int $atendimentoId = null): ?int
+    {
+        $ids = collect($tickets)
+            ->pluck('id')
+            ->filter(fn ($id): bool => (int) $id > 0)
+            ->map(fn ($id): int => (int) $id)
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return null;
+        }
+
+        if ($atendimentoId && $ids->contains((int) $atendimentoId)) {
+            return (int) $atendimentoId;
+        }
+
+        return (int) $ids->first();
+    }
+
+    private static function ticketPorId(array $tickets, ?int $atendimentoId): ?array
+    {
+        if (! $atendimentoId) {
+            return null;
+        }
+
+        return collect($tickets)->first(fn (array $ticket): bool => (int) ($ticket['id'] ?? 0) === (int) $atendimentoId);
+    }
+
+    private static function mensagens(?int $empresaId, bool $somenteAtivas = true, ?int $atendimentoId = null): array
     {
         if (! $empresaId) {
             return [];
@@ -381,10 +451,14 @@ class PortalClienteData
 
         $mensagens = collect();
 
-        if (CachedSchema::hasTable('portal_mensagens')) {
+        if (! $atendimentoId && CachedSchema::hasTable('portal_mensagens')) {
             $mensagens = $mensagens->merge(
                 PortalMensagem::query()
                     ->where('empresa_id', $empresaId)
+                    ->when(
+                        $atendimentoId && CachedSchema::hasColumn('portal_mensagens', 'atendimento_id'),
+                        fn ($query) => $query->where('atendimento_id', (int) $atendimentoId)
+                    )
                     ->when(
                         $somenteAtivas,
                         fn ($query) => $query->when(
@@ -404,12 +478,55 @@ class PortalClienteData
                         'mensagem' => $mensagem->mensagem,
                         'origem' => $mensagem->origem,
                         'conversa_status' => $mensagem->conversa_status ?? 'aberta',
+                        'atendimento_id' => $mensagem->atendimento_id ?? null,
                         'created_at' => $mensagem->created_at,
                         'created_at_label' => self::formatarDataHora($mensagem->created_at),
                     ]))
             );
         }
 
+
+        // Quando um ticket específico está selecionado, a conversa precisa ser filtrada
+        // pelo atendimento/ticket, não pela empresa inteira. O portal_mensagens é usado
+        // para mensagens do chat público, mas a timeline oficial do ticket fica em
+        // atendimento_interacoes. Esse fallback evita que conversas de outros tickets
+        // apareçam quando mensagens antigas ainda não possuem portal_mensagens.atendimento_id.
+        if ($atendimentoId && CachedSchema::hasTable('atendimento_interacoes')) {
+            $mensagens = $mensagens->merge(
+                DB::table('atendimento_interacoes as i')
+                    ->where('i.atendimento_id', (int) $atendimentoId)
+                    ->select(['i.id', 'i.atendimento_id', 'i.user_id', 'i.origem', 'i.mensagem', 'i.metadata', 'i.created_at'])
+                    ->when(CachedSchema::hasTable('users'), function ($query) {
+                        $query->leftJoin('users as u', 'u.id', '=', 'i.user_id')
+                            ->addSelect('u.name as usuario_nome');
+                    })
+                    ->oldest('i.created_at')
+                    ->orderBy('i.id')
+                    ->limit(120)
+                    ->get()
+                    ->map(function (object $interacao): array {
+                        $row = (array) $interacao;
+                        $metadata = (string) ($row['metadata'] ?? '');
+                        $origem = strtolower((string) ($row['origem'] ?? ''));
+                        $isCliente = in_array($origem, ['cliente', 'portal', 'publico', 'portal_cliente', 'client'], true)
+                            || str_contains($metadata, 'portal_mensagem_id')
+                            || str_contains($metadata, 'portal_cliente');
+
+                        return self::formatarMensagemChat([
+                            'id' => 'i-' . (int) ($row['id'] ?? 0),
+                            'source' => 'atendimento_interacoes',
+                            'nome' => $isCliente ? 'Cliente' : (string) ($row['usuario_nome'] ?? 'Equipe'),
+                            'email' => null,
+                            'mensagem' => (string) ($row['mensagem'] ?? ''),
+                            'origem' => $isCliente ? 'cliente' : 'interno',
+                            'created_at' => $row['created_at'] ?? null,
+                            'created_at_label' => self::formatarDataHora($row['created_at'] ?? null),
+                            'atendimento_id' => (int) ($row['atendimento_id'] ?? 0),
+                            'room_scope' => 'atendimento',
+                        ]);
+                    })
+            );
+        }
 
         // Lote 5: o chat passa a ter uma única fonte de verdade.
         // Mensagens legadas de prazzu_client_portal_messages/client_portal_messages não entram mais no fluxo do Portal Cliente.

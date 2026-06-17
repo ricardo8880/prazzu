@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Atendimento;
+use App\Models\PortalMensagem;
 use App\Models\ItemControle;
 use App\Support\AtendimentoPortalService;
 use App\Support\AtendimentoStatus;
@@ -15,8 +16,10 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Throwable;
 use UnitEnum;
 
@@ -69,6 +72,18 @@ class Atendimentos extends Page
     public string $novaInteracao = '';
     public string $novaRespostaCliente = '';
     public $anexoRespostaCliente = null;
+
+    /**
+     * Anexos do chat de atendimento usando a mesma regra do chat do Portal do Cliente.
+     *
+     * @var array<int, TemporaryUploadedFile>
+     */
+    public array $portalAnexos = [];
+
+    public bool $clienteDigitando = false;
+    public ?string $clienteDigitandoNome = null;
+    public ?int $clienteVisualizouAteId = null;
+    public ?int $suporteVisualizouAteId = null;
     public string $resolucaoTexto = '';
     public string $motivoEncerramento = 'duvida_resolvida';
     public string $observacaoEncerramento = '';
@@ -357,6 +372,7 @@ class Atendimentos extends Page
         $this->novaInteracao = '';
         $this->novaRespostaCliente = '';
         $this->anexoRespostaCliente = null;
+        $this->portalAnexos = [];
         $this->resolucaoTexto = '';
         $this->motivoEncerramento = 'duvida_resolvida';
         $this->observacaoEncerramento = '';
@@ -579,6 +595,8 @@ class Atendimentos extends Page
             return;
         }
 
+        $this->validarMensagemAtendimentoComAnexos();
+
         $mensagem = trim($this->novaRespostaCliente);
 
         $atendimento = $this->findAtendimentoAutorizado($this->selectedAtendimentoId);
@@ -590,17 +608,16 @@ class Atendimentos extends Page
             return;
         }
 
-        $anexo = $this->prepararAnexoRespostaCliente();
-        if ($anexo === false) {
-            return;
-        }
+        $anexos = $this->salvarAnexosMensagemAtendimento($atendimento);
 
-        if (mb_strlen($mensagem) < 2 && ! $anexo) {
+        if (mb_strlen($mensagem) < 2 && $anexos === []) {
             $this->notify('danger', 'Escreva uma resposta ou selecione um anexo antes de enviar ao cliente.');
             return;
         }
 
-        DB::transaction(function () use ($atendimento, $mensagem, $anexo): void {
+        $portalMensagem = null;
+
+        DB::transaction(function () use ($atendimento, $mensagem, $anexos, &$portalMensagem): void {
             $agora = now();
             $payload = [
                 'status' => AtendimentoStatus::AGUARDANDO_CLIENTE,
@@ -617,6 +634,8 @@ class Atendimentos extends Page
 
             $atendimento->update($payload);
 
+            $portalMensagem = $this->registrarMensagemPortalDoAtendimento($atendimento->refresh(), $mensagem, $anexos);
+
             $this->registrarInteracao(
                 (int) $atendimento->id,
                 'resposta',
@@ -632,22 +651,185 @@ class Atendimentos extends Page
                     'visivel_cliente' => true,
                     'suporte_nome' => auth()->user()?->name,
                     'suporte_email' => auth()->user()?->email,
-                    'anexos' => $anexo ? [$anexo] : [],
+                    'portal_mensagem_id' => $portalMensagem?->id,
+                    'anexos' => $anexos,
                 ]
             );
 
             $this->sincronizarPortalVinculado($atendimento->refresh(), AtendimentoStatus::AGUARDANDO_CLIENTE);
         });
 
-        $this->notificarClienteResposta($atendimento->refresh(), $mensagem, (bool) $anexo);
+        $atendimentoAtualizado = $atendimento->refresh();
+        $this->notificarClienteResposta($atendimentoAtualizado, $mensagem, $anexos !== []);
+
+        if ($portalMensagem) {
+            $this->dispatch('atendimento-chat-message-sent', payload: $this->payloadSocketMensagemAtendimento($atendimentoAtualizado, $portalMensagem, $mensagem, $anexos));
+        }
 
         $this->novaRespostaCliente = '';
         $this->anexoRespostaCliente = null;
+        $this->portalAnexos = [];
         $this->loadData(true);
-        $this->notify('success', $anexo ? 'Resposta com anexo enviada ao portal do cliente.' : 'Resposta enviada ao portal do cliente.');
+        $this->notify('success', $anexos !== [] ? 'Resposta com anexos enviada ao portal do cliente.' : 'Resposta enviada ao portal do cliente.');
     }
 
 
+
+    private function socketIoConfigAtendimento(Atendimento $atendimento): array
+    {
+        $empresaId = (int) $atendimento->empresa_id;
+
+        if ($empresaId <= 0) {
+            return ['enabled' => false];
+        }
+
+        $actor = 'suporte';
+        $secret = (string) config('app.key');
+        $token = 'admin:' . (auth()->id() ?: '0');
+        $room = 'empresa:' . $empresaId . ':portal';
+
+        return [
+            'enabled' => true,
+            'url' => rtrim((string) env('VITE_SOCKET_IO_URL', env('SOCKET_IO_URL', 'http://127.0.0.1:3001')), '/'),
+            'empresaId' => $empresaId,
+            'actor' => $actor,
+            'nome' => auth()->user()?->name ?: 'Suporte',
+            'token' => $token,
+            'room' => $room,
+            'roomScope' => 'portal',
+            'signature' => hash_hmac('sha256', $empresaId . '|' . $actor . '|' . $token . '|' . $room, $secret),
+        ];
+    }
+
+    private function payloadSocketMensagemAtendimento(Atendimento $atendimento, PortalMensagem $portalMensagem, string $mensagem, array $anexos = []): array
+    {
+        $empresaId = (int) $atendimento->empresa_id;
+        $room = 'empresa:' . $empresaId . ':portal';
+        $actor = 'suporte';
+
+        return [
+            'socket' => $this->socketIoConfigAtendimento($atendimento),
+            'message' => [
+                'id' => (int) $portalMensagem->id,
+                'message_id' => (int) $portalMensagem->id,
+                'empresa_id' => $empresaId,
+                'atendimento_id' => (int) $atendimento->id,
+                'room' => $room,
+                'room_scope' => 'portal',
+                'class' => 'equipe',
+                'actor' => $actor,
+                'server_signature' => hash_hmac('sha256', $empresaId . '|' . $room . '|' . $actor . '|' . (int) $portalMensagem->id, (string) config('app.key')),
+                'origem' => 'interno',
+                'author' => auth()->user()?->name ?: 'Equipe',
+                'nome' => auth()->user()?->name ?: 'Equipe',
+                'text' => trim($mensagem),
+                'mensagem' => trim($mensagem),
+                'time' => optional($portalMensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
+                'created_at_label' => optional($portalMensagem->created_at)->format('d/m/Y H:i') ?: 'agora',
+                'attachments' => collect($anexos)->map(fn (array $anexo): array => [
+                    'nome' => $anexo['nome'] ?? $anexo['nome_original'] ?? 'Anexo',
+                    'url' => $anexo['url'] ?? null,
+                    'mime_type' => $anexo['mime_type'] ?? $anexo['mime'] ?? 'application/octet-stream',
+                    'size' => $anexo['size'] ?? $anexo['tamanho'] ?? null,
+                    'size_label' => $anexo['size_label'] ?? null,
+                    'is_image' => (bool) ($anexo['is_image'] ?? false),
+                ])->values()->all(),
+            ],
+        ];
+    }
+
+    private function validarMensagemAtendimentoComAnexos(): void
+    {
+        $this->validate([
+            'novaRespostaCliente' => ['nullable', 'string', 'max:5000', 'required_without:portalAnexos.0'],
+            'portalAnexos' => ['array', 'max:5'],
+            'portalAnexos.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx,txt,csv'],
+        ], [
+            'novaRespostaCliente.required_without' => 'Digite uma mensagem ou anexe pelo menos um arquivo.',
+            'portalAnexos.max' => 'Envie no máximo 5 arquivos por mensagem.',
+            'portalAnexos.*.max' => 'Cada arquivo deve ter no máximo 10 MB.',
+            'portalAnexos.*.mimes' => 'Use apenas imagem, PDF, Word, Excel, TXT ou CSV.',
+        ]);
+    }
+
+    /**
+     * @return array<int, array<string, string|int|bool|null>>
+     */
+    private function salvarAnexosMensagemAtendimento(Atendimento $atendimento): array
+    {
+        return collect($this->portalAnexos)
+            ->filter(fn ($arquivo): bool => $arquivo instanceof TemporaryUploadedFile || $arquivo instanceof UploadedFile)
+            ->map(function (TemporaryUploadedFile|UploadedFile $arquivo) use ($atendimento): array {
+                $nomeOriginal = $arquivo->getClientOriginalName() ?: 'anexo';
+                $nomeSeguro = substr((string) pathinfo($nomeOriginal, PATHINFO_FILENAME), 0, 80);
+                $nomeSeguro = preg_replace('/[^A-Za-z0-9_-]+/', '-', $nomeSeguro) ?: 'anexo';
+                $extensao = strtolower($arquivo->getClientOriginalExtension() ?: 'bin');
+                $arquivoNome = trim($nomeSeguro, '-') . '-' . now()->format('YmdHis') . '-' . bin2hex(random_bytes(4)) . '.' . $extensao;
+                $pasta = 'portal-chat/' . (int) $atendimento->empresa_id;
+                $caminho = $arquivo->storeAs($pasta, $arquivoNome, 'public');
+                $mime = $arquivo->getMimeType() ?: 'application/octet-stream';
+                $tamanho = (int) $arquivo->getSize();
+
+                return [
+                    'nome_original' => $nomeOriginal,
+                    'nome_arquivo' => $arquivoNome,
+                    'nome' => $nomeOriginal,
+                    'caminho' => $caminho,
+                    'url' => asset(Storage::url($caminho)),
+                    'mime' => $mime,
+                    'mime_type' => $mime,
+                    'tamanho' => $tamanho,
+                    'size' => $tamanho,
+                    'size_label' => $tamanho ? number_format($tamanho / 1024, 1, ',', '.') . ' KB' : 'arquivo',
+                    'is_image' => str_starts_with((string) $mime, 'image/'),
+                    'extensao' => $extensao,
+                    'enviado_por' => 'suporte',
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function registrarMensagemPortalDoAtendimento(Atendimento $atendimento, string $mensagem, array $anexos = []): ?PortalMensagem
+    {
+        if (! CachedSchema::hasTable('portal_mensagens')) {
+            return null;
+        }
+
+        $mensagemFinal = trim($mensagem);
+
+        if ($anexos !== []) {
+            $linhas = collect($anexos)
+                ->map(fn (array $anexo): string => '- ' . ($anexo['nome'] ?? $anexo['nome_original'] ?? 'Anexo') . ' | ' . ($anexo['url'] ?? '') . ' | ' . ($anexo['mime_type'] ?? $anexo['mime'] ?? 'application/octet-stream') . ' | ' . ($anexo['size'] ?? $anexo['tamanho'] ?? ''))
+                ->implode("\n");
+
+            $mensagemFinal = trim($mensagemFinal . "\n\nAnexos enviados:\n" . $linhas);
+        }
+
+        if ($mensagemFinal === '') {
+            return null;
+        }
+
+        $payload = [
+            'empresa_id' => (int) $atendimento->empresa_id,
+            'item_controle_id' => $atendimento->item_controle_id ? (int) $atendimento->item_controle_id : null,
+            'user_id' => auth()->id(),
+            'nome' => auth()->user()?->name,
+            'email' => auth()->user()?->email,
+            'mensagem' => $mensagemFinal,
+            'origem' => 'interno',
+        ];
+
+        if (CachedSchema::hasColumn('portal_mensagens', 'atendimento_id')) {
+            $payload['atendimento_id'] = (int) $atendimento->id;
+        }
+
+        if (CachedSchema::hasColumn('portal_mensagens', 'conversa_status')) {
+            $payload['conversa_status'] = 'aberta';
+        }
+
+        return PortalMensagem::create($payload);
+    }
     public function baixarAnexoHistorico(int $interacaoId, string $hash)
     {
         if (! CachedSchema::hasTable('atendimento_interacoes')) {
@@ -679,7 +861,7 @@ class Atendimentos extends Page
                 continue;
             }
 
-            if (! str_starts_with($caminho, 'portal_cliente_anexos/')) {
+            if (! str_starts_with($caminho, 'portal_cliente_anexos/') && ! str_starts_with($caminho, 'portal-chat/')) {
                 $this->notify('danger', 'Arquivo fora da área permitida do portal.');
                 return null;
             }
@@ -824,6 +1006,53 @@ class Atendimentos extends Page
             'extensao' => $extensao,
             'enviado_por' => 'suporte',
         ];
+    }
+
+    public function criarTarefaDoAtendimento(): void
+    {
+        $atendimento = $this->selectedAtendimentoId ? $this->findAtendimentoAutorizado($this->selectedAtendimentoId) : null;
+        if (! $atendimento || ! $this->atendimentoPermiteAcaoOperacional($atendimento, 'criar tarefa')) {
+            return;
+        }
+
+        if (! $this->itemControlesDisponivel()) {
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($atendimento): void {
+                $item = $this->criarItemControleVinculado(
+                    $atendimento,
+                    'tarefa',
+                    'Tarefa do ticket #' . $atendimento->id . ' - ' . Str::limit((string) $atendimento->titulo, 120, ''),
+                    'Tarefa criada a partir do ticket/atendimento #' . $atendimento->id . ".
+
+Contexto do ticket:
+" . trim((string) ($atendimento->descricao ?: 'Sem descrição.')),
+                    false
+                );
+
+                if (! $atendimento->item_controle_id) {
+                    $atendimento->update(['item_controle_id' => $item->id, 'updated_at' => now()]);
+                } else {
+                    $atendimento->touch();
+                }
+
+                $this->registrarInteracao(
+                    $atendimento->id,
+                    'tarefa_criada',
+                    'Tarefa criada a partir deste ticket: #' . $item->id . ' - ' . $item->titulo . '.',
+                    ['item_controle_id' => $item->id, 'tipo' => 'tarefa', 'atendimento_id' => (int) $atendimento->id]
+                );
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível criar a tarefa a partir do atendimento.');
+            return;
+        }
+
+        $this->loadData(true);
+        $this->notify('success', 'Tarefa criada e vinculada ao ticket.');
     }
 
     public function criarPendenciaDoAtendimento(): void
@@ -993,6 +1222,7 @@ class Atendimentos extends Page
         $this->setItemControlePayload($payload, 'status', 'pendente');
         $this->setItemControlePayload($payload, 'prioridade', $this->prioridadeItemControle((string) $atendimento->prioridade));
         $this->setItemControlePayload($payload, 'empresa_id', $empresaId);
+        $this->setItemControlePayload($payload, 'atendimento_id', (int) $atendimento->id);
         $this->setItemControlePayload($payload, 'responsavel_id', $responsavelId);
         $this->setItemControlePayload($payload, 'data_vencimento', now()->addDays($portalAtivo ? 3 : 2)->toDateString());
         $this->setItemControlePayload($payload, 'portal_ativo', $portalAtivo);
@@ -1161,6 +1391,7 @@ class Atendimentos extends Page
         $this->observacaoEncerramento = '';
         $this->novaRespostaCliente = '';
         $this->anexoRespostaCliente = null;
+        $this->portalAnexos = [];
     }
 
     private function clientePertenceEmpresa(int $clienteId, int $empresaId): bool

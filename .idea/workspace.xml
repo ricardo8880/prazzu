@@ -6,8 +6,27 @@
   <component name="ChangeListManager">
     <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Atendimentos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Atendimentos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/PortalClientePublicoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/PortalClientePublicoController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/Atendimento.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/Atendimento.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/ItemControle.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/ItemControle.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/PortalMensagem.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/PortalMensagem.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/AtendimentoPortalService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AtendimentoPortalService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/AtendimentosData.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AtendimentosData.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/PortalClienteData.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/PortalClienteData.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/atendimentos-ticket-modal.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/css/atendimentos-ticket-modal.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/atendimentos.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/css/atendimentos.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/atendimentos.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/atendimentos.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/partials/atendimentos-detail-modal.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/partials/atendimentos-detail-modal.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/portal/cliente/dashboard.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/portal/cliente/dashboard.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/portal/cliente/show.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/portal/cliente/show.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/0f/2c/0f2c595baa1fac2457a5970eb17f735ffedd0c40" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/0f/2c/0f2c595baa1fac2457a5970eb17f735ffedd0c40" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/10/2c/102c86a2eb0c5068865a476e1d32e2218bf25fc8" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/10/2c/102c86a2eb0c5068865a476e1d32e2218bf25fc8" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/framework/sessions/DM1gn0qwH5ypt0iglqr2XmbC0Jbds8FT3wEIn1pM" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/DM1gn0qwH5ypt0iglqr2XmbC0Jbds8FT3wEIn1pM" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/views/d584cd13fc5083552184555347899467.php" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/views/d584cd13fc5083552184555347899467.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/views/da806d2565468fef01bab4f19eba6e02.php" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/views/da806d2565468fef01bab4f19eba6e02.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -232,7 +251,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1781695741322</updated>
-      <workItem from="1781695742244" duration="3966000" />
+      <workItem from="1781695742244" duration="8850000" />
     </task>
     <servers />
   </component>

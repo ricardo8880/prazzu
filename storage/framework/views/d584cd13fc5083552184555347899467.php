@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos.css')); ?>">
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos-ticket-modal.css')); ?>">
-    <?php if (! $__env->hasRenderedOnce('3c9ed81e-8e97-448a-9f1d-d458bb638ef7')): $__env->markAsRenderedOnce('3c9ed81e-8e97-448a-9f1d-d458bb638ef7'); ?>
+    <?php if (! $__env->hasRenderedOnce('f0e22d4f-b97a-419d-a32a-235fae621da6')): $__env->markAsRenderedOnce('f0e22d4f-b97a-419d-a32a-235fae621da6'); ?>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <?php endif; ?>
 
@@ -32,6 +32,7 @@
         $idsAtendimentosVisiveis = collect($atendimentos)->pluck('id')->map(fn ($id) => (string) $id)->values();
         $idsAtendimentosSelecionados = collect($atendimentosSelecionados ?? [])->map(fn ($id) => (string) $id)->values();
         $todosAtendimentosVisiveisSelecionados = $idsAtendimentosVisiveis->isNotEmpty() && $idsAtendimentosVisiveis->diff($idsAtendimentosSelecionados)->isEmpty();
+        $totalAtendimentosSelecionados = $idsAtendimentosSelecionados->count();
     ?>
 
     <div class="at-wrap at-reference-layout" x-data="{ criar: <?php if ((object) ('createModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'->value()); ?>')<?php echo e('createModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'); ?>')<?php endif; ?>.live, detalhe: <?php if ((object) ('detailModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'->value()); ?>')<?php echo e('detailModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'); ?>')<?php endif; ?>.live }" wire:poll.25s="loadData(true)">
@@ -123,6 +124,28 @@
                             <span><strong><?php echo e($summary['aguardando_cliente'] ?? 0); ?></strong> aguardando</span>
                         </div>
                     </header>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($totalAtendimentosSelecionados > 0): ?>
+                        <div class="at-bulk-actions" role="region" aria-label="Ações dos atendimentos selecionados">
+                            <div class="at-bulk-actions-info">
+                                <i class="bi bi-check2-square" aria-hidden="true"></i>
+                                <strong><?php echo e($totalAtendimentosSelecionados); ?></strong>
+                                <span><?php echo e($totalAtendimentosSelecionados === 1 ? 'atendimento selecionado' : 'atendimentos selecionados'); ?></span>
+                            </div>
+
+                            <button
+                                type="button"
+                                class="at-bulk-delete-btn"
+                                wire:click="apagarAtendimentosSelecionados"
+                                wire:loading.attr="disabled"
+                                wire:target="apagarAtendimentosSelecionados"
+                                wire:confirm="Apagar os atendimentos selecionados? Essa ação não pode ser desfeita."
+                            >
+                                <i class="bi bi-trash3" aria-hidden="true"></i>
+                                Apagar
+                            </button>
+                        </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
                     <div class="at-table-wrap at-queue-wrap">
                         <table class="at-table at-queue-table">
@@ -364,6 +387,98 @@
             Atualizando central de atendimentos...
         </div>
     </div>
+
+
+    <script>
+        (() => {
+            let atendimentoSocket = null;
+            let atendimentoSocketKey = null;
+
+            function loadSocketIo(url) {
+                return new Promise((resolve, reject) => {
+                    if (window.io) {
+                        resolve(window.io);
+                        return;
+                    }
+
+                    const src = String(url || '').replace(/\/$/, '') + '/socket.io/socket.io.js';
+                    let script = document.getElementById('atendimentos-socket-io-client');
+
+                    if (script) {
+                        script.addEventListener('load', () => resolve(window.io), { once: true });
+                        script.addEventListener('error', reject, { once: true });
+                        return;
+                    }
+
+                    script = document.createElement('script');
+                    script.id = 'atendimentos-socket-io-client';
+                    script.src = src;
+                    script.async = true;
+                    script.onload = () => resolve(window.io);
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+
+            async function emitirMensagemAtendimento(payload) {
+                const config = payload?.socket || {};
+                const message = payload?.message || {};
+
+                if (!config.enabled || !config.url || !message.id) {
+                    return;
+                }
+
+                try {
+                    await loadSocketIo(config.url);
+
+                    const key = [config.url, config.empresaId, config.room, config.token].join('|');
+                    if (!atendimentoSocket || atendimentoSocketKey !== key || !atendimentoSocket.connected) {
+                        if (atendimentoSocket) atendimentoSocket.disconnect();
+
+                        atendimentoSocketKey = key;
+                        atendimentoSocket = window.io(config.url, {
+                            transports: ['websocket', 'polling'],
+                            auth: {
+                                empresaId: config.empresaId,
+                                actor: config.actor || 'suporte',
+                                token: config.token || '',
+                                signature: config.signature || '',
+                                room: config.room || '',
+                            },
+                        });
+                    }
+
+                    const emitNow = () => {
+                        message.room = message.room || config.room || '';
+                        message.actor = message.actor || config.actor || 'suporte';
+                        atendimentoSocket.emit('chat:message:new', message);
+                        atendimentoSocket.emit('chat:typing:stop', { actor: config.actor || 'suporte', nome: config.nome || 'Suporte', room: config.room || '' });
+                    };
+
+                    if (atendimentoSocket.connected) {
+                        emitNow();
+                    } else {
+                        atendimentoSocket.once('connect', emitNow);
+                    }
+                } catch (error) {
+                    console.warn('Não foi possível emitir a mensagem do atendimento via Socket.IO.', error);
+                }
+            }
+
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('atendimento-chat-message-sent', (event) => {
+                    emitirMensagemAtendimento(event?.payload || event?.[0]?.payload || event?.[0] || event);
+                });
+            });
+
+            document.addEventListener('livewire:navigated', () => {
+                if (atendimentoSocket) atendimentoSocket.disconnect();
+                atendimentoSocket = null;
+                atendimentoSocketKey = null;
+            });
+        })();
+    </script>
+
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal166a02a7c5ef5a9331faf66fa665c256)): ?>

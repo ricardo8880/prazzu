@@ -11,6 +11,7 @@ class PortalMensagem extends Model
 
     protected $fillable = [
         'empresa_id',
+        'atendimento_id',
         'item_controle_id',
         'user_id',
         'nome',
@@ -23,6 +24,7 @@ class PortalMensagem extends Model
 
     protected $casts = [
         'empresa_id' => 'integer',
+        'atendimento_id' => 'integer',
         'item_controle_id' => 'integer',
         'user_id' => 'integer',
         'visualizada_em' => 'datetime',
@@ -45,5 +47,10 @@ class PortalMensagem extends Model
     public function atendimento(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Atendimento::class, 'portal_mensagem_id');
+    }
+
+    public function ticket(): BelongsTo
+    {
+        return $this->belongsTo(Atendimento::class, 'atendimento_id');
     }
 }

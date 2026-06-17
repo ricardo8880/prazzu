@@ -4,10 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Portal do Cliente</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="stylesheet" href="{{ asset('css/prazzu-theme.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/prazzu-global.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/prazzu-ui-standard.css') }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/prazzu-theme.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/prazzu-global.css')); ?>">
+    <link rel="stylesheet" href="<?php echo e(asset('css/prazzu-ui-standard.css')); ?>">
     <style>
         :root {
             --pc-navy: #061735;
@@ -1618,7 +1618,7 @@
     </style>
 </head>
 <body>
-@php
+<?php
     $clientePublicoNome = old('nome', $empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? 'Cliente do portal');
     $clientePublicoEmail = old('email', $empresa['email'] ?? '');
     $percent = (int) ($progress['percent'] ?? 0);
@@ -1663,7 +1663,7 @@
         if ($bytes >= 1048576) return number_format($bytes / 1048576, 1, ',', '.') . ' MB';
         return max(1, (int) ceil($bytes / 1024)) . ' KB';
     };
-@endphp
+?>
 
 <div class="portal-app">
     <header class="portal-topbar">
@@ -1678,11 +1678,11 @@
         <div class="top-actions">
             <button type="button" class="bell" aria-label="Abrir pendências" data-portal-cluster="pendencias">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M10 21h4"/></svg>
-                @if($pendenciasCount > 0)<span class="bell-badge">{{ $pendenciasCount }}</span>@endif
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($pendenciasCount > 0): ?><span class="bell-badge"><?php echo e($pendenciasCount); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </button>
             <div class="profile" aria-label="Cliente identificado">
-                <div class="profile-copy"><strong>{{ \Illuminate\Support\Str::limit($empresaNome, 28) }}</strong><span class="profile-status">Atendimento pelo portal</span></div>
-                <div class="profile-avatar">{{ $iniciaisEmpresa }}</div>
+                <div class="profile-copy"><strong><?php echo e(\Illuminate\Support\Str::limit($empresaNome, 28)); ?></strong><span class="profile-status">Atendimento pelo portal</span></div>
+                <div class="profile-avatar"><?php echo e($iniciaisEmpresa); ?></div>
                 <span class="profile-note">Cliente</span>
             </div>
         </div>
@@ -1695,7 +1695,7 @@
                 <span>Atendimento</span>
             </button>
             <button type="button" class="side-link" data-portal-cluster="pendencias">
-                @if($pendenciasCount > 0)<span class="side-badge">{{ $pendenciasCount }}</span>@endif
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($pendenciasCount > 0): ?><span class="side-badge"><?php echo e($pendenciasCount); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5h6"/><path d="M9 12l2 2 4-4"/><path d="M5 7a2 2 0 0 1 2-2h1a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2h1a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"/></svg>
                 <span>Pendências</span>
             </button>
@@ -1709,33 +1709,33 @@
         <div class="portal-content">
             <div class="portal-cluster" aria-label="Navegação do atendimento">
                 <button type="button" class="portal-cluster-button is-active" data-portal-cluster="chat">Atendimento</button>
-                <button type="button" class="portal-cluster-button" data-portal-cluster="pendencias">Pendências @if($pendenciasCount > 0)<span class="portal-cluster-badge">{{ $pendenciasCount }}</span>@endif</button>
+                <button type="button" class="portal-cluster-button" data-portal-cluster="pendencias">Pendências <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($pendenciasCount > 0): ?><span class="portal-cluster-badge"><?php echo e($pendenciasCount); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></button>
                 <button type="button" class="portal-cluster-button" data-portal-cluster="status">Status</button>
                 <button type="button" class="portal-cluster-button" data-portal-cluster="historico">Histórico do chat</button>
             </div>
 
             <main class="workspace is-single-view" data-portal-workspace>
-            <section class="panel panel-pad action-banner {{ $hasPendencias ? 'is-urgent' : '' }}" data-portal-section="chat" aria-label="Próxima ação recomendada">
+            <section class="panel panel-pad action-banner <?php echo e($hasPendencias ? 'is-urgent' : ''); ?>" data-portal-section="chat" aria-label="Próxima ação recomendada">
                 <div class="action-banner-header">
                     <div class="action-banner-copy">
                         <span class="action-banner-kicker">Próximo passo recomendado</span>
-                        @if($hasPendencias)
-                            <strong>Você tem {{ $pendenciasCount }} {{ $pendenciasCount === 1 ? 'pendência aguardando sua ação' : 'pendências aguardando sua ação' }}.</strong>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasPendencias): ?>
+                            <strong>Você tem <?php echo e($pendenciasCount); ?> <?php echo e($pendenciasCount === 1 ? 'pendência aguardando sua ação' : 'pendências aguardando sua ação'); ?>.</strong>
                             <span>Comece pela primeira pendência destacada. Depois de responder, a equipe consegue continuar o atendimento sem atrasos.</span>
-                        @else
+                        <?php else: ?>
                             <strong>Seu atendimento está em acompanhamento.</strong>
                             <span>Não há pendências abertas agora. Use o chat para tirar dúvidas, enviar documentos ou acompanhar as atualizações da equipe.</span>
-                        @endif
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </div>
-                    <button type="button" class="outline-button" data-portal-cluster="{{ $acaoPrincipalDestino }}">{{ $acaoPrincipalLabel }} <span>→</span></button>
+                    <button type="button" class="outline-button" data-portal-cluster="<?php echo e($acaoPrincipalDestino); ?>"><?php echo e($acaoPrincipalLabel); ?> <span>→</span></button>
                 </div>
                 <button type="button" class="mobile-summary-toggle" data-mobile-summary-toggle aria-expanded="false">Ver orientação rápida <span>⌄</span></button>
                 <div class="journey-steps" data-mobile-summary-content aria-label="Fluxo recomendado do atendimento">
-                    <div class="journey-step {{ $hasPendencias ? 'is-current' : '' }}">
+                    <div class="journey-step <?php echo e($hasPendencias ? 'is-current' : ''); ?>">
                         <span class="journey-step-number">1</span>
-                        <div><strong>Resolva pendências</strong><span>{{ $hasPendencias ? 'Ação necessária agora' : 'Nada pendente no momento' }}</span></div>
+                        <div><strong>Resolva pendências</strong><span><?php echo e($hasPendencias ? 'Ação necessária agora' : 'Nada pendente no momento'); ?></span></div>
                     </div>
-                    <div class="journey-step {{ ! $hasPendencias ? 'is-current' : '' }}">
+                    <div class="journey-step <?php echo e(! $hasPendencias ? 'is-current' : ''); ?>">
                         <span class="journey-step-number">2</span>
                         <div><strong>Fale pelo chat</strong><span>Envie dúvidas e documentos</span></div>
                     </div>
@@ -1748,62 +1748,90 @@
             <section class="panel panel-pad portal-section-hidden" id="pendencias" data-portal-section="pendencias">
                 <div class="panel-title-row">
                     <h2>Meus tickets</h2>
-                    @if($ticketsCount > 0)<span class="count-dot">{{ $ticketsCount }}</span>@endif
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($ticketsCount > 0): ?><span class="count-dot"><?php echo e($ticketsCount); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
                 <p class="panel-sub">Acompanhe cada problema separado em um ticket. Para outro assunto, abra um novo problema e ele aparecerá para o suporte na aba Atendimentos.</p>
 
                 <div class="ticket-actions">
-                    <details class="new-ticket-box" {{ $errors->has('solicitacao') || $errors->has('titulo') || $errors->has('descricao') ? 'open' : '' }}>
+                    <details class="new-ticket-box" <?php echo e($errors->has('solicitacao') || $errors->has('titulo') || $errors->has('descricao') ? 'open' : ''); ?>>
                         <summary><span>+ Novo problema</span><span>Abrir ticket</span></summary>
-                        <form method="POST" action="{{ route('portal.cliente.solicitacoes.store', $token) }}" class="new-ticket-form js-feedback-form" data-processing="Abrindo ticket...">
-                            @csrf
+                        <form method="POST" action="<?php echo e(route('portal.cliente.solicitacoes.store', $token)); ?>" class="new-ticket-form js-feedback-form" data-processing="Abrindo ticket...">
+                            <?php echo csrf_field(); ?>
                             <div class="hp-field" aria-hidden="true"><label>Website</label><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
-                            <input type="text" name="titulo" value="{{ old('titulo') }}" placeholder="Título do problema" required maxlength="255">
-                            <textarea name="descricao" placeholder="Explique o que aconteceu e o que precisa de ajuda" required maxlength="5000">{{ old('descricao') }}</textarea>
+                            <input type="text" name="titulo" value="<?php echo e(old('titulo')); ?>" placeholder="Título do problema" required maxlength="255">
+                            <textarea name="descricao" placeholder="Explique o que aconteceu e o que precisa de ajuda" required maxlength="5000"><?php echo e(old('descricao')); ?></textarea>
                             <select name="prioridade" required>
-                                <option value="baixa" @selected(old('prioridade') === 'baixa')>Baixa</option>
-                                <option value="media" @selected(old('prioridade', 'media') === 'media')>Média</option>
-                                <option value="alta" @selected(old('prioridade') === 'alta')>Alta</option>
-                                <option value="urgente" @selected(old('prioridade') === 'urgente')>Urgente</option>
+                                <option value="baixa" <?php if(old('prioridade') === 'baixa'): echo 'selected'; endif; ?>>Baixa</option>
+                                <option value="media" <?php if(old('prioridade', 'media') === 'media'): echo 'selected'; endif; ?>>Média</option>
+                                <option value="alta" <?php if(old('prioridade') === 'alta'): echo 'selected'; endif; ?>>Alta</option>
+                                <option value="urgente" <?php if(old('prioridade') === 'urgente'): echo 'selected'; endif; ?>>Urgente</option>
                             </select>
                             <button class="btn" type="submit">Criar ticket</button>
-                            @error('solicitacao')<div class="field-error">{{ $message }}</div>@enderror
-                            @error('titulo')<div class="field-error">{{ $message }}</div>@enderror
-                            @error('descricao')<div class="field-error">{{ $message }}</div>@enderror
-                            @error('prioridade')<div class="field-error">{{ $message }}</div>@enderror
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['solicitacao'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['titulo'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['descricao'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['prioridade'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             <div class="field-error" data-form-feedback style="display:none"></div>
                         </form>
                     </details>
 
-                    @if($hasPendencias)
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasPendencias): ?>
                         <div class="pending-guidance"><strong>Pendências:</strong> alguns tickets podem estar aguardando resposta, documento ou confirmação sua.</div>
-                    @endif
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
                 <div class="pending-list">
-                    @forelse($ticketsCliente as $index => $ticket)
-                        @php
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $ticketsCliente; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $ticket): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <?php
                             $cardClass = ! empty($ticket['is_done']) ? 'info' : ($index === 1 ? 'warn' : '');
                             $prioridade = mb_strtoupper((string) ($ticket['prioridade'] ?? 'MÉDIA'));
                             $statusTicket = $ticket['status_label'] ?? $ticket['status'] ?? 'Aberto';
                             $ticketLabel = $ticket['ticket_label'] ?? ('#ATD-' . str_pad((string) ($ticket['id'] ?? 0), 5, '0', STR_PAD_LEFT));
-                        @endphp
-                        <article class="pending-card ticket-card {{ $cardClass }} {{ $index === 0 ? 'is-primary' : '' }} {{ $index > 4 ? 'is-extra-hidden' : '' }}" data-pending-card>
+                        ?>
+                        <article class="pending-card ticket-card <?php echo e($cardClass); ?> <?php echo e($index === 0 ? 'is-primary' : ''); ?> <?php echo e($index > 4 ? 'is-extra-hidden' : ''); ?>" data-pending-card>
                             <div class="pending-head">
                                 <span class="pending-icon" aria-hidden="true">#</span>
-                                <h3 class="pending-title">{{ $ticket['titulo'] ?? 'Ticket de atendimento' }}</h3>
-                                <span class="priority">{{ $prioridade }}</span>
+                                <h3 class="pending-title"><?php echo e($ticket['titulo'] ?? 'Ticket de atendimento'); ?></h3>
+                                <span class="priority"><?php echo e($prioridade); ?></span>
                             </div>
-                            <p class="pending-text">{{ \Illuminate\Support\Str::limit($ticket['descricao'] ?? 'Conversa aberta com a equipe de suporte.', 150) }}</p>
+                            <p class="pending-text"><?php echo e(\Illuminate\Support\Str::limit($ticket['descricao'] ?? 'Conversa aberta com a equipe de suporte.', 150)); ?></p>
                             <div class="ticket-meta">
-                                <span class="ticket-chip">{{ $ticketLabel }}</span>
-                                <span class="ticket-chip {{ ! empty($ticket['is_done']) ? 'done' : 'open' }}">{{ $statusTicket }}</span>
-                                @if(! empty($ticket['created_at_label']))<span class="ticket-chip">Aberto em {{ $ticket['created_at_label'] }}</span>@endif
-                                @if(! empty($ticket['updated_at_label']))<span class="ticket-chip">Atualizado em {{ $ticket['updated_at_label'] }}</span>@endif
+                                <span class="ticket-chip"><?php echo e($ticketLabel); ?></span>
+                                <span class="ticket-chip <?php echo e(! empty($ticket['is_done']) ? 'done' : 'open'); ?>"><?php echo e($statusTicket); ?></span>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($ticket['created_at_label'])): ?><span class="ticket-chip">Aberto em <?php echo e($ticket['created_at_label']); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($ticket['updated_at_label'])): ?><span class="ticket-chip">Atualizado em <?php echo e($ticket['updated_at_label']); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
-                            <a href="{{ route('portal.cliente.show', ['token' => $token, 'ticket' => (int) ($ticket['id'] ?? 0)]) }}#chat" class="outline-button" style="margin-top:14px; text-decoration:none" data-open-ticket-chat="{{ (int) ($ticket['id'] ?? 0) }}">Abrir conversa <span>→</span></a>
+                            <a href="<?php echo e(route('portal.cliente.show', ['token' => $token, 'ticket' => (int) ($ticket['id'] ?? 0)])); ?>#chat" class="outline-button" style="margin-top:14px; text-decoration:none" data-open-ticket-chat="<?php echo e((int) ($ticket['id'] ?? 0)); ?>">Abrir conversa <span>→</span></a>
                         </article>
-                    @empty
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         <article class="pending-card info">
                             <div class="pending-head">
                                 <span class="pending-icon" aria-hidden="true">✓</span>
@@ -1812,13 +1840,13 @@
                             <p class="pending-text">Use o botão <strong>+ Novo problema</strong> para abrir seu primeiro ticket com a equipe.</p>
                             <span class="deadline">Tudo certo por enquanto.</span>
                         </article>
-                    @endforelse
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-                    @if($ticketsCliente->count() > 5)
-                        <button type="button" class="all-link" data-toggle-all-pendings data-total-pendings="{{ $ticketsCliente->count() }}">Ver todos os {{ $ticketsCliente->count() }} tickets <span>→</span></button>
-                    @else
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($ticketsCliente->count() > 5): ?>
+                        <button type="button" class="all-link" data-toggle-all-pendings data-total-pendings="<?php echo e($ticketsCliente->count()); ?>">Ver todos os <?php echo e($ticketsCliente->count()); ?> tickets <span>→</span></button>
+                    <?php else: ?>
                         <button type="button" class="all-link" data-portal-cluster="chat">Falar com a equipe <span>→</span></button>
-                    @endif
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
             </section>
 
@@ -1826,7 +1854,7 @@
                 <header class="chat-header">
                     <div class="chat-title">
                         <h2>Chat com a equipe</h2>
-                        <span class="online-badge">{{ $ticketSelecionadoId > 0 ? $ticketSelecionadoLabel : 'Resposta pelo portal' }}</span>
+                        <span class="online-badge"><?php echo e($ticketSelecionadoId > 0 ? $ticketSelecionadoLabel : 'Resposta pelo portal'); ?></span>
                     </div>
                     <div class="chat-tools">
                         <span class="chat-safe-label">Canal seguro</span>
@@ -1834,48 +1862,48 @@
                 </header>
 
                 <div class="chat-scroll" id="chatHistorico" role="log" aria-live="polite" aria-label="Histórico do atendimento">
-                    @forelse($chatMensagens as $mensagem)
-                        @php
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $chatMensagens; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $mensagem): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <?php
                             $classeMensagem = $mensagem['css_class'] ?? (($mensagem['origem'] ?? 'cliente') === 'interno' ? 'equipe' : 'cliente');
                             $autor = $mensagem['autor_label'] ?? ($classeMensagem === 'equipe' ? 'Equipe' : 'Cliente');
                             $textoMensagem = trim((string) ($mensagem['mensagem_texto'] ?? $mensagem['mensagem'] ?? ''));
-                        @endphp
-                        <div class="message-row {{ $classeMensagem }}" data-message-id="{{ $mensagem['id'] ?? 0 }}" data-message-class="{{ $classeMensagem }}">
-                            <span class="message-avatar" aria-hidden="true">{{ $iniciaisAutor($mensagem) }}</span>
+                        ?>
+                        <div class="message-row <?php echo e($classeMensagem); ?>" data-message-id="<?php echo e($mensagem['id'] ?? 0); ?>" data-message-class="<?php echo e($classeMensagem); ?>">
+                            <span class="message-avatar" aria-hidden="true"><?php echo e($iniciaisAutor($mensagem)); ?></span>
                             <div class="bubble-wrap">
                                 <div class="bubble">
-                                    @if($classeMensagem !== 'cliente')<span class="bubble-name">{{ $mensagem['nome'] ?? $autor }}</span>@endif
-                                    @if($textoMensagem !== '')<span>{!! $mensagemComLinks($textoMensagem) !!}</span>@endif
-                                    @if(! empty($mensagem['created_at_label']))<span class="bubble-time">{{ $mensagem['created_at_label'] }} @if($classeMensagem === 'cliente')✓✓@endif</span>@endif
-                                    @if($classeMensagem === 'cliente')<span class="chat-seen-status" data-seen-status style="display:none">Visualizado pelo suporte</span>@endif
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($classeMensagem !== 'cliente'): ?><span class="bubble-name"><?php echo e($mensagem['nome'] ?? $autor); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($textoMensagem !== ''): ?><span><?php echo $mensagemComLinks($textoMensagem); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($mensagem['created_at_label'])): ?><span class="bubble-time"><?php echo e($mensagem['created_at_label']); ?> <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($classeMensagem === 'cliente'): ?>✓✓<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($classeMensagem === 'cliente'): ?><span class="chat-seen-status" data-seen-status style="display:none">Visualizado pelo suporte</span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
-                                @if(! empty($mensagem['attachments']))
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($mensagem['attachments'])): ?>
                                     <div class="attachment-grid" aria-label="Anexos da mensagem">
-                                        @foreach($mensagem['attachments'] as $anexo)
-                                            @php
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $mensagem['attachments']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $anexo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                            <?php
                                                 $nomeAnexo = $anexo['nome'] ?? 'Anexo';
                                                 $isImage = (bool) ($anexo['is_image'] ?? false);
                                                 $extensao = strtoupper(pathinfo($nomeAnexo, PATHINFO_EXTENSION) ?: ($isImage ? 'IMG' : 'DOC'));
-                                            @endphp
-                                            <a class="attachment-card" href="{{ $anexo['url'] }}" target="_blank" rel="noopener noreferrer" download>
-                                                <span class="file-icon {{ $isImage ? 'image' : '' }}">{{ $isImage ? 'IMG' : $extensao }}</span>
-                                                <span class="file-info"><strong>{{ $nomeAnexo }}</strong><span>{{ $anexo['mime_type'] ?? 'Arquivo anexado' }}</span></span>
+                                            ?>
+                                            <a class="attachment-card" href="<?php echo e($anexo['url']); ?>" target="_blank" rel="noopener noreferrer" download>
+                                                <span class="file-icon <?php echo e($isImage ? 'image' : ''); ?>"><?php echo e($isImage ? 'IMG' : $extensao); ?></span>
+                                                <span class="file-info"><strong><?php echo e($nomeAnexo); ?></strong><span><?php echo e($anexo['mime_type'] ?? 'Arquivo anexado'); ?></span></span>
                                                 <span class="download-icon">⌄</span>
-                                                @if($isImage)<img class="attachment-preview" src="{{ $anexo['url'] }}" alt="{{ $nomeAnexo }}" loading="lazy">@endif
+                                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($isImage): ?><img class="attachment-preview" src="<?php echo e($anexo['url']); ?>" alt="<?php echo e($nomeAnexo); ?>" loading="lazy"><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                             </a>
-                                        @endforeach
+                                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                                     </div>
-                                @endif
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </div>
                         </div>
-                    @empty
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                         <div class="empty-chat">
                             <div>
                                 <strong>Nenhuma mensagem ainda.</strong><br>
                                 Envie uma dúvida, documento ou atualização pelo campo abaixo. A equipe responderá por este canal.
                             </div>
                         </div>
-                    @endforelse
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
 
                 <div class="chat-typing-status" data-support-typing aria-live="polite">
@@ -1883,19 +1911,33 @@
                     <span data-support-typing-text>Suporte está digitando...</span>
                 </div>
 
-                <form method="POST" action="{{ route('portal.cliente.mensagem', $token) }}" class="composer js-feedback-form" data-processing="Enviando mensagem..." enctype="multipart/form-data" data-chat-form>
-                    @csrf
+                <form method="POST" action="<?php echo e(route('portal.cliente.mensagem', $token)); ?>" class="composer js-feedback-form" data-processing="Enviando mensagem..." enctype="multipart/form-data" data-chat-form>
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" name="_portal_ajax" value="1">
                     <div class="hp-field" aria-hidden="true"><label>Website</label><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
-                    <input type="hidden" name="nome" value="{{ $clientePublicoNome }}">
-                    <input type="hidden" name="email" value="{{ $clientePublicoEmail }}">
-                    <input type="hidden" name="atendimento_id" value="{{ $ticketSelecionadoId > 0 ? $ticketSelecionadoId : '' }}">
+                    <input type="hidden" name="nome" value="<?php echo e($clientePublicoNome); ?>">
+                    <input type="hidden" name="email" value="<?php echo e($clientePublicoEmail); ?>">
+                    <input type="hidden" name="atendimento_id" value="<?php echo e($ticketSelecionadoId > 0 ? $ticketSelecionadoId : ''); ?>">
                     <div class="composer-client-summary" aria-label="Cliente identificado pelo link do portal">
                         <span>Cliente identificado</span>
-                        <strong>{{ $clientePublicoNome }}</strong>
+                        <strong><?php echo e($clientePublicoNome); ?></strong>
                     </div>
-                    @error('nome')<div class="field-error">{{ $message }}</div>@enderror
-                    @error('email')<div class="field-error">{{ $message }}</div>@enderror
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['nome'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['email'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     <div class="composer-row">
                         <label class="icon-input file-control" title="Anexar arquivo">
                             <input id="chatAnexos" class="js-chat-files" name="anexos[]" type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf">
@@ -1905,16 +1947,37 @@
                             <input class="js-chat-files-mirror" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" tabindex="-1">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
                         </label>
-                        <textarea class="js-chat-message" name="mensagem" rows="1" maxlength="5000" placeholder="Digite sua dúvida, resposta ou informe quais documentos está enviando..." aria-invalid="{{ $errors->has('mensagem') ? 'true' : 'false' }}">{{ old('mensagem') }}</textarea>
+                        <textarea class="js-chat-message" name="mensagem" rows="1" maxlength="5000" placeholder="Digite sua dúvida, resposta ou informe quais documentos está enviando..." aria-invalid="<?php echo e($errors->has('mensagem') ? 'true' : 'false'); ?>"><?php echo e(old('mensagem')); ?></textarea>
                         <button class="send-button" type="submit" aria-label="Enviar mensagem">
                             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
                         </button>
                     </div>
                     <div class="selected-files" data-selected-files aria-live="polite"></div>
                     <div class="composer-help"><span data-composer-hint>Você pode enviar arquivos: PDF, JPG, PNG, DOC, DOCX (até 10MB cada)</span><span><span data-chat-count>0</span>/5000</span></div>
-                    @error('mensagem')<div class="field-error">{{ $message }}</div>@enderror
-                    @error('anexos')<div class="field-error">{{ $message }}</div>@enderror
-                    @error('anexos.*')<div class="field-error">{{ $message }}</div>@enderror
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['mensagem'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['anexos'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php $__errorArgs = ['anexos.*'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><div class="field-error"><?php echo e($message); ?></div><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     <div class="field-error" data-form-feedback style="display:none"></div>
                 </form>
             </section>
@@ -1923,14 +1986,14 @@
                 <section class="panel status-card">
                     <h2>Status do atendimento</h2>
                     <div class="divider"></div>
-                    <span class="status-pill {{ $statusClasse }}">{{ $statusLabel }}</span>
-                    <p class="status-desc">{{ $statusAtendimentoDescricao }}</p>
+                    <span class="status-pill <?php echo e($statusClasse); ?>"><?php echo e($statusLabel); ?></span>
+                    <p class="status-desc"><?php echo e($statusAtendimentoDescricao); ?></p>
                     <div class="divider"></div>
                     <div class="info-list">
-                        <div class="info-row"><span>♙</span><strong>Protocolo</strong><span>{{ $protocolo }}</span></div>
-                        <div class="info-row"><span>▣</span><strong>Abertura</strong><span>{{ $abertura }}</span></div>
-                        <div class="info-row"><span>◷</span><strong>Última atualização</strong><span>{{ $atualizacao }}</span></div>
-                        <div class="info-row"><span>♧</span><strong>Responsável</strong><span class="person"><span class="small-avatar">EQ</span><span>{{ $responsavel }}<small>Suporte</small></span></span></div>
+                        <div class="info-row"><span>♙</span><strong>Protocolo</strong><span><?php echo e($protocolo); ?></span></div>
+                        <div class="info-row"><span>▣</span><strong>Abertura</strong><span><?php echo e($abertura); ?></span></div>
+                        <div class="info-row"><span>◷</span><strong>Última atualização</strong><span><?php echo e($atualizacao); ?></span></div>
+                        <div class="info-row"><span>♧</span><strong>Responsável</strong><span class="person"><span class="small-avatar">EQ</span><span><?php echo e($responsavel); ?><small>Suporte</small></span></span></div>
                     </div>
                 </section>
 
@@ -1939,20 +2002,22 @@
                     <div class="divider"></div>
                     <div class="progress-line" aria-label="Progresso do atendimento">
                         <div class="step done"><span class="step-circle">✓</span><span>Recebido</span></div>
-                        <div class="step {{ $percent >= 35 ? 'active' : '' }}"><span class="step-circle">2</span><span>Em análise</span></div>
-                        <div class="step {{ $pendenciasCount > 0 ? 'active' : '' }}"><span class="step-circle">3</span><span>Aguardando<br>você</span></div>
-                        <div class="step {{ $percent >= 100 ? 'done' : '' }}"><span class="step-circle">4</span><span>Concluído</span></div>
+                        <div class="step <?php echo e($percent >= 35 ? 'active' : ''); ?>"><span class="step-circle">2</span><span>Em análise</span></div>
+                        <div class="step <?php echo e($pendenciasCount > 0 ? 'active' : ''); ?>"><span class="step-circle">3</span><span>Aguardando<br>você</span></div>
+                        <div class="step <?php echo e($percent >= 100 ? 'done' : ''); ?>"><span class="step-circle">4</span><span>Concluído</span></div>
                     </div>
                     <div class="divider"></div>
                     <h2 style="font-size:17px">Resumo da solicitação</h2>
                     <p class="summary-text">
-                        @if($solicitacoesAbertas->isNotEmpty())
-                            {{ \Illuminate\Support\Str::limit($solicitacoesAbertas->first()['descricao'] ?? $solicitacoesAbertas->first()['titulo'] ?? 'Atendimento em acompanhamento pela equipe.', 170) }}
-                        @elseif($nextDelivery)
-                            {{ \Illuminate\Support\Str::limit($nextDelivery['titulo'] ?? 'Atendimento em acompanhamento pela equipe.', 170) }}
-                        @else
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($solicitacoesAbertas->isNotEmpty()): ?>
+                            <?php echo e(\Illuminate\Support\Str::limit($solicitacoesAbertas->first()['descricao'] ?? $solicitacoesAbertas->first()['titulo'] ?? 'Atendimento em acompanhamento pela equipe.', 170)); ?>
+
+                        <?php elseif($nextDelivery): ?>
+                            <?php echo e(\Illuminate\Support\Str::limit($nextDelivery['titulo'] ?? 'Atendimento em acompanhamento pela equipe.', 170)); ?>
+
+                        <?php else: ?>
                             Solicitação em acompanhamento pela equipe de suporte. Use o chat para enviar dúvidas, documentos e atualizações.
-                        @endif
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </p>
                     <button type="button" class="all-link" style="margin-top:26px" data-portal-cluster="historico">Abrir histórico do chat <span>→</span></button>
                 </section>
@@ -1963,26 +2028,26 @@
 </div>
 
 <div class="alerts">
-    @if(session('success'))
-        <div class="alert"><strong>Pronto!</strong> {{ session('success') }}</div>
-    @endif
-    @if($errors->any())
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(session('success')): ?>
+        <div class="alert"><strong>Pronto!</strong> <?php echo e(session('success')); ?></div>
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($errors->any()): ?>
         <div class="errors" role="alert">
             <strong>Não foi possível continuar.</strong>
-            <ul>@foreach($errors->all() as $erro)<li>{{ $erro }}</li>@endforeach</ul>
+            <ul><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $erro): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><li><?php echo e($erro); ?></li><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></ul>
         </div>
-    @endif
+    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 </div>
 <div class="client-toast" data-client-toast role="status" aria-live="polite"></div>
 
-@if(! empty($socketIoConfig['url']))
-    <script src="{{ rtrim($socketIoConfig['url'], '/') }}/socket.io/socket.io.js" onload="window.__portalSocketIoScriptLoaded=true" onerror="window.__portalSocketIoScriptError=true"></script>
-@endif
+<?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($socketIoConfig['url'])): ?>
+    <script src="<?php echo e(rtrim($socketIoConfig['url'], '/')); ?>/socket.io/socket.io.js" onload="window.__portalSocketIoScriptLoaded=true" onerror="window.__portalSocketIoScriptError=true"></script>
+<?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
 <script>
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
-    const portalChatSocketConfig = @json($socketIoConfig ?? []);
-    const portalSelectedAtendimentoId = Number(@json($ticketSelecionadoId ?? 0));
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '<?php echo e(csrf_token()); ?>';
+    const portalChatSocketConfig = <?php echo json_encode($socketIoConfig ?? [], 15, 512) ?>;
+    const portalSelectedAtendimentoId = Number(<?php echo json_encode($ticketSelecionadoId ?? 0, 15, 512) ?>);
     let portalChatSocket = null;
     let portalSocketRetryTimer = null;
     let portalOfflineSyncTimer = null;
@@ -2895,12 +2960,13 @@
         setPortalCluster(active?.dataset.portalCluster || 'chat');
     });
 
-    @if(session('success'))
-        showClientToast(@json(session('success')), 'success');
-    @endif
-    @if($errors->any())
+    <?php if(session('success')): ?>
+        showClientToast(<?php echo json_encode(session('success'), 15, 512) ?>, 'success');
+    <?php endif; ?>
+    <?php if($errors->any()): ?>
         showClientToast('Revise os campos destacados para continuar.', 'error');
-    @endif
+    <?php endif; ?>
 </script>
 </body>
 </html>
+<?php /**PATH C:\xampp\htdocs\prazzu\resources\views/portal/cliente/show.blade.php ENDPATH**/ ?>
