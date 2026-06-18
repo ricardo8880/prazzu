@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Atendimento;
+use App\Models\Empresa;
 use App\Models\PortalMensagem;
 use App\Models\ItemControle;
 use App\Support\AtendimentoPortalService;
@@ -42,6 +43,9 @@ class Atendimentos extends Page
     public string $slaFilter = 'todos';
     public string $sortBy = 'recentes';
     public ?int $empresaFilter = null;
+    public ?int $portalCadastroEmpresaId = null;
+    public ?string $portalCadastroClienteLink = null;
+    public ?string $portalCadastroClienteEmpresaNome = null;
 
     public array $data = [];
     public array $summary = [];
@@ -144,6 +148,92 @@ class Atendimentos extends Page
             : $idsVisiveis;
     }
 
+    public function apagarAtendimentosSelecionados(): void
+    {
+        if (! $this->bancoDisponivel()) {
+            return;
+        }
+
+        $ids = collect($this->atendimentosSelecionados)
+            ->map(fn ($id) => (int) $id)
+            ->filter(fn (int $id) => $id > 0)
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            $this->notify('info', 'Selecione ao menos um atendimento para apagar.');
+            return;
+        }
+
+        $atendimentos = $ids
+            ->map(fn (int $id) => $this->findAtendimentoAutorizado($id, false))
+            ->filter()
+            ->values();
+
+        if ($atendimentos->isEmpty()) {
+            $this->notify('danger', 'Nenhum atendimento selecionado foi encontrado ou você não tem permissão para apagá-lo.');
+            $this->atendimentosSelecionados = [];
+            $this->loadData(true);
+            return;
+        }
+
+        $idsAutorizados = $atendimentos->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+        $portalMensagemIds = $atendimentos
+            ->pluck('portal_mensagem_id')
+            ->filter(fn ($id) => filled($id))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+
+        try {
+            DB::transaction(function () use ($idsAutorizados, $portalMensagemIds): void {
+                if (CachedSchema::hasTable('atendimento_interacoes')) {
+                    DB::table('atendimento_interacoes')
+                        ->whereIn('atendimento_id', $idsAutorizados)
+                        ->delete();
+                }
+
+                if (CachedSchema::hasTable('portal_mensagens')) {
+                    DB::table('portal_mensagens')
+                        ->where(function ($query) use ($idsAutorizados, $portalMensagemIds): void {
+                            if (CachedSchema::hasColumn('portal_mensagens', 'atendimento_id')) {
+                                $query->whereIn('atendimento_id', $idsAutorizados);
+                            }
+
+                            if ($portalMensagemIds !== []) {
+                                $query->orWhereIn('id', $portalMensagemIds);
+                            }
+                        })
+                        ->delete();
+                }
+
+                if (CachedSchema::hasTable('item_controles') && CachedSchema::hasColumn('item_controles', 'atendimento_id')) {
+                    DB::table('item_controles')
+                        ->whereIn('atendimento_id', $idsAutorizados)
+                        ->update(['atendimento_id' => null]);
+                }
+
+                Atendimento::query()
+                    ->whereIn('id', $idsAutorizados)
+                    ->delete();
+            });
+        } catch (Throwable $exception) {
+            report($exception);
+            $this->notify('danger', 'Não foi possível apagar os atendimentos selecionados.');
+            return;
+        }
+
+        if ($this->selectedAtendimentoId && in_array((int) $this->selectedAtendimentoId, $idsAutorizados, true)) {
+            $this->fecharDetalhe();
+        }
+
+        $total = count($idsAutorizados);
+        $this->atendimentosSelecionados = [];
+        $this->loadData(true);
+        $this->notify('success', $total === 1 ? 'Atendimento apagado com sucesso.' : "{$total} atendimentos apagados com sucesso.");
+    }
+
     public function updatedNovoEmpresaId(): void
     {
         $this->novoClienteId = null;
@@ -177,6 +267,8 @@ class Atendimentos extends Page
             $this->novoEmpresaId = (int) $this->empresas[0]['id'];
         }
 
+        $this->atualizarLinkCadastroClientePortal();
+
         if ($selectedId) {
             $this->refreshSelectedAtendimento((int) $selectedId);
         }
@@ -189,6 +281,78 @@ class Atendimentos extends Page
         return $this->data;
     }
 
+
+
+    public function updatedPortalCadastroEmpresaId(): void
+    {
+        $this->atualizarLinkCadastroClientePortal();
+    }
+
+    public function atualizarLinkCadastroClientePortal(): void
+    {
+        $this->portalCadastroClienteLink = null;
+        $this->portalCadastroClienteEmpresaNome = null;
+
+        $empresaId = $this->resolverEmpresaCadastroPortalId();
+
+        if (! $empresaId) {
+            return;
+        }
+
+        $empresa = Empresa::query()
+            ->whereKey($empresaId)
+            ->first(['id', 'razao_social', 'nome_fantasia', 'portal_token']);
+
+        if (! $empresa || ! AtendimentosData::usuarioPodeAcessarEmpresa((int) $empresa->id)) {
+            return;
+        }
+
+        if (blank($empresa->portal_token)) {
+            $empresa->forceFill(['portal_token' => Str::random(64)])->save();
+        }
+
+        $this->portalCadastroEmpresaId = (int) $empresa->id;
+        $this->portalCadastroClienteEmpresaNome = (string) ($empresa->nome_fantasia ?: $empresa->razao_social ?: 'Empresa #' . $empresa->id);
+        $this->portalCadastroClienteLink = url('/portal-cliente/cadastro/' . $empresa->portal_token);
+    }
+
+    public function renovarLinkCadastroClientePortal(): void
+    {
+        $empresaId = $this->resolverEmpresaCadastroPortalId();
+
+        if (! $empresaId || ! AtendimentosData::usuarioPodeAcessarEmpresa($empresaId)) {
+            $this->notify('danger', 'Selecione uma empresa válida para renovar o link de cadastro.');
+            return;
+        }
+
+        Empresa::query()
+            ->whereKey($empresaId)
+            ->update(['portal_token' => Str::random(64)]);
+
+        $this->atualizarLinkCadastroClientePortal();
+        $this->notify('success', 'Link de cadastro do cliente renovado. Envie o novo link para seus clientes.');
+    }
+
+    private function resolverEmpresaCadastroPortalId(): ?int
+    {
+        $user = auth()->user();
+
+        if ($user && ! $user->isSuperAdmin()) {
+            return (int) $user->empresa_id;
+        }
+
+        if ($this->portalCadastroEmpresaId) {
+            return (int) $this->portalCadastroEmpresaId;
+        }
+
+        if ($this->empresaFilter) {
+            return (int) $this->empresaFilter;
+        }
+
+        $primeiraEmpresa = collect($this->empresas)->first();
+
+        return $primeiraEmpresa ? (int) ($primeiraEmpresa['id'] ?? 0) : null;
+    }
 
     public function sincronizarPortal(): void
     {
@@ -982,7 +1146,7 @@ class Atendimentos extends Page
             return false;
         }
 
-        $nomeSeguro = Str::uuid()->toString() . ($extensao !== '' ? '.' . $extensao : '');
+        $nomeSeguro = Str::random(64) . ($extensao !== '' ? '.' . $extensao : '');
         $pasta = 'portal_cliente_anexos/' . $atendimentoId;
         try {
             $caminho = $arquivo->storeAs($pasta, $nomeSeguro, 'public');

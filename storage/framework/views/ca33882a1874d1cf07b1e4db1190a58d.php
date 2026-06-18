@@ -1,2 +1,0 @@
-<?php echo $__env->make('filament.pages.partials.prazzu-enterprise-page', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
-<?php /**PATH C:\xampp\htdocs\prazzu\resources\views\filament\pages\riscos.blade.php ENDPATH**/ ?>

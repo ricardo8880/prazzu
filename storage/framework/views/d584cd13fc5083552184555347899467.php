@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos.css')); ?>">
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos-ticket-modal.css')); ?>">
-    <?php if (! $__env->hasRenderedOnce('f0e22d4f-b97a-419d-a32a-235fae621da6')): $__env->markAsRenderedOnce('f0e22d4f-b97a-419d-a32a-235fae621da6'); ?>
+    <?php if (! $__env->hasRenderedOnce('8d98465d-df0b-40c7-9142-a9daaf4aefda')): $__env->markAsRenderedOnce('8d98465d-df0b-40c7-9142-a9daaf4aefda'); ?>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <?php endif; ?>
 
@@ -35,7 +35,7 @@
         $totalAtendimentosSelecionados = $idsAtendimentosSelecionados->count();
     ?>
 
-    <div class="at-wrap at-reference-layout" x-data="{ criar: <?php if ((object) ('createModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'->value()); ?>')<?php echo e('createModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'); ?>')<?php endif; ?>.live, detalhe: <?php if ((object) ('detailModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'->value()); ?>')<?php echo e('detailModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'); ?>')<?php endif; ?>.live }" wire:poll.25s="loadData(true)">
+    <div class="at-wrap at-reference-layout" x-data="{ criar: <?php if ((object) ('createModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'->value()); ?>')<?php echo e('createModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'); ?>')<?php endif; ?>.live, detalhe: <?php if ((object) ('detailModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'->value()); ?>')<?php echo e('detailModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'); ?>')<?php endif; ?>.live, cadastroCliente: false }" wire:poll.25s="loadData(true)">
         <section class="at-page-head at-reference-head">
             <div class="at-title-block">
                 <span class="at-eyebrow">Central de suporte</span>
@@ -48,6 +48,7 @@
                     <small class="at-last-sync">Atualizado em <?php echo e($lastRefreshAt); ?></small>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <button type="button" class="at-btn ghost" wire:click="sincronizarPortal" wire:loading.attr="disabled" wire:target="sincronizarPortal"><i class="bi bi-arrow-clockwise at-btn-icon" aria-hidden="true"></i> Atualizar</button>
+                <button type="button" class="at-btn ghost" @click="cadastroCliente = true"><i class="bi bi-person-plus at-btn-icon" aria-hidden="true"></i> Link do cliente</button>
                 <button type="button" class="at-btn" wire:click="abrirCriacao" wire:loading.attr="disabled" wire:target="abrirCriacao"><i class="bi bi-plus-lg at-btn-icon" aria-hidden="true"></i> Novo atendimento</button>
             </div>
         </section>
@@ -363,6 +364,59 @@
             </aside>
         </section>
 
+
+
+        <div class="at-modal" x-show="cadastroCliente" x-cloak>
+            <div class="at-modal-card" @click.outside="cadastroCliente = false" x-data="{ copied: false }">
+                <header>
+                    <div>
+                        <h2>Link de cadastro do cliente</h2>
+                        <p>Envie este link para o cliente criar o próprio acesso ao Portal do Cliente já vinculado à empresa correta.</p>
+                    </div>
+                    <button type="button" @click="cadastroCliente = false">×</button>
+                </header>
+
+                <div class="at-form-grid">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(count($empresas) > 1): ?>
+                        <label>
+                            <span>Empresa do link</span>
+                            <select wire:model.live="portalCadastroEmpresaId">
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $empresas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                    <option value="<?php echo e($empresa['id']); ?>"><?php echo e($empresa['nome'] ?? ('Empresa #' . $empresa['id'])); ?></option>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            </select>
+                        </label>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                    <label>
+                        <span>Empresa vinculada</span>
+                        <input type="text" readonly value="<?php echo e($portalCadastroClienteEmpresaNome ?: 'Nenhuma empresa selecionada'); ?>">
+                    </label>
+                </div>
+
+                <label class="at-full">
+                    <span>Link para enviar ao cliente</span>
+                    <input type="text" readonly x-ref="linkCadastroCliente" value="<?php echo e($portalCadastroClienteLink ?: 'Nenhuma empresa disponível para gerar o link.'); ?>">
+                </label>
+
+                <section class="at-alert" style="margin:14px 0 0;">
+                    <strong>Como usar</strong>
+                    <span>Copie o link e envie para o cliente. Ao preencher o formulário, o cadastro dele será separado automaticamente pela empresa selecionada acima.</span>
+                </section>
+
+                <footer>
+                    <button type="button" class="at-btn ghost" @click="cadastroCliente = false">Fechar</button>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($portalCadastroClienteLink): ?>
+                        <button type="button" class="at-btn ghost" wire:click="renovarLinkCadastroClientePortal" wire:loading.attr="disabled" wire:target="renovarLinkCadastroClientePortal">Renovar link</button>
+                        <a href="<?php echo e($portalCadastroClienteLink); ?>" target="_blank" rel="noopener" class="at-btn ghost">Abrir</a>
+                        <button type="button" class="at-btn" @click="navigator.clipboard.writeText($refs.linkCadastroCliente.value); copied = true; setTimeout(() => copied = false, 1800)">
+                            <i class="bi bi-clipboard-check at-btn-icon" aria-hidden="true"></i>
+                            <span x-text="copied ? 'Copiado' : 'Copiar link'"></span>
+                        </button>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </footer>
+            </div>
+        </div>
         <div class="at-modal" x-show="criar" x-cloak>
             <div class="at-modal-card" @click.outside="criar = false">
                 <header><div><h2>Novo atendimento</h2><p>Registre uma demanda interna vinculada ao cliente/empresa.</p></div><button type="button" @click="criar = false">×</button></header>

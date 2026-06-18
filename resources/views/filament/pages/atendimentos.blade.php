@@ -24,7 +24,7 @@
         $totalAtendimentosSelecionados = $idsAtendimentosSelecionados->count();
     @endphp
 
-    <div class="at-wrap at-reference-layout" x-data="{ criar: @entangle('createModalAberto').live, detalhe: @entangle('detailModalAberto').live }" wire:poll.25s="loadData(true)">
+    <div class="at-wrap at-reference-layout" x-data="{ criar: @entangle('createModalAberto').live, detalhe: @entangle('detailModalAberto').live, cadastroCliente: false }" wire:poll.25s="loadData(true)">
         <section class="at-page-head at-reference-head">
             <div class="at-title-block">
                 <span class="at-eyebrow">Central de suporte</span>
@@ -37,6 +37,7 @@
                     <small class="at-last-sync">Atualizado em {{ $lastRefreshAt }}</small>
                 @endif
                 <button type="button" class="at-btn ghost" wire:click="sincronizarPortal" wire:loading.attr="disabled" wire:target="sincronizarPortal"><i class="bi bi-arrow-clockwise at-btn-icon" aria-hidden="true"></i> Atualizar</button>
+                <button type="button" class="at-btn ghost" @click="cadastroCliente = true"><i class="bi bi-person-plus at-btn-icon" aria-hidden="true"></i> Link do cliente</button>
                 <button type="button" class="at-btn" wire:click="abrirCriacao" wire:loading.attr="disabled" wire:target="abrirCriacao"><i class="bi bi-plus-lg at-btn-icon" aria-hidden="true"></i> Novo atendimento</button>
             </div>
         </section>
@@ -352,6 +353,59 @@
             </aside>
         </section>
 
+
+
+        <div class="at-modal" x-show="cadastroCliente" x-cloak>
+            <div class="at-modal-card" @click.outside="cadastroCliente = false" x-data="{ copied: false }">
+                <header>
+                    <div>
+                        <h2>Link de cadastro do cliente</h2>
+                        <p>Envie este link para o cliente criar o próprio acesso ao Portal do Cliente já vinculado à empresa correta.</p>
+                    </div>
+                    <button type="button" @click="cadastroCliente = false">×</button>
+                </header>
+
+                <div class="at-form-grid">
+                    @if(count($empresas) > 1)
+                        <label>
+                            <span>Empresa do link</span>
+                            <select wire:model.live="portalCadastroEmpresaId">
+                                @foreach($empresas as $empresa)
+                                    <option value="{{ $empresa['id'] }}">{{ $empresa['nome'] ?? ('Empresa #' . $empresa['id']) }}</option>
+                                @endforeach
+                            </select>
+                        </label>
+                    @endif
+
+                    <label>
+                        <span>Empresa vinculada</span>
+                        <input type="text" readonly value="{{ $portalCadastroClienteEmpresaNome ?: 'Nenhuma empresa selecionada' }}">
+                    </label>
+                </div>
+
+                <label class="at-full">
+                    <span>Link para enviar ao cliente</span>
+                    <input type="text" readonly x-ref="linkCadastroCliente" value="{{ $portalCadastroClienteLink ?: 'Nenhuma empresa disponível para gerar o link.' }}">
+                </label>
+
+                <section class="at-alert" style="margin:14px 0 0;">
+                    <strong>Como usar</strong>
+                    <span>Copie o link e envie para o cliente. Ao preencher o formulário, o cadastro dele será separado automaticamente pela empresa selecionada acima.</span>
+                </section>
+
+                <footer>
+                    <button type="button" class="at-btn ghost" @click="cadastroCliente = false">Fechar</button>
+                    @if($portalCadastroClienteLink)
+                        <button type="button" class="at-btn ghost" wire:click="renovarLinkCadastroClientePortal" wire:loading.attr="disabled" wire:target="renovarLinkCadastroClientePortal">Renovar link</button>
+                        <a href="{{ $portalCadastroClienteLink }}" target="_blank" rel="noopener" class="at-btn ghost">Abrir</a>
+                        <button type="button" class="at-btn" @click="navigator.clipboard.writeText($refs.linkCadastroCliente.value); copied = true; setTimeout(() => copied = false, 1800)">
+                            <i class="bi bi-clipboard-check at-btn-icon" aria-hidden="true"></i>
+                            <span x-text="copied ? 'Copiado' : 'Copiar link'"></span>
+                        </button>
+                    @endif
+                </footer>
+            </div>
+        </div>
         <div class="at-modal" x-show="criar" x-cloak>
             <div class="at-modal-card" @click.outside="criar = false">
                 <header><div><h2>Novo atendimento</h2><p>Registre uma demanda interna vinculada ao cliente/empresa.</p></div><button type="button" @click="criar = false">×</button></header>

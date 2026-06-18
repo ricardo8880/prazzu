@@ -70,16 +70,15 @@
         .brand-divider { width: 1px; height: 42px; background: rgba(255,255,255,.12); }
         .brand h1 { margin: 0; font-size: 22px; line-height: 1; letter-spacing: .01em; font-weight: 900; text-transform: uppercase; }
         .brand p { margin: 9px 0 0; color: rgba(255,255,255,.78); font-size: 15px; }
-        .top-actions { display: flex; align-items: center; gap: 22px; }
-        .bell { width: 42px; height: 42px; display: grid; place-items: center; position: relative; border-left: 1px solid rgba(255,255,255,.12); padding-left: 18px; color: #fff; background: transparent; border-top: 0; border-right: 0; border-bottom: 0; cursor: pointer; }
-        .bell:hover { color: #dbeafe; }
-        .bell-badge { position: absolute; top: 6px; right: -6px; min-width: 20px; height: 20px; border-radius: 999px; display: grid; place-items: center; background: var(--pc-danger); color: #fff; font-size: 11px; font-weight: 900; }
-        .profile { display: flex; align-items: center; gap: 12px; }
-        .profile-note { color: rgba(255,255,255,.58); font-size: 12px; font-weight: 800; }
-        .profile-status { font-size: 13px; color: rgba(255,255,255,.78); display: flex; align-items: center; gap: 7px; margin-top: 4px; }
-        .profile-status::before { content: ""; width: 13px; height: 13px; border-radius: 50%; background: #22c55e; display: inline-block; }
-        .profile strong { display: block; font-size: 15px; }
-        .profile-avatar { width: 48px; height: 48px; border-radius: 50%; background: #123f91; display: grid; place-items: center; font-weight: 900; font-size: 17px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+        .top-actions { display: flex; align-items: center; gap: 18px; }
+        .profile { display: flex; align-items: center; gap: 13px; min-width: 0; }
+        .profile-copy { display: grid; gap: 3px; min-width: 0; }
+        .profile-name { display: block; color: #fff; font-size: 15px; line-height: 1.15; font-weight: 900; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-email { display: block; color: rgba(255,255,255,.82); font-size: 13px; line-height: 1.2; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .profile-avatar { width: 44px; height: 44px; border-radius: 50%; background: #123f91; display: grid; place-items: center; font-weight: 900; font-size: 17px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); flex: 0 0 auto; text-transform: uppercase; }
+        .logout-button { min-height: 38px; padding: 0 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,.26); background: rgba(255,255,255,.10); color: #fff; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-size: 13px; font-weight: 900; cursor: pointer; transition: .2s ease; }
+        .logout-button:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.42); transform: translateY(-1px); }
+        .logout-form { margin: 0; }
 
         .portal-body { display: grid; grid-template-columns: 94px minmax(0, 1fr); min-height: calc(100vh - 94px); }
         .portal-content { min-width: 0; min-height: calc(100vh - 94px); display: grid; grid-template-rows: auto minmax(0, 1fr); }
@@ -851,24 +850,18 @@
                 font-size: 14px;
             }
 
-            .profile-note,
-            .profile-copy,
             .brand-divider {
                 display: none !important;
             }
 
-            .bell {
-                width: 40px;
-                height: 40px;
-                padding-left: 0;
-                border-left: 0;
-                border-radius: 12px;
-                background: rgba(255,255,255,.08);
+            .profile-copy {
+                display: none !important;
             }
 
-            .bell-badge {
-                top: -4px;
-                right: -5px;
+            .logout-button {
+                min-height: 36px;
+                padding: 0 13px;
+                border-radius: 10px;
             }
 
             .portal-cluster {
@@ -1619,15 +1612,22 @@
 </head>
 <body>
 <?php
-    $clientePublicoNome = old('nome', $empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? 'Cliente do portal');
-    $clientePublicoEmail = old('email', $empresa['email'] ?? '');
+    $portalClienteLogado = auth('portal_cliente')->user();
+    $portalEmpresaId = (int) ($empresaId ?? ($empresa['id'] ?? 0));
+    $portalClienteEmpresaId = (int) ($portalClienteLogado->empresa_id ?? 0);
+    $portalClienteIdentificado = $portalClienteLogado && $portalEmpresaId > 0 && $portalClienteEmpresaId === $portalEmpresaId;
+
+    $clientePublicoNome = old('nome', $portalClienteIdentificado ? ($portalClienteLogado->nome ?? 'Cliente do portal') : ($empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? 'Cliente do portal'));
+    $clientePublicoEmail = old('email', $portalClienteIdentificado ? ($portalClienteLogado->email ?? '') : ($empresa['email'] ?? ''));
     $percent = (int) ($progress['percent'] ?? 0);
     $empresaNome = $empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? 'Cliente';
-    $pendenciasCount = (int) ($statusSummary['pendencias_cliente'] ?? 0);
     $atrasadosCount = (int) ($statusSummary['atrasados'] ?? 0);
     $solicitacoesAbertas = collect($supportQueue ?? [])->values();
     $ticketsCliente = collect($clienteTickets ?? $tickets ?? $supportQueue ?? [])->values();
     $ticketsCount = $ticketsCliente->count();
+    // Mantém os badges de Pendências sincronizados com a quantidade real de tickets exibidos.
+    // Isso evita voltar a mostrar total fixo/antigo nos ícones e na aba Pendências.
+    $pendenciasCount = $ticketsCount;
     $ticketSelecionadoId = (int) ($selectedAtendimentoId ?? 0);
     $ticketSelecionado = $ticketsCliente->first(fn ($ticket) => (int) ($ticket['id'] ?? 0) === $ticketSelecionadoId);
     $ticketSelecionadoLabel = $ticketSelecionado['ticket_label'] ?? ($ticketSelecionadoId > 0 ? '#ATD-' . str_pad((string) $ticketSelecionadoId, 5, '0', STR_PAD_LEFT) : 'Atendimento');
@@ -1647,6 +1647,7 @@
         : 'O atendimento está em acompanhamento. Você pode enviar dúvidas ou documentos pelo chat quando precisar.';
     $responsavel = 'Equipe de Suporte';
     $iniciaisEmpresa = collect(preg_split('/\s+/', trim($empresaNome)) ?: [])->filter()->take(2)->map(fn ($parte) => mb_strtoupper(mb_substr($parte, 0, 1)))->implode('') ?: 'CL';
+    $iniciaisCliente = collect(preg_split('/\s+/', trim((string) $clientePublicoNome)) ?: [])->filter()->take(2)->map(fn ($parte) => mb_strtoupper(mb_substr($parte, 0, 1)))->implode('') ?: $iniciaisEmpresa;
     $iniciaisAutor = function (array $mensagem): string {
         $nome = trim((string) ($mensagem['nome'] ?? $mensagem['autor_label'] ?? ''));
         $partes = preg_split('/\s+/', $nome) ?: [];
@@ -1672,19 +1673,27 @@
             <div class="brand-divider" aria-hidden="true"></div>
             <div>
                 <h1>Portal do Cliente</h1>
-                <p>Acompanhamento do seu atendimento</p>
+                <p><?php echo e(\Illuminate\Support\Str::limit($empresaNome, 34)); ?> · acompanhe seus atendimentos com segurança.</p>
             </div>
         </div>
         <div class="top-actions">
-            <button type="button" class="bell" aria-label="Abrir pendências" data-portal-cluster="pendencias">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5"/><path d="M10 21h4"/></svg>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($pendenciasCount > 0): ?><span class="bell-badge"><?php echo e($pendenciasCount); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-            </button>
             <div class="profile" aria-label="Cliente identificado">
-                <div class="profile-copy"><strong><?php echo e(\Illuminate\Support\Str::limit($empresaNome, 28)); ?></strong><span class="profile-status">Atendimento pelo portal</span></div>
-                <div class="profile-avatar"><?php echo e($iniciaisEmpresa); ?></div>
-                <span class="profile-note">Cliente</span>
+                <div class="profile-avatar"><?php echo e($iniciaisCliente); ?></div>
+                <div class="profile-copy">
+                    <strong class="profile-name"><?php echo e(\Illuminate\Support\Str::limit($clientePublicoNome ?: 'Cliente', 28)); ?></strong>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($clientePublicoEmail)): ?>
+                        <span class="profile-email"><?php echo e(\Illuminate\Support\Str::limit($clientePublicoEmail, 34)); ?></span>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
             </div>
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(auth('portal_cliente')->check() && \Illuminate\Support\Facades\Route::has('portal.cliente.logout')): ?>
+                <form method="POST" action="<?php echo e(route('portal.cliente.logout')); ?>" class="logout-form">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" class="logout-button">Sair</button>
+                </form>
+            <?php else: ?>
+                <a href="<?php echo e(url('/')); ?>" class="logout-button">Sair</a>
+            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </div>
     </header>
 

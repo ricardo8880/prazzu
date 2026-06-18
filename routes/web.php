@@ -7,12 +7,10 @@ use App\Http\Controllers\AuditoriaDetalhadaExportController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\Auth\WhiteLabelSsoController;
 use App\Http\Controllers\PublicEmpresaCadastroController;
-use App\Http\Controllers\PortalClienteAreaController;
 use App\Http\Controllers\PortalClienteAuthController;
 use App\Http\Controllers\PortalClientePasswordController;
 use App\Http\Controllers\PortalClientePublicoController;
 use App\Http\Controllers\PortalItemControleController;
-use App\Http\Middleware\RedirectIfPortalClienteAuthenticated;
 use App\Http\Middleware\ValidatePortalPublicAccess;
 use App\Models\ItemControle;
 use App\Services\ItemControlePdfService;
@@ -21,11 +19,19 @@ use App\Support\CachedSchema;
 use App\Support\PortalClienteData;
 use App\Support\PortalChatMessageContract;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 
-Route::middleware(['guest:portal_cliente', RedirectIfPortalClienteAuthenticated::class])->group(function (): void {
+Route::get('/portal-cliente/cadastro/{token}', [PortalClienteAuthController::class, 'cadastroForm'])
+    ->where('token', '[^/]+')
+    ->name('portal.cliente.cadastro');
+
+Route::post('/portal-cliente/cadastro/{token}', [PortalClienteAuthController::class, 'cadastrar'])
+    ->where('token', '[^/]+')
+    ->middleware('throttle:30,1')
+    ->name('portal.cliente.cadastro.store');
+
+Route::middleware(['guest:portal_cliente'])->group(function (): void {
     Route::get('/portal-cliente/login', [PortalClienteAuthController::class, 'loginForm'])
         ->name('portal.cliente.login');
 
@@ -33,6 +39,10 @@ Route::middleware(['guest:portal_cliente', RedirectIfPortalClienteAuthenticated:
         ->middleware('throttle:5,1')
         ->name('portal.cliente.login.store');
 });
+
+Route::post('/', [PortalClienteAuthController::class, 'logout'])
+    ->name('portal.cliente.logout');
+
 
 Route::middleware(['guest:portal_cliente'])->group(function (): void {
     Route::get('/portal-cliente/esqueci-senha', [PortalClientePasswordController::class, 'forgotForm'])
@@ -61,43 +71,6 @@ Route::middleware(['guest:portal_cliente'])->group(function (): void {
         ->name('portal.cliente.convite.aceitar');
 });
 
-Route::middleware(['auth:portal_cliente'])->group(function (): void {
-    Route::get('/portal-cliente', [PortalClienteAreaController::class, 'dashboard'])
-        ->name('portal.cliente.dashboard');
-
-    Route::get('/portal-cliente/atendimentos/novo', [PortalClienteAreaController::class, 'novo'])
-        ->name('portal.cliente.atendimentos.create');
-
-    Route::post('/portal-cliente/atendimentos', [PortalClienteAreaController::class, 'store'])
-        ->middleware('throttle:10,1')
-        ->name('portal.cliente.atendimentos.store');
-
-    Route::get('/portal-cliente/atendimentos/{atendimento}', [PortalClienteAreaController::class, 'atendimento'])
-        ->whereNumber('atendimento')
-        ->name('portal.cliente.atendimentos.show');
-
-    Route::post('/portal-cliente/atendimentos/{atendimento}/mensagem', [PortalClienteAreaController::class, 'mensagem'])
-        ->whereNumber('atendimento')
-        ->middleware('throttle:30,1')
-        ->name('portal.cliente.atendimentos.mensagem');
-
-    Route::get('/portal-cliente/atendimentos/{atendimento}/chat-estado', [PortalClienteAreaController::class, 'estadoChat'])
-        ->whereNumber('atendimento')
-        ->middleware('throttle:900,1')
-        ->name('portal.cliente.atendimentos.chat.estado');
-
-    Route::get('/portal-cliente/atendimentos/{atendimento}/interacoes/{interacao}/anexo', [PortalClienteAreaController::class, 'anexo'])
-        ->whereNumber('atendimento')
-        ->whereNumber('interacao')
-        ->name('portal.cliente.atendimentos.anexo');
-
-    Route::post('/portal-cliente/debug-log', [PortalClienteAreaController::class, 'debugLog'])
-        ->middleware('throttle:120,1')
-        ->name('portal.cliente.debug-log');
-
-    Route::post('/portal-cliente/logout', [PortalClienteAuthController::class, 'logout'])
-        ->name('portal.cliente.logout');
-});
 
 
 Route::middleware(['auth'])->group(function (): void {
@@ -122,7 +95,7 @@ Route::middleware(['auth'])->group(function (): void {
             'ack' => ['nullable'],
         ]);
 
-        
+
 
         return response()->json(['ok' => true]);
     })->middleware('throttle:180,1')->name('admin.portal-cliente.debug-log');
@@ -201,7 +174,7 @@ Route::middleware(['auth'])->group(function (): void {
     })->middleware('throttle:120,1')->name('admin.portal-cliente.chat.mensagens-novas');
 
     Route::get('/admin/portal-cliente/mensagem', function () {
-        
+
 
         return redirect('/admin/portal-cliente');
     })->middleware('throttle:60,1')->name('admin.portal-cliente.chat.mensagem.get-redirect');
@@ -210,7 +183,7 @@ Route::middleware(['auth'])->group(function (): void {
         $inicio = microtime(true);
         $empresaId = $request->integer('empresa');
 
-        
+
 
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
@@ -295,7 +268,7 @@ Route::middleware(['auth'])->group(function (): void {
             'attachments' => $anexos->all(),
         ];
 
-        
+
 
         $responsePayload = [
             'ok' => true,
@@ -304,7 +277,7 @@ Route::middleware(['auth'])->group(function (): void {
         ];
 
         if (! $request->expectsJson() && ! $request->ajax()) {
-            
+
 
             return redirect('/admin/portal-cliente')
                 ->with('success', 'Mensagem enviada.');
@@ -428,7 +401,7 @@ Route::post('/admin/auditoria/debug-log', function (\Illuminate\Http\Request $re
         'active_element' => ['nullable', 'array'],
     ]);
 
-    
+
 
     return response()->json(['ok' => true]);
 })->middleware(['auth'])->name('auditoria.debug-log');
