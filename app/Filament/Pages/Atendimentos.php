@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 use App\Models\Atendimento;
 use App\Models\Empresa;
 use App\Models\PortalMensagem;
@@ -27,12 +29,24 @@ use UnitEnum;
 class Atendimentos extends Page
 {
     use WithFileUploads;
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
     protected static string | UnitEnum | null $navigationGroup = 'Clientes';
     protected static ?string $navigationLabel = 'Atendimentos';
     protected static ?string $title = 'Central de Atendimentos';
     protected static ?int $navigationSort = 3;
     protected string $view = 'filament.pages.atendimentos';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('atendimentos.view');
+    }
 
     public string $search = '';
     public string $statusFilter = 'todos';
@@ -150,6 +164,10 @@ class Atendimentos extends Page
 
     public function apagarAtendimentosSelecionados(): void
     {
+        if (! $this->ensureCanDo('atendimentos.delete')) {
+            return;
+        }
+
         if (! $this->bancoDisponivel()) {
             return;
         }
@@ -318,6 +336,10 @@ class Atendimentos extends Page
 
     public function renovarLinkCadastroClientePortal(): void
     {
+        if (! $this->ensureCanDo('atendimentos.create')) {
+            return;
+        }
+
         $empresaId = $this->resolverEmpresaCadastroPortalId();
 
         if (! $empresaId || ! AtendimentosData::usuarioPodeAcessarEmpresa($empresaId)) {
@@ -429,6 +451,10 @@ class Atendimentos extends Page
 
     public function criarAtendimento(): void
     {
+        if (! $this->ensureCanDo('atendimentos.create')) {
+            return;
+        }
+
         if (! $this->bancoDisponivel()) {
             return;
         }
@@ -547,6 +573,10 @@ class Atendimentos extends Page
 
     public function assumirAtendimento(int $id): void
     {
+        if (! $this->ensureCanDo('atendimentos.reassign')) {
+            return;
+        }
+
         $atendimento = $this->findAtendimentoAutorizado($id);
         if (! $atendimento || ! $this->atendimentoPermiteAcaoOperacional($atendimento, 'assumir o atendimento')) {
             return;
@@ -566,6 +596,10 @@ class Atendimentos extends Page
 
     public function mudarStatusRapido(int $id, string $status): void
     {
+        if (! $this->ensureCanDo('atendimentos.reply')) {
+            return;
+        }
+
         $atendimento = $this->findAtendimentoAutorizado($id);
         if (! $atendimento) {
             return;
@@ -585,6 +619,10 @@ class Atendimentos extends Page
 
     public function resolverAtendimento(int $id): void
     {
+        if (! $this->ensureCanDo('atendimentos.close')) {
+            return;
+        }
+
         $this->mudarStatusRapido($id, AtendimentoStatus::RESOLVIDO);
     }
 
@@ -649,6 +687,10 @@ class Atendimentos extends Page
 
     public function reabrirAtendimento(int $id): void
     {
+        if (! $this->ensureCanDo('atendimentos.reply')) {
+            return;
+        }
+
         $atendimento = $this->findAtendimentoAutorizado($id);
         if (! $atendimento) {
             return;
@@ -844,7 +886,8 @@ class Atendimentos extends Page
         $empresaId = (int) $atendimento->empresa_id;
 
         if ($empresaId <= 0) {
-            return ['enabled' => false];
+            return [
+            'permissions' => $this->permissionFlags('atendimentos'),'enabled' => false];
         }
 
         $actor = 'suporte';
@@ -1598,10 +1641,5 @@ Contexto do ticket:
             ->title($message)
             ->{$type}()
             ->send();
-    }
-
-    public static function canAccess(): bool
-    {
-        return auth()->check();
     }
 }

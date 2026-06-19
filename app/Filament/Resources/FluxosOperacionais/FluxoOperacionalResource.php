@@ -10,6 +10,7 @@ use App\Models\Empresa;
 use App\Models\FluxoOperacional;
 use App\Models\Responsavel;
 use App\Services\PlanoService;
+use App\Support\PrazzuAccessControl;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -214,26 +215,28 @@ class FluxoOperacionalResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return PlanoService::usuarioPossuiFeature(
-            Filament::auth()->user(),
-            PlanoService::FEATURE_FLUXOS_OPERACIONAIS
-        );
+        return PrazzuAccessControl::can('tarefas.view')
+            && PlanoService::usuarioPossuiFeature(
+                Filament::auth()->user(),
+                PlanoService::FEATURE_FLUXOS_OPERACIONAIS
+            );
     }
 
     public static function canCreate(): bool
     {
-        return Filament::auth()->user()?->isAdmin() === true
-            || Filament::auth()->user()?->isGestor() === true;
+        return PrazzuAccessControl::can('tarefas.create')
+            && (Filament::auth()->user()?->isAdmin() === true
+                || Filament::auth()->user()?->isGestor() === true);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return static::canCreate();
+        return PrazzuAccessControl::can('tarefas.edit') && static::canCreate();
     }
 
     public static function canDelete(Model $record): bool
     {
-        return static::canCreate();
+        return PrazzuAccessControl::can('tarefas.delete') && static::canCreate();
     }
 
     public static function getPages(): array

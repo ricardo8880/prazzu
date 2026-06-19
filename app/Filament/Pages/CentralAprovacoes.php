@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Support\CachedSchema;
@@ -20,6 +22,7 @@ use UnitEnum;
 
 class CentralAprovacoes extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-inbox-stack';
     protected static string | UnitEnum | null $navigationGroup = 'Governança';
     protected static ?string $navigationLabel = 'Central de Aprovações';
@@ -44,7 +47,7 @@ class CentralAprovacoes extends Page
 
     public static function canAccess(): bool
     {
-        return PrazzuAccessControl::canUseAprovacoes(PrazzuAccessControl::user());
+        return static::canAdvancedPermission('aprovacoes.view') && PrazzuAccessControl::canUseAprovacoes(PrazzuAccessControl::user());
     }
 
     protected function getViewData(): array
@@ -53,6 +56,7 @@ class CentralAprovacoes extends Page
         $fila = $this->filaPriorizada();
 
         return [
+            'permissions' => $this->permissionFlags('aprovacoes'),
             'resumo' => $resumo,
             'diagnostico' => $this->diagnostico($resumo),
             'kanban' => $this->kanban(),
@@ -102,6 +106,10 @@ class CentralAprovacoes extends Page
 
     public function abrirConfirmacaoAprovacao(int $aprovacaoId): void
     {
+        if (! $this->ensureCanDo('aprovacoes.approve')) {
+            return;
+        }
+
         if (! $this->usuarioPodeDecidirAprovacao($aprovacaoId)) {
             Notification::make()
                 ->title('Você não tem permissão para decidir esta aprovação.')
@@ -125,6 +133,10 @@ class CentralAprovacoes extends Page
 
     public function confirmarAprovacao(): void
     {
+        if (! $this->ensureCanDo('aprovacoes.approve')) {
+            return;
+        }
+
         if (! $this->confirmacaoAprovacaoSelecionada) {
             Notification::make()->title('Selecione uma aprovação para confirmar.')->warning()->send();
             return;
@@ -145,11 +157,19 @@ class CentralAprovacoes extends Page
 
     public function aprovar(int $aprovacaoId): void
     {
+        if (! $this->ensureCanDo('aprovacoes.approve')) {
+            return;
+        }
+
         $this->abrirConfirmacaoAprovacao($aprovacaoId);
     }
 
     public function abrirReprovacao(int $aprovacaoId): void
     {
+        if (! $this->ensureCanDo('aprovacoes.approve')) {
+            return;
+        }
+
         if (! $this->usuarioPodeDecidirAprovacao($aprovacaoId)) {
             Notification::make()
                 ->title('Você não tem permissão para reprovar esta aprovação.')
@@ -173,6 +193,10 @@ class CentralAprovacoes extends Page
 
     public function reprovarComComentario(): void
     {
+        if (! $this->ensureCanDo('aprovacoes.approve')) {
+            return;
+        }
+
         $motivo = trim($this->motivoReprovacao);
 
         if (! $this->reprovacaoSelecionada) {

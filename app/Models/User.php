@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\PlanoService;
+use App\Services\PrazzuPermissionService;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -177,6 +178,21 @@ class User extends Authenticatable implements FilamentUser
     public function possuiFeaturePlano(string $feature): bool
     {
         return PlanoService::usuarioPossuiFeature($this, $feature);
+    }
+
+    public function advancedRoles()
+    {
+        return $this->belongsToMany(PrazzuRole::class, 'prazzu_user_roles', 'user_id', 'role_id')->withTimestamps();
+    }
+
+    public function advancedPermissionOverrides()
+    {
+        return $this->hasMany(PrazzuUserPermission::class, 'user_id');
+    }
+
+    public function hasAdvancedPermission(string $permission, string $scope = 'empresa'): bool
+    {
+        return app(PrazzuPermissionService::class)->can($this, $permission, $scope);
     }
 
     public function canAccessPanel(Panel $panel): bool

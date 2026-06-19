@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 
 use App\Support\CachedSchema;
 use App\Support\FinanceiroClienteData;
@@ -15,12 +17,24 @@ use UnitEnum;
 
 class ControleCobrancas extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string | UnitEnum | null $navigationGroup = 'Financeiro';
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Cobranças';
     protected static ?string $title = 'Cobranças';
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.controle-cobrancas';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('cobrancas.view');
+    }
 
     public ?int $empresaFiltro = null;
     public string $statusFiltro = 'todos';
@@ -59,6 +73,10 @@ class ControleCobrancas extends Page
 
     public function abrirNovaCobranca(): void
     {
+        if (! $this->ensureCanDo('cobrancas.create')) {
+            return;
+        }
+
         $this->resetValidation();
         $this->cobrancaSelecionada = null;
         $this->form = [
@@ -109,6 +127,10 @@ class ControleCobrancas extends Page
 
     public function salvarCobranca(): void
     {
+        if (! $this->ensureCanDo('cobrancas.create')) {
+            return;
+        }
+
         if (! FinanceiroClienteData::moduloInstalado()) {
             $this->notificarSql();
             return;
@@ -168,6 +190,10 @@ class ControleCobrancas extends Page
 
     public function registrarPagamento(int $id): void
     {
+        if (! $this->ensureCanDo('cobrancas.approve')) {
+            return;
+        }
+
         if (! FinanceiroClienteData::moduloInstalado()) {
             $this->notificarSql();
             return;
@@ -210,6 +236,10 @@ class ControleCobrancas extends Page
 
     public function cancelarCobranca(int $id): void
     {
+        if (! $this->ensureCanDo('cobrancas.cancel')) {
+            return;
+        }
+
         if (! CachedSchema::hasTable('financeiro_cobrancas')) {
             $this->notificarSql();
             return;
@@ -227,6 +257,10 @@ class ControleCobrancas extends Page
 
     public function abrirNovoCliente(): void
     {
+        if (! $this->ensureCanDo('clientes.create')) {
+            return;
+        }
+
         $this->resetValidation();
         $this->clienteForm = ['nome' => '', 'documento' => '', 'email' => '', 'telefone' => '', 'observacoes' => ''];
         $this->modalClienteAberto = true;
@@ -234,6 +268,10 @@ class ControleCobrancas extends Page
 
     public function salvarCliente(): void
     {
+        if (! $this->ensureCanDo('clientes.create')) {
+            return;
+        }
+
         if (! CachedSchema::hasTable('financeiro_clientes')) {
             $this->notificarSql();
             return;
@@ -282,6 +320,7 @@ class ControleCobrancas extends Page
         FinanceiroClienteData::marcarVencidas($this->empresaFiltro);
 
         return [
+            'permissions' => $this->permissionFlags('cobrancas'),
             'instalado' => FinanceiroClienteData::moduloInstalado(),
             'faltantes' => FinanceiroClienteData::tabelasFaltantes(),
             'empresas' => FinanceiroClienteData::empresasDisponiveis(),
@@ -298,10 +337,5 @@ class ControleCobrancas extends Page
             ->body('As tabelas novas ainda não existem no banco. Use o arquivo sql/financeiro_cliente.sql incluído no zip.')
             ->warning()
             ->send();
-    }
-
-    public static function canAccess(): bool
-    {
-        return auth()->check();
     }
 }

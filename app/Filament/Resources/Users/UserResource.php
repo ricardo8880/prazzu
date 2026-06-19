@@ -8,6 +8,7 @@ use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use UnitEnum;
 use Filament\Facades\Filament;
@@ -79,14 +80,15 @@ class UserResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        return $user?->isSuperAdmin() === true || $user?->isAdminEmpresa() === true;
+        return PrazzuAccessControl::can('governanca.view', $user)
+            && ($user?->isSuperAdmin() === true || $user?->isAdminEmpresa() === true);
     }
 
     public static function canCreate(): bool
     {
         $user = Filament::auth()->user();
 
-        if (! $user) {
+        if (! $user || ! PrazzuAccessControl::can('governanca.create', $user)) {
             return false;
         }
 
@@ -115,7 +117,7 @@ class UserResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        if (! $user) {
+        if (! $user || ! PrazzuAccessControl::can('governanca.edit', $user)) {
             return false;
         }
 
@@ -132,7 +134,7 @@ class UserResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        if (! $user) {
+        if (! $user || ! PrazzuAccessControl::can('governanca.delete', $user)) {
             return false;
         }
 

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 use App\Filament\Resources\Empresas\EmpresaResource;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
@@ -22,6 +24,7 @@ use UnitEnum;
 
 class Armazenamento extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-circle-stack';
     protected static string | UnitEnum | null $navigationGroup = 'Documentos';
     protected static ?string $navigationLabel = 'Armazenamento';
@@ -30,6 +33,17 @@ class Armazenamento extends Page
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.armazenamento';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('armazenamento.view');
+    }
 
     public string $aba = 'visao-geral';
     public string $busca = '';
@@ -76,6 +90,7 @@ class Armazenamento extends Page
         $arquivosExpirados = $this->arquivosExpirados($arquivos);
 
         return [
+            'permissions' => $this->permissionFlags('armazenamento'),
             'abas' => $this->abas(),
             'aba' => $this->aba,
             'resumo' => $resumo,
@@ -94,6 +109,10 @@ class Armazenamento extends Page
 
     public function salvarPoliticaRetencao(): void
     {
+        if (! $this->ensureCanDo('armazenamento.create')) {
+            return;
+        }
+
         $this->validate([
             'retentionForm.name' => ['required', 'string', 'max:120'],
             'retentionForm.scope_type' => ['required', 'in:global,empresa,origem'],
@@ -127,12 +146,20 @@ class Armazenamento extends Page
 
     public function alternarPoliticaRetencao(int $policyId): void
     {
+        if (! $this->ensureCanDo('armazenamento.edit')) {
+            return;
+        }
+
         app(StorageRetentionService::class)->togglePolicy($policyId);
         Notification::make()->title('Status da política atualizado')->success()->send();
     }
 
     public function processarRetencaoAgora(): void
     {
+        if (! $this->ensureCanDo('armazenamento.delete')) {
+            return;
+        }
+
         $result = app(StorageRetentionService::class)->process(auth()->user(), 100);
 
         Notification::make()

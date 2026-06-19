@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 
 use App\Support\CachedSchema;
 use App\Filament\Resources\ItemControles\ItemControleResource;
@@ -24,6 +26,7 @@ use UnitEnum;
 class Documentos extends Page
 {
     use WithFileUploads;
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document';
     protected static string | UnitEnum | null $navigationGroup = 'Documentos';
     protected static ?string $navigationLabel = 'Documentos';
@@ -31,6 +34,17 @@ class Documentos extends Page
     protected static ?int $navigationSort = 1;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected string $view = 'filament.pages.documentos';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('documentos.view');
+    }
 
     public string $clusterDocumentos = 'visao-geral';
     public ?int $documentoResolucaoSelecionado = null;
@@ -56,6 +70,10 @@ class Documentos extends Page
 
     public function abrirResolucaoDocumento(int $documentoId): void
     {
+        if (! $this->ensureCanDo('documentos.edit')) {
+            return;
+        }
+
         if (! $this->prepararResolucaoDocumento($documentoId)) {
             return;
         }
@@ -65,6 +83,10 @@ class Documentos extends Page
 
     public function prepararResolucaoDocumento(int $documentoId): bool
     {
+        if (! $this->ensureCanDo('documentos.edit')) {
+            return false;
+        }
+
         $documento = $this->documentoVisivel($documentoId);
 
         if (! $documento) {
@@ -95,6 +117,10 @@ class Documentos extends Page
 
     public function resolverDocumentoRapido(int $documentoId): void
     {
+        if (! $this->ensureCanDo('documentos.edit')) {
+            return;
+        }
+
         $documento = $this->documentoVisivel($documentoId);
 
         if (! $documento) {
@@ -241,6 +267,7 @@ class Documentos extends Page
         $documentos = $this->documentos();
 
         return [
+            'permissions' => $this->permissionFlags('documentos'),
             'resumo' => $this->resumo(),
             'documentos' => $documentos,
             'documentosPorCluster' => $this->documentosPorCluster($documentos),

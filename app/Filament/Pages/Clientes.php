@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 
 use App\Support\CachedSchema;
 use App\Support\ClientesCrmData;
@@ -13,6 +15,7 @@ use Illuminate\Support\Str;
 
 class Clientes extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
     protected static ?string $navigationLabel = 'Clientes';
@@ -22,6 +25,17 @@ class Clientes extends Page
     protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.clientes';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('clientes.view');
+    }
 
     public string $search = '';
     public string $statusFilter = 'todos';
@@ -153,6 +167,7 @@ class Clientes extends Page
     protected function getViewData(): array
     {
         return [
+            'permissions' => $this->permissionFlags('clientes'),
             'crm' => $this->crm,
             'cards' => $this->cards,
             'clientes' => $this->clientes,
@@ -228,6 +243,10 @@ class Clientes extends Page
 
     public function abrirImportacaoClientes(): void
     {
+        if (! $this->ensureCanDo('clientes.create')) {
+            return;
+        }
+
         $this->notify('danger', 'Importação de clientes ainda não configurada neste painel. Use Novo cliente para cadastrar manualmente.');
     }
 
@@ -263,6 +282,10 @@ class Clientes extends Page
 
     public function editarCliente(int $clienteId): void
     {
+        if (! $this->ensureCanDo('clientes.edit')) {
+            return;
+        }
+
         if (! $this->selectClient($clienteId, true)) {
             return;
         }
@@ -299,6 +322,10 @@ class Clientes extends Page
 
     public function mudarStatusContrato(int $clienteId, string $status): void
     {
+        if (! $this->ensureCanDo('clientes.edit')) {
+            return;
+        }
+
         if (! $this->selectClient($clienteId, true)) {
             return;
         }
@@ -311,6 +338,10 @@ class Clientes extends Page
 
     public function salvarClienteCrm(): void
     {
+        if (! $this->ensureCanDo('clientes.edit')) {
+            return;
+        }
+
         if (! $this->selectedClient || ! $this->findClientById((int) ($this->selectedClient['id'] ?? 0))) {
             $this->notify('danger', 'Selecione um cliente válido antes de salvar.');
             return;
@@ -354,6 +385,10 @@ class Clientes extends Page
 
     public function criarOnboarding(int $clienteId): void
     {
+        if (! $this->ensureCanDo('tarefas.create')) {
+            return;
+        }
+
         if (! $this->selectClient($clienteId, true)) {
             return;
         }
@@ -395,6 +430,10 @@ class Clientes extends Page
 
     public function registrarReuniao(): void
     {
+        if (! $this->ensureCanDo('clientes.edit')) {
+            return;
+        }
+
         $crmId = (int) ($this->meetingEmpresaId ?: $this->selectedEmpresaId ?: 0);
         $client = $this->findClientById($crmId);
 
@@ -428,6 +467,10 @@ class Clientes extends Page
 
     public function registrarEmailHistorico(): void
     {
+        if (! $this->ensureCanDo('clientes.edit')) {
+            return;
+        }
+
         $crmId = (int) ($this->emailEmpresaId ?: $this->selectedEmpresaId ?: 0);
         $client = $this->findClientById($crmId);
 
@@ -448,6 +491,10 @@ class Clientes extends Page
 
     public function abrirContatoRapido(int $clienteId): void
     {
+        if (! $this->ensureCanDo('atendimentos.create')) {
+            return;
+        }
+
         if (! $this->selectClient($clienteId, true)) {
             return;
         }
@@ -472,6 +519,10 @@ class Clientes extends Page
 
     public function registrarContatoRapido(): void
     {
+        if (! $this->ensureCanDo('atendimentos.create')) {
+            return;
+        }
+
         $client = $this->findClientById((int) ($this->quickClienteId ?? 0));
 
         if (! $client) {
@@ -510,6 +561,10 @@ class Clientes extends Page
 
     public function concluirProximaPendencia(int $clienteId): void
     {
+        if (! $this->ensureCanDo('tarefas.edit')) {
+            return;
+        }
+
         if (! $this->selectClient($clienteId, true)) {
             return;
         }

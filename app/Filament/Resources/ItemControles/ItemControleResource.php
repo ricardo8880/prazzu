@@ -160,14 +160,14 @@ class ItemControleResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return PrazzuAccessControl::canUseWorkArea();
+        return PrazzuAccessControl::canUseWorkArea() && PrazzuAccessControl::can('tarefas.view');
     }
 
     public static function canCreate(): bool
     {
         $user = Filament::auth()->user();
 
-        if (! $user) {
+        if (! $user || ! PrazzuAccessControl::can('tarefas.create', $user)) {
             return false;
         }
 
@@ -192,7 +192,7 @@ class ItemControleResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        if (! $user) {
+        if (! $user || ! PrazzuAccessControl::can('tarefas.edit', $user)) {
             return false;
         }
 
@@ -215,7 +215,7 @@ class ItemControleResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        if (! $user) {
+        if (! $user || ! PrazzuAccessControl::can('tarefas.delete', $user)) {
             return false;
         }
 

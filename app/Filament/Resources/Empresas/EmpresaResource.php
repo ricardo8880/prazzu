@@ -8,6 +8,7 @@ use App\Filament\Resources\Empresas\Pages\ListEmpresas;
 use App\Filament\Resources\Empresas\Schemas\EmpresaForm;
 use App\Filament\Resources\Empresas\Tables\EmpresasTable;
 use App\Models\Empresa;
+use App\Support\PrazzuAccessControl;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -88,19 +89,20 @@ class EmpresaResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        return $user?->isSuperAdmin() === true || $user?->isAdminEmpresa() === true;
+        return PrazzuAccessControl::can('clientes.view', $user)
+            && ($user?->isSuperAdmin() === true || $user?->isAdminEmpresa() === true);
     }
 
     public static function canCreate(): bool
     {
-        return Filament::auth()->user()?->isSuperAdmin() === true;
+        return PrazzuAccessControl::can('clientes.create') && Filament::auth()->user()?->isSuperAdmin() === true;
     }
 
     public static function canEdit($record): bool
     {
         $user = Filament::auth()->user();
 
-        if (! $user || ! $record) {
+        if (! $user || ! $record || ! PrazzuAccessControl::can('clientes.edit', $user)) {
             return false;
         }
 
@@ -113,12 +115,12 @@ class EmpresaResource extends Resource
 
     public static function canDelete($record): bool
     {
-        return Filament::auth()->user()?->isSuperAdmin() === true;
+        return PrazzuAccessControl::can('clientes.delete') && Filament::auth()->user()?->isSuperAdmin() === true;
     }
 
     public static function canDeleteAny(): bool
     {
-        return Filament::auth()->user()?->isSuperAdmin() === true;
+        return PrazzuAccessControl::can('clientes.delete') && Filament::auth()->user()?->isSuperAdmin() === true;
     }
 
     public static function getPages(): array

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 
 use App\Support\CachedSchema;
 use App\Models\Empresa;
@@ -16,12 +18,24 @@ use UnitEnum;
 
 class Usuarios extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-users';
     protected static string | UnitEnum | null $navigationGroup = 'Configurações';
     protected static ?string $navigationLabel = 'Usuários';
     protected static ?string $title = 'Usuários';
     protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.usuarios-management';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('governanca.view');
+    }
 
     public string $search = '';
     public string $roleFilter = 'todos';
@@ -30,6 +44,10 @@ class Usuarios extends Page
 
     public function updateUserRole(int $userId, string $role): void
     {
+        if (! $this->ensureCanDo('governanca.edit')) {
+            return;
+        }
+
         if (! in_array($role, array_keys($this->roleOptions()), true)) {
             return;
         }
@@ -54,6 +72,10 @@ class Usuarios extends Page
 
     public function updateUserPerfilContabil(int $userId, ?string $perfilContabil): void
     {
+        if (! $this->ensureCanDo('governanca.edit')) {
+            return;
+        }
+
         $perfilContabil = blank($perfilContabil) ? null : $perfilContabil;
 
         if ($perfilContabil !== null && ! in_array($perfilContabil, array_keys($this->perfilContabilOptions()), true)) {
@@ -81,6 +103,10 @@ class Usuarios extends Page
 
     public function removeUserAccess(int $userId): void
     {
+        if (! $this->ensureCanDo('governanca.delete')) {
+            return;
+        }
+
         $user = User::query()->find($userId);
 
         if (! $user) {
@@ -157,6 +183,7 @@ class Usuarios extends Page
         $lastAccessColumn = $this->lastAccessColumn();
 
         return [
+            'permissions' => $this->permissionFlags('governanca'),
             'users' => $users,
             'roleOptions' => $this->roleOptions(),
             'perfilContabilOptions' => $this->perfilContabilOptions(),
@@ -222,10 +249,5 @@ class Usuarios extends Page
         }
 
         return Carbon::parse($value)->format('d/m/Y H:i');
-    }
-
-    public static function canAccess(): bool
-    {
-        return auth()->check();
     }
 }

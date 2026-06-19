@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 
 use App\Support\CachedSchema;
 use App\Support\FinanceiroClienteData;
@@ -16,12 +18,24 @@ use UnitEnum;
 
 class Financeiro extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
     protected static string | UnitEnum | null $navigationGroup = 'Financeiro';
     protected static ?string $navigationLabel = 'Financeiro';
     protected static ?string $title = 'Financeiro';
     protected static ?int $navigationSort = 3;
     protected string $view = 'filament.pages.financeiro';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('financeiro.view');
+    }
 
     public ?int $empresaFiltro = null;
     public bool $modalGatewayAberto = false;
@@ -41,6 +55,10 @@ class Financeiro extends Page
 
     public function abrirGateway(): void
     {
+        if (! $this->ensureCanDo('financeiro.edit')) {
+            return;
+        }
+
         $this->resetValidation();
         $this->gatewayForm = [
             'gateway' => 'asaas',
@@ -54,6 +72,10 @@ class Financeiro extends Page
 
     public function salvarGateway(): void
     {
+        if (! $this->ensureCanDo('financeiro.edit')) {
+            return;
+        }
+
         if (! CachedSchema::hasTable('financeiro_gateway_integracoes')) {
             $this->notificarSql();
             return;
@@ -107,6 +129,10 @@ class Financeiro extends Page
 
     public function desativarGateway(int $id): void
     {
+        if (! $this->ensureCanDo('financeiro.delete')) {
+            return;
+        }
+
         if (! CachedSchema::hasTable('financeiro_gateway_integracoes')) {
             $this->notificarSql();
             return;
@@ -125,6 +151,7 @@ class Financeiro extends Page
     protected function getViewData(): array
     {
         return [
+            'permissions' => $this->permissionFlags('financeiro'),
             'instalado' => FinanceiroClienteData::moduloInstalado(),
             'faltantes' => FinanceiroClienteData::tabelasFaltantes(),
             'empresas' => FinanceiroClienteData::empresasDisponiveis(),
@@ -139,10 +166,5 @@ class Financeiro extends Page
             ->body('As tabelas novas ainda não existem no banco. Use o arquivo sql/financeiro_cliente.sql incluído no zip.')
             ->warning()
             ->send();
-    }
-
-    public static function canAccess(): bool
-    {
-        return auth()->check();
     }
 }

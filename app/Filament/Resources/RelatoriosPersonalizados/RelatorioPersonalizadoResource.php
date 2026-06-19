@@ -8,6 +8,7 @@ use App\Filament\Resources\RelatoriosPersonalizados\Pages\ListRelatoriosPersonal
 use App\Filament\Resources\RelatoriosPersonalizados\Pages\VisualizarRelatoriosPersonalizados;
 use App\Models\Empresa;
 use App\Models\RelatorioPersonalizado;
+use App\Support\PrazzuAccessControl;
 use App\Services\PlanoService;
 use App\Services\RelatorioPersonalizadoService;
 use Filament\Actions\Action;
@@ -318,26 +319,28 @@ class RelatorioPersonalizadoResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return PlanoService::usuarioPossuiFeature(
-            Filament::auth()->user(),
-            PlanoService::FEATURE_RELATORIOS_PERSONALIZADOS
-        );
+        return PrazzuAccessControl::can('relatorios.view')
+            && PlanoService::usuarioPossuiFeature(
+                Filament::auth()->user(),
+                PlanoService::FEATURE_RELATORIOS_PERSONALIZADOS
+            );
     }
 
     public static function canCreate(): bool
     {
-        return Filament::auth()->user()?->isAdmin() === true
-            || Filament::auth()->user()?->isGestor() === true;
+        return PrazzuAccessControl::can('relatorios.create')
+            && (Filament::auth()->user()?->isAdmin() === true
+                || Filament::auth()->user()?->isGestor() === true);
     }
 
     public static function canEdit(Model $record): bool
     {
-        return static::canCreate();
+        return PrazzuAccessControl::can('relatorios.edit') && static::canCreate();
     }
 
     public static function canDelete(Model $record): bool
     {
-        return static::canCreate();
+        return PrazzuAccessControl::can('relatorios.delete') && static::canCreate();
     }
 
     public static function getPages(): array

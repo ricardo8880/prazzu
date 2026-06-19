@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\User;
+use App\Services\PrazzuPermissionService;
 use App\Services\PlanoService;
 use Filament\Facades\Filament;
 
@@ -13,6 +14,21 @@ class PrazzuAccessControl
         $user = Filament::auth()->user() ?: auth()->user();
 
         return $user instanceof User ? $user : null;
+    }
+
+
+    public static function can(string $permission, ?User $user = null, string $scope = 'empresa'): bool
+    {
+        $user ??= self::user();
+
+        return app(PrazzuPermissionService::class)->can($user, $permission, $scope);
+    }
+
+    public static function canAny(array $permissions, ?User $user = null, string $scope = 'empresa'): bool
+    {
+        $user ??= self::user();
+
+        return app(PrazzuPermissionService::class)->canAny($user, $permissions, $scope);
     }
 
     public static function canUseWorkArea(?User $user = null): bool

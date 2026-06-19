@@ -48,6 +48,7 @@ class ProductProfileNavigation
                     'Timeline Operacional',
                     'Central de Aprovações',
                     'Auditoria',
+                    'Perfis e Permissões',
                 ],
                 'hidden_labels' => [
                     'Assinaturas',

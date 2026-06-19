@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\UsesAdvancedPermissions;
+
 use App\Exports\PrazzuRelatorioOperacionalExport;
 use App\Support\PrazzuRelatoriosData;
 use App\Support\WhiteLabelSettings;
@@ -16,6 +18,7 @@ use UnitEnum;
 
 class Relatorios extends Page
 {
+    use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
     protected static ?string $navigationLabel = 'Relatórios';
@@ -23,6 +26,17 @@ class Relatorios extends Page
     protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.relatorios';
+
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::canAdvancedPermission('relatorios.view');
+    }
 
     public string $tipoRelatorio = 'documentos_vencidos';
 
@@ -43,6 +57,10 @@ class Relatorios extends Page
 
     public function exportarCsv(): StreamedResponse
     {
+        if (! $this->ensureCanDo('relatorios.export')) {
+            abort(403);
+        }
+
         $rows = PrazzuRelatoriosData::exportRows($this->tipoRelatorio);
         $filename = $this->nomeArquivo('csv');
         $headings = PrazzuRelatoriosData::headings();
@@ -63,6 +81,10 @@ class Relatorios extends Page
 
     public function exportarExcel()
     {
+        if (! $this->ensureCanDo('relatorios.export')) {
+            return;
+        }
+
         $rows = PrazzuRelatoriosData::exportRows($this->tipoRelatorio);
 
         return Excel::download(
@@ -73,6 +95,10 @@ class Relatorios extends Page
 
     public function exportarPdf()
     {
+        if (! $this->ensureCanDo('relatorios.export')) {
+            return;
+        }
+
         $data = PrazzuRelatoriosData::dashboard($this->tipoRelatorio);
 
         return Pdf::loadView('exports.prazzu-relatorio-operacional-pdf', [
@@ -93,10 +119,5 @@ class Relatorios extends Page
         $nome = PrazzuRelatoriosData::TIPOS[$this->tipoRelatorio] ?? 'relatorio-operacional';
 
         return Str::slug($nome).'-'.now()->format('Y-m-d-His').'.'.$extensao;
-    }
-
-    public static function canAccess(): bool
-    {
-        return auth()->check();
     }
 }
