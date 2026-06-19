@@ -2,13 +2,17 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\Empresas\EmpresaResource;
+use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Support\CachedSchema;
 use BackedEnum;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
+use Filament\Support\Enums\Width;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -464,6 +468,208 @@ class Armazenamento extends Page
         }
 
         return $insights;
+    }
+
+
+    public function verClienteAction(): Action
+    {
+        return Action::make('verCliente')
+            ->label('Ver cliente')
+            ->modalHeading(fn (Action $action): string => $this->clienteStorageDetail($action->getArguments())['empresa']['nome'] ?? 'Resumo do cliente')
+            ->modalDescription('Resumo operacional ligado ao consumo de armazenamento, sem tirar você da tela atual.')
+            ->modalWidth(Width::SevenExtraLarge)
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Fechar')
+            ->modalContent(fn (Action $action) => view('filament.pages.partials.armazenamento-cliente-modal', [
+                'detail' => $this->clienteStorageDetail($action->getArguments()),
+            ]));
+    }
+
+    private function clienteStorageDetail(array $arguments = []): array
+    {
+        $empresaId = (int) ($arguments['empresaId'] ?? 0);
+        $arquivos = collect($this->arquivos())->filter(fn (array $arquivo): bool => (int) ($arquivo['empresa_id'] ?? 0) === $empresaId);
+        $porEmpresa = collect($this->porEmpresa($arquivos->all()))->first() ?? [];
+        $empresa = $this->empresaResumo($empresaId, $porEmpresa);
+        $totalBytes = (int) $arquivos->sum('tamanho_bytes');
+        $limiteBytes = (int) ($porEmpresa['limite_bytes'] ?? $this->limiteEmpresaBytes($empresaId, (string) ($empresa['plano'] ?? '')));
+        $percentual = $limiteBytes > 0 ? min(999, (int) round(($totalBytes / $limiteBytes) * 100)) : 0;
+        $expirados = $arquivos->where('expirado', true);
+        $pesados = $arquivos->sortByDesc('tamanho_bytes')->take(5)->values();
+        $tarefas = $this->metricasTarefasEmpresa($empresaId);
+        $atendimentos = $this->metricasAtendimentosEmpresa($empresaId);
+        $financeiro = $this->metricasFinanceiroEmpresa($empresaId);
+
+        return [
+            'empresa' => $empresa,
+            'armazenamento' => [
+                'total_formatado' => $this->formatBytes($totalBytes),
+                'limite_formatado' => $this->formatBytes($limiteBytes),
+                'percentual' => $percentual,
+                'tom' => $percentual >= 95 ? 'danger' : ($percentual >= 80 ? 'warning' : 'success'),
+                'arquivos' => $arquivos->count(),
+                'expirados' => $expirados->count(),
+                'recuperavel_formatado' => $this->formatBytes((int) $expirados->sum('tamanho_bytes')),
+                'maior_arquivo' => $pesados->first(),
+                'pesados' => $pesados->all(),
+            ],
+            'tarefas' => $tarefas,
+            'atendimentos' => $atendimentos,
+            'portal' => $this->metricasPortalEmpresa($empresaId),
+            'financeiro' => $financeiro,
+            'contratos' => $this->metricasContratosEmpresa($empresaId),
+            'validade' => $this->metricasValidadeEmpresa($empresaId),
+            'governanca' => $this->metricasGovernancaEmpresa($empresaId),
+            'acoes' => $this->acoesClienteModal($empresaId),
+            'recomendacoes' => $this->recomendacoesClienteModal($percentual, $expirados->count(), (int) ($tarefas['atrasadas'] ?? 0), (int) ($atendimentos['criticos'] ?? 0), (float) ($financeiro['vencido_valor'] ?? 0)),
+        ];
+    }
+
+    private function empresaResumo(int $empresaId, array $porEmpresa): array
+    {
+        $empresa = [];
+        if ($empresaId > 0 && CachedSchema::hasTable('empresas')) {
+            $select = ['id'];
+            foreach (['razao_social', 'nome_fantasia', 'cnpj', 'email', 'telefone', 'responsavel_nome', 'status', 'plano', 'created_at', 'portal_ativo'] as $column) {
+                if (CachedSchema::hasColumn('empresas', $column)) { $select[] = $column; }
+            }
+            $empresa = (array) DB::table('empresas')->select($select)->where('id', $empresaId)->first();
+        }
+        $nome = $empresa['nome_fantasia'] ?? $empresa['razao_social'] ?? $porEmpresa['empresa_nome'] ?? 'Cliente não identificado';
+        return [
+            'id' => $empresaId,
+            'nome' => $nome,
+            'razao_social' => $empresa['razao_social'] ?? $nome,
+            'cnpj' => $empresa['cnpj'] ?? null,
+            'email' => $empresa['email'] ?? null,
+            'telefone' => $empresa['telefone'] ?? null,
+            'responsavel' => $empresa['responsavel_nome'] ?? null,
+            'status' => $empresa['status'] ?? 'não informado',
+            'plano' => $empresa['plano'] ?? ($porEmpresa['plano'] ?? 'sem plano'),
+            'portal_ativo' => (bool) ($empresa['portal_ativo'] ?? false),
+            'desde' => $this->formatDate($empresa['created_at'] ?? null),
+        ];
+    }
+
+    private function metricasTarefasEmpresa(int $empresaId): array
+    {
+        if ($empresaId <= 0 || ! CachedSchema::hasTable('item_controles')) { return $this->emptyMetrics(); }
+        $query = DB::table('item_controles')->where('empresa_id', $empresaId);
+        $abertas = (clone $query)->whereNotIn('status', $this->statusFinalizados())->count();
+        $atrasadas = CachedSchema::hasColumn('item_controles', 'data_vencimento') ? (clone $query)->whereNotIn('status', $this->statusFinalizados())->whereDate('data_vencimento', '<', now()->toDateString())->count() : 0;
+        $criticas = CachedSchema::hasColumn('item_controles', 'prioridade') ? (clone $query)->whereNotIn('status', $this->statusFinalizados())->whereIn('prioridade', ['alta', 'urgente', 'critica', 'crítica'])->count() : 0;
+        $concluidasMes = CachedSchema::hasColumn('item_controles', 'data_conclusao') ? (clone $query)->whereIn('status', $this->statusFinalizados())->whereDate('data_conclusao', '>=', now()->startOfMonth()->toDateString())->count() : (clone $query)->whereIn('status', $this->statusFinalizados())->whereDate('updated_at', '>=', now()->startOfMonth()->toDateString())->count();
+        $slaVencido = CachedSchema::hasColumn('item_controles', 'sla_limite_em') ? (clone $query)->whereNotIn('status', $this->statusFinalizados())->whereNotNull('sla_limite_em')->where('sla_limite_em', '<', now())->count() : 0;
+        return compact('abertas', 'atrasadas', 'criticas', 'concluidasMes', 'slaVencido');
+    }
+
+    private function metricasAtendimentosEmpresa(int $empresaId): array
+    {
+        if ($empresaId <= 0 || ! CachedSchema::hasTable('atendimentos')) { return $this->emptyMetrics(); }
+        $query = DB::table('atendimentos')->where('empresa_id', $empresaId);
+        $abertos = (clone $query)->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])->count();
+        $aguardandoCliente = (clone $query)->where('status', 'aguardando_cliente')->count();
+        $criticos = (clone $query)->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])->whereIn('prioridade', ['alta', 'urgente'])->count();
+        $slaVencido = CachedSchema::hasColumn('atendimentos', 'sla_limite_em') ? (clone $query)->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])->whereNotNull('sla_limite_em')->where('sla_limite_em', '<', now())->count() : 0;
+        return ['abertos' => $abertos, 'aguardando_cliente' => $aguardandoCliente, 'criticos' => $criticos, 'sla_vencido' => $slaVencido, 'ultimo_contato' => $this->formatDateTime((clone $query)->max('updated_at'))];
+    }
+
+    private function metricasPortalEmpresa(int $empresaId): array
+    {
+        $data = ['solicitacoes_abertas' => 0, 'mensagens_abertas' => 0, 'documentos' => 0, 'ultima_mensagem' => 'Não informado'];
+        if ($empresaId > 0 && CachedSchema::hasTable('portal_solicitacoes')) { $data['solicitacoes_abertas'] = DB::table('portal_solicitacoes')->where('empresa_id', $empresaId)->whereNotIn('status', ['concluido', 'concluida', 'finalizado', 'finalizada', 'cancelado', 'cancelada'])->count(); }
+        if ($empresaId > 0 && CachedSchema::hasTable('portal_mensagens')) { $query = DB::table('portal_mensagens')->where('empresa_id', $empresaId); $data['mensagens_abertas'] = (clone $query)->where('conversa_status', 'aberta')->count(); $data['ultima_mensagem'] = $this->formatDateTime((clone $query)->max('created_at')); }
+        if ($empresaId > 0 && CachedSchema::hasTable('portal_documentos')) { $data['documentos'] = DB::table('portal_documentos')->where('empresa_id', $empresaId)->count(); }
+        return $data;
+    }
+
+    private function metricasFinanceiroEmpresa(int $empresaId): array
+    {
+        if ($empresaId <= 0 || ! CachedSchema::hasTable('financeiro_cobrancas')) { return ['abertas' => 0, 'vencidas' => 0, 'vencido_valor' => 0, 'vencido_formatado' => 'R$ 0,00', 'proximo_vencimento' => 'Sem vencimento']; }
+        $query = DB::table('financeiro_cobrancas')->where('empresa_id', $empresaId);
+        $abertas = (clone $query)->whereNotIn('status', ['paga', 'pago', 'cancelada', 'cancelado'])->count();
+        $vencidasQuery = (clone $query)->whereNotIn('status', ['paga', 'pago', 'cancelada', 'cancelado'])->whereDate('vencimento', '<', now()->toDateString());
+        $vencidas = (clone $vencidasQuery)->count();
+        $vencidoValor = (float) (clone $vencidasQuery)->sum('valor');
+        $proximoVencimento = (clone $query)->whereNotIn('status', ['paga', 'pago', 'cancelada', 'cancelado'])->whereDate('vencimento', '>=', now()->toDateString())->min('vencimento');
+        return ['abertas' => $abertas, 'vencidas' => $vencidas, 'vencido_valor' => $vencidoValor, 'vencido_formatado' => $this->formatCurrency($vencidoValor), 'proximo_vencimento' => $this->formatDate($proximoVencimento)];
+    }
+
+    private function metricasContratosEmpresa(int $empresaId): array
+    {
+        if ($empresaId <= 0 || ! CachedSchema::hasTable('item_controles')) { return $this->emptyMetrics(); }
+        $query = DB::table('item_controles')->where('empresa_id', $empresaId);
+        $contratos = CachedSchema::hasColumn('item_controles', 'contrato_numero') ? (clone $query)->whereNotNull('contrato_numero')->where('contrato_numero', '<>', '')->count() : 0;
+        $ativos = CachedSchema::hasColumn('item_controles', 'contrato_status') ? (clone $query)->whereNotNull('contrato_numero')->whereIn('contrato_status', ['ativo', 'vigente', 'assinado'])->count() : 0;
+        $vencendo = CachedSchema::hasColumn('item_controles', 'contrato_fim_em') ? (clone $query)->whereNotNull('contrato_numero')->whereBetween('contrato_fim_em', [now()->toDateString(), now()->addDays(30)->toDateString()])->count() : 0;
+        return compact('contratos', 'ativos', 'vencendo');
+    }
+
+    private function metricasValidadeEmpresa(int $empresaId): array
+    {
+        if ($empresaId <= 0 || ! CachedSchema::hasTable('item_controles') || ! CachedSchema::hasColumn('item_controles', 'data_vencimento')) { return $this->emptyMetrics(); }
+        $query = DB::table('item_controles')->where('empresa_id', $empresaId)->whereNotIn('status', $this->statusFinalizados());
+        return ['vencidos' => (clone $query)->whereDate('data_vencimento', '<', now()->toDateString())->count(), 'proximos_7' => (clone $query)->whereBetween('data_vencimento', [now()->toDateString(), now()->addDays(7)->toDateString()])->count(), 'proximos_30' => (clone $query)->whereBetween('data_vencimento', [now()->toDateString(), now()->addDays(30)->toDateString()])->count()];
+    }
+
+    private function metricasGovernancaEmpresa(int $empresaId): array
+    {
+        $data = ['aprovacoes_pendentes' => 0, 'assinaturas_pendentes' => 0, 'checklists_pendentes' => 0];
+        if ($empresaId > 0 && CachedSchema::hasTable('item_controle_aprovacoes')) { $data['aprovacoes_pendentes'] = DB::table('item_controle_aprovacoes')->where('empresa_id', $empresaId)->where('status', 'pendente')->count(); }
+        if ($empresaId > 0 && CachedSchema::hasTable('item_controle_assinaturas')) { $data['assinaturas_pendentes'] = DB::table('item_controle_assinaturas')->where('empresa_id', $empresaId)->whereNull('assinado_em')->count(); }
+        if ($empresaId > 0 && CachedSchema::hasTable('item_controle_checklists') && CachedSchema::hasTable('item_controles')) { $data['checklists_pendentes'] = DB::table('item_controle_checklists')->join('item_controles', 'item_controles.id', '=', 'item_controle_checklists.item_controle_id')->where('item_controles.empresa_id', $empresaId)->where('item_controle_checklists.concluido', false)->count(); }
+        return $data;
+    }
+
+    private function acoesClienteModal(int $empresaId): array
+    {
+        if ($empresaId <= 0) { return []; }
+        return [
+            ['label' => 'Abrir ficha do cliente', 'url' => EmpresaResource::getUrl('edit', ['record' => $empresaId]), 'style' => 'primary'],
+            ['label' => 'Ver tarefas', 'url' => ItemControleResource::getUrl('index') . '?tableFilters[empresa_id][value]=' . $empresaId, 'style' => 'secondary'],
+            ['label' => 'Ver documentos', 'url' => ItemControleResource::getUrl('anexos') . '?tableFilters[empresa_id][value]=' . $empresaId, 'style' => 'secondary'],
+            ['label' => 'Ver aprovações', 'url' => ItemControleResource::getUrl('aprovacoes') . '?tableFilters[empresa_id][value]=' . $empresaId, 'style' => 'secondary'],
+        ];
+    }
+
+    private function recomendacoesClienteModal(int $percentual, int $expirados, int $tarefasAtrasadas, int $atendimentosCriticos, float $valorVencido): array
+    {
+        $recomendacoes = [];
+        if ($percentual >= 90) { $recomendacoes[] = ['tom' => 'danger', 'texto' => 'Cliente acima de 90% do limite: revisar limite contratado ou iniciar limpeza de arquivos grandes.']; }
+        elseif ($percentual >= 80) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Cliente próximo do limite: acompanhar crescimento antes de novos envios em massa.']; }
+        if ($expirados > 0) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Há arquivos expirados/antigos: validar retenção antes de excluir e priorizar os maiores.']; }
+        if ($tarefasAtrasadas > 0) { $recomendacoes[] = ['tom' => 'danger', 'texto' => 'Existem tarefas atrasadas: o consumo pode estar ligado a pendências documentais.']; }
+        if ($atendimentosCriticos > 0) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Atendimentos críticos abertos: conferir se há solicitação de documentos pendente.']; }
+        if ($valorVencido > 0) { $recomendacoes[] = ['tom' => 'danger', 'texto' => 'Cliente com cobrança vencida: avaliar regra comercial antes de ampliar limite de armazenamento.']; }
+        if ($recomendacoes === []) { $recomendacoes[] = ['tom' => 'success', 'texto' => 'Cliente sem alerta crítico combinado. Manter monitoramento padrão.']; }
+        return $recomendacoes;
+    }
+
+    private function emptyMetrics(): array
+    {
+        return ['abertas' => 0, 'atrasadas' => 0, 'criticas' => 0];
+    }
+
+    private function statusFinalizados(): array
+    {
+        return ['concluido', 'concluído', 'finalizado', 'aprovado', 'cancelado', 'cancelada', 'fechado', 'resolvido'];
+    }
+
+    private function formatDate(mixed $date): string
+    {
+        if (! filled($date)) { return 'Não informado'; }
+        try { return Carbon::parse($date)->format('d/m/Y'); } catch (\Throwable) { return 'Não informado'; }
+    }
+
+    private function formatDateTime(mixed $date): string
+    {
+        if (! filled($date)) { return 'Não informado'; }
+        try { return Carbon::parse($date)->format('d/m/Y H:i'); } catch (\Throwable) { return 'Não informado'; }
+    }
+
+    private function formatCurrency(float $value): string
+    {
+        return 'R$ ' . number_format($value, 2, ',', '.');
     }
 
     /** @return array<int, string> */

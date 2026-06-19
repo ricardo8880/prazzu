@@ -72,8 +72,10 @@
         .storage-pill.warning { background: rgba(245, 158, 11, .14); color: rgb(180, 83, 9); }
         .storage-pill.danger { background: rgba(239, 68, 68, .13); color: rgb(185, 28, 28); }
         .storage-pill.primary { background: rgba(124, 58, 237, .12); color: rgb(109, 40, 217); }
-        .storage-action-link { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: .42rem .75rem; font-size: .75rem; font-weight: 850; text-decoration: none; background: rgba(124, 58, 237, .10); color: rgb(109, 40, 217); border: 1px solid rgba(124, 58, 237, .18); white-space: nowrap; }
+        .storage-action-link { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: .42rem .75rem; font-size: .75rem; font-weight: 850; text-decoration: none; background: rgba(124, 58, 237, .10); color: rgb(109, 40, 217); border: 1px solid rgba(124, 58, 237, .18); white-space: nowrap; cursor: pointer; }
         .storage-action-link:hover { background: rgba(124, 58, 237, .16); }
+        button.storage-action-link { font-family: inherit; }
+        button.storage-action-link:disabled { opacity: .65; cursor: wait; }
         .storage-action-stack { display: grid; gap: .55rem; justify-items: end; }
         .storage-checklist { display: grid; gap: .5rem; padding: 1rem 1.1rem; border-top: 1px solid rgba(148, 163, 184, .14); background: rgba(248, 250, 252, .62); }
         .dark .storage-checklist { background: rgba(30, 41, 59, .38); }
@@ -160,7 +162,11 @@
                                 </div>
                                 <div class="storage-action-stack">
                                     <div class="storage-size"><?php echo e($empresa['total_formatado']); ?></div>
-                                    <a class="storage-action-link" href="<?php echo e(\App\Filament\Pages\Armazenamento::getUrl(['aba' => 'por-empresa'])); ?>#empresa-<?php echo e($empresa['empresa_id'] ?? 'sem-empresa'); ?>">Ver cliente</a>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($empresa['empresa_id'])): ?>
+                                        <button type="button" class="storage-action-link" wire:click='mountAction("verCliente", <?php echo json_encode(["empresaId" => (int) $empresa["empresa_id"]], 15, 512) ?>)' wire:loading.attr="disabled" wire:target='mountAction("verCliente", <?php echo json_encode(["empresaId" => (int) $empresa["empresa_id"]], 15, 512) ?>)'>Ver cliente</button>
+                                    <?php else: ?>
+                                        <span class="storage-pill warning">Sem vínculo</span>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </article>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
@@ -180,7 +186,11 @@
                                 </div>
                                 <div class="storage-action-stack">
                                     <div class="storage-size"><?php echo e($empresa['total_formatado']); ?></div>
-                                    <a class="storage-action-link" href="<?php echo e(\App\Filament\Pages\Armazenamento::getUrl(['aba' => 'por-empresa'])); ?>#empresa-<?php echo e($empresa['empresa_id'] ?? 'sem-empresa'); ?>">Ver cliente</a>
+                                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($empresa['empresa_id'])): ?>
+                                        <button type="button" class="storage-action-link" wire:click='mountAction("verCliente", <?php echo json_encode(["empresaId" => (int) $empresa["empresa_id"]], 15, 512) ?>)' wire:loading.attr="disabled" wire:target='mountAction("verCliente", <?php echo json_encode(["empresaId" => (int) $empresa["empresa_id"]], 15, 512) ?>)'>Ver cliente</button>
+                                    <?php else: ?>
+                                        <span class="storage-pill warning">Sem vínculo</span>
+                                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                                 </div>
                             </article>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
