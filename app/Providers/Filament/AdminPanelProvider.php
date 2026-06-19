@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Home;
 use App\Http\Middleware\CheckEmpresaPagamento;
+use App\Http\Middleware\EnsureAccountingProfileCanAccessFilament;
 use App\Support\WhiteLabelSettings;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -68,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ),
             Css::make(
                 'workmode-ux',
-                asset('css/workmode-ux.css') . '?v=20260601-product-profiles-lote3'
+                asset('css/workmode-ux.css') . '?v=20260619-accounting-profiles-lote3'
             ),
         ]);
 
@@ -174,6 +175,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 CheckEmpresaPagamento::class,
+                EnsureAccountingProfileCanAccessFilament::class,
             ]);
     }
 }

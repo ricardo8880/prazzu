@@ -25,6 +25,7 @@ class Usuarios extends Page
 
     public string $search = '';
     public string $roleFilter = 'todos';
+    public string $perfilContabilFilter = 'todos';
     public string $lastAccessFilter = 'todos';
 
     public function updateUserRole(int $userId, string $role): void
@@ -48,6 +49,34 @@ class Usuarios extends Page
         $user->forceFill(['role' => $role])->save();
 
         Notification::make()->title('Cargo atualizado com sucesso.')->success()->send();
+    }
+
+
+    public function updateUserPerfilContabil(int $userId, ?string $perfilContabil): void
+    {
+        $perfilContabil = blank($perfilContabil) ? null : $perfilContabil;
+
+        if ($perfilContabil !== null && ! in_array($perfilContabil, array_keys($this->perfilContabilOptions()), true)) {
+            return;
+        }
+
+        $user = User::query()->find($userId);
+
+        if (! $user) {
+            Notification::make()->title('Usuário não encontrado.')->danger()->send();
+            return;
+        }
+
+        $authUser = auth()->user();
+
+        if (! $authUser?->isSuperAdmin() && (int) $authUser?->empresa_id !== (int) $user->empresa_id) {
+            Notification::make()->title('Você não tem permissão para alterar este usuário.')->danger()->send();
+            return;
+        }
+
+        $user->forceFill(['perfil_contabil' => $perfilContabil])->save();
+
+        Notification::make()->title('Perfil contábil atualizado com sucesso.')->success()->send();
     }
 
     public function removeUserAccess(int $userId): void
@@ -77,6 +106,7 @@ class Usuarios extends Page
     {
         $this->search = '';
         $this->roleFilter = 'todos';
+        $this->perfilContabilFilter = 'todos';
         $this->lastAccessFilter = 'todos';
     }
 
@@ -94,7 +124,8 @@ class Usuarios extends Page
                     $subQuery->where('name', 'like', $search)->orWhere('email', 'like', $search);
                 });
             })
-            ->when($this->roleFilter !== 'todos', fn ($query) => $query->where('role', $this->roleFilter));
+            ->when($this->roleFilter !== 'todos', fn ($query) => $query->where('role', $this->roleFilter))
+            ->when($this->perfilContabilFilter !== 'todos', fn ($query) => $query->where('perfil_contabil', $this->perfilContabilFilter));
 
         if ($this->lastAccessFilter !== 'todos') {
             $dateColumn = $this->lastAccessColumn();
@@ -128,6 +159,7 @@ class Usuarios extends Page
         return [
             'users' => $users,
             'roleOptions' => $this->roleOptions(),
+            'perfilContabilOptions' => $this->perfilContabilOptions(),
             'teamsByUser' => $this->teamsByUser($users->pluck('id')->all()),
             'lastAccessColumn' => $lastAccessColumn,
             'stats' => [
@@ -145,9 +177,15 @@ class Usuarios extends Page
             'super_admin' => 'Super Admin',
             'admin' => 'Admin',
             'gestor' => 'Gestor',
-            'user' => 'Member',
-            'guest' => 'Guest',
+            'user' => 'Usuário',
+            'guest' => 'Convidado',
         ];
+    }
+
+
+    private function perfilContabilOptions(): array
+    {
+        return User::perfilContabilOptions();
     }
 
     private function lastAccessColumn(): ?string

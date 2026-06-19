@@ -1,6 +1,6 @@
 /* =========================
-   PERFIS DE PRODUTO - UX DA SIDEBAR
-   Lote 2: perfis profissionais por nicho com navegação enxuta.
+   PERFIS DE PRODUTO E PERFIS CONTÁBEIS - UX DA SIDEBAR
+   Lote 2: perfis profissionais por nicho e por função contábil com navegação enxuta.
    Não remove rotas, não altera permissões e não bloqueia acesso direto por URL.
    ========================= */
 
@@ -23,6 +23,7 @@ html[data-product-profile] .fi-sidebar-nav [data-group-label] {
 }
 
 .fi-sidebar-nav .prazzu-profile-hidden,
+.fi-sidebar-nav .prazzu-accounting-profile-hidden,
 .fi-sidebar-nav .prazzu-profile-empty-group {
     display: none !important;
 }

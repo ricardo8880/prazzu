@@ -53,6 +53,7 @@ class UserResource extends Resource
                 'name',
                 'email',
                 'role',
+                'perfil_contabil',
                 'empresa_id',
                 'created_at',
                 'updated_at',

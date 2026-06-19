@@ -18,6 +18,7 @@ class User extends Authenticatable implements FilamentUser
         'email',
         'password',
         'role',
+        'perfil_contabil',
         'empresa_id',
     ];
 
@@ -31,7 +32,45 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'empresa_id' => 'integer',
+            'perfil_contabil' => 'string',
         ];
+    }
+
+
+    public const PERFIS_CONTABEIS = [
+        'socio' => 'Sócio',
+        'gestor' => 'Gestor',
+        'contador' => 'Contador',
+        'fiscal' => 'Fiscal',
+        'departamento_pessoal' => 'Departamento Pessoal',
+        'assistente' => 'Assistente',
+        'cliente' => 'Cliente',
+    ];
+
+    public static function perfilContabilOptions(): array
+    {
+        return self::PERFIS_CONTABEIS;
+    }
+
+    public static function perfilContabilPadraoPorRole(?string $role): ?string
+    {
+        return match ($role) {
+            'admin' => 'socio',
+            'gestor' => 'gestor',
+            'user' => 'assistente',
+            'guest' => 'cliente',
+            default => null,
+        };
+    }
+
+    public function getPerfilContabilLabelAttribute(): string
+    {
+        return self::PERFIS_CONTABEIS[$this->perfil_contabil] ?? 'Não definido';
+    }
+
+    public function isPerfilContabil(string $perfil): bool
+    {
+        return $this->perfil_contabil === $perfil;
     }
 
     protected static function booted(): void

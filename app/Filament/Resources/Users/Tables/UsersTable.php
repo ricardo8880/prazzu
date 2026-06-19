@@ -50,6 +50,23 @@ class UsersTable
                         default => 'gray',
                     }),
 
+
+                TextColumn::make('perfil_contabil')
+                    ->label('Perfil contábil')
+                    ->badge()
+                    ->placeholder('Não definido')
+                    ->formatStateUsing(fn (?string $state): string => User::perfilContabilOptions()[$state] ?? 'Não definido')
+                    ->color(fn (?string $state): string => match ($state) {
+                        'socio' => 'warning',
+                        'gestor' => 'info',
+                        'contador' => 'success',
+                        'fiscal' => 'primary',
+                        'departamento_pessoal' => 'purple',
+                        'assistente' => 'gray',
+                        'cliente' => 'gray',
+                        default => 'gray',
+                    }),
+
                 TextColumn::make('empresa.razao_social')
                     ->label('Empresa')
                     ->placeholder('Global')
@@ -74,6 +91,11 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+
+                SelectFilter::make('perfil_contabil')
+                    ->label('Perfil contábil')
+                    ->options(User::perfilContabilOptions()),
+
                 SelectFilter::make('role')
                     ->label('Perfil')
                     ->options([
@@ -81,6 +103,7 @@ class UsersTable
                         'admin' => 'Admin da Empresa',
                         'gestor' => 'Gestor',
                         'user' => 'Usuário',
+                        'guest' => 'Convidado',
                     ]),
             ])
             ->recordActions([

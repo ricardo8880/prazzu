@@ -1,5 +1,11 @@
 @php
+    use App\Support\AccountingProfileNavigation;
     use App\Support\ProductProfileNavigation;
+
+    $authUser = auth()->user();
+    $accountingProfiles = AccountingProfileNavigation::browserPayload();
+    $currentAccountingProfile = AccountingProfileNavigation::currentProfileKey($authUser);
+    $accountingAdministrativeLabels = AccountingProfileNavigation::administrativeLabelsFor($authUser);
 
     $workmodes = ProductProfileNavigation::profiles();
     $defaultWorkmode = ProductProfileNavigation::defaultProfile();
@@ -76,6 +82,9 @@
 <script>
     window.PrazzuProductProfiles = @json($navigationProfiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     window.PrazzuDefaultProductProfile = @json($defaultWorkmode, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    window.PrazzuAccountingProfiles = @json($accountingProfiles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    window.PrazzuCurrentAccountingProfile = @json($currentAccountingProfile, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    window.PrazzuAccountingAdministrativeLabels = @json($accountingAdministrativeLabels, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
     document.addEventListener('DOMContentLoaded', () => {
         const toggle = document.getElementById('sidebarToggleBtn');
@@ -87,6 +96,11 @@
         const options = customSelect ? Array.from(customSelect.querySelectorAll('.prazzu-workmode-option')) : [];
         const profiles = window.PrazzuProductProfiles || {};
         const defaultMode = window.PrazzuDefaultProductProfile || 'completo';
+        const accountingProfiles = window.PrazzuAccountingProfiles || {};
+        const currentAccountingProfile = window.PrazzuCurrentAccountingProfile || null;
+        const accountingAdministrativeLabels = Array.isArray(window.PrazzuAccountingAdministrativeLabels)
+            ? window.PrazzuAccountingAdministrativeLabels
+            : [];
 
         const normalize = (value) => String(value || '')
             .normalize('NFD')
@@ -94,6 +108,8 @@
             .replace(/\s+/g, ' ')
             .trim()
             .toLowerCase();
+
+        const administrativeAllowed = new Set(accountingAdministrativeLabels.map(normalize));
 
         const navItemSelector = [
             '.fi-sidebar-item',
@@ -140,8 +156,8 @@
         const getNavContainer = (link) => link.closest(navItemSelector) || link;
 
         const resetProfileVisibility = () => {
-            document.querySelectorAll('.prazzu-profile-hidden, .prazzu-profile-empty-group').forEach((item) => {
-                item.classList.remove('prazzu-profile-hidden', 'prazzu-profile-empty-group');
+            document.querySelectorAll('.prazzu-profile-hidden, .prazzu-accounting-profile-hidden, .prazzu-profile-empty-group').forEach((item) => {
+                item.classList.remove('prazzu-profile-hidden', 'prazzu-accounting-profile-hidden', 'prazzu-profile-empty-group');
                 item.removeAttribute('aria-hidden');
             });
         };
@@ -158,13 +174,55 @@
             groups.forEach((group) => {
                 const visibleLinks = Array.from(group.querySelectorAll('a')).filter((link) => {
                     const container = getNavContainer(link);
-                    return !container.classList.contains('prazzu-profile-hidden');
+                    return !container.classList.contains('prazzu-profile-hidden')
+                        && !container.classList.contains('prazzu-accounting-profile-hidden');
                 });
 
                 if (!visibleLinks.length) {
                     group.classList.add('prazzu-profile-empty-group');
                     group.setAttribute('aria-hidden', 'true');
                 }
+            });
+        };
+
+
+        const applyAccountingProfileNavigation = () => {
+            if (!currentAccountingProfile) {
+                return;
+            }
+
+            const profile = accountingProfiles[currentAccountingProfile];
+            const sidebar = getSidebar();
+
+            if (!profile || !sidebar) {
+                return;
+            }
+
+            const allowed = buildAllowedLabels(profile);
+
+            accountingAdministrativeLabels.forEach((label) => allowed.add(normalize(label)));
+
+            Array.from(sidebar.querySelectorAll('a')).forEach((link) => {
+                const container = getNavContainer(link);
+
+                if (container.classList.contains('prazzu-profile-hidden')) {
+                    return;
+                }
+
+                const label = normalize(getLinkLabel(link));
+                const group = link.closest('[data-group-label], .fi-sidebar-group');
+                const groupLabel = normalize(group ? getGroupLabel(group) : '');
+
+                if (!label) {
+                    return;
+                }
+
+                if (allowed.has(label) || allowed.has(groupLabel)) {
+                    return;
+                }
+
+                container.classList.add('prazzu-accounting-profile-hidden');
+                container.setAttribute('aria-hidden', 'true');
             });
         };
 
@@ -182,6 +240,8 @@
             }
 
             if (showEverything) {
+                applyAccountingProfileNavigation();
+                updateEmptyGroups();
                 return;
             }
 
@@ -197,6 +257,10 @@
                     return;
                 }
 
+                if (administrativeAllowed.has(label) || administrativeAllowed.has(groupLabel)) {
+                    return;
+                }
+
                 if ((allowed.has(label) || allowed.has(groupLabel)) && !forcedHidden.has(label) && !forcedHidden.has(groupLabel)) {
                     return;
                 }
@@ -206,6 +270,7 @@
                 container.setAttribute('aria-hidden', 'true');
             });
 
+            applyAccountingProfileNavigation();
             updateEmptyGroups();
         };
 
@@ -239,6 +304,12 @@
 
             document.documentElement.setAttribute('data-workmode', normalizedMode);
             document.documentElement.setAttribute('data-product-profile', normalizedMode);
+
+            if (currentAccountingProfile) {
+                document.documentElement.setAttribute('data-accounting-profile', currentAccountingProfile);
+            } else {
+                document.documentElement.removeAttribute('data-accounting-profile');
+            }
             selector.value = normalizedMode;
 
             if (selectedLabel && normalizedOption) {

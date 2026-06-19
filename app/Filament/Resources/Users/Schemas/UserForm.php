@@ -7,6 +7,8 @@ use App\Models\User;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
 
@@ -61,6 +63,12 @@ class UserForm
                     ->required()
                     ->native(false)
                     ->default('user')
+                    ->live()
+                    ->afterStateUpdated(function (?string $state, Set $set, Get $get): void {
+                        if (blank($get('perfil_contabil'))) {
+                            $set('perfil_contabil', User::perfilContabilPadraoPorRole($state));
+                        }
+                    })
                     ->options(function () use ($authUser): array {
                         if ($authUser?->isSuperAdmin()) {
                             return [
@@ -91,6 +99,15 @@ class UserForm
                             };
                         },
                     ]),
+
+
+                Select::make('perfil_contabil')
+                    ->label('Perfil contábil')
+                    ->native(false)
+                    ->searchable()
+                    ->options(User::perfilContabilOptions())
+                    ->default(fn (Get $get): ?string => User::perfilContabilPadraoPorRole($get('role')) ?? 'assistente')
+                    ->helperText('Define a função real do usuário no escritório. Neste lote, o campo é cadastral; a sidebar e os bloqueios por URL entram nos próximos lotes.'),
 
                 TextInput::make('password')
                     ->label('Senha')
