@@ -6,10 +6,12 @@ use App\Filament\Resources\Empresas\EmpresaResource;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Support\CachedSchema;
+use App\Services\StorageRetentionService;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Navigation\NavigationItem;
+use Filament\Notifications\Notification;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
@@ -32,6 +34,18 @@ class Armazenamento extends Page
     public string $aba = 'visao-geral';
     public string $busca = '';
     public string $ordenarPor = 'uso_desc';
+
+    /** @var array<string, mixed> */
+    public array $retentionForm = [
+        'name' => 'Temporários do escritório',
+        'scope_type' => 'global',
+        'empresa_id' => null,
+        'origin' => null,
+        'storage_type' => 'temporario',
+        'action' => 'arquivar',
+        'retention_days' => 30,
+        'notes' => '',
+    ];
 
     public function mount(): void
     {
@@ -73,7 +87,83 @@ class Armazenamento extends Page
             'alertas' => $this->alertas($resumo, $porEmpresa, $arquivosPesados, $arquivosExpirados),
             'insights' => $this->insights($resumo, $porEmpresa, $arquivos),
             'temColunaLimite' => CachedSchema::hasTable('empresas') && CachedSchema::hasColumn('empresas', 'limite_armazenamento_mb'),
+            'retencao' => app(StorageRetentionService::class)->summary(auth()->user()),
+            'empresasOptions' => $this->empresasOptions(),
         ];
+    }
+
+    public function salvarPoliticaRetencao(): void
+    {
+        $this->validate([
+            'retentionForm.name' => ['required', 'string', 'max:120'],
+            'retentionForm.scope_type' => ['required', 'in:global,empresa,origem'],
+            'retentionForm.storage_type' => ['required', 'in:temporario,permanente'],
+            'retentionForm.action' => ['required', 'in:arquivar,excluir,manter'],
+            'retentionForm.retention_days' => ['nullable', 'integer', 'min:1', 'max:3650'],
+        ]);
+
+        $retention = app(StorageRetentionService::class);
+
+        if (! $retention->ready()) {
+            Notification::make()->title('Execute as migrations antes de cadastrar políticas')->body('Rode: php artisan migrate')->warning()->send();
+            return;
+        }
+
+        $retention->createPolicy($this->retentionForm);
+
+        $this->retentionForm = [
+            'name' => 'Temporários do escritório',
+            'scope_type' => 'global',
+            'empresa_id' => null,
+            'origin' => null,
+            'storage_type' => 'temporario',
+            'action' => 'arquivar',
+            'retention_days' => 30,
+            'notes' => '',
+        ];
+
+        Notification::make()->title('Política de retenção criada')->success()->send();
+    }
+
+    public function alternarPoliticaRetencao(int $policyId): void
+    {
+        app(StorageRetentionService::class)->togglePolicy($policyId);
+        Notification::make()->title('Status da política atualizado')->success()->send();
+    }
+
+    public function processarRetencaoAgora(): void
+    {
+        $result = app(StorageRetentionService::class)->process(auth()->user(), 100);
+
+        Notification::make()
+            ->title('Retenção processada')
+            ->body($result['arquivados'] . ' arquivado(s), ' . $result['excluidos'] . ' excluído(s), ' . $result['erros'] . ' erro(s).')
+            ->success()
+            ->send();
+    }
+
+    /** @return array<int, string> */
+    private function empresasOptions(): array
+    {
+        if (! CachedSchema::hasTable('empresas')) {
+            return [];
+        }
+
+        $select = ['id'];
+        foreach (['nome_fantasia', 'razao_social'] as $column) {
+            if (CachedSchema::hasColumn('empresas', $column)) {
+                $select[] = $column;
+            }
+        }
+
+        return DB::table('empresas')
+            ->select($select)
+            ->limit(200)
+            ->get()
+            ->mapWithKeys(fn ($empresa): array => [
+                (int) $empresa->id => ($empresa->nome_fantasia ?? $empresa->razao_social ?? ('Cliente #' . $empresa->id)),
+            ])
+            ->all();
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -84,7 +174,8 @@ class Armazenamento extends Page
             ['key' => 'por-empresa', 'label' => 'Por Cliente/Empresa', 'icon' => 'heroicon-o-building-office-2', 'sort' => 2],
             ['key' => 'arquivos-pesados', 'label' => 'Arquivos Pesados', 'icon' => 'heroicon-o-scale', 'sort' => 3],
             ['key' => 'expirados', 'label' => 'Expirados', 'icon' => 'heroicon-o-clock', 'sort' => 4],
-            ['key' => 'limites', 'label' => 'Limites', 'icon' => 'heroicon-o-adjustments-horizontal', 'sort' => 5],
+            ['key' => 'retencao', 'label' => 'Política de Retenção', 'icon' => 'heroicon-o-archive-box-arrow-down', 'sort' => 5],
+            ['key' => 'limites', 'label' => 'Limites', 'icon' => 'heroicon-o-adjustments-horizontal', 'sort' => 6],
         ];
     }
 

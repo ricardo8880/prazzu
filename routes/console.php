@@ -58,3 +58,9 @@ Artisan::command('prazzu:diagnostico-producao {--limite=500} {--arquivo=} {--sem
 
     return Artisan::call('sistemrh:diagnostico', $options, $this->getOutput());
 })->purpose('Alias de compatibilidade para o diagnóstico profundo do SistemRH/Prazzu.');
+
+// 🗂️ RETENÇÃO DE ARQUIVOS
+Schedule::command('storage:processar-retencao --limit=100')
+    ->dailyAt('02:20')
+    ->withoutOverlapping()
+    ->runInBackground();

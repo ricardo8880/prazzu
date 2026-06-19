@@ -96,9 +96,22 @@
         .dark .storage-insight strong { color: white; }
         .storage-insight p { margin: .25rem 0 0; color: rgb(100, 116, 139); font-size: .84rem; line-height: 1.5; }
         .storage-empty { padding: 2rem; text-align: center; color: rgb(100, 116, 139); }
+
+        .storage-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; padding: 1rem 1.1rem; border-bottom: 1px solid rgba(148, 163, 184, .14); }
+        .storage-field { display: grid; gap: .35rem; }
+        .storage-field--wide { grid-column: 1 / -1; }
+        .storage-field label { font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; color: rgb(100, 116, 139); }
+        .storage-input { width: 100%; border-radius: 14px; border: 1px solid rgba(148, 163, 184, .34); background: white; padding: .62rem .72rem; color: rgb(15, 23, 42); font-size: .88rem; }
+        .dark .storage-input { background: rgba(15, 23, 42, .72); color: white; border-color: rgba(148, 163, 184, .22); }
+        .storage-retention-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; padding: 1rem 1.1rem; border-bottom: 1px solid rgba(148, 163, 184, .14); }
+        .storage-retention-box { border-radius: 18px; padding: .85rem; background: rgba(248, 250, 252, .82); border: 1px solid rgba(148, 163, 184, .18); }
+        .dark .storage-retention-box { background: rgba(30, 41, 59, .66); }
+        .storage-retention-box span { display: block; color: rgb(100, 116, 139); font-size: .72rem; font-weight: 800; text-transform: uppercase; }
+        .storage-retention-box strong { display: block; margin-top: .25rem; color: rgb(15, 23, 42); font-size: 1.1rem; font-weight: 900; }
+        .dark .storage-retention-box strong { color: white; }
         .storage-alert { border-radius: 20px; padding: .9rem 1rem; border: 1px solid rgba(245, 158, 11, .32); background: rgba(245, 158, 11, .10); color: rgb(120, 53, 15); font-size: .88rem; }
         .dark .storage-alert { color: rgb(253, 230, 138); }
-        @media (max-width: 1100px) { .storage-hero__grid, .storage-grid { grid-template-columns: 1fr; } .storage-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 1100px) { .storage-hero__grid, .storage-grid { grid-template-columns: 1fr; } .storage-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .storage-form-grid, .storage-retention-summary { grid-template-columns: 1fr; } }
         @media (max-width: 700px) { .storage-cards, .storage-mini-grid { grid-template-columns: 1fr; } .storage-row { grid-template-columns: 1fr; } .storage-size { text-align: left; } .storage-action-stack { justify-items: start; } .storage-alert-item { grid-template-columns: auto 1fr; } .storage-alert-item .storage-action-link { grid-column: 2; width: fit-content; } }
     </style>
 
@@ -131,6 +144,7 @@
             <a class="storage-card" href="<?php echo e(\App\Filament\Pages\Armazenamento::getUrl(['aba' => 'expirados'])); ?>"><span>Espaço recuperável</span><strong><?php echo e($resumo['recuperavel_formatado']); ?></strong><small>Estimativa com expirados/antigos · revisar limpeza</small></a>
             <a class="storage-card" href="<?php echo e(\App\Filament\Pages\Armazenamento::getUrl(['aba' => 'por-empresa'])); ?>"><span>Clientes/Empresas</span><strong><?php echo e(number_format($resumo['empresas'], 0, ',', '.')); ?></strong><small>Com arquivos vinculados · ver ranking</small></a>
             <a class="storage-card" href="<?php echo e(\App\Filament\Pages\Armazenamento::getUrl(['aba' => 'arquivos-pesados'])); ?>"><span>Alertas</span><strong><?php echo e(count($alertas)); ?></strong><small>Itens que pedem atenção operacional · agir agora</small></a>
+            <a class="storage-card" href="<?php echo e(\App\Filament\Pages\Armazenamento::getUrl(['aba' => 'retencao'])); ?>"><span>Retenção</span><strong><?php echo e($retencao['counts']['policies'] ?? 0); ?></strong><small>Políticas ativas · arquivar, excluir ou manter</small></a>
         </section>
 
         <div class="storage-grid">
@@ -235,6 +249,70 @@
                             <li>Remover somente arquivos sem pendência operacional e com rastreabilidade.</li>
                         </ol>
                     </div>
+                <?php elseif($aba === 'retencao'): ?>
+                    <div class="storage-section__header">
+                        <div><span class="storage-kicker">Governança de arquivos</span><h2>Política de retenção</h2><p>Defina se arquivos são temporários, permanentes, arquivados ou excluídos automaticamente.</p></div>
+                        <button type="button" class="storage-action-link" wire:click="processarRetencaoAgora" wire:loading.attr="disabled" wire:target="processarRetencaoAgora">Processar agora</button>
+                    </div>
+
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! ($retencao['ready'] ?? false)): ?>
+                        <div class="storage-alert" style="margin:1rem">As tabelas de retenção ainda não existem. Execute <strong>php artisan migrate</strong> para ativar cadastro, histórico e processamento automático.</div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+                    <div class="storage-retention-summary">
+                        <div class="storage-retention-box"><span>Políticas ativas</span><strong><?php echo e($retencao['counts']['policies'] ?? 0); ?></strong></div>
+                        <div class="storage-retention-box"><span>Arquivar agora</span><strong><?php echo e($retencao['counts']['due_archive'] ?? 0); ?></strong></div>
+                        <div class="storage-retention-box"><span>Excluir agora</span><strong><?php echo e($retencao['counts']['due_delete'] ?? 0); ?></strong></div>
+                        <div class="storage-retention-box"><span>Espaço elegível</span><strong><?php echo e($retencao['counts']['space'] ?? '0 B'); ?></strong></div>
+                    </div>
+
+                    <form class="storage-form-grid" wire:submit.prevent="salvarPoliticaRetencao">
+                        <div class="storage-field"><label>Nome da política</label><input class="storage-input" type="text" wire:model="retentionForm.name" placeholder="Ex: Temporários 7 dias"></div>
+                        <div class="storage-field"><label>Escopo</label><select class="storage-input" wire:model.live="retentionForm.scope_type"><option value="global">Todos os arquivos</option><option value="empresa">Cliente específico</option><option value="origem">Origem do arquivo</option></select></div>
+                        <div class="storage-field"><label>Tipo</label><select class="storage-input" wire:model="retentionForm.storage_type"><option value="temporario">Arquivo temporário</option><option value="permanente">Arquivo permanente</option></select></div>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($retentionForm['scope_type'] ?? 'global') === 'empresa'): ?>
+                            <div class="storage-field"><label>Cliente</label><select class="storage-input" wire:model="retentionForm.empresa_id"><option value="">Selecione</option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $empresasOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresaId => $empresaNome): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?><option value="<?php echo e($empresaId); ?>"><?php echo e($empresaNome); ?></option><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?></select></div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($retentionForm['scope_type'] ?? 'global') === 'origem'): ?>
+                            <div class="storage-field"><label>Origem</label><select class="storage-input" wire:model="retentionForm.origin"><option value="Anexo">Anexos</option><option value="Documento">Documentos</option><option value="Portal">Portal do cliente</option></select></div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <div class="storage-field"><label>Ação automática</label><select class="storage-input" wire:model.live="retentionForm.action"><option value="arquivar">Arquivar após prazo</option><option value="excluir">Excluir após prazo</option><option value="manter">Nunca excluir</option></select></div>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(($retentionForm['action'] ?? 'arquivar') !== 'manter'): ?>
+                            <div class="storage-field"><label>Prazo</label><select class="storage-input" wire:model="retentionForm.retention_days"><option value="7">7 dias</option><option value="30">30 dias</option><option value="90">90 dias</option><option value="365">1 ano</option></select></div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                        <div class="storage-field storage-field--wide"><label>Observação</label><input class="storage-input" type="text" wire:model="retentionForm.notes" placeholder="Ex: usar para arquivos enviados temporariamente pelo cliente."></div>
+                        <div class="storage-field"><label>&nbsp;</label><button class="storage-action-link" type="submit">Salvar política</button></div>
+                    </form>
+
+                    <div class="storage-section__header"><div><span class="storage-kicker">Regras cadastradas</span><h2>Políticas em uso</h2><p>A regra mais específica vence: cliente, origem e depois global.</p></div><strong><?php echo e(count($retencao['all_policies'] ?? [])); ?></strong></div>
+                    <div class="storage-list">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $retencao['all_policies'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $policy): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <article class="storage-row">
+                                <div><h3><?php echo e($policy['name']); ?></h3><p><?php echo e($policy['scope_label']); ?> · <?php echo e(ucfirst($policy['storage_type'])); ?> · <?php echo e($policy['retention_label']); ?></p><div class="storage-meta"><span class="storage-pill <?php echo e($policy['is_active'] ? 'success' : 'warning'); ?>"><?php echo e($policy['is_active'] ? 'Ativa' : 'Pausada'); ?></span><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($policy['notes'])): ?><span class="storage-pill"><?php echo e($policy['notes']); ?></span><?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?></div></div>
+                                <div class="storage-action-stack"><button type="button" class="storage-action-link" wire:click="alternarPoliticaRetencao(<?php echo e((int) $policy['id']); ?>)"><?php echo e($policy['is_active'] ? 'Pausar' : 'Ativar'); ?></button></div>
+                            </article>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="storage-empty">Nenhuma política cadastrada. Crie a primeira regra acima.</div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </div>
+
+                    <div class="storage-section__header"><div><span class="storage-kicker">Prévia automática</span><h2>Arquivos que entram na próxima execução</h2><p>Estes são os candidatos calculados agora pelas políticas ativas.</p></div><strong><?php echo e(count($retencao['candidates'] ?? [])); ?></strong></div>
+                    <div class="storage-list">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $retencao['candidates'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $arquivo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <article class="storage-row"><div><h3 title="<?php echo e($arquivo['nome']); ?>"><?php echo e($arquivo['nome']); ?></h3><p><?php echo e($arquivo['empresa_nome']); ?> · <?php echo e($arquivo['policy_name']); ?></p><div class="storage-meta"><span class="storage-pill <?php echo e($arquivo['action'] === 'excluir' ? 'danger' : 'warning'); ?>"><?php echo e($arquivo['action'] === 'excluir' ? 'Excluir' : 'Arquivar'); ?></span><span class="storage-pill">Venceu em <?php echo e($arquivo['due_at']); ?></span><span class="storage-pill primary"><?php echo e($arquivo['origem']); ?></span></div></div><div class="storage-size"><?php echo e($arquivo['tamanho_formatado']); ?></div></article>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="storage-empty">Nenhum arquivo elegível para arquivar ou excluir agora.</div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </div>
+
+                    <div class="storage-section__header"><div><span class="storage-kicker">Histórico</span><h2>Últimas execuções</h2><p>Rastro de auditoria para saber o que foi feito pela rotina.</p></div></div>
+                    <div class="storage-list">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $retencao['recent_events'] ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $event): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <article class="storage-row"><div><h3><?php echo e($event['file_name'] ?? 'Arquivo'); ?></h3><p><?php echo e($event['policy_name'] ?? 'Política removida'); ?> · <?php echo e($event['message'] ?? ''); ?></p><div class="storage-meta"><span class="storage-pill <?php echo e(($event['status'] ?? '') === 'processado' ? 'success' : 'danger'); ?>"><?php echo e($event['status'] ?? 'registro'); ?></span><span class="storage-pill"><?php echo e($event['action'] ?? '-'); ?></span></div></div><div class="storage-size"><?php echo e(\Carbon\Carbon::parse($event['created_at'])->format('d/m/Y H:i')); ?></div></article>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="storage-empty">Ainda não existe histórico de processamento.</div>
+                        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    </div>
                 <?php elseif($aba === 'limites'): ?>
                     <div class="storage-section__header"><div><span class="storage-kicker">Capacidade</span><h2>Limites de armazenamento</h2><p>Ranking de empresas mais próximas do limite.</p></div><strong><?php echo e(count($limites)); ?></strong></div>
                     <div class="storage-list">
@@ -264,7 +342,7 @@
 
                 <article class="storage-insight">
                     <strong>Como usar esta página</strong>
-                    <p>Comece pelos limites, depois revise arquivos pesados e finalize com expirados. A exclusão deve ser feita com regra de retenção e auditoria.</p>
+                    <p>Comece pelos limites, revise arquivos pesados e configure Política de Retenção para arquivar, excluir ou manter arquivos com auditoria.</p>
                 </article>
             </aside>
         </div>
