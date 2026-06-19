@@ -24,7 +24,7 @@
         $totalAtendimentosSelecionados = $idsAtendimentosSelecionados->count();
     @endphp
 
-    <div class="at-wrap at-reference-layout" x-data="{ criar: @entangle('createModalAberto').live, detalhe: @entangle('detailModalAberto').live, cadastroCliente: false }" wire:poll.25s="loadData(true)">
+    <div class="at-wrap at-reference-layout" x-data="{ criar: @entangle('createModalAberto').live, detalhe: @entangle('detailModalAberto').live, cadastroCliente: false }" wire:poll.visible.90s="loadData(true)">
         <section class="at-page-head at-reference-head">
             <div class="at-title-block">
                 <span class="at-eyebrow">Central de suporte</span>
@@ -508,7 +508,50 @@
                 }
             }
 
+
+            const atendimentoSessionKeepAliveUrl = '{{ route('admin.session.keepalive') }}';
+            let atendimentoSessionKeepAliveTimer = null;
+
+            function manterSessaoAtendimentosAtiva() {
+                if (!atendimentoSessionKeepAliveUrl || document.hidden) {
+                    return;
+                }
+
+                fetch(atendimentoSessionKeepAliveUrl, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    cache: 'no-store',
+                }).catch(() => {});
+            }
+
+            function iniciarKeepAliveAtendimentos() {
+                if (atendimentoSessionKeepAliveTimer) {
+                    clearInterval(atendimentoSessionKeepAliveTimer);
+                }
+
+                manterSessaoAtendimentosAtiva();
+                atendimentoSessionKeepAliveTimer = setInterval(manterSessaoAtendimentosAtiva, 4 * 60 * 1000);
+            }
+
             document.addEventListener('livewire:init', () => {
+                iniciarKeepAliveAtendimentos();
+
+                if (window.Livewire && typeof Livewire.hook === 'function') {
+                    Livewire.hook('request', ({ fail }) => {
+                        fail(({ status, preventDefault }) => {
+                            if (status === 419) {
+                                preventDefault();
+                                manterSessaoAtendimentosAtiva();
+                                setTimeout(() => window.location.reload(), 500);
+                            }
+                        });
+                    });
+                }
+
                 Livewire.on('atendimento-chat-message-sent', (event) => {
                     emitirMensagemAtendimento(event?.payload || event?.[0]?.payload || event?.[0] || event);
                 });

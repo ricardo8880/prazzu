@@ -12,7 +12,7 @@
 
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos.css')); ?>">
     <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos-ticket-modal.css')); ?>">
-    <?php if (! $__env->hasRenderedOnce('8d98465d-df0b-40c7-9142-a9daaf4aefda')): $__env->markAsRenderedOnce('8d98465d-df0b-40c7-9142-a9daaf4aefda'); ?>
+    <?php if (! $__env->hasRenderedOnce('df5daefa-3c91-425f-847e-4b4f1a024759')): $__env->markAsRenderedOnce('df5daefa-3c91-425f-847e-4b4f1a024759'); ?>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <?php endif; ?>
 
@@ -35,7 +35,7 @@
         $totalAtendimentosSelecionados = $idsAtendimentosSelecionados->count();
     ?>
 
-    <div class="at-wrap at-reference-layout" x-data="{ criar: <?php if ((object) ('createModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'->value()); ?>')<?php echo e('createModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'); ?>')<?php endif; ?>.live, detalhe: <?php if ((object) ('detailModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'->value()); ?>')<?php echo e('detailModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'); ?>')<?php endif; ?>.live, cadastroCliente: false }" wire:poll.25s="loadData(true)">
+    <div class="at-wrap at-reference-layout" x-data="{ criar: <?php if ((object) ('createModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'->value()); ?>')<?php echo e('createModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('createModalAberto'); ?>')<?php endif; ?>.live, detalhe: <?php if ((object) ('detailModalAberto') instanceof \Livewire\WireDirective) : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'->value()); ?>')<?php echo e('detailModalAberto'->hasModifier('live') ? '.live' : ''); ?><?php else : ?>window.Livewire.find('<?php echo e($__livewire->getId()); ?>').entangle('<?php echo e('detailModalAberto'); ?>')<?php endif; ?>.live, cadastroCliente: false }" wire:poll.visible.90s="loadData(true)">
         <section class="at-page-head at-reference-head">
             <div class="at-title-block">
                 <span class="at-eyebrow">Central de suporte</span>
@@ -519,7 +519,50 @@
                 }
             }
 
+
+            const atendimentoSessionKeepAliveUrl = '<?php echo e(route('admin.session.keepalive')); ?>';
+            let atendimentoSessionKeepAliveTimer = null;
+
+            function manterSessaoAtendimentosAtiva() {
+                if (!atendimentoSessionKeepAliveUrl || document.hidden) {
+                    return;
+                }
+
+                fetch(atendimentoSessionKeepAliveUrl, {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    cache: 'no-store',
+                }).catch(() => {});
+            }
+
+            function iniciarKeepAliveAtendimentos() {
+                if (atendimentoSessionKeepAliveTimer) {
+                    clearInterval(atendimentoSessionKeepAliveTimer);
+                }
+
+                manterSessaoAtendimentosAtiva();
+                atendimentoSessionKeepAliveTimer = setInterval(manterSessaoAtendimentosAtiva, 4 * 60 * 1000);
+            }
+
             document.addEventListener('livewire:init', () => {
+                iniciarKeepAliveAtendimentos();
+
+                if (window.Livewire && typeof Livewire.hook === 'function') {
+                    Livewire.hook('request', ({ fail }) => {
+                        fail(({ status, preventDefault }) => {
+                            if (status === 419) {
+                                preventDefault();
+                                manterSessaoAtendimentosAtiva();
+                                setTimeout(() => window.location.reload(), 500);
+                            }
+                        });
+                    });
+                }
+
                 Livewire.on('atendimento-chat-message-sent', (event) => {
                     emitirMensagemAtendimento(event?.payload || event?.[0]?.payload || event?.[0] || event);
                 });

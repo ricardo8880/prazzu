@@ -297,19 +297,19 @@ class Documentos extends Page
                 'tone' => ((int) ($resumo['vencidos'] ?? 0)) > 0 ? 'danger' : (((int) ($resumo['vencem30'] ?? 0)) > 0 ? 'warning' : 'success'),
                 'count' => (int) ($resumo['vencidos'] ?? 0) + (int) ($resumo['vencem30'] ?? 0),
                 'hint' => 'Vencidos e próximos 30 dias',
-                'description' => 'Acompanhe risco por prazo e avance para a Gestão Documental Enterprise já filtrada.',
+                'description' => 'Acompanhe risco por prazo e abra a regularização pelo próprio item.',
                 'next_action' => 'Regularizar vencidos e monitorar próximos prazos',
             ],
             [
                 'key' => 'enterprise',
-                'label' => 'Enterprise',
+                'label' => 'Detalhes',
                 'icon' => 'heroicon-o-rocket-launch',
                 'sort' => 4,
                 'tone' => 'primary',
                 'count' => (int) ($resumo['total'] ?? 0),
-                'hint' => 'Operação avançada e fluxos completos',
-                'description' => 'Centralize o acesso aos fluxos completos sem duplicar a experiência da Enterprise.',
-                'next_action' => 'Abrir o fluxo Enterprise certo conforme o problema',
+                'hint' => 'Visão completa para consulta',
+                'description' => 'Mantenha a consulta completa disponível sem atrapalhar a regularização rápida.',
+                'next_action' => 'Consultar detalhes quando a regularização rápida não for suficiente',
             ],
             [
                 'key' => 'fila',
@@ -660,10 +660,10 @@ class Documentos extends Page
                     'prioridade' => 'Primeiro passo',
                 ],
                 [
-                    'titulo' => 'Abrir gestão documental completa',
-                    'descricao' => 'Use a tela Enterprise para acompanhar filtros, fluxos, aprovações e indicadores quando a base estiver alimentada.',
-                    'url' => $this->enterpriseUrl(),
-                    'botao' => 'Abrir gestão',
+                    'titulo' => 'Consultar documentos em detalhe',
+                    'descricao' => 'Use a visão completa apenas quando precisar pesquisar ou auditar a base documental.',
+                    'url' => $this->clusterDocumentosUrl('fila'),
+                    'botao' => 'Ver lista documental',
                     'tom' => 'primary',
                     'prioridade' => 'Estrutura',
                 ],
@@ -676,8 +676,8 @@ class Documentos extends Page
             $acoes[] = [
                 'titulo' => 'Regularizar documentos vencidos',
                 'descricao' => 'Resolva primeiro os documentos fora do prazo para reduzir risco operacional e melhorar a saúde documental.',
-                'url' => $this->enterpriseUrl(['situacao' => 'vencido']),
-                'botao' => 'Ver vencidos',
+                'url' => $this->clusterDocumentosUrl('pendencias'),
+                'botao' => 'Abrir vencidos',
                 'tom' => 'danger',
                 'prioridade' => $vencidos . ' vencido(s)',
             ];
@@ -687,7 +687,7 @@ class Documentos extends Page
             $acoes[] = [
                 'titulo' => 'Anexar arquivos pendentes',
                 'descricao' => 'Itens sem arquivo principal prejudicam consulta, auditoria e atendimento ao cliente.',
-                'url' => $this->enterpriseUrl(['situacao' => 'sem_arquivo']),
+                'url' => $this->clusterDocumentosUrl('pendencias'),
                 'botao' => 'Abrir sem anexo',
                 'tom' => 'warning',
                 'prioridade' => $semArquivo . ' sem arquivo',
@@ -698,7 +698,7 @@ class Documentos extends Page
             $acoes[] = [
                 'titulo' => 'Antecipar próximos vencimentos',
                 'descricao' => 'Revise documentos que vencem nos próximos 30 dias antes que virem urgência.',
-                'url' => $this->enterpriseUrl(['situacao' => 'vence_30']),
+                'url' => $this->clusterDocumentosUrl('vencimentos'),
                 'botao' => 'Ver prazos',
                 'tom' => 'warning',
                 'prioridade' => $vencem30 . ' em 30 dias',
@@ -706,10 +706,10 @@ class Documentos extends Page
         }
 
         $acoes[] = [
-            'titulo' => 'Trabalhar na gestão documental completa',
-            'descricao' => 'Acesse o painel Enterprise para filtros, prioridades, aprovações, empresas e fluxo documental.',
-            'url' => $this->enterpriseUrl(),
-            'botao' => 'Abrir Enterprise',
+            'titulo' => 'Consultar lista documental',
+            'descricao' => 'Veja todos os documentos e abra a regularização pelo próprio item.',
+            'url' => $this->clusterDocumentosUrl('fila'),
+            'botao' => 'Ver lista',
             'tom' => $hub['tom'] === 'success' ? 'success' : 'primary',
             'prioridade' => (string) ($hub['status'] ?? 'Gestão'),
         ];

@@ -8,18 +8,18 @@
         <form wire:submit.prevent="resolverDocumentoRapido({{ $documento['id'] }})" class="documentos-resolver-form documentos-resolver-form--dialog">
             <div class="documentos-modal-header">
                 <div>
-                    <span class="pz-ux-kicker">Resolução rápida</span>
+                    <span class="pz-ux-kicker">Regularização documental</span>
                     <h2 id="documentos-resolver-titulo">{{ $documento['titulo'] }}</h2>
-                    <p>Atualize status, prazo, portal, observação e arquivo sem sair da página Documentos.</p>
+                    <p>Corrija o status, atualize o vencimento e anexe o arquivo necessário sem sair da página.</p>
                 </div>
                 <button type="button" class="documentos-modal-close" wire:click="fecharResolucaoDocumento" wire:loading.attr="disabled" aria-label="Fechar resolução">×</button>
             </div>
 
             <div class="documentos-resolver-header {{ $prioridadeOperacional['tom'] ?? 'success' }}">
                 <div>
-                    <span>Contexto operacional</span>
+                    <span>Motivo da atenção</span>
                     <h3>{{ $prioridadeOperacional['motivo'] ?? 'Atualize o documento sem sair desta página.' }}</h3>
-                    <p>Esse popup segue o padrão de abertura global da Central de Aprovações para não ficar preso dentro do card.</p>
+                    <p>Use esta tela para deixar o documento regularizado e registrado.</p>
                 </div>
                 <strong>{{ $prioridadeOperacional['label'] ?? 'Estável' }}</strong>
             </div>
@@ -63,8 +63,8 @@
             </div>
 
             <label class="documentos-resolver-field documentos-resolver-field--full">
-                <span>Observação da resolução</span>
-                <textarea rows="4" wire:model.defer="resolverObservacao.{{ $documento['id'] }}" placeholder="Registre o que foi ajustado, recebido ou conferido neste documento."></textarea>
+                <span>Observação do ajuste</span>
+                <textarea rows="4" wire:model.defer="resolverObservacao.{{ $documento['id'] }}" placeholder="Ex.: documento recebido do cliente, novo vencimento conferido, arquivo substituído."></textarea>
                 @error('resolverObservacao.' . $documento['id']) <small class="documentos-field-error">{{ $message }}</small> @enderror
             </label>
 
@@ -73,14 +73,14 @@
                     @if (! empty($documento['arquivo_url']))
                         <a href="{{ $documento['arquivo_url'] }}" target="_blank" rel="noopener noreferrer">Abrir arquivo atual</a>
                     @endif
-                    <a href="{{ $documento['enterprise_url'] ?? $documento['edit_url'] }}">Ver na Enterprise</a>
+                    <a href="{{ $documento['enterprise_url'] ?? $documento['edit_url'] }}">Abrir edição completa</a>
                 </div>
                 <div class="documentos-modal-actions">
                     <x-filament::button type="button" color="gray" wire:click="fecharResolucaoDocumento" wire:loading.attr="disabled">
                         Fechar
                     </x-filament::button>
                     <x-filament::button type="submit" color="primary" icon="heroicon-m-check-circle" wire:loading.attr="disabled" wire:target="resolverDocumentoRapido({{ $documento['id'] }}),resolverArquivos.{{ $documento['id'] }}">
-                        Salvar resolução
+                        Salvar regularização
                     </x-filament::button>
                 </div>
             </div>

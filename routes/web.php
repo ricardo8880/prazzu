@@ -40,7 +40,7 @@ Route::middleware(['guest:portal_cliente'])->group(function (): void {
         ->name('portal.cliente.login.store');
 });
 
-Route::post('/', [PortalClienteAuthController::class, 'logout'])
+Route::post('/portal-cliente/logout', [PortalClienteAuthController::class, 'logout'])
     ->name('portal.cliente.logout');
 
 
@@ -75,6 +75,11 @@ Route::middleware(['guest:portal_cliente'])->group(function (): void {
 
 Route::middleware(['auth'])->group(function (): void {
 
+
+    Route::get('/admin/session/keepalive', function () {
+        return response()->json(['ok' => true, 'time' => now()->toIso8601String()]);
+    })->middleware('throttle:60,1')->name('admin.session.keepalive');
+
     Route::post('/admin/portal-cliente/debug-log', function (Request $request) {
         $payload = $request->validate([
             'step' => ['nullable', 'string', 'max:160'],
@@ -95,7 +100,7 @@ Route::middleware(['auth'])->group(function (): void {
             'ack' => ['nullable'],
         ]);
 
-
+        
 
         return response()->json(['ok' => true]);
     })->middleware('throttle:180,1')->name('admin.portal-cliente.debug-log');
@@ -174,7 +179,7 @@ Route::middleware(['auth'])->group(function (): void {
     })->middleware('throttle:120,1')->name('admin.portal-cliente.chat.mensagens-novas');
 
     Route::get('/admin/portal-cliente/mensagem', function () {
-
+        
 
         return redirect('/admin/portal-cliente');
     })->middleware('throttle:60,1')->name('admin.portal-cliente.chat.mensagem.get-redirect');
@@ -183,7 +188,7 @@ Route::middleware(['auth'])->group(function (): void {
         $inicio = microtime(true);
         $empresaId = $request->integer('empresa');
 
-
+        
 
         abort_if(! $empresaId || ! PortalClienteData::usuarioPodeAcessarEmpresa($empresaId), 403);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
@@ -268,7 +273,7 @@ Route::middleware(['auth'])->group(function (): void {
             'attachments' => $anexos->all(),
         ];
 
-
+        
 
         $responsePayload = [
             'ok' => true,
@@ -277,7 +282,7 @@ Route::middleware(['auth'])->group(function (): void {
         ];
 
         if (! $request->expectsJson() && ! $request->ajax()) {
-
+            
 
             return redirect('/admin/portal-cliente')
                 ->with('success', 'Mensagem enviada.');
@@ -401,7 +406,7 @@ Route::post('/admin/auditoria/debug-log', function (\Illuminate\Http\Request $re
         'active_element' => ['nullable', 'array'],
     ]);
 
-
+    
 
     return response()->json(['ok' => true]);
 })->middleware(['auth'])->name('auditoria.debug-log');
