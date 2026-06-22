@@ -6,17 +6,18 @@
   <component name="ChangeListManager">
     <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Permissoes.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Permissoes.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Services/PrazzuPermissionAuditService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/PrazzuPermissionAuditService.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Services/PrazzuPermissionService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/PrazzuPermissionService.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/permissoes-management.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/permissoes-management.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Pages/CreateSugestaoMelhoria.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Pages/CreateSugestaoMelhoria.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Pages/EditSugestaoMelhoria.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Pages/EditSugestaoMelhoria.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Pages/ListSugestaoMelhorias.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Pages/ListSugestaoMelhorias.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Schemas/SugestaoMelhoriaForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Schemas/SugestaoMelhoriaForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/SugestaoMelhoriaResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/SugestaoMelhoriaResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Tables/SugestaoMelhoriasTable.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/SugestaoMelhorias/Tables/SugestaoMelhoriasTable.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Middleware/EnsureAccountingProfileCanAccessFilament.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Middleware/EnsureAccountingProfileCanAccessFilament.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Models/SugestaoMelhoria.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Models/SugestaoMelhoria.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/AccountingProfileNavigation.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AccountingProfileNavigation.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/ProductProfileNavigation.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/ProductProfileNavigation.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/6c/b3/6cb3f104e8a16abe5bba894fcec0024f26ab16ae" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/7VIpikCuLb2yomLtsDKDxK2ffBgujNdyHQGhfilD" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/views/fed3cf4d570c8d3553955dea31f50aeb.php" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/views/fed3cf4d570c8d3553955dea31f50aeb.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/BlOpAL2oIpLd3i3kjbJIzeNKkul6MagA8J18ZWCe" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/BlOpAL2oIpLd3i3kjbJIzeNKkul6MagA8J18ZWCe" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -239,7 +240,7 @@
       <workItem from="1781805145046" duration="5624000" />
       <workItem from="1781867968299" duration="11527000" />
       <workItem from="1782127057560" duration="81000" />
-      <workItem from="1782134842537" duration="359000" />
+      <workItem from="1782134842537" duration="3190000" />
     </task>
     <servers />
   </component>

@@ -36,7 +36,7 @@ class EditSugestaoMelhoria extends EditRecord
             return;
         }
 
-        abort(403, 'Você não tem permissão para acessar esta sugestão.');
+        abort(403, 'Você não tem permissão para acessar esta contribuição.');
     }
 
     protected function mutateFormDataBeforeSave(array $data): array

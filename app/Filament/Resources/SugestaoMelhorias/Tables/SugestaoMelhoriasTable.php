@@ -32,7 +32,7 @@ class SugestaoMelhoriasTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('titulo')
-                    ->label('Sugestão')
+                    ->label('Contribuição')
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::SemiBold)
@@ -45,10 +45,10 @@ class SugestaoMelhoriasTable
                     ->label('Tipo')
                     ->badge()
                     ->formatStateUsing(fn ($state): string => match ($state) {
-                        'bug' => 'Bug',
+                        'bug' => 'Dor ou problema',
                         'melhoria' => 'Melhoria',
-                        'funcionalidade' => 'Nova funcionalidade',
-                        'duvida' => 'Dúvida',
+                        'funcionalidade' => 'Ideia de funcionalidade',
+                        'duvida' => 'Dúvida de uso',
                         'outro' => 'Outro',
                         default => (string) $state,
                     })
@@ -80,10 +80,10 @@ class SugestaoMelhoriasTable
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn ($state): string => match ($state) {
-                        'aberta' => 'Aberta',
+                        'aberta' => 'Recebida',
                         'em_analise' => 'Em análise',
-                        'aceita' => 'Aceita',
-                        'recusada' => 'Recusada',
+                        'aceita' => 'Planejada',
+                        'recusada' => 'Não seguirá agora',
                         'implementada' => 'Implementada',
                         default => (string) $state,
                     })
@@ -112,10 +112,10 @@ class SugestaoMelhoriasTable
                 SelectFilter::make('tipo')
                     ->label('Tipo')
                     ->options([
-                        'bug' => 'Bug',
+                        'bug' => 'Dor ou problema',
                         'melhoria' => 'Melhoria',
-                        'funcionalidade' => 'Nova funcionalidade',
-                        'duvida' => 'Dúvida',
+                        'funcionalidade' => 'Ideia de funcionalidade',
+                        'duvida' => 'Dúvida de uso',
                         'outro' => 'Outro',
                     ]),
 
@@ -130,20 +130,20 @@ class SugestaoMelhoriasTable
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([
-                        'aberta' => 'Aberta',
+                        'aberta' => 'Recebida',
                         'em_analise' => 'Em análise',
-                        'aceita' => 'Aceita',
-                        'recusada' => 'Recusada',
+                        'aceita' => 'Planejada',
+                        'recusada' => 'Não seguirá agora',
                         'implementada' => 'Implementada',
                     ]),
             ], layout: FiltersLayout::AboveContent)
             ->recordActions([
                 Action::make('visualizar')
-                    ->label('Ler proposta')
+                    ->label('Ler contribuição')
                     ->icon('heroicon-o-eye')
                     ->color('info')
                     ->modalHeading(fn (SugestaoMelhoria $record): string => $record->titulo)
-                    ->modalDescription('Detalhes completos da sugestão enviada.')
+                    ->modalDescription('Detalhes completos da contribuição enviada pelo cliente.')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Fechar')
                     ->modalWidth('4xl')
@@ -163,8 +163,8 @@ class SugestaoMelhoriasTable
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
-                        ->modalHeading('Deletar sugestão')
-                        ->modalDescription('Tem certeza que deseja deletar esta sugestão? Esta ação não poderá ser desfeita.'),
+                        ->modalHeading('Deletar contribuição')
+                        ->modalDescription('Tem certeza que deseja deletar esta contribuição? Esta ação não poderá ser desfeita.'),
                 ])
                     ->label('Mais')
                     ->icon('heroicon-m-ellipsis-vertical')
@@ -234,7 +234,7 @@ class SugestaoMelhoriasTable
     </div>
 
     <div class="sugestao-modal__box">
-        <p class="sugestao-modal__box-title">Proposta enviada</p>
+        <p class="sugestao-modal__box-title">Contribuição enviada</p>
         <p class="sugestao-modal__text">{$descricao}</p>
     </div>
 HTML;
@@ -242,7 +242,7 @@ HTML;
         if (filled($record->resposta_admin)) {
             $html .= <<<HTML
     <div class="sugestao-modal__box sugestao-modal__box--answer">
-        <p class="sugestao-modal__box-title">Resposta do super admin</p>
+        <p class="sugestao-modal__box-title">Resposta do Prazzu</p>
         <p class="sugestao-modal__text">{$resposta}</p>
 
         <div class="sugestao-modal__meta">

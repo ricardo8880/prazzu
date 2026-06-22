@@ -24,11 +24,11 @@ class SugestaoMelhoriaResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?string $navigationLabel = 'Relatar Bug / Melhoria';
+    protected static ?string $navigationLabel = 'Central de Evolução';
 
-    protected static ?string $modelLabel = 'Relato de Bug / Melhoria';
+    protected static ?string $modelLabel = 'Contribuição de Evolução';
 
-    protected static ?string $pluralModelLabel = 'Relatos de Bugs / Melhorias';
+    protected static ?string $pluralModelLabel = 'Central de Evolução';
 
     protected static ?int $navigationSort = 60;
 

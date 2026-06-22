@@ -81,6 +81,7 @@ class EnsureAccountingProfileCanAccessFilament
         return [
             'central-aprovacoes' => 'Central de Aprovações',
             'aprovacoes' => 'Central de Aprovações',
+            'indicadores-conta' => 'Indicadores da Conta',
             'dashboard-executivo' => 'Dashboard Executivo',
             'relatorios-exportaveis' => 'Relatórios Exportáveis',
             'relatorios-internos' => 'Relatórios',

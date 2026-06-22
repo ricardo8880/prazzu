@@ -21,7 +21,7 @@ class CreateSugestaoMelhoria extends CreateRecord
 
         if ($user->isSuperAdmin()) {
             Notification::make()
-                ->title('Super admin não cria sugestões nesta área.')
+                ->title('Super admin não envia contribuições nesta área.')
                 ->body('Esta área é exclusiva para feedback enviado pelas empresas.')
                 ->danger()
                 ->send();
@@ -32,7 +32,7 @@ class CreateSugestaoMelhoria extends CreateRecord
         if (! $user->hasEmpresaVinculada()) {
             Notification::make()
                 ->title('Seu usuário não possui empresa vinculada.')
-                ->body('Para enviar uma sugestão, o usuário precisa estar vinculado a uma empresa.')
+                ->body('Para enviar uma contribuição, o usuário precisa estar vinculado a uma empresa.')
                 ->danger()
                 ->send();
 
@@ -66,8 +66,8 @@ class CreateSugestaoMelhoria extends CreateRecord
     protected function afterCreate(): void
     {
         Notification::make()
-            ->title('Sugestão enviada com sucesso.')
-            ->body('Obrigado pelo feedback. O super admin poderá analisar sua sugestão.')
+            ->title('Contribuição enviada com sucesso.')
+            ->body('Obrigado por ajudar a evoluir o Prazzu. Sua contribuição será avaliada por impacto, recorrência e escalabilidade.')
             ->success()
             ->send();
     }

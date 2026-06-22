@@ -58,10 +58,10 @@ class SugestaoMelhoria extends Model
     public function getTipoFormatado(): string
     {
         return match ($this->tipo) {
-            'bug' => 'Bug',
+            'bug' => 'Dor ou problema',
             'melhoria' => 'Melhoria',
-            'funcionalidade' => 'Nova funcionalidade',
-            'duvida' => 'Dúvida',
+            'funcionalidade' => 'Ideia de funcionalidade',
+            'duvida' => 'Dúvida de uso',
             'outro' => 'Outro',
             default => (string) $this->tipo,
         };
@@ -80,10 +80,10 @@ class SugestaoMelhoria extends Model
     public function getStatusFormatado(): string
     {
         return match ($this->status) {
-            'aberta' => 'Aberta',
+            'aberta' => 'Recebida',
             'em_analise' => 'Em análise',
-            'aceita' => 'Aceita',
-            'recusada' => 'Recusada',
+            'aceita' => 'Planejada',
+            'recusada' => 'Não seguirá agora',
             'implementada' => 'Implementada',
             default => (string) $this->status,
         };

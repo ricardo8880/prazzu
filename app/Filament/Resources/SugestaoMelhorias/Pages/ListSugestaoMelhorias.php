@@ -14,7 +14,7 @@ class ListSugestaoMelhorias extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Nova sugestão'),
+                ->label('Enviar contribuição'),
         ];
     }
 }

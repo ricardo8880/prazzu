@@ -15,6 +15,7 @@ class AccountingProfileNavigation
                 'visible_labels' => [
                     'Home',
                     'Dashboard Executivo',
+                    'Indicadores da Conta',
                     'Financeiro',
                     'Cobranças',
                     'Relatórios',
@@ -56,6 +57,7 @@ class AccountingProfileNavigation
                     'Financeiro',
                     'Relatórios',
                     'Dashboard Executivo',
+                    'Indicadores da Conta',
                     'Riscos',
                     'Calendário',
                     'Timeline Operacional',
@@ -278,6 +280,7 @@ class AccountingProfileNavigation
                 'Empresas',
                 'Perfis e Permissões',
                 'Permissões',
+                'Indicadores da Conta',
             ];
         }
 
