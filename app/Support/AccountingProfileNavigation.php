@@ -14,8 +14,8 @@ class AccountingProfileNavigation
                 'hint' => 'Visão estratégica, financeira e de auditoria',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Dashboard Executivo',
-                    'Indicadores da Conta',
                     'Financeiro',
                     'Cobranças',
                     'Relatórios',
@@ -40,6 +40,7 @@ class AccountingProfileNavigation
                 'hint' => 'Gestão da operação, equipe, prazos e aprovações',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Centro Operacional',
                     'Tarefas',
                     'Fluxos Operacionais',
@@ -57,7 +58,6 @@ class AccountingProfileNavigation
                     'Financeiro',
                     'Relatórios',
                     'Dashboard Executivo',
-                    'Indicadores da Conta',
                     'Riscos',
                     'Calendário',
                     'Timeline Operacional',
@@ -76,6 +76,7 @@ class AccountingProfileNavigation
                 'hint' => 'Execução contábil, documentos, clientes e prazos',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Centro Operacional',
                     'Tarefas',
                     'Fluxos Operacionais',
@@ -106,6 +107,7 @@ class AccountingProfileNavigation
                 'hint' => 'Rotina fiscal, documentos, pendências e vencimentos',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Centro Operacional',
                     'Tarefas',
                     'SLA e Prazos',
@@ -130,6 +132,7 @@ class AccountingProfileNavigation
                 'hint' => 'Rotina de DP, documentos, checklists e prazos',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Centro Operacional',
                     'Tarefas',
                     'SLA e Prazos',
@@ -155,6 +158,7 @@ class AccountingProfileNavigation
                 'hint' => 'Atendimento, tarefas simples, documentos e checklist',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Centro Operacional',
                     'Tarefas',
                     'Checklist',
@@ -172,6 +176,7 @@ class AccountingProfileNavigation
                 'hint' => 'Portal, documentos, atendimentos e cobranças',
                 'visible_labels' => [
                     'Home',
+                    'Central de Evolução',
                     'Portal do Cliente',
                     'Atendimentos',
                     'Documentos',
@@ -203,6 +208,8 @@ class AccountingProfileNavigation
         return [
             'Perfis e Permissões' => 'Permissões',
             'Permissões' => 'Perfis e Permissões',
+            'Relatar Bug / Melhoria' => 'Central de Evolução',
+            'Central de Evolução' => 'Central de Evolução',
         ];
     }
 
@@ -258,6 +265,8 @@ class AccountingProfileNavigation
     {
         $aliases = [
             'Permissões' => 'Perfis e Permissões',
+            'Relatar Bug / Melhoria' => 'Central de Evolução',
+            'Central de Evolução' => 'Central de Evolução',
             'Perfis e Permissões' => 'Permissões',
         ];
 
@@ -276,11 +285,11 @@ class AccountingProfileNavigation
         if ($user->isAdmin()) {
             return [
                 'Usuários',
+                'Central de Evolução',
                 'Configurações',
                 'Empresas',
                 'Perfis e Permissões',
                 'Permissões',
-                'Indicadores da Conta',
             ];
         }
 

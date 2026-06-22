@@ -190,19 +190,33 @@ class SugestaoMelhoriasTable
         $resposta = nl2br(e($record->resposta_admin ?? ''));
         $analisador = e($record->analisador?->name ?? '-');
         $analisadoEm = e($record->analisado_em?->format('d/m/Y H:i') ?? '-');
+        $statusKey = e((string) $record->status);
+        $statusHint = e(self::getStatusHint((string) $record->status));
+        $timeline = self::renderStatusTimeline((string) $record->status);
 
         $html = <<<HTML
 <link rel="stylesheet" href="/css/style.css">
 
 <div class="sugestao-modal">
-    <div class="sugestao-modal__grid">
+    <div class="sugestao-modal__hero">
+        <div>
+            <p class="sugestao-modal__eyebrow">Central de Evolução</p>
+            <h3 class="sugestao-modal__title">{$status}</h3>
+            <p class="sugestao-modal__subtitle">{$statusHint}</p>
+        </div>
+        <span class="sugestao-modal__status-pill sugestao-modal__status-pill--{$statusKey}">{$status}</span>
+    </div>
+
+    {$timeline}
+
+    <div class="sugestao-modal__grid sugestao-modal__grid--compact">
         <div class="sugestao-modal__card">
             <p class="sugestao-modal__label">Empresa</p>
             <p class="sugestao-modal__value">{$empresa}</p>
         </div>
 
         <div class="sugestao-modal__card">
-            <p class="sugestao-modal__label">Usuário</p>
+            <p class="sugestao-modal__label">Enviado por</p>
             <p class="sugestao-modal__value">{$usuario}</p>
         </div>
 
@@ -214,16 +228,9 @@ class SugestaoMelhoriasTable
         </div>
 
         <div class="sugestao-modal__card">
-            <p class="sugestao-modal__label">Prioridade</p>
+            <p class="sugestao-modal__label">Impacto informado</p>
             <p class="sugestao-modal__value">
                 <span class="sugestao-modal__badge sugestao-modal__badge--prioridade">{$prioridade}</span>
-            </p>
-        </div>
-
-        <div class="sugestao-modal__card">
-            <p class="sugestao-modal__label">Status</p>
-            <p class="sugestao-modal__value">
-                <span class="sugestao-modal__badge sugestao-modal__badge--status">{$status}</span>
             </p>
         </div>
 
@@ -233,8 +240,8 @@ class SugestaoMelhoriasTable
         </div>
     </div>
 
-    <div class="sugestao-modal__box">
-        <p class="sugestao-modal__box-title">Contribuição enviada</p>
+    <div class="sugestao-modal__box sugestao-modal__box--main">
+        <p class="sugestao-modal__box-title">O que foi compartilhado</p>
         <p class="sugestao-modal__text">{$descricao}</p>
     </div>
 HTML;
@@ -246,8 +253,15 @@ HTML;
         <p class="sugestao-modal__text">{$resposta}</p>
 
         <div class="sugestao-modal__meta">
-            Respondido por <strong>{$analisador}</strong> em <strong>{$analisadoEm}</strong>.
+            Atualizado por <strong>{$analisador}</strong> em <strong>{$analisadoEm}</strong>.
         </div>
+    </div>
+HTML;
+        } else {
+            $html .= <<<HTML
+    <div class="sugestao-modal__box sugestao-modal__box--empty-answer">
+        <p class="sugestao-modal__box-title">Acompanhamento</p>
+        <p class="sugestao-modal__text">Sua contribuição foi recebida. Quando houver uma decisão ou resposta da equipe do Prazzu, ela aparecerá aqui.</p>
     </div>
 HTML;
         }
@@ -255,5 +269,62 @@ HTML;
         $html .= '</div>';
 
         return $html;
+    }
+
+
+    protected static function renderStatusTimeline(string $status): string
+    {
+        if ($status === 'recusada') {
+            return <<<HTML
+    <div class="sugestao-modal__timeline" aria-label="Status da evolução">
+        <div class="sugestao-modal__step sugestao-modal__step--done">Recebida</div>
+        <div class="sugestao-modal__step sugestao-modal__step--done">Analisada</div>
+        <div class="sugestao-modal__step sugestao-modal__step--blocked">Não seguirá agora</div>
+    </div>
+HTML;
+        }
+
+        $steps = [
+            'aberta' => 'Recebida',
+            'em_analise' => 'Em análise',
+            'aceita' => 'Planejada',
+            'implementada' => 'Implementada',
+        ];
+
+        $order = array_keys($steps);
+        $currentIndex = array_search($status, $order, true);
+
+        if ($currentIndex === false) {
+            $currentIndex = 0;
+        }
+
+        $items = '';
+
+        foreach ($steps as $key => $label) {
+            $index = array_search($key, $order, true);
+            $class = 'sugestao-modal__step';
+
+            if ($index < $currentIndex) {
+                $class .= ' sugestao-modal__step--done';
+            } elseif ($index === $currentIndex) {
+                $class .= ' sugestao-modal__step--active';
+            }
+
+            $items .= '<div class="'.$class.'">'.e($label).'</div>';
+        }
+
+        return '<div class="sugestao-modal__timeline" aria-label="Status da evolução">'.$items.'</div>';
+    }
+
+    protected static function getStatusHint(string $status): string
+    {
+        return match ($status) {
+            'aberta' => 'Sua contribuição foi recebida e entrou na fila de análise do produto.',
+            'em_analise' => 'A equipe está avaliando impacto, recorrência e possibilidade de uma solução escalável.',
+            'aceita' => 'A contribuição foi considerada relevante e entrou no radar de evolução.',
+            'recusada' => 'A ideia foi analisada, mas não seguirá neste momento por prioridade, escopo ou escalabilidade.',
+            'implementada' => 'Essa evolução já foi implementada ou resolvida no Prazzu.',
+            default => 'Acompanhe aqui o andamento desta contribuição.',
+        };
     }
 }

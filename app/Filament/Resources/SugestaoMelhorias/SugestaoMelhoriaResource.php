@@ -44,13 +44,7 @@ class SugestaoMelhoriaResource extends Resource
 
     public static function canCreate(): bool
     {
-        $user = Filament::auth()->user();
-
-        if (! $user) {
-            return false;
-        }
-
-        return ! $user->isSuperAdmin();
+        return Filament::auth()->check();
     }
 
     public static function canDelete($record): bool

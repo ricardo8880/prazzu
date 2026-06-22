@@ -14,7 +14,9 @@ class ListSugestaoMelhorias extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Enviar contribuição'),
+                ->label('Enviar contribuição')
+                ->icon('heroicon-o-plus-circle')
+                ->color('primary'),
         ];
     }
 }
