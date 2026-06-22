@@ -118,7 +118,8 @@ class SugestaoMelhoriaForm
                             ->dehydrated(fn (): bool => self::isAdminReviewForm())
                             ->columnSpanFull(),
                     ])
-                    ->columns(['default' => 1, 'lg' => 2]),
+                    ->columns(['default' => 1, 'lg' => 2])
+                    ->columnSpanFull(),
             ]);
     }
 
