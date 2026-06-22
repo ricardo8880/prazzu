@@ -57,32 +57,12 @@ class PrazzuPermissionAuditService
         }
 
         $rows = [];
-        $roleNames = CachedSchema::hasTable('prazzu_user_roles')
-            ? PrazzuUserRole::query()->with('role')->where('user_id', $user->id)->get()->pluck('role.name')->filter()->implode(', ')
-            : '';
 
         foreach ($permissionService->defaultPermissionMatrix() as $module => $actions) {
             foreach ($actions as $action) {
-                $override = CachedSchema::hasTable('prazzu_user_permissions')
-                    ? PrazzuUserPermission::query()
-                        ->where('user_id', $user->id)
-                        ->where('module', $module)
-                        ->where('action', $action)
-                        ->whereIn('scope', ['empresa', 'all'])
-                        ->orderByRaw("FIELD(scope, 'empresa', 'all')")
-                        ->first()
-                    : null;
-
-                $allowed = $permissionService->can($user, $module . '.' . $action);
-
-                $rows[] = [
-                    'module' => $module,
-                    'action' => $action,
-                    'allowed' => $allowed,
-                    'source' => $override ? 'Exceção individual' : ($roleNames ? 'Perfil' : 'Fallback'),
-                    'roles' => $roleNames ?: '-',
-                    'override' => $override,
-                ];
+                foreach (array_keys(PrazzuPermissionService::SCOPES) as $scope) {
+                    $rows[] = $permissionService->effectivePermissionDetails($user, $module, $action, $scope);
+                }
             }
         }
 

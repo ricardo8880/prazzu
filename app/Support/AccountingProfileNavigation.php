@@ -27,6 +27,7 @@ class AccountingProfileNavigation
                     'Calendário',
                     'Usuários',
                     'Configurações',
+                    'Perfis e Permissões',
                 ],
                 'aliases' => [
                     'Dashboard' => 'Dashboard Executivo',
@@ -189,10 +190,18 @@ class AccountingProfileNavigation
                 'label' => $profile['label'],
                 'hint' => $profile['hint'],
                 'visibleLabels' => $profile['visible_labels'],
-                'aliases' => $profile['aliases'] ?? [],
+                'aliases' => array_merge(self::globalAliases(), $profile['aliases'] ?? []),
                 'visibleCount' => count($profile['visible_labels']),
             ])
             ->all();
+    }
+
+    private static function globalAliases(): array
+    {
+        return [
+            'Perfis e Permissões' => 'Permissões',
+            'Permissões' => 'Perfis e Permissões',
+        ];
     }
 
     public static function currentProfileKey(?User $user): ?string
@@ -232,7 +241,28 @@ class AccountingProfileNavigation
             return true;
         }
 
-        return in_array($label, self::allowedLabelsFor($user), true);
+        $allowedLabels = self::allowedLabelsFor($user);
+
+        foreach (self::labelVariants($label) as $variant) {
+            if (in_array($variant, $allowedLabels, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function labelVariants(string $label): array
+    {
+        $aliases = [
+            'Permissões' => 'Perfis e Permissões',
+            'Perfis e Permissões' => 'Permissões',
+        ];
+
+        return array_values(array_unique(array_filter([
+            $label,
+            $aliases[$label] ?? null,
+        ])));
     }
 
     public static function administrativeLabelsFor(?User $user): array
@@ -246,6 +276,7 @@ class AccountingProfileNavigation
                 'Usuários',
                 'Configurações',
                 'Empresas',
+                'Perfis e Permissões',
                 'Permissões',
             ];
         }

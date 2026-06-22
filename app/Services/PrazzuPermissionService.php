@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\PrazzuPermission;
 use App\Models\PrazzuPermissionRule;
-use App\Models\PrazzuRole;
 use App\Models\PrazzuUserPermission;
 use App\Models\User;
 use App\Support\CachedSchema;
@@ -39,6 +38,22 @@ class PrazzuPermissionService
         'reassign' => 'Reatribuir',
     ];
 
+    public const SCOPES = [
+        'empresa' => 'Empresa',
+        'proprio' => 'Próprio usuário',
+        'equipe' => 'Equipe',
+        'all' => 'Global',
+    ];
+
+    /**
+     * Permissões legadas/técnicas que existem no banco e podem ser consultadas pelo backend,
+     * mas não fazem parte da matriz editável da tela Perfis e Permissões.
+     */
+    public const UNMANAGED_PERMISSIONS = [
+        'seguranca' => ['visibility'],
+        'workflow' => ['manage_tags_status'],
+    ];
+
     public function can(?User $user, string $permission, string $scope = 'empresa'): bool
     {
         if (! $user) {
@@ -50,14 +65,13 @@ class PrazzuPermissionService
         }
 
         [$module, $action] = $this->splitPermission($permission);
-
-        if ($module === '' || $action === '') {
-            return false;
-        }
-
-        $module = $this->normalize($module);
+        $module = $this->normalizeModule($module);
         $action = $this->normalizeAction($action);
         $scope = $this->normalizeScope($scope);
+
+        if (! $this->isKnownPermission($module, $action) || ! $this->isValidScope($scope)) {
+            return false;
+        }
 
         if (! CachedSchema::hasTable('prazzu_permissions')) {
             return $this->fallbackCan($user, $module, $action);
@@ -84,7 +98,6 @@ class PrazzuPermissionService
         });
     }
 
-
     public function canAny(?User $user, array $permissions, string $scope = 'empresa'): bool
     {
         foreach ($permissions as $permission) {
@@ -100,10 +113,9 @@ class PrazzuPermissionService
     {
         $userId = $user instanceof User ? $user->id : $user;
 
-        foreach (array_keys(self::MODULES) as $module) {
-            foreach (array_keys(self::ACTIONS) as $action) {
-                Cache::forget(sprintf('prazzu_permission:%s:%s:%s:%s', $userId, $module, $action, 'empresa'));
-                Cache::forget(sprintf('prazzu_permission:%s:%s:%s:%s', $userId, $module, $action, 'all'));
+        foreach ($this->allKnownPermissionPairs() as [$module, $action]) {
+            foreach (array_keys(self::SCOPES) as $scope) {
+                Cache::forget(sprintf('prazzu_permission:%s:%s:%s:%s', $userId, $module, $action, $scope));
             }
         }
     }
@@ -124,6 +136,112 @@ class PrazzuPermissionService
         ];
     }
 
+    public function matrixActionsForModule(string $module): array
+    {
+        return $this->defaultPermissionMatrix()[$this->normalizeModule($module)] ?? [];
+    }
+
+    public function isMatrixPermission(string $module, string $action): bool
+    {
+        $module = $this->normalizeModule($module);
+        $action = $this->normalizeAction($action);
+
+        return in_array($action, $this->defaultPermissionMatrix()[$module] ?? [], true);
+    }
+
+    public function isKnownPermission(string $module, string $action): bool
+    {
+        $module = $this->normalizeModule($module);
+        $action = $this->normalizeAction($action);
+
+        return $this->isMatrixPermission($module, $action)
+            || in_array($action, self::UNMANAGED_PERMISSIONS[$module] ?? [], true);
+    }
+
+    public function isValidScope(string $scope): bool
+    {
+        return array_key_exists($this->normalizeScope($scope), self::SCOPES);
+    }
+
+    public function normalizeModule(string $module): string
+    {
+        return $this->normalize($module);
+    }
+
+    public function normalizeAction(string $action): string
+    {
+        $action = $this->normalize($action);
+
+        return match ($action) {
+            'update', 'editar' => 'edit',
+            'visualizar', 'ver' => 'view',
+            'criar' => 'create',
+            'excluir', 'destroy' => 'delete',
+            'aprovar' => 'approve',
+            'cancelar' => 'cancel',
+            'responder' => 'reply',
+            'encerrar' => 'close',
+            'exportar' => 'export',
+            'reatribuir' => 'reassign',
+            default => $action,
+        };
+    }
+
+    public function normalizeScope(string $scope): string
+    {
+        $scope = $this->normalize($scope ?: 'empresa');
+
+        return match ($scope) {
+            'global', 'todos', 'all' => 'all',
+            'proprio_usuario', 'proprio' => 'proprio',
+            'time', 'equipe' => 'equipe',
+            default => $scope ?: 'empresa',
+        };
+    }
+
+    public function effectivePermissionDetails(User $user, string $module, string $action, string $scope = 'empresa'): array
+    {
+        $module = $this->normalizeModule($module);
+        $action = $this->normalizeAction($action);
+        $scope = $this->normalizeScope($scope);
+        $roles = $this->roleNamesForUser($user);
+        $override = $this->directUserPermissionRecord($user, $module, $action, $scope);
+        $allowed = $this->can($user, $module . '.' . $action, $scope);
+
+        if ($override) {
+            $source = 'Exceção individual';
+        } elseif ($this->hasRolePermission($user, $module, $action, $scope)) {
+            $source = 'Perfil';
+        } elseif ($this->hasRulePermission($user, $module, $action)) {
+            $source = 'Regra antiga';
+        } else {
+            $source = 'Fallback';
+        }
+
+        return [
+            'module' => $module,
+            'action' => $action,
+            'scope' => $scope,
+            'allowed' => $allowed,
+            'source' => $source,
+            'roles' => $roles ?: '-',
+            'override' => $override,
+        ];
+    }
+
+    private function allKnownPermissionPairs(): array
+    {
+        $pairs = [];
+
+        foreach ($this->defaultPermissionMatrix() + self::UNMANAGED_PERMISSIONS as $module => $actions) {
+            foreach ($actions as $action) {
+                $pairs[] = [$module, $action];
+            }
+        }
+
+        return $pairs;
+    }
+
     private function splitPermission(string $permission): array
     {
         if (str_contains($permission, '.')) {
@@ -139,32 +257,39 @@ class PrazzuPermissionService
 
     private function directUserPermission(User $user, string $module, string $action, string $scope): ?bool
     {
-        if (! CachedSchema::hasTable('prazzu_user_permissions')) {
-            return null;
-        }
-
-        $query = PrazzuUserPermission::query()
-            ->where('user_id', $user->id)
-            ->where('module', $module)
-            ->where('action', $action)
-            ->whereIn('scope', array_unique([$scope, 'all', 'empresa']))
-            ->orderByRaw("FIELD(scope, ?, 'all', 'empresa')", [$scope]);
-
-        $record = $query->first();
+        $record = $this->directUserPermissionRecord($user, $module, $action, $scope);
 
         return $record ? (bool) $record->allowed : null;
     }
 
+    private function directUserPermissionRecord(User $user, string $module, string $action, string $scope): ?PrazzuUserPermission
+    {
+        if (! CachedSchema::hasTable('prazzu_user_permissions')) {
+            return null;
+        }
+
+        $scopes = $this->scopeFallbacks($scope);
+        $orderSql = $this->scopeOrderSql($scopes);
+
+        return PrazzuUserPermission::query()
+            ->where('user_id', $user->id)
+            ->where('module', $module)
+            ->where('action', $action)
+            ->whereIn('scope', $scopes)
+            ->orderByRaw($orderSql)
+            ->first();
+    }
+
     private function hasRolePermission(User $user, string $module, string $action, string $scope): bool
     {
-        if (! CachedSchema::hasTable('prazzu_user_roles') || ! CachedSchema::hasTable('prazzu_roles')) {
+        if (! CachedSchema::hasTable('prazzu_user_roles') || ! CachedSchema::hasTable('prazzu_roles') || ! CachedSchema::hasTable('prazzu_permissions')) {
             return false;
         }
 
         return PrazzuPermission::query()
             ->where('module', $module)
             ->where('action', $action)
-            ->whereIn('scope', array_unique([$scope, 'all', 'empresa']))
+            ->whereIn('scope', $this->scopeFallbacks($scope))
             ->whereHas('role', fn ($query) => $query->where('active', true))
             ->whereHas('role.userRoles', fn ($query) => $query->where('user_id', $user->id))
             ->exists();
@@ -222,6 +347,43 @@ class PrazzuPermissionService
         return false;
     }
 
+    private function roleNamesForUser(User $user): string
+    {
+        if (! CachedSchema::hasTable('prazzu_user_roles')) {
+            return '';
+        }
+
+        return \App\Models\PrazzuUserRole::query()
+            ->with('role')
+            ->where('user_id', $user->id)
+            ->get()
+            ->pluck('role.name')
+            ->filter()
+            ->implode(', ');
+    }
+
+    private function scopeFallbacks(string $scope): array
+    {
+        $scope = $this->normalizeScope($scope);
+
+        return match ($scope) {
+            'empresa' => ['empresa', 'all'],
+            'all' => ['all', 'empresa'],
+            default => [$scope, 'all', 'empresa'],
+        };
+    }
+
+    private function scopeOrderSql(array $scopes): string
+    {
+        $cases = [];
+
+        foreach (array_values($scopes) as $index => $scope) {
+            $cases[] = "WHEN '" . str_replace("'", "''", $scope) . "' THEN " . $index;
+        }
+
+        return 'CASE scope ' . implode(' ', $cases) . ' ELSE 99 END';
+    }
+
     private function normalize(string $value): string
     {
         return Str::of($value)->ascii()->lower()->replace([' ', '-'], '_')->squish()->toString();
@@ -230,25 +392,5 @@ class PrazzuPermissionService
     private function normalizeRole(string $value): string
     {
         return $this->normalize($value);
-    }
-
-    private function normalizeAction(string $action): string
-    {
-        $action = $this->normalize($action);
-
-        return match ($action) {
-            'update', 'editar' => 'edit',
-            'visualizar', 'ver' => 'view',
-            'criar' => 'create',
-            'excluir', 'destroy' => 'delete',
-            'aprovar' => 'approve',
-            'cancelar' => 'cancel',
-            default => $action,
-        };
-    }
-
-    private function normalizeScope(string $scope): string
-    {
-        return $this->normalize($scope ?: 'empresa');
     }
 }

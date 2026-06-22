@@ -14,10 +14,11 @@ use App\Services\PrazzuPermissionAuditService;
 use App\Services\PrazzuPermissionService;
 use App\Support\CachedSchema;
 use BackedEnum;
+use Filament\Navigation\NavigationItem;
 use Filament\Notifications\Notification;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use UnitEnum;
@@ -30,6 +31,7 @@ class Permissoes extends Page
     protected static ?string $navigationLabel = 'Perfis e Permissões';
     protected static ?string $title = 'Perfis e Permissões';
     protected static ?int $navigationSort = 95;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.permissoes-management';
 
@@ -57,22 +59,102 @@ class Permissoes extends Page
     public string $overrideReason = '';
     public array $rolePermissions = [];
     public string $auditFilter = 'all';
+    public string $activeTab = 'perfis';
+    public string $roleSearch = '';
+    public string $userSearch = '';
+    public string $matrixModuleFilter = 'all';
+    public string $auditEventFilter = 'all';
 
     public function mount(): void
     {
-        $this->ensureTablesReady();
+        $this->activeTab = $this->normalizeTab((string) request()->query('tab', $this->activeTab));
+
+        if (! $this->ensureTablesReady()) {
+            return;
+        }
+
         $this->seedStarterRolesIfEmpty();
 
-        $this->selectedRoleId = PrazzuRole::query()->orderBy('name')->value('id');
-        $this->selectedUserId = User::query()->orderBy('name')->value('id');
+        $this->selectedRoleId = PrazzuRole::query()->orderByDesc('active')->orderBy('name')->value('id');
+        $this->selectedUserId = $this->manageableUsersQuery()->orderBy('name')->value('id');
         $this->assignRoleId = $this->selectedRoleId;
-        $this->hydrateRolePermissions(app(PrazzuPermissionService::class));
+        $this->loadRolePermissions(app(PrazzuPermissionService::class));
+    }
+
+    private function normalizeTab(string $tab): string
+    {
+        return in_array($tab, ['perfis', 'matriz', 'usuarios', 'excecoes', 'relatorio', 'auditoria'], true)
+            ? $tab
+            : 'perfis';
     }
 
     public function updatedSelectedRoleId(): void
     {
         $this->assignRoleId = $this->selectedRoleId;
-        $this->hydrateRolePermissions(app(PrazzuPermissionService::class));
+        $this->loadRolePermissions(app(PrazzuPermissionService::class));
+    }
+
+    public function updatedOverrideModule(): void
+    {
+        $actions = app(PrazzuPermissionService::class)->matrixActionsForModule($this->overrideModule);
+
+        if (! in_array($this->overrideAction, $actions, true)) {
+            $this->overrideAction = $actions[0] ?? 'view';
+        }
+    }
+
+    public function setActiveTab(string $tab): void
+    {
+        $this->activeTab = $this->normalizeTab($tab);
+    }
+
+    public function getSubNavigation(): array
+    {
+        return collect($this->permissionTabs())
+            ->map(fn (array $item): NavigationItem => NavigationItem::make($item['label'])
+                ->icon($item['icon'])
+                ->url(static::getUrl(['tab' => $item['key']]))
+                ->isActiveWhen(fn (): bool => $this->activeTab === $item['key'])
+                ->sort($item['sort']))
+            ->all();
+    }
+
+    private function permissionTabs(): array
+    {
+        return [
+            ['key' => 'perfis', 'label' => 'Perfis', 'icon' => 'heroicon-o-identification', 'sort' => 1],
+            ['key' => 'matriz', 'label' => 'Matriz', 'icon' => 'heroicon-o-squares-2x2', 'sort' => 2],
+            ['key' => 'usuarios', 'label' => 'Usuários', 'icon' => 'heroicon-o-users', 'sort' => 3],
+            ['key' => 'excecoes', 'label' => 'Exceções', 'icon' => 'heroicon-o-adjustments-horizontal', 'sort' => 4],
+            ['key' => 'relatorio', 'label' => 'Relatório efetivo', 'icon' => 'heroicon-o-chart-bar-square', 'sort' => 5],
+            ['key' => 'auditoria', 'label' => 'Auditoria', 'icon' => 'heroicon-o-clock', 'sort' => 6],
+        ];
+    }
+
+    public function applyMatrixPreset(string $preset, ?string $module = null): void
+    {
+        if (! $this->ensureCanDo('governanca.edit')) {
+            return;
+        }
+
+        $permissionService = app(PrazzuPermissionService::class);
+        $matrix = $permissionService->defaultPermissionMatrix();
+        $targetModules = $module && isset($matrix[$module]) ? [$module => $matrix[$module]] : $matrix;
+
+        foreach ($targetModules as $moduleKey => $availableActions) {
+            foreach ($availableActions as $actionKey) {
+                $this->rolePermissions[$moduleKey][$actionKey] = match ($preset) {
+                    'all' => true,
+                    'read' => $actionKey === 'view',
+                    'operational' => in_array($actionKey, ['view', 'create', 'edit', 'respond', 'export'], true),
+                    'manager' => in_array($actionKey, ['view', 'create', 'edit', 'approve', 'cancel', 'respond', 'close', 'export', 'reassign'], true),
+                    'clear' => false,
+                    default => (bool) data_get($this->rolePermissions, $moduleKey . '.' . $actionKey, false),
+                };
+            }
+        }
+
+        Notification::make()->title('Atalho aplicado. Clique em Salvar matriz para confirmar.')->success()->send();
     }
 
     public function createRole(): void
@@ -112,7 +194,7 @@ class Permissoes extends Page
         $this->roleActive = true;
         $this->selectedRoleId = (int) $role->id;
         $this->assignRoleId = (int) $role->id;
-        $this->hydrateRolePermissions(app(PrazzuPermissionService::class));
+        $this->loadRolePermissions(app(PrazzuPermissionService::class));
         $this->forgetPermissionCache();
 
         Notification::make()->title('Perfil salvo. Agora configure a matriz de permissões.')->success()->send();
@@ -197,7 +279,11 @@ class Permissoes extends Page
         }
 
         $before = $role->only(['active']);
-        $role->update(['active' => ! $role->active]);
+        $role->forceFill(['active' => ! (bool) $role->active])->save();
+        $role->refresh();
+
+        $this->selectedRoleId = (int) $role->id;
+        $this->assignRoleId = (int) $role->id;
 
         app(PrazzuPermissionAuditService::class)->record('role.status.updated', [
             'role_id' => $role->id,
@@ -208,7 +294,10 @@ class Permissoes extends Page
 
         $this->forgetPermissionCache();
 
-        Notification::make()->title('Status do perfil atualizado.')->success()->send();
+        Notification::make()
+            ->title($role->active ? 'Perfil ativado.' : 'Perfil desativado.')
+            ->success()
+            ->send();
     }
 
     public function assignRoleToUser(): void
@@ -219,6 +308,11 @@ class Permissoes extends Page
 
         if (! $this->selectedUserId || ! $this->assignRoleId || ! CachedSchema::hasTable('prazzu_user_roles')) {
             Notification::make()->title('Selecione usuário e perfil.')->warning()->send();
+            return;
+        }
+
+        if (! $this->canManageUserId((int) $this->selectedUserId)) {
+            Notification::make()->title('Usuário não pertence à sua empresa.')->danger()->send();
             return;
         }
 
@@ -245,7 +339,12 @@ class Permissoes extends Page
             return;
         }
 
-        $record = PrazzuUserRole::query()->find($userRoleId);
+        $record = PrazzuUserRole::query()->with('user')->find($userRoleId);
+
+        if ($record && ! $this->canManageUserId((int) $record->user_id)) {
+            Notification::make()->title('Você não pode alterar usuário de outra empresa.')->danger()->send();
+            return;
+        }
         $userId = $record?->user_id;
         $before = $record?->only(['user_id', 'role_id']);
         $roleId = $record?->role_id;
@@ -278,11 +377,31 @@ class Permissoes extends Page
             return;
         }
 
+        if (! $this->canManageUserId((int) $this->selectedUserId)) {
+            Notification::make()->title('Usuário não pertence à sua empresa.')->danger()->send();
+            return;
+        }
+
+        $permissionService = app(PrazzuPermissionService::class);
+        $module = $permissionService->normalizeModule($this->overrideModule);
+        $action = $permissionService->normalizeAction($this->overrideAction);
+        $scope = $permissionService->normalizeScope($this->overrideScope ?: 'empresa');
+
+        if (! $permissionService->isMatrixPermission($module, $action)) {
+            Notification::make()->title('Permissão inválida para a matriz atual.')->body('Escolha uma ação disponível para o módulo selecionado.')->danger()->send();
+            return;
+        }
+
+        if (! $permissionService->isValidScope($scope)) {
+            Notification::make()->title('Escopo inválido.')->body('Escolha Empresa, Próprio usuário, Equipe ou Global.')->danger()->send();
+            return;
+        }
+
         $lookup = [
             'user_id' => $this->selectedUserId,
-            'module' => $this->overrideModule,
-            'action' => $this->overrideAction,
-            'scope' => $this->overrideScope ?: 'empresa',
+            'module' => $module,
+            'action' => $action,
+            'scope' => $scope,
         ];
 
         $before = PrazzuUserPermission::query()->where($lookup)->first()?->toArray();
@@ -298,9 +417,9 @@ class Permissoes extends Page
 
         app(PrazzuPermissionAuditService::class)->record('user.override.saved', [
             'target_user_id' => $this->selectedUserId,
-            'module' => $this->overrideModule,
-            'action' => $this->overrideAction,
-            'scope' => $this->overrideScope ?: 'empresa',
+            'module' => $module,
+            'action' => $action,
+            'scope' => $scope,
             'allowed' => $this->overrideAllowed,
             'reason' => trim($this->overrideReason) ?: 'Exceção individual salva.',
             'before_payload' => $before,
@@ -308,7 +427,7 @@ class Permissoes extends Page
         ]);
 
         $this->overrideReason = '';
-        app(PrazzuPermissionService::class)->flushUserCache((int) $this->selectedUserId);
+        $permissionService->flushUserCache((int) $this->selectedUserId);
 
         Notification::make()->title('Exceção individual salva.')->success()->send();
     }
@@ -320,6 +439,11 @@ class Permissoes extends Page
         }
 
         $record = PrazzuUserPermission::query()->find($overrideId);
+
+        if ($record && ! $this->canManageUserId((int) $record->user_id)) {
+            Notification::make()->title('Você não pode alterar usuário de outra empresa.')->danger()->send();
+            return;
+        }
         $userId = $record?->user_id;
         $before = $record?->toArray();
         $record?->delete();
@@ -348,16 +472,23 @@ class Permissoes extends Page
         $permissionService = app(PrazzuPermissionService::class);
         $auditService = app(PrazzuPermissionAuditService::class);
         $selectedRole = $this->selectedRoleId ? PrazzuRole::query()->find($this->selectedRoleId) : null;
-        $selectedUser = $this->selectedUserId ? User::query()->find($this->selectedUserId) : null;
+        $selectedUser = $this->selectedUserId ? $this->manageableUsersQuery()->find($this->selectedUserId) : null;
+
+        if ($this->selectedUserId && ! $selectedUser) {
+            $this->selectedUserId = $this->manageableUsersQuery()->orderBy('name')->value('id');
+            $selectedUser = $this->selectedUserId ? $this->manageableUsersQuery()->find($this->selectedUserId) : null;
+        }
 
         return [
             'permissions' => $this->permissionFlags('governanca'),
-            'roles' => CachedSchema::hasTable('prazzu_roles') ? PrazzuRole::query()->orderByDesc('active')->orderBy('name')->get() : collect(),
-            'users' => User::query()->orderBy('name')->limit(200)->get(),
+            'roles' => $this->filteredRoles(),
+            'users' => $this->filteredUsers(),
             'selectedRole' => $selectedRole,
             'selectedUser' => $selectedUser,
             'modules' => PrazzuPermissionService::MODULES,
             'actions' => PrazzuPermissionService::ACTIONS,
+            'scopeLabels' => PrazzuPermissionService::SCOPES,
+            'overrideActions' => $permissionService->matrixActionsForModule($this->overrideModule),
             'matrix' => $permissionService->defaultPermissionMatrix(),
             'roleStats' => $this->roleStats($permissionService),
             'userRoles' => $selectedUser && CachedSchema::hasTable('prazzu_user_roles')
@@ -367,15 +498,86 @@ class Permissoes extends Page
                 ? PrazzuUserPermission::query()->where('user_id', $selectedUser->id)->orderBy('module')->orderBy('action')->get()
                 : collect(),
             'effectivePermissions' => $auditService->userEffectivePermissions($selectedUser, $permissionService),
-            'permissionAudits' => $auditService->recent(40),
+            'permissionAudits' => $this->filteredAudits($auditService),
             'legacyRules' => CachedSchema::hasTable('prazzu_permission_rules')
                 ? PrazzuPermissionRule::query()->orderBy('role')->orderBy('module')->get()
                 : collect(),
             'readiness' => $this->readiness(),
+            'visibleMatrix' => $this->visibleMatrix($permissionService),
+            'tabCounts' => $this->tabCounts($selectedUser),
         ];
     }
 
-    private function hydrateRolePermissions(PrazzuPermissionService $permissionService): void
+    private function filteredRoles()
+    {
+        if (! CachedSchema::hasTable('prazzu_roles')) {
+            return collect();
+        }
+
+        return PrazzuRole::query()
+            ->when(trim($this->roleSearch) !== '', function ($query): void {
+                $search = '%' . trim($this->roleSearch) . '%';
+                $query->where(function ($searchQuery) use ($search): void {
+                    $searchQuery->where('name', 'like', $search)
+                        ->orWhere('description', 'like', $search);
+                });
+            })
+            ->orderByDesc('active')
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function filteredUsers()
+    {
+        return $this->manageableUsersQuery()
+            ->when(trim($this->userSearch) !== '', function ($query): void {
+                $search = '%' . trim($this->userSearch) . '%';
+                $query->where(function ($searchQuery) use ($search): void {
+                    $searchQuery->where('name', 'like', $search)
+                        ->orWhere('email', 'like', $search);
+                });
+            })
+            ->orderBy('name')
+            ->limit(200)
+            ->get();
+    }
+
+    private function filteredAudits(PrazzuPermissionAuditService $auditService)
+    {
+        $audits = $auditService->recent(80);
+
+        if ($this->auditEventFilter === 'all') {
+            return $audits->take(40);
+        }
+
+        return $audits->filter(fn ($audit) => str_starts_with((string) $audit->event, $this->auditEventFilter))->take(40);
+    }
+
+    private function visibleMatrix(PrazzuPermissionService $permissionService): array
+    {
+        $matrix = $permissionService->defaultPermissionMatrix();
+
+        if ($this->matrixModuleFilter !== 'all' && isset($matrix[$this->matrixModuleFilter])) {
+            return [$this->matrixModuleFilter => $matrix[$this->matrixModuleFilter]];
+        }
+
+        return $matrix;
+    }
+
+    private function tabCounts($selectedUser): array
+    {
+        return [
+            'roles' => CachedSchema::hasTable('prazzu_roles') ? PrazzuRole::query()->count() : 0,
+            'userRoles' => $selectedUser && CachedSchema::hasTable('prazzu_user_roles')
+                ? PrazzuUserRole::query()->where('user_id', $selectedUser->id)->count()
+                : 0,
+            'overrides' => $selectedUser && CachedSchema::hasTable('prazzu_user_permissions')
+                ? PrazzuUserPermission::query()->where('user_id', $selectedUser->id)->count()
+                : 0,
+        ];
+    }
+
+    private function loadRolePermissions(PrazzuPermissionService $permissionService): void
     {
         $permissions = [];
 
@@ -438,7 +640,17 @@ class Permissoes extends Page
                 }
             }
 
-            $active = PrazzuPermission::query()->where('role_id', $role->id)->where('scope', 'empresa')->count();
+            $active = PrazzuPermission::query()
+                ->where('role_id', $role->id)
+                ->where('scope', 'empresa')
+                ->where(function ($query) use ($permissionService): void {
+                    foreach ($permissionService->defaultPermissionMatrix() as $module => $actions) {
+                        $query->orWhere(function ($moduleQuery) use ($module, $actions): void {
+                            $moduleQuery->where('module', $module)->whereIn('action', $actions);
+                        });
+                    }
+                })
+                ->count();
 
             $stats[$role->id] = [
                 'active' => $active,
@@ -477,18 +689,53 @@ class Permissoes extends Page
 
     private function forgetPermissionCache(): void
     {
-        Cache::flush();
+        foreach ($this->manageableUsersQuery()->pluck('id') as $userId) {
+            app(PrazzuPermissionService::class)->flushUserCache((int) $userId);
+        }
     }
 
-    private function ensureTablesReady(): void
+    private function ensureTablesReady(): bool
     {
-        if (! CachedSchema::hasTable('prazzu_roles') || ! CachedSchema::hasTable('prazzu_permissions')) {
+        $ready = CachedSchema::hasTable('prazzu_roles')
+            && CachedSchema::hasTable('prazzu_permissions')
+            && CachedSchema::hasTable('prazzu_user_roles')
+            && CachedSchema::hasTable('prazzu_user_permissions');
+
+        if (! $ready) {
             Notification::make()
                 ->title('Estrutura de permissões incompleta')
                 ->body('Execute o SQL/migration do lote 1 antes de configurar os perfis.')
                 ->warning()
                 ->send();
         }
+
+        return $ready;
+    }
+
+    private function manageableUsersQuery()
+    {
+        $query = User::query();
+        $user = Auth::user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->where('empresa_id', $user->empresa_id);
+    }
+
+    private function canManageUserId(int $userId): bool
+    {
+        return $this->manageableUsersQuery()->whereKey($userId)->exists();
+    }
+
+    private function isValidMatrixPermission(string $module, string $action): bool
+    {
+        return app(PrazzuPermissionService::class)->isMatrixPermission($module, $action);
     }
 
     private function seedStarterRolesIfEmpty(): void

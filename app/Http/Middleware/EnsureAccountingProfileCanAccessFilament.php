@@ -117,7 +117,7 @@ class EnsureAccountingProfileCanAccessFilament
             'usuarios' => 'Usuários',
             'users' => 'Usuários',
             'configuracoes' => 'Configurações',
-            'permissoes' => 'Permissões',
+            'permissoes' => 'Perfis e Permissões',
             'empresas' => 'Empresas',
             'dashboard-configuravel' => 'Dashboard Configurável',
             'inteligencia-produto' => 'Inteligência do Produto',

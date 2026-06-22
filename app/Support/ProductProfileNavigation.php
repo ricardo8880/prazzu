@@ -266,10 +266,18 @@ class ProductProfileNavigation
                 'recommendedFor' => $profile['recommended_for'] ?? null,
                 'visibleLabels' => $profile['visible_labels'],
                 'hiddenLabels' => $profile['hidden_labels'] ?? [],
-                'aliases' => $profile['aliases'] ?? [],
+                'aliases' => array_merge(self::globalAliases(), $profile['aliases'] ?? []),
                 'visibleCount' => in_array('*', $profile['visible_labels'], true) ? null : count($profile['visible_labels']),
                 'hiddenCount' => count($profile['hidden_labels'] ?? []),
             ])
             ->all();
+    }
+
+    private static function globalAliases(): array
+    {
+        return [
+            'Perfis e Permissões' => 'Permissões',
+            'Permissões' => 'Perfis e Permissões',
+        ];
     }
 }
