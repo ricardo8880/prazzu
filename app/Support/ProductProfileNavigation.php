@@ -49,6 +49,7 @@ class ProductProfileNavigation
                     'Central de Aprovações',
                     'Auditoria',
                     'Perfis e Permissões',
+                    'Gestão de Planos',
                 ],
                 'hidden_labels' => [
                     'Assinaturas',

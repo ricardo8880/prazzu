@@ -10,6 +10,7 @@ class PlanoService
 {
     public const STARTER = 'starter';
     public const PROFISSIONAL = 'profissional';
+    public const PROFESSIONAL = 'professional';
     public const BUSINESS = 'business';
     public const BUSINESS_PLUS = 'business_plus';
     public const ENTERPRISE = 'enterprise';
@@ -43,6 +44,7 @@ class PlanoService
     public const FEATURE_BUSCA_GLOBAL = 'busca_global';
     public const FEATURE_PORTAL_AVANCADO = 'portal_avancado';
     public const FEATURE_WHITE_LABEL = 'white_label';
+    public const FEATURE_GESTAO_PLANOS = 'gestao_planos';
     public const FEATURE_FLUXOS_OPERACIONAIS = 'fluxos_operacionais';
     public const FEATURE_RELATORIOS_PERSONALIZADOS = 'relatorios_personalizados';
     public const FEATURE_DASHBOARDS_PERSONALIZADOS = 'dashboards_personalizados';
@@ -52,17 +54,18 @@ class PlanoService
     {
         return [
             self::STARTER => [
-                'nome' => 'Free',
-                'nome_comercial' => 'Plano Free',
+                'nome' => 'Starter',
+                'nome_comercial' => 'Plano Starter',
                 'preco' => 'R$ 0/mês',
                 'valor_mensal' => 0.00,
                 'tag' => 'Comece grátis',
                 'destaque' => false,
-                'descricao' => 'Para o escritório conhecer a Prazzu, organizar os primeiros documentos e sentir o ganho de controle sem custo.',
-                'limite_usuarios' => 1,
-                'limite_itens' => 20,
-                'limite_interacoes_ia' => 0,
-                'limite_anexos' => 20,
+                'descricao' => 'Plano de entrada para escritórios que precisam controlar usuários, documentos e rotina básica sem excesso de módulos.',
+                'limite_usuarios' => 3,
+                'limite_itens' => 200,
+                'limite_armazenamento_mb' => 6144,
+                'limite_interacoes_ia' => 150,
+                'limite_anexos' => 100,
                 'limite_assinaturas' => 0,
                 'features' => [
                     self::FEATURE_TAREFAS,
@@ -98,8 +101,8 @@ class PlanoService
             ],
 
             self::PROFISSIONAL => [
-                'nome' => 'Starter',
-                'nome_comercial' => 'Plano Starter',
+                'nome' => 'Professional',
+                'nome_comercial' => 'Plano Professional',
                 'preco' => 'R$ 39/mês',
                 'valor_mensal' => 39.00,
                 'tag' => 'Mais escolhido',
@@ -107,7 +110,8 @@ class PlanoService
                 'descricao' => 'Para pequenas contabilidades saírem do WhatsApp e das planilhas, centralizando solicitações, documentos e pendências.',
                 'limite_usuarios' => 3,
                 'limite_itens' => 200,
-                'limite_interacoes_ia' => 0,
+                'limite_interacoes_ia' => 2000,
+                'limite_armazenamento_mb' => 15360,
                 'limite_anexos' => 100,
                 'limite_assinaturas' => 0,
                 'features' => [
@@ -176,7 +180,8 @@ class PlanoService
                 'descricao' => 'Para escritórios em crescimento que precisam de controle, aprovações, portal do cliente, relatórios e automações.',
                 'limite_usuarios' => 10,
                 'limite_itens' => 1000,
-                'limite_interacoes_ia' => 0,
+                'limite_interacoes_ia' => 2000,
+                'limite_armazenamento_mb' => 10240,
                 'limite_anexos' => 500,
                 'limite_assinaturas' => 0,
                 'features' => [
@@ -261,7 +266,8 @@ class PlanoService
                 'descricao' => 'Para contabilidades maiores que precisam de auditoria, BI, portal avançado, indicadores e alto volume operacional.',
                 'limite_usuarios' => 30,
                 'limite_itens' => 5000,
-                'limite_interacoes_ia' => 0,
+                'limite_interacoes_ia' => 5000,
+                'limite_armazenamento_mb' => 20480,
                 'limite_anexos' => 2000,
                 'limite_assinaturas' => 0,
                 'features' => [
@@ -352,7 +358,8 @@ class PlanoService
                 'descricao' => 'Para operações com necessidade de white label, implantação assistida, volumes especiais e personalização comercial.',
                 'limite_usuarios' => 999999,
                 'limite_itens' => 999999,
-                'limite_interacoes_ia' => 0,
+                'limite_interacoes_ia' => 15000,
+                'limite_armazenamento_mb' => 40960,
                 'limite_anexos' => 999999,
                 'limite_assinaturas' => 0,
                 'features' => [
@@ -384,6 +391,7 @@ class PlanoService
                     self::FEATURE_BUSCA_GLOBAL,
                     self::FEATURE_PORTAL_AVANCADO,
                     self::FEATURE_WHITE_LABEL,
+                    self::FEATURE_GESTAO_PLANOS,
                     self::FEATURE_FLUXOS_OPERACIONAIS,
                     self::FEATURE_RELATORIOS_PERSONALIZADOS,
                     self::FEATURE_DASHBOARDS_PERSONALIZADOS,
@@ -474,7 +482,7 @@ class PlanoService
     {
         return match ($plano) {
             'free', 'gratuito', 'gratis', 'starter', 'essencial', 'basico', 'basic' => self::STARTER,
-            'pro', 'profissional' => self::PROFISSIONAL,
+            'pro', 'professional', 'profissional' => self::PROFISSIONAL,
             'empresarial', 'premium', 'business' => self::BUSINESS,
             'business_plus', 'scale', 'growth' => self::BUSINESS_PLUS,
             'enterprise', 'enterprise_plus' => self::ENTERPRISE,
@@ -507,6 +515,11 @@ class PlanoService
     public static function limiteItens(?string $plano): int
     {
         return (int) self::dados($plano)['limite_itens'];
+    }
+
+    public static function limiteArmazenamentoMb(?string $plano): int
+    {
+        return (int) (self::dados($plano)['limite_armazenamento_mb'] ?? 0);
     }
 
     public static function limiteInteracoesIa(?string $plano): int

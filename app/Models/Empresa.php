@@ -19,6 +19,7 @@ class Empresa extends Model
         'plano',
         'limite_usuarios',
         'limite_itens',
+        'limite_armazenamento_mb',
         'limite_interacoes_ia',
         'ativo',
     ];
@@ -105,6 +106,11 @@ class Empresa extends Model
         return (int) ($this->limite_itens ?: PlanoService::limiteItens($this->plano));
     }
 
+    public function getLimiteArmazenamentoMbPlanoAttribute(): int
+    {
+        return (int) ($this->limite_armazenamento_mb ?: PlanoService::limiteArmazenamentoMb($this->plano));
+    }
+
     public function getLimiteInteracoesIaPlanoAttribute(): int
     {
         return (int) ($this->limite_interacoes_ia ?: PlanoService::limiteInteracoesIa($this->plano));
@@ -115,6 +121,7 @@ class Empresa extends Model
         $this->plano = PlanoService::normalizarPlano($this->plano);
         $this->limite_usuarios = PlanoService::limiteUsuarios($this->plano);
         $this->limite_itens = PlanoService::limiteItens($this->plano);
+        $this->limite_armazenamento_mb = PlanoService::limiteArmazenamentoMb($this->plano);
         $this->limite_interacoes_ia = PlanoService::limiteInteracoesIa($this->plano);
     }
 
