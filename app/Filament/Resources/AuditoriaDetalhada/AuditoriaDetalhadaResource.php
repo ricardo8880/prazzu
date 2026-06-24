@@ -26,7 +26,7 @@ class AuditoriaDetalhadaResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $navigationLabel = 'Auditoria';
+    protected static ?string $navigationLabel = 'Auditoria completa';
 
     protected static string | UnitEnum | null $navigationGroup = 'Governança';
 
@@ -66,7 +66,7 @@ class AuditoriaDetalhadaResource extends Resource
             ->striped()
             ->columns([
                 TextColumn::make('created_at')
-                    ->label('Data')
+                    ->label('Quando')
                     ->dateTime('d/m/Y H:i:s')
                     ->sortable(),
 
@@ -76,12 +76,12 @@ class AuditoriaDetalhadaResource extends Resource
                     ->toggleable(),
 
                 TextColumn::make('user.name')
-                    ->label('Usuário')
+                    ->label('Quem alterou')
                     ->searchable()
                     ->toggleable(),
 
                 TextColumn::make('evento')
-                    ->label('Evento')
+                    ->label('Tipo de ação')
                     ->badge()
                     ->formatStateUsing(fn ($state) => AuditoriaFormatter::evento($state))
                     ->color(fn ($state) => match ($state) {
@@ -98,27 +98,27 @@ class AuditoriaDetalhadaResource extends Resource
                     ->color(fn (string $state): string => $state === 'Atenção' ? 'danger' : 'gray'),
 
                 TextColumn::make('auditable_type')
-                    ->label('Módulo')
+                    ->label('Área do sistema')
                     ->formatStateUsing(fn ($state) => AuditoriaFormatter::modulo($state))
                     ->searchable(),
 
                 TextColumn::make('auditable_id')
-                    ->label('Registro')
+                    ->label('Item alterado')
                     ->state(fn (AuditoriaDetalhada $record): string => AuditoriaFormatter::registroCurto($record->auditable_type, $record->auditable_id))
                     ->sortable(),
 
                 TextColumn::make('campo')
-                    ->label('Campo')
+                    ->label('Campo alterado')
                     ->formatStateUsing(fn ($state) => AuditoriaFormatter::campo($state))
                     ->searchable(),
 
                 TextColumn::make('valor_anterior')
-                    ->label('Antes')
+                    ->label('Valor anterior')
                     ->state(fn (AuditoriaDetalhada $record): string => AuditoriaFormatter::valor($record->valor_anterior, $record->campo, 45))
                     ->toggleable(),
 
                 TextColumn::make('valor_novo')
-                    ->label('Depois')
+                    ->label('Valor novo')
                     ->state(fn (AuditoriaDetalhada $record): string => AuditoriaFormatter::valor($record->valor_novo, $record->campo, 45))
                     ->toggleable(),
 
@@ -128,15 +128,24 @@ class AuditoriaDetalhadaResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('evento')
-                    ->label('Evento')
+                    ->label('Tipo de ação')
                     ->options([
                         'created' => 'Criado',
                         'updated' => 'Alterado',
                         'deleted' => 'Excluído',
+                        'login.success' => 'Login realizado',
+                        'login.failed' => 'Falha de login',
+                        'logout' => 'Logout',
+                        'password.reset' => 'Senha redefinida',
+                        'auditoria.exported' => 'Auditoria exportada',
+                        'asaas.webhook.received' => 'Webhook Asaas recebido',
+                        'asaas.webhook.processed' => 'Webhook Asaas processado',
+                        'asaas.webhook.rejected' => 'Webhook Asaas rejeitado',
+                        'asaas.webhook.failed' => 'Falha no webhook Asaas',
                     ]),
 
                 SelectFilter::make('user_id')
-                    ->label('Usuário')
+                    ->label('Quem alterou')
                     ->options(fn (): array => User::query()
                         ->whereIn('id', self::getEloquentQuery()->whereNotNull('user_id')->distinct()->pluck('user_id'))
                         ->orderBy('name')
@@ -157,7 +166,7 @@ class AuditoriaDetalhadaResource extends Resource
                     ->searchable(),
 
                 SelectFilter::make('auditable_type')
-                    ->label('Módulo')
+                    ->label('Área do sistema')
                     ->options(fn (): array => self::getEloquentQuery()
                         ->whereNotNull('auditable_type')
                         ->select('auditable_type')

@@ -56,11 +56,17 @@
 
     <div class="compliance-page">
         <section class="compliance-hero">
-            <div><span>COMPLIANCE</span><h1>Auditoria</h1><p>Rastro de alterações, usuários, eventos críticos e aprovações recentes em uma visão simples para investigar o que aconteceu.</p></div>
+            <div>
+                <span>AUDITORIA COMPLETA</span>
+                <h1>Quem fez, quando fez e o que mudou</h1>
+                <p>Visão resumida da rastreabilidade do sistema. Use os filtros para chegar rápido ao usuário, empresa, módulo, IP, campo alterado e comparação antes/depois.</p>
+            </div>
             <div class="compliance-hero-actions compliance-hero-actions-export">
-                <button type="button" class="compliance-export-button" wire:click="exportAuditoriaCsv" wire:loading.attr="disabled" wire:target="exportAuditoriaCsv">Exportar CSV</button>
-                <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel">Exportar Excel</button>
-                <a href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>">Auditoria detalhada</a>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->canExportAuditoria()): ?>
+                    <button type="button" class="compliance-export-button" wire:click="exportAuditoriaCsv" wire:loading.attr="disabled" wire:target="exportAuditoriaCsv">Exportar CSV</button>
+                    <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel">Exportar Excel</button>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                <a href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>">Investigar em detalhes</a>
             </div>
         </section>
 
@@ -73,8 +79,8 @@
         <section class="compliance-card compliance-filters">
             <header>
                 <div>
-                    <h2>Filtros da auditoria</h2>
-                    <p>Refine os indicadores, ranking e timeline por período, empresa, usuário, evento ou texto livre.</p>
+                    <h2>Encontre rapidamente o que aconteceu</h2>
+                    <p>Filtre por período, empresa, usuário, tipo de ação ou texto livre. A busca aceita campo, módulo, registro, valor, IP e evento.</p>
                 </div>
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($hasActiveFilters): ?>
                     <a class="compliance-link compliance-link-light" href="<?php echo e(url()->current()); ?>">Limpar filtros</a>
@@ -125,7 +131,7 @@
                 </label>
 
                 <label>
-                    <span>Tipo de evento</span>
+                    <span>Tipo de ação</span>
                     <select name="actionFilter">
                         <option value="todas">Todos os eventos</option>
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($filterOptions['actions'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $action): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
@@ -135,8 +141,8 @@
                 </label>
 
                 <label class="wide">
-                    <span>Busca livre</span>
-                    <input type="search" name="searchFilter" value="<?php echo e($searchFilter); ?>" placeholder="Buscar por campo, módulo, registro, valor anterior, valor novo, IP ou evento">
+                    <span>Buscar na auditoria</span>
+                    <input type="search" name="searchFilter" value="<?php echo e($searchFilter); ?>" placeholder="Ex.: nome do usuário, empresa, status, IP, documento ou permissão">
                 </label>
 
                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($auditableTypeFilter !== ''): ?>
@@ -167,7 +173,7 @@
 
                 <div class="compliance-filter-actions wide">
                     <button type="submit">Aplicar filtros</button>
-                    <a href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>">Abrir investigação detalhada</a>
+                    <a href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>">Abrir visão limpa de investigação</a>
                 </div>
             </form>
         </section>

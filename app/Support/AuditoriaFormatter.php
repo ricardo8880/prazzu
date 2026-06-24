@@ -17,7 +17,20 @@ class AuditoriaFormatter
         'restored' => 'Restaurado',
         'force_deleted' => 'Excluído definitivamente',
         'login' => 'Login',
+        'login.success' => 'Login realizado',
+        'login.failed' => 'Falha de login',
         'logout' => 'Logout',
+        'password.reset' => 'Senha redefinida',
+        'auditoria.exported' => 'Auditoria exportada',
+        'asaas.webhook.received' => 'Webhook Asaas recebido',
+        'asaas.webhook.processed' => 'Webhook Asaas processado',
+        'asaas.webhook.rejected' => 'Webhook Asaas rejeitado',
+        'asaas.webhook.failed' => 'Falha no webhook Asaas',
+        'portal_cliente.login.failed' => 'Falha de login no portal',
+        'portal_cliente.logout' => 'Logout do portal',
+        'portal_cliente.password.reset_requested' => 'Reset de senha solicitado',
+        'portal_cliente.password.reset_success' => 'Senha do portal redefinida',
+        'portal_cliente.invite.accepted' => 'Convite do portal aceito',
         'approved' => 'Aprovado',
         'reproved' => 'Reprovado',
         'rejected' => 'Rejeitado',
@@ -60,11 +73,11 @@ class AuditoriaFormatter
         'auditable_id' => 'Registro',
         'evento' => 'Evento',
         'nivel' => 'Nível',
-        'campo' => 'Campo',
-        'valor_anterior' => 'Valor anterior',
-        'valor_novo' => 'Valor novo',
+        'campo' => 'Campo alterado',
+        'valor_anterior' => 'Antes',
+        'valor_novo' => 'Depois',
         'ip' => 'IP',
-        'user_agent' => 'Navegador/dispositivo',
+        'user_agent' => 'Dispositivo',
         'created_at' => 'Criado em',
         'updated_at' => 'Atualizado em',
         'deleted_at' => 'Excluído em',
@@ -149,6 +162,17 @@ class AuditoriaFormatter
         'crm_health_manual' => 'Saúde CRM manual',
         'crm_observacoes' => 'Observações CRM',
         'crm_ultima_reuniao_em' => 'Última reunião CRM',
+        'evento_manual' => 'Evento manual',
+        'guard' => 'Área de login',
+        'email_hash' => 'E-mail protegido',
+        'reason' => 'Motivo',
+        'headers_present' => 'Cabeçalho recebido',
+        'event' => 'Evento externo',
+        'payment_id' => 'Pagamento',
+        'customer_id' => 'Cliente Asaas',
+        'payload_id' => 'Registro externo',
+        'filters' => 'Filtros usados',
+        'route' => 'Rota',
     ];
 
     private const VALUE_LABELS = [
@@ -337,6 +361,10 @@ class AuditoriaFormatter
         $evento = (string) ($registro->evento ?? '');
 
         return $evento === 'deleted'
+            || str_contains($evento, 'failed')
+            || str_contains($evento, 'rejected')
+            || str_contains($evento, 'export')
+            || str_contains($evento, 'webhook')
             || str_contains($campo, 'password')
             || str_contains($campo, 'senha')
             || str_contains($campo, 'role')

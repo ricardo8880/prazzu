@@ -21,21 +21,21 @@ class VisualizarAuditoriaDetalhada extends Page
 
     protected string $view = 'filament.resources.auditoria-detalhada.pages.visualizar-auditoria-detalhada';
 
-    protected static ?string $title = 'Auditoria Detalhada';
+    protected static ?string $title = 'Investigação de Auditoria';
 
     public function getTitle(): string
     {
-        return 'Auditoria Detalhada';
+        return 'Investigação de Auditoria';
     }
 
     public function getHeading(): string
     {
-        return 'Auditoria Detalhada';
+        return 'Investigação de Auditoria';
     }
 
     public function getSubheading(): ?string
     {
-        return 'Trilha por usuário, comparação antes/depois, ações suspeitas, filtros por módulo e auditoria por empresa.';
+        return 'Veja rapidamente quem fez, quando fez, onde mexeu e o que mudou antes/depois.';
     }
 
     protected function getHeaderActions(): array
@@ -58,6 +58,7 @@ class VisualizarAuditoriaDetalhada extends Page
             'empresa_id' => request('empresa_id'),
             'modulo' => request('modulo'),
             'suspeito' => request()->boolean('suspeito'),
+            'busca' => trim((string) request('busca', '')),
         ];
     }
 
@@ -103,14 +104,24 @@ class VisualizarAuditoriaDetalhada extends Page
         }
 
         if (! empty($filtros['suspeito'])) {
-            $query->where(function (Builder $subQuery): void {
+            $query = $this->aplicarFiltroSuspeito($query);
+        }
+
+        if (! empty($filtros['busca'])) {
+            $busca = '%' . str_replace(['%', '_'], ['\%', '\_'], $filtros['busca']) . '%';
+
+            $query->where(function (Builder $subQuery) use ($busca): void {
                 $subQuery
-                    ->where('evento', 'deleted')
-                    ->orWhere('campo', 'like', '%password%')
-                    ->orWhere('campo', 'like', '%senha%')
-                    ->orWhere('campo', 'like', '%role%')
-                    ->orWhere('campo', 'like', '%permiss%')
-                    ->orWhere('campo', 'like', '%status%');
+                    ->where('evento', 'like', $busca)
+                    ->orWhere('campo', 'like', $busca)
+                    ->orWhere('valor_anterior', 'like', $busca)
+                    ->orWhere('valor_novo', 'like', $busca)
+                    ->orWhere('ip', 'like', $busca)
+                    ->orWhere('auditable_type', 'like', $busca)
+                    ->orWhereHas('user', fn (Builder $userQuery): Builder => $userQuery->where('name', 'like', $busca))
+                    ->orWhereHas('empresa', fn (Builder $empresaQuery): Builder => $empresaQuery
+                        ->where('razao_social', 'like', $busca)
+                        ->orWhere('nome_fantasia', 'like', $busca));
             });
         }
 
@@ -259,6 +270,73 @@ class VisualizarAuditoriaDetalhada extends Page
                 'value' => $tipo,
                 'label' => AuditoriaFormatter::modulo((string) $tipo),
             ]);
+    }
+
+
+    public function filtrosAtivos(): array
+    {
+        $filtros = $this->filtros();
+        $ativos = [];
+
+        if (! empty($filtros['periodo'])) {
+            $ativos[] = 'Período: ' . match ((string) $filtros['periodo']) {
+                'hoje' => 'Hoje',
+                '7' => 'Últimos 7 dias',
+                '30' => 'Últimos 30 dias',
+                default => 'Todo período',
+            };
+        }
+
+        if (! empty($filtros['evento'])) {
+            $ativos[] = 'Evento: ' . $this->eventoLabel($filtros['evento']);
+        }
+
+        if (! empty($filtros['modulo'])) {
+            $ativos[] = 'Módulo: ' . $this->moduloLabel($filtros['modulo']);
+        }
+
+        if (! empty($filtros['suspeito'])) {
+            $ativos[] = 'Somente ações sensíveis';
+        }
+
+        if (! empty($filtros['busca'])) {
+            $ativos[] = 'Busca: ' . $filtros['busca'];
+        }
+
+        return $ativos;
+    }
+
+    public function resumoAcao($registro): string
+    {
+        $usuario = $registro->user?->name ?? 'Sistema';
+        $evento = mb_strtolower($this->eventoLabel($registro->evento));
+        $campo = $this->campoLabel($registro->campo);
+        $registroLabel = $this->registroLabel($registro);
+
+        return trim("{$usuario} executou {$evento} em {$campo} de {$registroLabel}");
+    }
+
+    public function dataHumana($data): string
+    {
+        if (! $data) {
+            return '-';
+        }
+
+        return $data->format('d/m/Y H:i:s');
+    }
+
+    public function nomeEmpresa($registro): string
+    {
+        return $registro->empresa?->razao_social ?: $registro->empresa?->nome_fantasia ?: 'Sem empresa';
+    }
+
+    public function iniciaisUsuario($registro): string
+    {
+        $nome = trim((string) ($registro->user?->name ?? 'Sistema'));
+        $partes = preg_split('/\s+/', $nome) ?: [];
+        $iniciais = collect($partes)->filter()->take(2)->map(fn ($parte) => mb_substr($parte, 0, 1))->implode('');
+
+        return mb_strtoupper($iniciais ?: 'S');
     }
 
     public function eventoLabel(?string $evento): string

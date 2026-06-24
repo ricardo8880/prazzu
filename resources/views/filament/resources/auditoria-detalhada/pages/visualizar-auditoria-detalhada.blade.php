@@ -9,22 +9,30 @@
     @php($suspeitas = $this->acoesSuspeitas())
     @php($recentes = $this->registrosRecentes())
     @php($filtros = $this->filtros())
+    @php($filtrosAtivos = $this->filtrosAtivos())
 
     <div class="ad-page">
-        <section class="ad-hero">
+        <section class="ad-hero ad-hero--clean">
             <div>
-                <div class="ad-eyebrow">Auditoria e rastreabilidade</div>
-                <h2 class="ad-title">Auditoria útil para operação, compliance e cliente</h2>
+                <div class="ad-eyebrow">Auditoria completa</div>
+                <h2 class="ad-title">Entenda quem mexeu, quando mexeu e o que mudou</h2>
                 <p class="ad-subtitle">
-                    Acompanhe a trilha por usuário, compare antes/depois das alterações, filtre por módulo e empresa,
-                    identifique ações sensíveis e exporte o resultado atual para análise externa.
+                    Esta tela transforma o log técnico em uma leitura operacional: usuário, empresa, módulo,
+                    campo alterado, valor anterior, valor novo, IP e eventos sensíveis em um só lugar.
                 </p>
+
+                <div class="ad-help-grid" aria-label="Como ler a auditoria">
+                    <span><strong>1</strong> Quem fez</span>
+                    <span><strong>2</strong> Quando fez</span>
+                    <span><strong>3</strong> Onde alterou</span>
+                    <span><strong>4</strong> Antes e depois</span>
+                </div>
             </div>
 
             <div class="ad-hero-actions">
                 @if ($this->canExportAuditoria())
                     <a href="{{ $this->exportUrl() }}" class="ad-button ad-button--primary">
-                        Exportar CSV
+                        Exportar recorte atual
                     </a>
                 @endif
                 <a href="{{ url()->current() }}" class="ad-button ad-button--ghost">
@@ -33,7 +41,12 @@
             </div>
         </section>
 
-        <form method="GET" action="{{ url()->current() }}" class="ad-filters">
+        <form method="GET" action="{{ url()->current() }}" class="ad-filters ad-filters--ux">
+            <div class="ad-filter-field ad-filter-field--wide">
+                <label for="busca">Buscar na auditoria</label>
+                <input id="busca" name="busca" type="search" value="{{ $filtros['busca'] ?? '' }}" placeholder="Usuário, empresa, campo, valor, IP, módulo ou evento">
+            </div>
+
             <div class="ad-filter-field">
                 <label for="periodo">Período</label>
                 <select id="periodo" name="periodo">
@@ -45,12 +58,15 @@
             </div>
 
             <div class="ad-filter-field">
-                <label for="evento">Evento</label>
+                <label for="evento">Tipo de ação</label>
                 <select id="evento" name="evento">
-                    <option value="">Todos</option>
+                    <option value="">Todas</option>
                     <option value="created" @selected(($filtros['evento'] ?? '') === 'created')>Criado</option>
                     <option value="updated" @selected(($filtros['evento'] ?? '') === 'updated')>Alterado</option>
                     <option value="deleted" @selected(($filtros['evento'] ?? '') === 'deleted')>Excluído</option>
+                    <option value="login.success" @selected(($filtros['evento'] ?? '') === 'login.success')>Login realizado</option>
+                    <option value="login.failed" @selected(($filtros['evento'] ?? '') === 'login.failed')>Falha de login</option>
+                    <option value="auditoria.exported" @selected(($filtros['evento'] ?? '') === 'auditoria.exported')>Auditoria exportada</option>
                 </select>
             </div>
 
@@ -77,9 +93,9 @@
             </div>
 
             <div class="ad-filter-field">
-                <label for="modulo">Módulo</label>
+                <label for="modulo">Área do sistema</label>
                 <select id="modulo" name="modulo">
-                    <option value="">Todos</option>
+                    <option value="">Todas</option>
                     @foreach($this->modulosFiltro() as $modulo)
                         <option value="{{ $modulo['value'] }}" @selected(($filtros['modulo'] ?? '') === $modulo['value'])>{{ $modulo['label'] }}</option>
                     @endforeach
@@ -92,145 +108,85 @@
             </label>
 
             <div class="ad-filter-actions">
-                <button type="submit" class="ad-button ad-button--primary">Aplicar filtros</button>
+                <button type="submit" class="ad-button ad-button--primary">Aplicar</button>
             </div>
+
+            @if(! empty($filtrosAtivos))
+                <div class="ad-active-filters">
+                    <strong>Filtros ativos:</strong>
+                    @foreach($filtrosAtivos as $filtroAtivo)
+                        <span>{{ $filtroAtivo }}</span>
+                    @endforeach
+                </div>
+            @endif
         </form>
 
         <section class="ad-metrics ad-metrics--five">
-            <article class="ad-metric-card">
-                <span>Total filtrado</span>
-                <strong>{{ number_format((int) ($metricas['total'] ?? 0), 0, ',', '.') }}</strong>
-                <small>Registros no recorte atual</small>
-            </article>
-
-            <article class="ad-metric-card ad-metric-card--info">
-                <span>Hoje</span>
-                <strong>{{ number_format((int) ($metricas['hoje'] ?? 0), 0, ',', '.') }}</strong>
-                <small>Movimentações do dia</small>
-            </article>
-
-            <article class="ad-metric-card ad-metric-card--warning">
-                <span>Alterações</span>
-                <strong>{{ number_format((int) ($metricas['alteracoes'] ?? 0), 0, ',', '.') }}</strong>
-                <small>Campos modificados</small>
-            </article>
-
-            <article class="ad-metric-card ad-metric-card--danger">
-                <span>Exclusões</span>
-                <strong>{{ number_format((int) ($metricas['exclusoes'] ?? 0), 0, ',', '.') }}</strong>
-                <small>Registros removidos</small>
-            </article>
-
-            <article class="ad-metric-card ad-metric-card--critical">
-                <span>Ações sensíveis</span>
-                <strong>{{ number_format((int) ($metricas['suspeitas'] ?? 0), 0, ',', '.') }}</strong>
-                <small>Exclusões, permissões, status e senhas</small>
-            </article>
+            <article class="ad-metric-card"><span>Total no filtro</span><strong>{{ number_format((int) ($metricas['total'] ?? 0), 0, ',', '.') }}</strong><small>Tudo que corresponde ao recorte atual</small></article>
+            <article class="ad-metric-card ad-metric-card--info"><span>Hoje</span><strong>{{ number_format((int) ($metricas['hoje'] ?? 0), 0, ',', '.') }}</strong><small>Movimentações do dia</small></article>
+            <article class="ad-metric-card ad-metric-card--warning"><span>Alterações</span><strong>{{ number_format((int) ($metricas['alteracoes'] ?? 0), 0, ',', '.') }}</strong><small>Campos que mudaram de valor</small></article>
+            <article class="ad-metric-card ad-metric-card--danger"><span>Exclusões</span><strong>{{ number_format((int) ($metricas['exclusoes'] ?? 0), 0, ',', '.') }}</strong><small>Registros removidos</small></article>
+            <article class="ad-metric-card ad-metric-card--critical"><span>Revisar</span><strong>{{ number_format((int) ($metricas['suspeitas'] ?? 0), 0, ',', '.') }}</strong><small>Senhas, permissões, status, exportações e falhas</small></article>
         </section>
 
-        <section class="ad-layout ad-layout--balanced">
-            <article class="ad-panel">
-                <div class="ad-panel-header">
-                    <div>
-                        <h3>Eventos por tipo</h3>
-                        <p>Distribuição das ações registradas no recorte atual.</p>
-                    </div>
+        <section class="ad-panel ad-panel--large ad-focus-panel">
+            <div class="ad-panel-header">
+                <div>
+                    <h3>Linha do tempo das alterações</h3>
+                    <p>Leitura direta: quem fez, em qual empresa, qual campo mudou e comparação antes/depois.</p>
                 </div>
+                <div class="ad-panel-counter">{{ number_format((int) $recentes->count(), 0, ',', '.') }} recentes</div>
+            </div>
 
-                @if($eventos->isEmpty())
-                    <div class="ad-empty">Nenhum evento encontrado para os filtros aplicados.</div>
-                @else
-                    <div class="ad-chart">
-                        @foreach($eventos as $evento)
-                            <div class="ad-chart-row">
-                                <div class="ad-chart-label">
-                                    <span class="ad-badge {{ $evento['classe'] }}">{{ $evento['label'] }}</span>
+            @if($recentes->isEmpty())
+                <div class="ad-empty">Nenhuma movimentação encontrada para os filtros aplicados.</div>
+            @else
+                <div class="ad-timeline">
+                    @foreach($recentes as $registro)
+                        <div class="ad-timeline-item ad-timeline-item--ux">
+                            <div class="ad-avatar" title="{{ $registro->user?->name ?? 'Sistema' }}">{{ $this->iniciaisUsuario($registro) }}</div>
+
+                            <div class="ad-timeline-content">
+                                <div class="ad-timeline-top">
+                                    <div class="ad-timeline-badges">
+                                        <span class="ad-badge {{ $this->eventoClasse($registro->evento) }}">{{ $this->eventoLabel($registro->evento) }}</span>
+                                        <span class="ad-badge {{ $this->suspeitoClasse($registro) }}">{{ $this->suspeitoLabel($registro) }}</span>
+                                    </div>
+                                    <time>{{ $this->dataHumana($registro->created_at) }}</time>
                                 </div>
-                                <div class="ad-chart-track">
-                                    <div class="ad-chart-bar" style="width: {{ $evento['percentual'] }}%"></div>
+
+                                <h4>{{ $this->resumoAcao($registro) }}</h4>
+
+                                <div class="ad-timeline-meta">
+                                    <span>Usuário: {{ $registro->user?->name ?? 'Sistema' }}</span>
+                                    <span>Empresa: {{ $this->nomeEmpresa($registro) }}</span>
+                                    <span>Módulo: {{ $this->moduloLabel($registro->auditable_type) }}</span>
+                                    <span>Registro: {{ $this->registroLabel($registro) }}</span>
+                                    <span>IP: {{ $registro->ip ?: '-' }}</span>
                                 </div>
-                                <strong>{{ number_format((int) $evento['valor'], 0, ',', '.') }}</strong>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </article>
 
-            <article class="ad-panel">
-                <div class="ad-panel-header">
-                    <div>
-                        <h3>Trilha por usuário</h3>
-                        <p>Usuários com maior volume de movimentações.</p>
-                    </div>
+                                <div class="ad-diff ad-diff--ux">
+                                    <div>
+                                        <span>Valor anterior</span>
+                                        <strong>{{ $this->valorRegistro($registro->valor_anterior, $registro->campo) }}</strong>
+                                    </div>
+                                    <div>
+                                        <span>Valor novo</span>
+                                        <strong>{{ $this->valorRegistro($registro->valor_novo, $registro->campo) }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
-
-                @if($usuarios->isEmpty())
-                    <div class="ad-empty">Sem usuários auditados.</div>
-                @else
-                    <div class="ad-ranking">
-                        @foreach($usuarios as $usuario)
-                            <div class="ad-ranking-row ad-ranking-row--stacked">
-                                <span>{{ $usuario['nome'] }}</span>
-                                <small>Última ação: {{ $usuario['ultima'] }}</small>
-                                <strong>{{ number_format((int) $usuario['total'], 0, ',', '.') }}</strong>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </article>
-        </section>
-
-        <section class="ad-layout ad-layout--balanced">
-            <article class="ad-panel">
-                <div class="ad-panel-header">
-                    <div>
-                        <h3>Auditoria por empresa</h3>
-                        <p>Empresas com mais movimentações registradas.</p>
-                    </div>
-                </div>
-
-                @if($empresas->isEmpty())
-                    <div class="ad-empty">Nenhuma empresa encontrada.</div>
-                @else
-                    <div class="ad-ranking">
-                        @foreach($empresas as $empresa)
-                            <div class="ad-ranking-row">
-                                <span>{{ $empresa['nome'] }}</span>
-                                <strong>{{ number_format((int) $empresa['total'], 0, ',', '.') }}</strong>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </article>
-
-            <article class="ad-panel">
-                <div class="ad-panel-header">
-                    <div>
-                        <h3>Módulos auditados</h3>
-                        <p>Áreas do sistema com maior volume de rastreio.</p>
-                    </div>
-                </div>
-
-                @if($modulos->isEmpty())
-                    <div class="ad-empty">Nenhum módulo encontrado.</div>
-                @else
-                    <div class="ad-ranking">
-                        @foreach($modulos as $modulo)
-                            <div class="ad-ranking-row">
-                                <span>{{ $modulo['nome'] }}</span>
-                                <strong>{{ number_format((int) $modulo['total'], 0, ',', '.') }}</strong>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </article>
+            @endif
         </section>
 
         <section class="ad-panel">
             <div class="ad-panel-header">
                 <div>
-                    <h3>Ações sensíveis</h3>
-                    <p>Exclusões e alterações em campos críticos aparecem aqui para revisão rápida.</p>
+                    <h3>Ações que merecem revisão</h3>
+                    <p>Eventos que podem impactar segurança, permissão, status, senha, exportação ou integração.</p>
                 </div>
                 <div class="ad-panel-counter">{{ number_format((int) $suspeitas->count(), 0, ',', '.') }} recentes</div>
             </div>
@@ -242,14 +198,14 @@
                     @foreach($suspeitas as $registro)
                         <article class="ad-sensitive-card">
                             <div class="ad-sensitive-top">
-                                <span class="ad-badge ad-badge--danger">Atenção</span>
+                                <span class="ad-badge ad-badge--danger">Revisar</span>
                                 <time>{{ optional($registro->created_at)->format('d/m/Y H:i') ?: '-' }}</time>
                             </div>
                             <h4>{{ $this->registroLabel($registro) }}</h4>
-                            <p>{{ $this->eventoLabel($registro->evento) }} em {{ $this->campoLabel($registro->campo) }}</p>
+                            <p>{{ $this->resumoAcao($registro) }}</p>
                             <div class="ad-timeline-meta">
                                 <span>{{ $registro->user?->name ?? 'Sistema' }}</span>
-                                <span>{{ $registro->empresa?->razao_social ?: $registro->empresa?->nome_fantasia ?: 'Sem empresa' }}</span>
+                                <span>{{ $this->nomeEmpresa($registro) }}</span>
                             </div>
                         </article>
                     @endforeach
@@ -257,56 +213,64 @@
             @endif
         </section>
 
-        <section class="ad-panel ad-panel--large">
-            <div class="ad-panel-header">
-                <div>
-                    <h3>Trilha recente com antes/depois</h3>
-                    <p>Últimas alterações registradas, já com comparação do valor anterior e novo.</p>
-                </div>
-                <div class="ad-panel-counter">{{ number_format((int) $recentes->count(), 0, ',', '.') }} registros</div>
-            </div>
-
-            @if($recentes->isEmpty())
-                <div class="ad-empty">Nenhuma movimentação recente encontrada.</div>
-            @else
-                <div class="ad-timeline">
-                    @foreach($recentes as $registro)
-                        <div class="ad-timeline-item">
-                            <div class="ad-timeline-marker"></div>
-
-                            <div class="ad-timeline-content">
-                                <div class="ad-timeline-top">
-                                    <div class="ad-timeline-badges">
-                                        <span class="ad-badge {{ $this->eventoClasse($registro->evento) }}">{{ $this->eventoLabel($registro->evento) }}</span>
-                                        <span class="ad-badge {{ $this->suspeitoClasse($registro) }}">{{ $this->suspeitoLabel($registro) }}</span>
-                                    </div>
-                                    <time>{{ optional($registro->created_at)->format('d/m/Y H:i:s') ?: '-' }}</time>
-                                </div>
-
-                                <h4>{{ $this->registroLabel($registro) }}</h4>
-
-                                <div class="ad-timeline-meta">
-                                    <span>Usuário: {{ $registro->user?->name ?? 'Sistema' }}</span>
-                                    <span>Empresa: {{ $registro->empresa?->razao_social ?: $registro->empresa?->nome_fantasia ?: '-' }}</span>
-                                    <span>Campo: {{ $this->campoLabel($registro->campo) }}</span>
-                                    <span>IP: {{ $registro->ip ?: '-' }}</span>
-                                </div>
-
-                                <div class="ad-diff">
-                                    <div>
-                                        <span>Antes</span>
-                                        <strong>{{ $this->valorRegistro($registro->valor_anterior, $registro->campo) }}</strong>
-                                    </div>
-                                    <div>
-                                        <span>Depois</span>
-                                        <strong>{{ $this->valorRegistro($registro->valor_novo, $registro->campo) }}</strong>
-                                    </div>
-                                </div>
+        <section class="ad-layout ad-layout--balanced">
+            <article class="ad-panel">
+                <div class="ad-panel-header"><div><h3>Eventos por tipo</h3><p>Ajuda a entender se o recorte tem mais criações, alterações, exclusões ou eventos manuais.</p></div></div>
+                @if($eventos->isEmpty())
+                    <div class="ad-empty">Nenhum evento encontrado para os filtros aplicados.</div>
+                @else
+                    <div class="ad-chart">
+                        @foreach($eventos as $evento)
+                            <div class="ad-chart-row">
+                                <div class="ad-chart-label"><span class="ad-badge {{ $evento['classe'] }}">{{ $evento['label'] }}</span></div>
+                                <div class="ad-chart-track"><div class="ad-chart-bar" style="width: {{ $evento['percentual'] }}%"></div></div>
+                                <strong>{{ number_format((int) $evento['valor'], 0, ',', '.') }}</strong>
                             </div>
-                        </div>
-                    @endforeach
-                </div>
-            @endif
+                        @endforeach
+                    </div>
+                @endif
+            </article>
+
+            <article class="ad-panel">
+                <div class="ad-panel-header"><div><h3>Usuários mais ativos</h3><p>Quem mais gerou movimentações no período filtrado.</p></div></div>
+                @if($usuarios->isEmpty())
+                    <div class="ad-empty">Sem usuários auditados.</div>
+                @else
+                    <div class="ad-ranking">
+                        @foreach($usuarios as $usuario)
+                            <div class="ad-ranking-row ad-ranking-row--stacked"><span>{{ $usuario['nome'] }}</span><small>Última ação: {{ $usuario['ultima'] }}</small><strong>{{ number_format((int) $usuario['total'], 0, ',', '.') }}</strong></div>
+                        @endforeach
+                    </div>
+                @endif
+            </article>
+        </section>
+
+        <section class="ad-layout ad-layout--balanced">
+            <article class="ad-panel">
+                <div class="ad-panel-header"><div><h3>Auditoria por empresa</h3><p>Empresas com mais movimentações registradas.</p></div></div>
+                @if($empresas->isEmpty())
+                    <div class="ad-empty">Nenhuma empresa encontrada.</div>
+                @else
+                    <div class="ad-ranking">
+                        @foreach($empresas as $empresa)
+                            <div class="ad-ranking-row"><span>{{ $empresa['nome'] }}</span><strong>{{ number_format((int) $empresa['total'], 0, ',', '.') }}</strong></div>
+                        @endforeach
+                    </div>
+                @endif
+            </article>
+
+            <article class="ad-panel">
+                <div class="ad-panel-header"><div><h3>Áreas mais movimentadas</h3><p>Módulos do sistema com maior volume de rastreio.</p></div></div>
+                @if($modulos->isEmpty())
+                    <div class="ad-empty">Nenhum módulo encontrado.</div>
+                @else
+                    <div class="ad-ranking">
+                        @foreach($modulos as $modulo)
+                            <div class="ad-ranking-row"><span>{{ $modulo['nome'] }}</span><strong>{{ number_format((int) $modulo['total'], 0, ',', '.') }}</strong></div>
+                        @endforeach
+                    </div>
+                @endif
+            </article>
         </section>
     </div>
 </x-filament-panels::page>
