@@ -85,6 +85,7 @@ class EnsureAccountingProfileCanAccessFilament
             'central-de-evolucao' => 'Central de Evolução',
             'central-aprovacoes' => 'Central de Aprovações',
             'aprovacoes' => 'Central de Aprovações',
+            'dashboard-executivo-contabil' => 'Dashboard Executivo Contábil',
             'dashboard-executivo' => 'Dashboard Executivo',
             'relatorios-exportaveis' => 'Relatórios Exportáveis',
             'relatorios-internos' => 'Relatórios',

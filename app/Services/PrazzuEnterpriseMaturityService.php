@@ -223,27 +223,50 @@ class PrazzuEnterpriseMaturityService
 
     private function dashboardExecutivo(): array
     {
-        $total = max($this->tableCount('item_controles'), 1);
-        $done = $this->doneItemsCount();
-        $late = $this->lateItemsCount();
-        $sla = $this->slaCriticalCount();
+        $totalItems = max($this->tableCount('item_controles'), 1);
+        $doneItems = $this->doneItemsCount();
+        $openItems = $this->openItemsCount();
+        $lateItems = $this->lateItemsCount();
+        $completionRate = ($doneItems / $totalItems) * 100;
         $overdueValue = $this->overdueBillingValue();
+        $revenueMonth = $this->revenueThisMonth();
+        $health = $this->executiveHealthScore();
 
         return [
             'module' => 'dashboard-executivo',
-            'group' => 'DASHBOARD',
-            'title' => 'Dashboard Executivo',
-            'subtitle' => 'Visão de gestão para receita, risco, produtividade, inadimplência, gargalos e SLA.',
+            'group' => 'GESTÃO CONTÁBIL',
+            'title' => 'Dashboard Executivo Contábil',
+            'subtitle' => 'Painel simples para o sócio ou gestor entender clientes, prazos, documentos, equipe, gargalos e financeiro sem entrar em várias telas.',
             'cards' => [
-                ['label' => 'Conclusão', 'value' => number_format(($done / $total) * 100, 1, ',', '.') . '%', 'tone' => 'success', 'hint' => 'Itens concluídos'],
-                ['label' => 'Atrasos', 'value' => $late, 'tone' => 'danger', 'hint' => 'Backlog vencido'],
-                ['label' => 'SLA crítico', 'value' => $sla, 'tone' => 'warning', 'hint' => 'Rompido ou em risco'],
-                ['label' => 'Valor vencido', 'value' => 'R$ ' . number_format($overdueValue, 2, ',', '.'), 'tone' => 'info', 'hint' => 'Pagamentos locais'],
+                ['label' => 'Saúde do escritório', 'value' => $health['score'] . '/100', 'tone' => $health['tone'], 'hint' => $health['label']],
+                ['label' => 'Clientes ativos', 'value' => $this->activeCompaniesCount(), 'tone' => 'success', 'hint' => 'Carteira em operação'],
+                ['label' => 'Clientes em risco', 'value' => $this->lateCompaniesCount(), 'tone' => 'danger', 'hint' => 'Atraso, cobrança ou pendência'],
+                ['label' => 'Clientes parados', 'value' => $this->companiesWithoutRecentInteractionCount(), 'tone' => 'warning', 'hint' => 'Sem movimento recente'],
+                ['label' => 'Tarefas abertas', 'value' => $openItems, 'tone' => 'info', 'hint' => 'Demandas ainda não concluídas'],
+                ['label' => 'Tarefas atrasadas', 'value' => $lateItems, 'tone' => 'danger', 'hint' => 'Vencidas e não finalizadas'],
+                ['label' => 'Sem responsável', 'value' => $this->unassignedItemsCount(), 'tone' => 'warning', 'hint' => 'Precisam de dono claro'],
+                ['label' => 'SLA crítico', 'value' => $this->slaCriticalCount(), 'tone' => 'warning', 'hint' => 'Rompido ou próximo do limite'],
+                ['label' => 'Documentos pendentes', 'value' => $this->pendingDocumentsCount(), 'tone' => 'warning', 'hint' => 'Sem arquivo, vencidos ou aguardando aprovação'],
+                ['label' => 'Equipe sobrecarregada', 'value' => $this->overloadedTeamCount(), 'tone' => 'danger', 'hint' => 'Responsáveis com atraso acumulado'],
+                ['label' => 'Receita do mês', 'value' => 'R$ ' . number_format($revenueMonth, 2, ',', '.'), 'tone' => 'success', 'hint' => 'Pagamentos recebidos no mês'],
+                ['label' => 'Valor vencido', 'value' => 'R$ ' . number_format($overdueValue, 2, ',', '.'), 'tone' => $overdueValue > 0 ? 'danger' : 'success', 'hint' => 'Cobranças em aberto vencidas'],
             ],
+            'workflowTitle' => 'Funil executivo do escritório',
+            'workflowDescription' => 'Da carteira ativa até conclusão: visão compacta para perceber volume, atraso e risco.',
+            'workflow' => $this->executiveFunnelRows($completionRate),
             'sections' => [
-                ['title' => 'Gargalos executivos', 'description' => 'Itens que mais impactam operação e percepção do cliente.', 'items' => $this->riskRows(12)],
-                ['title' => 'Clientes críticos', 'description' => 'Empresas com pendências, atrasos, documentos ou financeiro em atenção.', 'items' => $this->companyContextRows(12)],
-                ['title' => 'Indicadores semanais', 'description' => 'Leitura simples para reunião de gestão.', 'items' => $this->weeklyKpiRows()],
+                ['title' => 'Saúde do escritório', 'description' => 'Score único para o sócio entender em segundos se o escritório está saudável, em atenção ou crítico.', 'items' => $this->executiveHealthRows($health)],
+                ['title' => 'O que precisa da sua atenção hoje?', 'description' => 'Leitura executiva simples: ações que mais reduzem risco, atraso, perda de receita e reclamação.', 'items' => $this->todayExecutiveAttentionRows($completionRate)],
+                ['title' => 'Radar de risco da carteira', 'description' => 'Clientes classificados por risco alto, médio e baixo usando atraso, documentos, financeiro e falta de interação.', 'items' => $this->riskRadarRows()],
+                ['title' => 'Ranking de clientes problemáticos', 'description' => 'Clientes que exigem ação prioritária por risco operacional, financeiro ou documental.', 'items' => $this->priorityCompanyRows(10)],
+                ['title' => 'Ranking de clientes por receita', 'description' => 'Clientes que mais geraram receita recebida nos últimos 90 dias, com leitura simples de concentração da carteira.', 'items' => $this->topRevenueCompanyRows(10)],
+                ['title' => 'Carteiras por responsável', 'description' => 'Visão por responsável para equilibrar clientes, tarefas abertas, atrasos e entregas.', 'items' => $this->portfolioByOwnerRows(12)],
+                ['title' => 'Comparativo mensal', 'description' => 'Este mês contra o mês anterior: receita, novos trabalhos, conclusão e inadimplência.', 'items' => $this->monthlyComparisonRows()],
+                ['title' => 'Tendências estratégicas', 'description' => 'Sinais de 30, 90 e 180 dias para o gestor saber se o escritório está melhorando ou piorando.', 'items' => $this->strategicTrendRows()],
+                ['title' => 'Mapa de gargalos operacionais', 'description' => 'Agrupa atrasos, SLA e volume por tipo de trabalho para mostrar onde a operação está travando.', 'items' => $this->operationalBottleneckRows(10)],
+                ['title' => 'Plano de ação recomendado', 'description' => 'Recomendações práticas para o gestor agir sem precisar interpretar todos os números.', 'items' => $this->actionPlanRows($completionRate)],
+                ['title' => 'Alertas inteligentes', 'description' => 'Sinais automáticos calculados com o banco atual para evitar surpresa operacional.', 'items' => $this->smartAlertRows()],
+                ['title' => 'Prazos, SLA e documentos críticos', 'description' => 'Fila objetiva de itens que podem gerar reclamação, multa, retrabalho ou perda de confiança.', 'items' => $this->riskRows(12)],
             ],
             'quickActions' => $this->quickActions(),
         ];
@@ -713,7 +736,7 @@ class PrazzuEnterpriseMaturityService
             ->get()
             ->map(function ($company) {
                 $items = $this->hasTable('item_controles') ? DB::table('item_controles')->where('empresa_id', $company->id)->count() : 0;
-                $late = $this->hasTable('item_controles') ? DB::table('item_controles')->where('empresa_id', $company->id)->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('status', self::DONE_STATUSES)->count() : 0;
+                $late = $this->hasTable('item_controles') ? DB::table('item_controles')->where('empresa_id', $company->id)->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->count() : 0;
                 $docs = $this->hasTable('item_controles') ? DB::table('item_controles')->where('empresa_id', $company->id)->where(function ($q) { $q->whereNotNull('arquivo')->orWhereIn('tipo', ['documento','contrato','compliance']); })->count() : 0;
                 $payments = $this->hasTable('pagamentos') ? DB::table('pagamentos')->where('empresa_id', $company->id)->whereNull('pago_em')->count() : 0;
                 $tone = $late > 0 || $payments > 0 ? 'danger' : 'success';
@@ -831,7 +854,7 @@ class PrazzuEnterpriseMaturityService
 
     private function documentosVencidos(): int
     {
-        return $this->hasTable('item_controles') ? DB::table('item_controles')->whereIn('tipo', ['documento','contrato','compliance','auditoria'])->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('status', self::DONE_STATUSES)->count() : 0;
+        return $this->hasTable('item_controles') ? DB::table('item_controles')->whereIn('tipo', ['documento','contrato','compliance','auditoria'])->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->count() : 0;
     }
 
     private function documentStatusCount(array $statuses): int
@@ -862,12 +885,12 @@ class PrazzuEnterpriseMaturityService
 
     private function doneItemsCount(): int
     {
-        return $this->hasTable('item_controles') ? DB::table('item_controles')->whereIn('status', self::DONE_STATUSES)->count() : 0;
+        return $this->hasTable('item_controles') ? DB::table('item_controles')->whereIn('item_controles.status', self::DONE_STATUSES)->count() : 0;
     }
 
     private function lateItemsCount(): int
     {
-        return $this->hasTable('item_controles') ? DB::table('item_controles')->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('status', self::DONE_STATUSES)->count() : 0;
+        return $this->hasTable('item_controles') ? DB::table('item_controles')->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->count() : 0;
     }
 
     private function slaCriticalCount(): int
@@ -890,7 +913,7 @@ class PrazzuEnterpriseMaturityService
         if (! $this->hasTable('empresas')) return 0;
         $ids = [];
         if ($this->hasTable('item_controles')) {
-            $ids = array_merge($ids, DB::table('item_controles')->whereNotNull('empresa_id')->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('status', self::DONE_STATUSES)->pluck('empresa_id')->all());
+            $ids = array_merge($ids, DB::table('item_controles')->whereNotNull('empresa_id')->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->pluck('empresa_id')->all());
         }
         if ($this->hasTable('pagamentos')) {
             $ids = array_merge($ids, DB::table('pagamentos')->whereNotNull('empresa_id')->whereNull('pago_em')->whereDate('vencimento', '<', now()->toDateString())->pluck('empresa_id')->all());
@@ -906,6 +929,656 @@ class PrazzuEnterpriseMaturityService
     private function companiesWithPaymentsCount(): int
     {
         return $this->hasTable('pagamentos') ? DB::table('pagamentos')->whereNotNull('empresa_id')->distinct('empresa_id')->count('empresa_id') : 0;
+    }
+
+
+    private function activeCompaniesCount(): int
+    {
+        if (! $this->hasTable('empresas')) return 0;
+
+        $query = DB::table('empresas');
+
+        if ($this->hasColumn('empresas', 'ativo')) {
+            $query->where('ativo', 1);
+        }
+
+        if ($this->hasColumn('empresas', 'status')) {
+            $query->where(function ($q) {
+                $q->whereNull('status')->orWhereIn('status', ['ativo', 'ativa', 'active']);
+            });
+        }
+
+        return $query->count();
+    }
+
+    private function openItemsCount(): int
+    {
+        return $this->hasTable('item_controles')
+            ? DB::table('item_controles')->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+            : 0;
+    }
+
+    private function pendingDocumentsCount(): int
+    {
+        if (! $this->hasTable('item_controles')) return 0;
+
+        return DB::table('item_controles')
+            ->whereIn('tipo', ['documento', 'contrato', 'compliance', 'auditoria'])
+            ->where(function ($q) {
+                $q->whereNull('arquivo')
+                    ->orWhere(function ($sub) {
+                        $sub->whereNotNull('data_vencimento')
+                            ->whereDate('data_vencimento', '<', now()->toDateString());
+                    });
+
+                if ($this->hasColumn('item_controles', 'document_status')) {
+                    $q->orWhereIn('document_status', ['pendente', 'em_revisao', 'aguardando_aprovacao', 'reprovado']);
+                }
+            })
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->count();
+    }
+
+    private function revenueThisMonth(): float
+    {
+        if (! $this->hasTable('pagamentos')) return 0.0;
+
+        return (float) DB::table('pagamentos')
+            ->whereNotNull('pago_em')
+            ->whereBetween('pago_em', [now()->startOfMonth(), now()->endOfMonth()])
+            ->sum('valor');
+    }
+
+    private function executiveFunnelRows(float $completionRate): array
+    {
+        return [
+            ['step' => 'Carteira ativa', 'count' => $this->activeCompaniesCount(), 'description' => 'Clientes ativos que compõem a base do escritório.'],
+            ['step' => 'Demandas abertas', 'count' => $this->openItemsCount(), 'description' => 'Tudo que ainda exige execução da equipe.'],
+            ['step' => 'Atrasos', 'count' => $this->lateItemsCount(), 'description' => 'Backlog vencido que precisa de decisão.'],
+            ['step' => 'SLA crítico', 'count' => $this->slaCriticalCount(), 'description' => 'Risco de quebra de prazo e insatisfação.'],
+            ['step' => 'Conclusão', 'count' => (int) round($completionRate), 'description' => 'Percentual geral de itens finalizados.'],
+        ];
+    }
+
+    private function executiveKpiRows(float $completionRate): array
+    {
+        $lateItems = $this->lateItemsCount();
+        $overdueValue = $this->overdueBillingValue();
+        $pendingDocuments = $this->pendingDocumentsCount();
+        $sla = $this->slaCriticalCount();
+
+        return [
+            ['title' => 'Saúde operacional', 'meta' => 'Conclusão geral', 'status' => number_format($completionRate, 1, ',', '.') . '% concluído', 'tone' => $completionRate >= 70 ? 'success' : ($completionRate >= 45 ? 'warning' : 'danger'), 'description' => 'Quanto maior a conclusão, menor a pressão operacional acumulada.'],
+            ['title' => 'Backlog vencido', 'meta' => 'Prazos', 'status' => $lateItems . ' item(ns)', 'tone' => $lateItems > 0 ? 'danger' : 'success', 'description' => 'Tarefas e controles vencidos que ainda não foram encerrados.'],
+            ['title' => 'Exposição financeira', 'meta' => 'Cobranças vencidas', 'status' => 'R$ ' . number_format($overdueValue, 2, ',', '.'), 'tone' => $overdueValue > 0 ? 'danger' : 'success', 'description' => 'Valor vencido afeta caixa, continuidade e negociação com clientes.'],
+            ['title' => 'Documentos que travam entrega', 'meta' => 'Documental', 'status' => $pendingDocuments . ' pendência(s)', 'tone' => $pendingDocuments > 0 ? 'warning' : 'success', 'description' => 'Documentos ausentes, vencidos ou aguardando regularização.'],
+            ['title' => 'Risco de SLA', 'meta' => 'Atendimento e execução', 'status' => $sla . ' alerta(s)', 'tone' => $sla > 0 ? 'warning' : 'success', 'description' => 'Itens próximos do limite ou já sem conclusão registrada.'],
+        ];
+    }
+
+    private function teamProductivityRows(int $limit): array
+    {
+        if (! $this->hasTable('responsaveis') || ! $this->hasTable('item_controles')) return [];
+
+        return DB::table('responsaveis')
+            ->leftJoin('item_controles', 'item_controles.responsavel_id', '=', 'responsaveis.id')
+            ->select([
+                'responsaveis.id',
+                'responsaveis.nome',
+                'responsaveis.cargo',
+                DB::raw('COUNT(item_controles.id) as total_itens'),
+                DB::raw("SUM(CASE WHEN item_controles.status IN ('" . implode("','", self::DONE_STATUSES) . "') THEN 1 ELSE 0 END) as concluidos"),
+                DB::raw("SUM(CASE WHEN item_controles.data_vencimento IS NOT NULL AND item_controles.data_vencimento < CURRENT_DATE AND item_controles.status NOT IN ('" . implode("','", self::DONE_STATUSES) . "') THEN 1 ELSE 0 END) as atrasados"),
+            ])
+            ->groupBy('responsaveis.id', 'responsaveis.nome', 'responsaveis.cargo')
+            ->orderByDesc('atrasados')
+            ->orderByDesc('total_itens')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $total = (int) $row->total_itens;
+                $done = (int) $row->concluidos;
+                $late = (int) $row->atrasados;
+                $rate = $total > 0 ? ($done / $total) * 100 : 0;
+
+                return [
+                    'title' => $row->nome ?: 'Responsável sem nome',
+                    'meta' => $row->cargo ?: 'Equipe',
+                    'status' => $late > 0 ? $late . ' atraso(s)' : number_format($rate, 0, ',', '.') . '% concluído',
+                    'tone' => $late > 0 ? 'danger' : ($total > 0 ? 'success' : 'info'),
+                    'description' => $total . ' item(ns) vinculados, ' . $done . ' concluído(s). Use este indicador para equilibrar carteira, cobrança e prazos.',
+                ];
+            })
+            ->all();
+    }
+
+    private function operationalBottleneckRows(int $limit): array
+    {
+        if (! $this->hasTable('item_controles')) return [];
+
+        $done = "'" . implode("','", self::DONE_STATUSES) . "'";
+        $select = [
+            DB::raw("COALESCE(NULLIF(tipo, ''), 'Sem tipo') as tipo_label"),
+            DB::raw('COUNT(*) as total_itens'),
+            DB::raw("SUM(CASE WHEN status NOT IN ($done) THEN 1 ELSE 0 END) as abertos"),
+            DB::raw("SUM(CASE WHEN data_vencimento IS NOT NULL AND data_vencimento < CURRENT_DATE AND status NOT IN ($done) THEN 1 ELSE 0 END) as atrasados"),
+        ];
+
+        if ($this->hasColumn('item_controles', 'sla_limite_em') && $this->hasColumn('item_controles', 'sla_concluido_em')) {
+            $select[] = DB::raw("SUM(CASE WHEN sla_limite_em IS NOT NULL AND sla_concluido_em IS NULL AND sla_limite_em <= DATE_ADD(NOW(), INTERVAL 12 HOUR) THEN 1 ELSE 0 END) as sla_critico");
+        } else {
+            $select[] = DB::raw('0 as sla_critico');
+        }
+
+        return DB::table('item_controles')
+            ->select($select)
+            ->groupBy(DB::raw("COALESCE(NULLIF(tipo, ''), 'Sem tipo')"))
+            ->orderByDesc('atrasados')
+            ->orderByDesc('sla_critico')
+            ->orderByDesc('abertos')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $late = (int) $row->atrasados;
+                $sla = (int) $row->sla_critico;
+                $open = (int) $row->abertos;
+                $total = (int) $row->total_itens;
+                $tone = ($late + $sla) > 0 ? 'danger' : ($open > 0 ? 'warning' : 'success');
+
+                return [
+                    'title' => Str::headline((string) $row->tipo_label),
+                    'meta' => $total . ' item(ns) no total • ' . $open . ' aberto(s)',
+                    'status' => ($late + $sla) . ' crítico(s)',
+                    'tone' => $tone,
+                    'description' => $late . ' atraso(s) e ' . $sla . ' SLA(s) crítico(s). Este bloco mostra onde o gestor deve reforçar processo, responsável ou cobrança do cliente.',
+                ];
+            })
+            ->all();
+    }
+
+    private function priorityCompanyRows(int $limit): array
+    {
+        if (! $this->hasTable('empresas')) return [];
+
+        return DB::table('empresas')
+            ->select('empresas.id', 'empresas.nome_fantasia', 'empresas.razao_social', 'empresas.email', 'empresas.updated_at')
+            ->get()
+            ->map(function ($company) {
+                $late = $this->hasTable('item_controles')
+                    ? DB::table('item_controles')->where('empresa_id', $company->id)->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+                    : 0;
+                $open = $this->hasTable('item_controles')
+                    ? DB::table('item_controles')->where('empresa_id', $company->id)->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+                    : 0;
+                $docs = $this->hasTable('item_controles')
+                    ? DB::table('item_controles')->where('empresa_id', $company->id)->whereIn('tipo', ['documento', 'contrato', 'compliance', 'auditoria'])->where(function ($q) {
+                        $q->whereNull('arquivo')->orWhere(function ($sub) {
+                            $sub->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString());
+                        });
+                    })->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+                    : 0;
+                $billing = $this->hasTable('pagamentos')
+                    ? (float) DB::table('pagamentos')->where('empresa_id', $company->id)->whereNull('pago_em')->whereDate('vencimento', '<', now()->toDateString())->sum('valor')
+                    : 0.0;
+                $lastActivity = $this->lastCompanyActivity($company->id, $company->updated_at);
+                $daysWithoutActivity = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
+                $score = ($late * 4) + ($docs * 3) + ($billing > 0 ? 5 : 0) + ($open * 1) + ($daysWithoutActivity >= 30 ? 2 : 0);
+
+                return [
+                    'score' => $score,
+                    'title' => $company->nome_fantasia ?: ($company->razao_social ?: 'Empresa sem nome'),
+                    'meta' => $company->email ?: 'Sem e-mail cadastrado',
+                    'status' => $score > 0 ? 'Prioridade ' . $score : 'Saudável',
+                    'tone' => $score >= 8 ? 'danger' : ($score >= 3 ? 'warning' : 'success'),
+                    'description' => $late . ' atraso(s), ' . $docs . ' documento(s) pendente(s), R$ ' . number_format($billing, 2, ',', '.') . ' vencido(s) e última movimentação há ' . $daysWithoutActivity . ' dia(s).',
+                ];
+            })
+            ->sortByDesc('score')
+            ->take($limit)
+            ->values()
+            ->map(fn ($row) => collect($row)->except('score')->all())
+            ->all();
+    }
+
+    private function actionPlanRows(float $completionRate): array
+    {
+        $late = $this->lateItemsCount();
+        $sla = $this->slaCriticalCount();
+        $docs = $this->pendingDocumentsCount();
+        $billing = $this->overdueBillingValue();
+        $unassigned = $this->unassignedItemsCount();
+        $overloaded = $this->overloadedTeamCount();
+
+        $rows = [
+            ['title' => 'Resolver atrasos de maior impacto', 'meta' => 'Prazos vencidos', 'status' => $late . ' item(ns)', 'tone' => $late > 0 ? 'danger' : 'success', 'description' => $late > 0 ? 'Comece pelos itens vencidos com cliente e responsável definidos. Isso reduz reclamação, multa e retrabalho.' : 'Não há atraso operacional vencido no momento.'],
+            ['title' => 'Blindar SLA antes de virar reclamação', 'meta' => 'Próximas 12 horas', 'status' => $sla . ' alerta(s)', 'tone' => $sla > 0 ? 'warning' : 'success', 'description' => $sla > 0 ? 'Priorize retorno rápido ao cliente e registre conclusão ou justificativa no item.' : 'Não há SLA crítico calculado com os campos atuais.'],
+            ['title' => 'Cobrar documentos que travam entrega', 'meta' => 'Documental', 'status' => $docs . ' pendência(s)', 'tone' => $docs > 0 ? 'warning' : 'success', 'description' => $docs > 0 ? 'Transforme documentos pendentes em cobrança objetiva para o cliente, com prazo e responsável.' : 'Base documental sem pendência crítica encontrada.'],
+            ['title' => 'Revisar carteira financeira vencida', 'meta' => 'Cobrança', 'status' => 'R$ ' . number_format($billing, 2, ',', '.'), 'tone' => $billing > 0 ? 'danger' : 'success', 'description' => $billing > 0 ? 'Acompanhe clientes com cobrança vencida antes de liberar novas demandas complexas.' : 'Nenhum valor vencido encontrado em pagamentos.'],
+            ['title' => 'Dar dono para tudo que está solto', 'meta' => 'Responsabilidade', 'status' => $unassigned . ' item(ns)', 'tone' => $unassigned > 0 ? 'warning' : 'success', 'description' => $unassigned > 0 ? 'Itens sem responsável tendem a desaparecer da rotina. Atribua responsável antes de cobrar prazo.' : 'Todos os itens possuem responsável pelos campos atuais.'],
+            ['title' => 'Equilibrar equipe', 'meta' => 'Sobrecarga', 'status' => $overloaded . ' pessoa(s)', 'tone' => $overloaded > 0 ? 'danger' : 'success', 'description' => $overloaded > 0 ? 'Reveja distribuição de tarefas dos responsáveis com maior acúmulo de atraso.' : 'Não foi encontrada sobrecarga crítica por responsável.'],
+            ['title' => 'Acompanhar conclusão geral', 'meta' => 'Saúde da operação', 'status' => number_format($completionRate, 1, ',', '.') . '%', 'tone' => $completionRate >= 70 ? 'success' : ($completionRate >= 45 ? 'warning' : 'danger'), 'description' => 'Indicador simples para reunião semanal: abaixo de 45% pede revisão de processo e foco no backlog.'],
+        ];
+
+        return $rows;
+    }
+
+    private function smartAlertRows(): array
+    {
+        $stopped = $this->companiesWithoutRecentInteractionCount();
+        $unassigned = $this->unassignedItemsCount();
+        $urgentTickets = $this->urgentAttendancesCount();
+        $contracts = $this->contractsDueThisMonthCount();
+        $blocked = $this->blockedItemsCount();
+
+        return [
+            ['title' => 'Clientes sem movimento recente', 'meta' => 'Relacionamento', 'status' => $stopped . ' cliente(s)', 'tone' => $stopped > 0 ? 'warning' : 'success', 'description' => $stopped > 0 ? 'Clientes sem atualização operacional ou atendimento recente podem estar sem acompanhamento claro.' : 'A carteira mostra movimentação recente suficiente.'],
+            ['title' => 'Itens sem responsável definido', 'meta' => 'Governança operacional', 'status' => $unassigned . ' item(ns)', 'tone' => $unassigned > 0 ? 'warning' : 'success', 'description' => $unassigned > 0 ? 'Sem dono, não há cobrança justa de prazo. Ação recomendada: atribuir responsável.' : 'Nenhum item sem responsável encontrado.'],
+            ['title' => 'Atendimentos urgentes abertos', 'meta' => 'Cliente e suporte', 'status' => $urgentTickets . ' chamado(s)', 'tone' => $urgentTickets > 0 ? 'danger' : 'success', 'description' => $urgentTickets > 0 ? 'Chamados urgentes abertos precisam de retorno rápido e registro de primeira resposta.' : 'Não há atendimento urgente aberto.'],
+            ['title' => 'Contratos vencendo no mês', 'meta' => 'Receita e renovação', 'status' => $contracts . ' contrato(s)', 'tone' => $contracts > 0 ? 'warning' : 'success', 'description' => $contracts > 0 ? 'Renovação deve ser acompanhada antes do vencimento para evitar perda de receita.' : 'Nenhum contrato vencendo neste mês pelos campos atuais.'],
+            ['title' => 'Itens bloqueados por dependência', 'meta' => 'Fluxo operacional', 'status' => $blocked . ' bloqueio(s)', 'tone' => $blocked > 0 ? 'danger' : 'success', 'description' => $blocked > 0 ? 'Bloqueios indicam dependência entre etapas. A gestão deve remover impedimentos antes de cobrar execução.' : 'Sem bloqueios ativos por dependência.'],
+        ];
+    }
+
+    private function overloadedTeamCount(): int
+    {
+        if (! $this->hasTable('responsaveis') || ! $this->hasTable('item_controles')) return 0;
+
+        $done = "'" . implode("','", self::DONE_STATUSES) . "'";
+
+        return DB::table('responsaveis')
+            ->leftJoin('item_controles', 'item_controles.responsavel_id', '=', 'responsaveis.id')
+            ->select('responsaveis.id')
+            ->groupBy('responsaveis.id')
+            ->havingRaw("SUM(CASE WHEN item_controles.data_vencimento IS NOT NULL AND item_controles.data_vencimento < CURRENT_DATE AND item_controles.status NOT IN ($done) THEN 1 ELSE 0 END) >= 3")
+            ->count();
+    }
+
+    private function unassignedItemsCount(): int
+    {
+        if (! $this->hasTable('item_controles')) return 0;
+
+        if (! $this->hasColumn('item_controles', 'responsavel_id')) return 0;
+
+        return DB::table('item_controles')
+            ->where(function ($q) { $q->whereNull('responsavel_id')->orWhere('responsavel_id', 0); })
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->count();
+    }
+
+    private function companiesWithoutRecentInteractionCount(): int
+    {
+        if (! $this->hasTable('empresas')) return 0;
+
+        return DB::table('empresas')
+            ->get(['id', 'updated_at'])
+            ->filter(fn ($company) => $this->lastCompanyActivity($company->id, $company->updated_at) === null || Carbon::parse($this->lastCompanyActivity($company->id, $company->updated_at))->lt(now()->subDays(30)))
+            ->count();
+    }
+
+    private function lastCompanyActivity(int|string $companyId, $fallback = null): mixed
+    {
+        $dates = [];
+
+        if (! empty($fallback)) $dates[] = $fallback;
+
+        if ($this->hasTable('item_controles')) {
+            $lastItem = DB::table('item_controles')->where('empresa_id', $companyId)->max('updated_at');
+            if (! empty($lastItem)) $dates[] = $lastItem;
+        }
+
+        if ($this->hasTable('atendimentos')) {
+            $lastAttendance = DB::table('atendimentos')->where('empresa_id', $companyId)->max('updated_at');
+            if (! empty($lastAttendance)) $dates[] = $lastAttendance;
+        }
+
+        if ($this->hasTable('pagamentos')) {
+            $lastPayment = DB::table('pagamentos')->where('empresa_id', $companyId)->max('updated_at');
+            if (! empty($lastPayment)) $dates[] = $lastPayment;
+        }
+
+        if (empty($dates)) return null;
+
+        rsort($dates);
+        return $dates[0];
+    }
+
+    private function urgentAttendancesCount(): int
+    {
+        if (! $this->hasTable('atendimentos')) return 0;
+
+        return DB::table('atendimentos')
+            ->where('prioridade', 'urgente')
+            ->whereNotIn('status', ['resolvido', 'fechado', 'cancelado'])
+            ->count();
+    }
+
+    private function blockedItemsCount(): int
+    {
+        if (! $this->hasColumn('item_controles', 'blocked_by_dependency')) return 0;
+
+        return DB::table('item_controles')
+            ->where('blocked_by_dependency', 1)
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->count();
+    }
+
+    private function monthlyEvolutionRows(int $months): array
+    {
+        $rows = [];
+
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $start = now()->subMonths($i)->startOfMonth();
+            $end = now()->subMonths($i)->endOfMonth();
+            $label = $start->translatedFormat('M/Y');
+
+            $created = $this->hasTable('item_controles')
+                ? DB::table('item_controles')->whereBetween('created_at', [$start, $end])->count()
+                : 0;
+            $done = $this->hasTable('item_controles')
+                ? DB::table('item_controles')->whereIn('item_controles.status', self::DONE_STATUSES)->whereBetween('updated_at', [$start, $end])->count()
+                : 0;
+            $paid = $this->hasTable('pagamentos')
+                ? (float) DB::table('pagamentos')->whereNotNull('pago_em')->whereBetween('pago_em', [$start, $end])->sum('valor')
+                : 0.0;
+            $overdue = $this->hasTable('pagamentos')
+                ? (float) DB::table('pagamentos')->whereNull('pago_em')->whereBetween('vencimento', [$start->toDateString(), $end->toDateString()])->sum('valor')
+                : 0.0;
+
+            $tone = $overdue > 0 ? 'warning' : ($done >= $created ? 'success' : 'info');
+
+            $rows[] = [
+                'title' => ucfirst($label),
+                'meta' => 'Criados: ' . $created . ' • Concluídos: ' . $done,
+                'status' => 'Recebido R$ ' . number_format($paid, 2, ',', '.'),
+                'tone' => $tone,
+                'description' => 'Valor vencido no mês: R$ ' . number_format($overdue, 2, ',', '.') . '. Ajuda a comparar volume operacional com caixa recebido.',
+            ];
+        }
+
+        return $rows;
+    }
+
+    private function executiveHealthScore(): array
+    {
+        $activeCompanies = max($this->activeCompaniesCount(), 1);
+        $openItems = max($this->openItemsCount(), 1);
+        $lateItems = $this->lateItemsCount();
+        $slaCritical = $this->slaCriticalCount();
+        $pendingDocuments = $this->pendingDocumentsCount();
+        $lateCompanies = $this->lateCompaniesCount();
+        $stoppedCompanies = $this->companiesWithoutRecentInteractionCount();
+        $overloadedTeam = $this->overloadedTeamCount();
+        $overdueValue = $this->overdueBillingValue();
+        $revenueMonth = max($this->revenueThisMonth(), 1);
+
+        $penalty = 0;
+        $penalty += min(28, ($lateItems / $openItems) * 28);
+        $penalty += min(18, ($slaCritical / $openItems) * 18);
+        $penalty += min(16, ($pendingDocuments / $openItems) * 16);
+        $penalty += min(14, ($lateCompanies / $activeCompanies) * 14);
+        $penalty += min(10, ($stoppedCompanies / $activeCompanies) * 10);
+        $penalty += min(8, $overloadedTeam * 2);
+        $penalty += min(6, ($overdueValue / $revenueMonth) * 6);
+
+        $score = max(0, min(100, (int) round(100 - $penalty)));
+
+        return [
+            'score' => $score,
+            'label' => $score >= 90 ? 'Excelente' : ($score >= 75 ? 'Atenção' : 'Crítico'),
+            'tone' => $score >= 90 ? 'success' : ($score >= 75 ? 'warning' : 'danger'),
+        ];
+    }
+
+    private function executiveHealthRows(array $health): array
+    {
+        return [
+            ['title' => 'Score executivo', 'meta' => 'Saúde geral do escritório', 'status' => $health['score'] . '/100 • ' . $health['label'], 'tone' => $health['tone'], 'description' => 'Calculado com atraso, SLA crítico, documentos pendentes, clientes em risco, clientes sem movimento, sobrecarga da equipe e inadimplência.'],
+            ['title' => 'Regra de leitura', 'meta' => 'Interpretação simples', 'status' => '90+ excelente • 75-89 atenção • abaixo de 75 crítico', 'tone' => 'info', 'description' => 'O objetivo é o gestor bater o olho e saber se precisa agir hoje ou apenas acompanhar.'],
+            ['title' => 'Maior objetivo da tela', 'meta' => 'Decisão rápida', 'status' => 'Reduzir ruído', 'tone' => 'success', 'description' => 'O dashboard prioriza leitura simples para cliente final: primeiro mostra o que importa, depois mostra onde clicar para resolver.'],
+        ];
+    }
+
+    private function todayExecutiveAttentionRows(float $completionRate): array
+    {
+        $rows = [];
+        $late = $this->lateItemsCount();
+        $sla = $this->slaCriticalCount();
+        $docs = $this->pendingDocumentsCount();
+        $billing = $this->overdueBillingValue();
+        $contracts = $this->contractsDueThisMonthCount();
+        $riskCompanies = $this->lateCompaniesCount();
+        $stopped = $this->companiesWithoutRecentInteractionCount();
+
+        if ($late > 0) $rows[] = ['title' => 'Resolver atrasos vencidos', 'meta' => 'Operação', 'status' => $late . ' item(ns)', 'tone' => 'danger', 'description' => 'Atraso vencido é o primeiro ponto de reclamação e multa. Priorize por cliente mais crítico e responsável definido.'];
+        if ($sla > 0) $rows[] = ['title' => 'Blindar SLA crítico', 'meta' => 'Prazo e atendimento', 'status' => $sla . ' alerta(s)', 'tone' => 'warning', 'description' => 'Itens próximos do limite precisam de retorno rápido ou justificativa registrada antes de virar problema.'];
+        if ($docs > 0) $rows[] = ['title' => 'Cobrar documentos pendentes', 'meta' => 'Documental', 'status' => $docs . ' documento(s)', 'tone' => 'warning', 'description' => 'Documentos faltantes travam entrega. Transforme cada pendência em solicitação clara para o cliente.'];
+        if ($billing > 0) $rows[] = ['title' => 'Atuar na inadimplência', 'meta' => 'Financeiro', 'status' => 'R$ ' . number_format($billing, 2, ',', '.'), 'tone' => 'danger', 'description' => 'Valor vencido reduz caixa e aumenta risco de continuar atendendo cliente sem previsibilidade.'];
+        if ($contracts > 0) $rows[] = ['title' => 'Renovar contratos vencendo', 'meta' => 'Receita', 'status' => $contracts . ' contrato(s)', 'tone' => 'warning', 'description' => 'Contrato perto do vencimento deve aparecer antes da perda de receita, não depois.'];
+        if ($riskCompanies > 0) $rows[] = ['title' => 'Revisar clientes em risco', 'meta' => 'Carteira', 'status' => $riskCompanies . ' cliente(s)', 'tone' => 'danger', 'description' => 'Clientes com atraso, cobrança ou documento pendente precisam de plano de contato e dono definido.'];
+        if ($stopped > 0) $rows[] = ['title' => 'Reativar clientes sem movimento', 'meta' => 'Relacionamento', 'status' => $stopped . ' cliente(s)', 'tone' => 'warning', 'description' => 'Cliente sem movimentação pode parecer abandonado. Use atendimento ou tarefa para registrar próximo passo.'];
+
+        $rows[] = ['title' => 'Conclusão geral da operação', 'meta' => 'Entrega', 'status' => number_format($completionRate, 1, ',', '.') . '%', 'tone' => $completionRate >= 70 ? 'success' : ($completionRate >= 45 ? 'warning' : 'danger'), 'description' => 'Use este número na reunião semanal para saber se a equipe está fechando mais trabalho do que abre.'];
+
+        return array_slice($rows, 0, 8);
+    }
+
+    private function riskRadarRows(): array
+    {
+        $scores = $this->companyRiskScores();
+        $high = $scores->filter(fn ($row) => $row['score'] >= 8)->count();
+        $medium = $scores->filter(fn ($row) => $row['score'] >= 3 && $row['score'] < 8)->count();
+        $low = $scores->filter(fn ($row) => $row['score'] < 3)->count();
+
+        return [
+            ['title' => 'Risco alto', 'meta' => 'Atraso, financeiro ou documento crítico', 'status' => $high . ' cliente(s)', 'tone' => $high > 0 ? 'danger' : 'success', 'description' => 'Clientes que precisam de ação direta do gestor ou responsável da carteira.'],
+            ['title' => 'Risco médio', 'meta' => 'Atenção preventiva', 'status' => $medium . ' cliente(s)', 'tone' => $medium > 0 ? 'warning' : 'success', 'description' => 'Clientes com sinais de acúmulo que ainda podem ser resolvidos antes de virar crise.'],
+            ['title' => 'Risco baixo', 'meta' => 'Carteira saudável', 'status' => $low . ' cliente(s)', 'tone' => 'success', 'description' => 'Clientes sem sinal crítico relevante pelos dados atuais.'],
+        ];
+    }
+
+    private function companyRiskScores()
+    {
+        if (! $this->hasTable('empresas')) return collect();
+
+        return DB::table('empresas')
+            ->select('empresas.id', 'empresas.nome_fantasia', 'empresas.razao_social', 'empresas.email', 'empresas.updated_at')
+            ->get()
+            ->map(function ($company) {
+                $late = $this->hasTable('item_controles')
+                    ? DB::table('item_controles')->where('empresa_id', $company->id)->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+                    : 0;
+                $open = $this->hasTable('item_controles')
+                    ? DB::table('item_controles')->where('empresa_id', $company->id)->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+                    : 0;
+                $docs = $this->hasTable('item_controles')
+                    ? DB::table('item_controles')->where('empresa_id', $company->id)->whereIn('tipo', ['documento', 'contrato', 'compliance', 'auditoria'])->where(function ($q) {
+                        $q->whereNull('arquivo')->orWhere(function ($sub) {
+                            $sub->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString());
+                        });
+                    })->whereNotIn('item_controles.status', self::DONE_STATUSES)->count()
+                    : 0;
+                $billing = $this->hasTable('pagamentos')
+                    ? (float) DB::table('pagamentos')->where('empresa_id', $company->id)->whereNull('pago_em')->whereDate('vencimento', '<', now()->toDateString())->sum('valor')
+                    : 0.0;
+                $lastActivity = $this->lastCompanyActivity($company->id, $company->updated_at);
+                $daysWithoutActivity = $lastActivity ? now()->diffInDays(Carbon::parse($lastActivity)) : 999;
+                $score = ($late * 4) + ($docs * 3) + ($billing > 0 ? 5 : 0) + min(4, $open) + ($daysWithoutActivity >= 30 ? 2 : 0);
+
+                return [
+                    'id' => $company->id,
+                    'score' => $score,
+                    'title' => $company->nome_fantasia ?: ($company->razao_social ?: 'Empresa sem nome'),
+                    'email' => $company->email,
+                    'late' => $late,
+                    'docs' => $docs,
+                    'billing' => $billing,
+                    'open' => $open,
+                    'days_without_activity' => $daysWithoutActivity,
+                ];
+            });
+    }
+
+    private function topRevenueCompanyRows(int $limit): array
+    {
+        if (! $this->hasTable('pagamentos') || ! $this->hasTable('empresas')) return [];
+
+        return DB::table('pagamentos')
+            ->leftJoin('empresas', 'empresas.id', '=', 'pagamentos.empresa_id')
+            ->select('empresas.id', 'empresas.nome_fantasia', 'empresas.razao_social', DB::raw('SUM(pagamentos.valor) as receita'), DB::raw('COUNT(pagamentos.id) as pagamentos_total'))
+            ->whereNotNull('pagamentos.pago_em')
+            ->where('pagamentos.pago_em', '>=', now()->subDays(90))
+            ->groupBy('empresas.id', 'empresas.nome_fantasia', 'empresas.razao_social')
+            ->orderByDesc('receita')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $risk = $row->id ? $this->companyRiskScores()->firstWhere('id', $row->id) : null;
+                $score = (int) ($risk['score'] ?? 0);
+                return [
+                    'title' => $row->nome_fantasia ?: ($row->razao_social ?: 'Cliente sem nome'),
+                    'meta' => $row->pagamentos_total . ' pagamento(s) recebido(s) nos últimos 90 dias',
+                    'status' => 'R$ ' . number_format((float) $row->receita, 2, ',', '.'),
+                    'tone' => $score >= 8 ? 'danger' : ($score >= 3 ? 'warning' : 'success'),
+                    'description' => 'Risco atual da carteira: ' . ($score >= 8 ? 'alto' : ($score >= 3 ? 'médio' : 'baixo')) . '. Use para proteger clientes relevantes financeiramente.',
+                ];
+            })
+            ->all();
+    }
+
+    private function portfolioByOwnerRows(int $limit): array
+    {
+        if (! $this->hasTable('responsaveis') || ! $this->hasTable('item_controles')) return [];
+
+        $done = "'" . implode("','", self::DONE_STATUSES) . "'";
+
+        return DB::table('responsaveis')
+            ->leftJoin('item_controles', 'item_controles.responsavel_id', '=', 'responsaveis.id')
+            ->leftJoin('empresas', 'empresas.id', '=', 'item_controles.empresa_id')
+            ->select([
+                'responsaveis.id',
+                'responsaveis.nome',
+                'responsaveis.cargo',
+                DB::raw('COUNT(DISTINCT empresas.id) as clientes'),
+                DB::raw('COUNT(item_controles.id) as itens'),
+                DB::raw("SUM(CASE WHEN item_controles.status NOT IN ($done) THEN 1 ELSE 0 END) as abertos"),
+                DB::raw("SUM(CASE WHEN item_controles.data_vencimento IS NOT NULL AND item_controles.data_vencimento < CURRENT_DATE AND item_controles.status NOT IN ($done) THEN 1 ELSE 0 END) as atrasados"),
+                DB::raw("SUM(CASE WHEN item_controles.status IN ($done) THEN 1 ELSE 0 END) as concluidos"),
+            ])
+            ->groupBy('responsaveis.id', 'responsaveis.nome', 'responsaveis.cargo')
+            ->orderByDesc('atrasados')
+            ->orderByDesc('clientes')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $clientes = (int) $row->clientes;
+                $abertos = (int) $row->abertos;
+                $atrasados = (int) $row->atrasados;
+                $concluidos = (int) $row->concluidos;
+
+                return [
+                    'title' => $row->nome ?: 'Responsável sem nome',
+                    'meta' => ($row->cargo ?: 'Carteira operacional') . ' • ' . $clientes . ' cliente(s)',
+                    'status' => $atrasados > 0 ? $atrasados . ' atraso(s)' : $concluidos . ' concluído(s)',
+                    'tone' => $atrasados > 0 ? 'danger' : ($abertos > 0 ? 'warning' : 'success'),
+                    'description' => $abertos . ' aberto(s), ' . $concluidos . ' concluído(s). Ajuda o gestor a redistribuir carga sem depender de planilha externa.',
+                ];
+            })
+            ->all();
+    }
+
+    private function monthlyComparisonRows(): array
+    {
+        $currentStart = now()->startOfMonth();
+        $currentEnd = now()->endOfMonth();
+        $previousStart = now()->subMonth()->startOfMonth();
+        $previousEnd = now()->subMonth()->endOfMonth();
+
+        $currentRevenue = $this->revenueBetween($currentStart, $currentEnd);
+        $previousRevenue = $this->revenueBetween($previousStart, $previousEnd);
+        $currentCreated = $this->itemsCreatedBetween($currentStart, $currentEnd);
+        $previousCreated = $this->itemsCreatedBetween($previousStart, $previousEnd);
+        $currentDone = $this->itemsDoneBetween($currentStart, $currentEnd);
+        $previousDone = $this->itemsDoneBetween($previousStart, $previousEnd);
+        $currentOverdue = $this->overdueBetween($currentStart, $currentEnd);
+        $previousOverdue = $this->overdueBetween($previousStart, $previousEnd);
+
+        return [
+            $this->comparisonRow('Receita recebida', 'Financeiro', $currentRevenue, $previousRevenue, true, 'Quanto entrou neste mês em comparação com o mês anterior.'),
+            $this->comparisonRow('Novos trabalhos', 'Operação', $currentCreated, $previousCreated, false, 'Volume de itens criados no mês. Crescimento sem conclusão pode gerar acúmulo.'),
+            $this->comparisonRow('Entregas concluídas', 'Produtividade', $currentDone, $previousDone, false, 'Itens finalizados neste mês. Deve acompanhar ou superar os novos trabalhos.'),
+            $this->comparisonRow('Valor vencido', 'Inadimplência', $currentOverdue, $previousOverdue, true, 'Aqui queda é bom: indica menor exposição financeira vencida.', true),
+        ];
+    }
+
+    private function comparisonRow(string $title, string $meta, float|int $current, float|int $previous, bool $money, string $description, bool $inverse = false): array
+    {
+        $diff = $previous == 0 ? ($current > 0 ? 100 : 0) : (($current - $previous) / max(abs((float) $previous), 1)) * 100;
+        $good = $inverse ? $diff <= 0 : $diff >= 0;
+        $value = $money ? 'R$ ' . number_format((float) $current, 2, ',', '.') : number_format((float) $current, 0, ',', '.');
+        $signal = $diff > 0 ? '+' : '';
+
+        return [
+            'title' => $title,
+            'meta' => $meta . ' • mês atual vs anterior',
+            'status' => $value . ' (' . $signal . number_format($diff, 1, ',', '.') . '%)',
+            'tone' => $good ? 'success' : 'warning',
+            'description' => $description,
+        ];
+    }
+
+    private function strategicTrendRows(): array
+    {
+        return [
+            $this->trendRow('30 dias', now()->subDays(30), now(), 'Curto prazo para detectar problema antes da reunião mensal.'),
+            $this->trendRow('90 dias', now()->subDays(90), now(), 'Mostra tendência real de carteira, receita e produtividade sem depender de um único mês.'),
+            $this->trendRow('180 dias', now()->subDays(180), now(), 'Visão estratégica para o sócio decidir contratação, reajuste ou revisão de carteira.'),
+        ];
+    }
+
+    private function trendRow(string $label, Carbon $start, Carbon $end, string $description): array
+    {
+        $created = $this->itemsCreatedBetween($start, $end);
+        $done = $this->itemsDoneBetween($start, $end);
+        $revenue = $this->revenueBetween($start, $end);
+        $overdue = $this->overdueBillingValue();
+        $balance = $done - $created;
+        $tone = $balance >= 0 && $overdue <= $revenue ? 'success' : ($balance >= -5 ? 'warning' : 'danger');
+
+        return [
+            'title' => 'Tendência de ' . $label,
+            'meta' => 'Criados ' . $created . ' • Concluídos ' . $done,
+            'status' => 'Receita R$ ' . number_format($revenue, 2, ',', '.'),
+            'tone' => $tone,
+            'description' => $description . ' Saldo operacional do período: ' . ($balance >= 0 ? '+' : '') . $balance . ' item(ns).',
+        ];
+    }
+
+    private function revenueBetween(Carbon $start, Carbon $end): float
+    {
+        return $this->hasTable('pagamentos')
+            ? (float) DB::table('pagamentos')->whereNotNull('pago_em')->whereBetween('pago_em', [$start, $end])->sum('valor')
+            : 0.0;
+    }
+
+    private function overdueBetween(Carbon $start, Carbon $end): float
+    {
+        return $this->hasTable('pagamentos')
+            ? (float) DB::table('pagamentos')->whereNull('pago_em')->whereBetween('vencimento', [$start->toDateString(), $end->toDateString()])->sum('valor')
+            : 0.0;
+    }
+
+    private function itemsCreatedBetween(Carbon $start, Carbon $end): int
+    {
+        return $this->hasTable('item_controles')
+            ? DB::table('item_controles')->whereBetween('created_at', [$start, $end])->count()
+            : 0;
+    }
+
+    private function itemsDoneBetween(Carbon $start, Carbon $end): int
+    {
+        return $this->hasTable('item_controles')
+            ? DB::table('item_controles')->whereIn('item_controles.status', self::DONE_STATUSES)->whereBetween('updated_at', [$start, $end])->count()
+            : 0;
     }
 
     private function formatDate($date): string

@@ -96,8 +96,8 @@
             <section class="prazzu-tool-card prazzu-tool-card--wide">
                 <div class="prazzu-tool-card__header">
                     <div>
-                        <h2>Workflow operacional</h2>
-                        <p>Etapas calculadas com base nos registros existentes para o usuário saber onde agir.</p>
+                        <h2>{{ $data['workflowTitle'] ?? 'Workflow operacional' }}</h2>
+                        <p>{{ $data['workflowDescription'] ?? 'Etapas calculadas com base nos registros existentes para o usuário saber onde agir.' }}</p>
                     </div>
                 </div>
 
