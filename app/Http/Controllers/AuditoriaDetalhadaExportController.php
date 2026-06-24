@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditoriaDetalhada;
+use App\Services\AuditoriaManualService;
+use App\Services\AuditoriaAccessService;
 use App\Support\AuditoriaFormatter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -13,9 +15,20 @@ class AuditoriaDetalhadaExportController extends Controller
 {
     public function __invoke(Request $request): StreamedResponse
     {
-        $filename = 'auditoria-detalhada-' . now()->format('Y-m-d-His') . '.csv';
+        $access = app(AuditoriaAccessService::class);
+        $user = Auth::user();
 
-        return response()->streamDownload(function () use ($request): void {
+        abort_unless($access->canExport($user), 403);
+
+        $filename = 'auditoria-detalhada-' . now()->format('Y-m-d-His') . '.csv';
+        $empresaId = $access->normalizeEmpresaFilter($user, $request->input('empresa_id'));
+
+        AuditoriaManualService::registrarEvento('auditoria.exported', [
+            'arquivo' => $filename,
+            'filtros' => $request->only(['evento', 'user_id', 'empresa_id', 'modulo', 'periodo', 'suspeito']),
+        ], null, empresaId: $empresaId, userId: Auth::id(), nivel: 'warning');
+
+        return response()->streamDownload(function () use ($request, $empresaId): void {
             $handle = fopen('php://output', 'w');
 
             fwrite($handle, "\xEF\xBB\xBF");
@@ -35,7 +48,7 @@ class AuditoriaDetalhadaExportController extends Controller
                 'Suspeito',
             ], ';');
 
-            $this->query($request)
+            $this->query($request, $empresaId)
                 ->with(['empresa:id,razao_social,nome_fantasia', 'user:id,name,email'])
                 ->latest('created_at')
                 ->chunk(300, function ($registros) use ($handle): void {
@@ -63,7 +76,7 @@ class AuditoriaDetalhadaExportController extends Controller
         ]);
     }
 
-    private function query(Request $request): Builder
+    private function query(Request $request, ?int $empresaId = null): Builder
     {
         $query = AuditoriaDetalhada::query()
             ->visibleForUser(Auth::user());
@@ -76,8 +89,8 @@ class AuditoriaDetalhadaExportController extends Controller
             $query->where('user_id', $request->integer('user_id'));
         }
 
-        if ($request->filled('empresa_id')) {
-            $query->where('empresa_id', $request->integer('empresa_id'));
+        if ($empresaId) {
+            $query->where('empresa_id', $empresaId);
         }
 
         if ($request->filled('modulo')) {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\AsaasService;
+use App\Services\AuditoriaManualService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +25,13 @@ class AsaasWebhookController extends Controller
                 'event' => $request->input('event'),
             ]);
 
+            AuditoriaManualService::registrarEvento('asaas.webhook.rejected', [
+                'motivo' => 'webhook_token_nao_configurado',
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ], null, nivel: 'critical');
+
             return response()->json(['message' => 'Webhook não configurado.'], Response::HTTP_SERVICE_UNAVAILABLE);
         }
 
@@ -32,6 +40,13 @@ class AsaasWebhookController extends Controller
                 'ip' => $request->ip(),
                 'event' => $request->input('event'),
             ]);
+
+            AuditoriaManualService::registrarEvento('asaas.webhook.rejected', [
+                'motivo' => 'token_invalido',
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ], null, nivel: 'critical');
 
             return response()->json(['message' => 'Token inválido.'], Response::HTTP_UNAUTHORIZED);
         }
@@ -44,7 +59,19 @@ class AsaasWebhookController extends Controller
                 'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
             ]);
 
+            AuditoriaManualService::registrarEvento('asaas.webhook.received', [
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ], null, nivel: 'info');
+
             $asaas->processarWebhook($request->all());
+
+            AuditoriaManualService::registrarEvento('asaas.webhook.processed', [
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ], null, nivel: 'info');
 
             return response()->json(['message' => 'Webhook processado.']);
         } catch (Throwable $exception) {
@@ -52,6 +79,13 @@ class AsaasWebhookController extends Controller
                 'message' => $exception->getMessage(),
                 'payload' => $request->all(),
             ]);
+
+            AuditoriaManualService::registrarEvento('asaas.webhook.failed', [
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+                'erro' => $exception->getMessage(),
+            ], null, nivel: 'error');
 
             return response()->json(['message' => 'Erro ao processar webhook.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }

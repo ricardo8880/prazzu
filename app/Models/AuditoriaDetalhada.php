@@ -16,6 +16,7 @@ class AuditoriaDetalhada extends Model
         'auditable_type',
         'auditable_id',
         'evento',
+        'nivel',
         'campo',
         'valor_anterior',
         'valor_novo',

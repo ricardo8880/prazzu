@@ -7,6 +7,7 @@ use App\Models\AuditoriaDetalhada;
 use App\Models\Empresa;
 use App\Models\User;
 use App\Support\AuditoriaFormatter;
+use App\Services\AuditoriaAccessService;
 use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\Page;
@@ -63,6 +64,11 @@ class VisualizarAuditoriaDetalhada extends Page
     public function exportUrl(): string
     {
         return route('auditoria-detalhada.exportar', array_filter($this->filtros(), fn ($value) => $value !== null && $value !== '' && $value !== false));
+    }
+
+    public function canExportAuditoria(): bool
+    {
+        return app(AuditoriaAccessService::class)->canExport(Filament::auth()->user());
     }
 
     public function queryFiltrada(): Builder

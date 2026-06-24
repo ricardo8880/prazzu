@@ -33,9 +33,11 @@
             </div>
 
             <div class="ad-hero-actions">
-                <a href="<?php echo e($this->exportUrl()); ?>" class="ad-button ad-button--primary">
-                    Exportar CSV
-                </a>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->canExportAuditoria()): ?>
+                    <a href="<?php echo e($this->exportUrl()); ?>" class="ad-button ad-button--primary">
+                        Exportar CSV
+                    </a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 <a href="<?php echo e(url()->current()); ?>" class="ad-button ad-button--ghost">
                     Limpar filtros
                 </a>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ClientePortalUser;
 use App\Models\Empresa;
+use App\Services\AuditoriaManualService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -116,6 +117,11 @@ class PortalClienteAuthController extends Controller
         if (! $cliente || ! Hash::check((string) $credentials['password'], (string) $cliente->password)) {
             RateLimiter::hit($this->throttleKey($request), 60);
 
+            AuditoriaManualService::registrarEvento('portal_cliente.login.failed', [
+                'email' => strtolower(trim((string) $credentials['email'])),
+                'motivo' => 'credenciais_invalidas',
+            ], $cliente, empresaId: $cliente?->empresa_id, userId: null, nivel: 'warning');
+
             throw ValidationException::withMessages([
                 'email' => 'As credenciais informadas não conferem.',
             ]);
@@ -123,6 +129,12 @@ class PortalClienteAuthController extends Controller
 
         if (! $cliente->estaAtivo()) {
             RateLimiter::hit($this->throttleKey($request), 60);
+
+            AuditoriaManualService::registrarEvento('portal_cliente.login.failed', [
+                'email' => $cliente->email,
+                'motivo' => 'cliente_inativo',
+                'empresa_id' => $cliente->empresa_id,
+            ], $cliente, empresaId: $cliente->empresa_id, userId: null, nivel: 'warning');
 
             throw ValidationException::withMessages([
                 'email' => 'Seu acesso ao portal está inativo. Entre em contato com o suporte.',
@@ -152,6 +164,13 @@ class PortalClienteAuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        $cliente = Auth::guard('portal_cliente')->user();
+
+        AuditoriaManualService::registrarEvento('portal_cliente.logout', [
+            'email' => $cliente?->email,
+            'empresa_id' => $cliente?->empresa_id,
+        ], $cliente, empresaId: $cliente?->empresa_id, userId: null);
+
         Auth::guard('portal_cliente')->logout();
 
         $request->session()->invalidate();

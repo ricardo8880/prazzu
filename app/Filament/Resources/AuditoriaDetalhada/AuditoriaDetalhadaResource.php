@@ -7,6 +7,7 @@ use App\Filament\Resources\AuditoriaDetalhada\Pages\VisualizarAuditoriaDetalhada
 use App\Models\AuditoriaDetalhada;
 use App\Models\Empresa;
 use App\Models\User;
+use App\Services\AuditoriaAccessService;
 use App\Support\AuditoriaFormatter;
 use BackedEnum;
 use Filament\Facades\Filament;
@@ -38,17 +39,19 @@ class AuditoriaDetalhadaResource extends Resource
 
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return app(AuditoriaAccessService::class)->canView(Filament::auth()->user());
     }
 
     public static function canViewAny(): bool
     {
-        return auth()->check();
+        return static::canAccess();
     }
 
     public static function canView($record): bool
     {
-        return auth()->check();
+        return $record instanceof AuditoriaDetalhada
+            ? app(AuditoriaAccessService::class)->canViewRecord($record, Filament::auth()->user())
+            : static::canAccess();
     }
 
     public static function form(Schema $schema): Schema

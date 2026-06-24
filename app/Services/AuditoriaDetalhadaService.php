@@ -2,14 +2,12 @@
 
 namespace App\Services;
 
-
-use App\Support\CachedSchema;
 use App\Models\AuditoriaDetalhada;
+use App\Support\CachedSchema;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class AuditoriaDetalhadaService
@@ -20,25 +18,16 @@ class AuditoriaDetalhadaService
             return;
         }
 
+        if (self::modelExcluido($model)) {
+            return;
+        }
+
         $user = Auth::user();
         $empresaId = self::resolverEmpresaId($model, $user);
-        $camposIgnorados = ['updated_at', 'created_at', 'remember_token', 'password'];
 
         try {
             if ($evento === 'updated') {
-                foreach ($novos as $campo => $valorNovo) {
-                    if (in_array($campo, $camposIgnorados, true)) {
-                        continue;
-                    }
-
-                    $valorAntigo = Arr::get($antigos, $campo);
-
-                    if ((string) $valorAntigo === (string) $valorNovo) {
-                        continue;
-                    }
-
-                    self::criarLinha($model, $evento, $empresaId, $user?->id, $campo, $valorAntigo, $valorNovo);
-                }
+                self::registrarUpdated($model, $evento, $empresaId, $user?->id, $antigos, $novos);
 
                 return;
             }
@@ -46,7 +35,7 @@ class AuditoriaDetalhadaService
             $base = $evento === 'deleted' ? $antigos : $novos;
 
             foreach ($base as $campo => $valor) {
-                if (in_array($campo, $camposIgnorados, true)) {
+                if (self::campoIgnorado($campo)) {
                     continue;
                 }
 
@@ -57,7 +46,7 @@ class AuditoriaDetalhadaService
                     $user?->id,
                     $campo,
                     $evento === 'deleted' ? $valor : null,
-                    $evento === 'created' ? $valor : null,
+                    $evento !== 'deleted' ? $valor : null,
                 );
             }
         } catch (Throwable $exception) {
@@ -76,6 +65,23 @@ class AuditoriaDetalhadaService
         }
     }
 
+    protected static function registrarUpdated(Model $model, string $evento, ?int $empresaId, ?int $userId, array $antigos, array $novos): void
+    {
+        foreach ($novos as $campo => $valorNovo) {
+            if (self::campoIgnorado($campo)) {
+                continue;
+            }
+
+            $valorAntigo = Arr::get($antigos, $campo);
+
+            if (self::valoresIguais($valorAntigo, $valorNovo)) {
+                continue;
+            }
+
+            self::criarLinha($model, $evento, $empresaId, $userId, $campo, $valorAntigo, $valorNovo);
+        }
+    }
+
     protected static function criarLinha(Model $model, string $evento, ?int $empresaId, ?int $userId, string $campo, mixed $valorAntigo, mixed $valorNovo): void
     {
         AuditoriaDetalhada::query()->create([
@@ -84,9 +90,10 @@ class AuditoriaDetalhadaService
             'auditable_type' => $model::class,
             'auditable_id' => $model->getKey(),
             'evento' => $evento,
+            'nivel' => config('auditoria.default_level', 'info'),
             'campo' => $campo,
-            'valor_anterior' => self::normalizarValor($valorAntigo),
-            'valor_novo' => self::normalizarValor($valorNovo),
+            'valor_anterior' => self::normalizarValor($valorAntigo, $campo),
+            'valor_novo' => self::normalizarValor($valorNovo, $campo),
             'ip' => request()?->ip(),
             'user_agent' => substr((string) request()?->userAgent(), 0, 500),
         ]);
@@ -105,8 +112,52 @@ class AuditoriaDetalhadaService
         return null;
     }
 
-    protected static function normalizarValor(mixed $valor): ?string
+    protected static function modelExcluido(Model $model): bool
     {
+        if (in_array($model::class, config('auditoria.excluded_models', []), true)) {
+            return true;
+        }
+
+        return in_array($model->getTable(), config('auditoria.excluded_tables', []), true);
+    }
+
+    protected static function campoIgnorado(string $campo): bool
+    {
+        return in_array($campo, config('auditoria.ignored_fields', []), true);
+    }
+
+    protected static function campoSensivel(string $campo): bool
+    {
+        $campoNormalizado = mb_strtolower($campo);
+
+        foreach (config('auditoria.sensitive_fields', []) as $sensivel) {
+            if ($campoNormalizado === mb_strtolower((string) $sensivel)) {
+                return true;
+            }
+
+            if (str_contains($campoNormalizado, mb_strtolower((string) $sensivel))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected static function valoresIguais(mixed $valorAntigo, mixed $valorNovo): bool
+    {
+        if ($valorAntigo === $valorNovo) {
+            return true;
+        }
+
+        return self::normalizarValor($valorAntigo) === self::normalizarValor($valorNovo);
+    }
+
+    protected static function normalizarValor(mixed $valor, ?string $campo = null): ?string
+    {
+        if ($campo !== null && self::campoSensivel($campo)) {
+            return config('auditoria.protected_value', '[valor protegido]');
+        }
+
         if ($valor === null) {
             return null;
         }
@@ -116,9 +167,9 @@ class AuditoriaDetalhadaService
         }
 
         if (is_array($valor) || is_object($valor)) {
-            return json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $valor = json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
-        return mb_substr((string) $valor, 0, 4000);
+        return mb_substr((string) $valor, 0, (int) config('auditoria.max_value_length', 4000));
     }
 }

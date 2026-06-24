@@ -22,9 +22,11 @@
             </div>
 
             <div class="ad-hero-actions">
-                <a href="{{ $this->exportUrl() }}" class="ad-button ad-button--primary">
-                    Exportar CSV
-                </a>
+                @if ($this->canExportAuditoria())
+                    <a href="{{ $this->exportUrl() }}" class="ad-button ad-button--primary">
+                        Exportar CSV
+                    </a>
+                @endif
                 <a href="{{ url()->current() }}" class="ad-button ad-button--ghost">
                     Limpar filtros
                 </a>

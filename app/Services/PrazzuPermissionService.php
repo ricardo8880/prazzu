@@ -132,7 +132,7 @@ class PrazzuPermissionService
             'aprovacoes' => ['view', 'approve'],
             'armazenamento' => ['view', 'create', 'edit', 'delete', 'export'],
             'relatorios' => ['view', 'export'],
-            'governanca' => ['view', 'create', 'edit', 'delete', 'approve'],
+            'governanca' => ['view', 'create', 'edit', 'delete', 'approve', 'export'],
         ];
     }
 

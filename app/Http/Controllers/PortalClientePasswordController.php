@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ClientePortalUser;
 use App\Models\PortalClienteToken;
+use App\Services\AuditoriaManualService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -67,6 +68,12 @@ class PortalClientePasswordController extends Controller
 
             $link = route('portal.cliente.password.reset', ['token' => $token, 'email' => $email]);
 
+            AuditoriaManualService::registrarEvento('portal_cliente.password.reset_requested', [
+                'email' => $email,
+                'empresa_id' => $cliente->empresa_id,
+                'expires_at' => now()->addMinutes(60)->toDateTimeString(),
+            ], $cliente, empresaId: $cliente->empresa_id, userId: null, nivel: 'warning');
+
             $this->enviarEmailToken(
                 $email,
                 'Redefinição de senha - Portal do Cliente',
@@ -126,6 +133,11 @@ class PortalClientePasswordController extends Controller
 
         $registro->forceFill(['used_at' => now()])->save();
 
+        AuditoriaManualService::registrarEvento('portal_cliente.password.reset_success', [
+            'email' => $email,
+            'empresa_id' => $registro->cliente->empresa_id,
+        ], $registro->cliente, empresaId: $registro->cliente->empresa_id, userId: null, nivel: 'warning');
+
         return redirect()
             ->route('portal.cliente.login')
             ->with('success', 'Senha alterada com sucesso. Faça login com sua nova senha.');
@@ -179,6 +191,11 @@ class PortalClientePasswordController extends Controller
         ])->save();
 
         $registro->forceFill(['used_at' => now()])->save();
+
+        AuditoriaManualService::registrarEvento('portal_cliente.invite.accepted', [
+            'email' => $email,
+            'empresa_id' => $registro->cliente->empresa_id,
+        ], $registro->cliente, empresaId: $registro->cliente->empresa_id, userId: null, nivel: 'info');
 
         return redirect()
             ->route('portal.cliente.login')

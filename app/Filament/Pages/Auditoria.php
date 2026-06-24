@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Exports\AuditoriaExport;
 use App\Support\ComplianceModuleData;
+use App\Services\AuditoriaAccessService;
 use App\Filament\Resources\AuditoriaDetalhada\AuditoriaDetalhadaResource;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -29,16 +30,18 @@ class Auditoria extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return app(AuditoriaAccessService::class)->canView(auth()->user());
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check();
+        return static::canAccess();
     }
 
     public function exportAuditoriaCsv(): StreamedResponse
     {
+        abort_unless(app(AuditoriaAccessService::class)->canExport(auth()->user()), 403);
+
         $filters = $this->resolveAuditFilters();
         $rows = ComplianceModuleData::auditoriaExportRows(auth()->user(), $filters);
         $headings = ComplianceModuleData::auditoriaExportHeadings();
@@ -66,6 +69,8 @@ class Auditoria extends Page
 
     public function exportAuditoriaExcel(): BinaryFileResponse
     {
+        abort_unless(app(AuditoriaAccessService::class)->canExport(auth()->user()), 403);
+
         $filters = $this->resolveAuditFilters();
         $rows = ComplianceModuleData::auditoriaExportRows(auth()->user(), $filters);
         $headings = ComplianceModuleData::auditoriaExportHeadings();
@@ -89,14 +94,21 @@ class Auditoria extends Page
         ];
     }
 
+    public function canExportAuditoria(): bool
+    {
+        return app(AuditoriaAccessService::class)->canExport(auth()->user());
+    }
+
     private function resolveAuditFilters(): array
     {
+        $empresaId = app(AuditoriaAccessService::class)->normalizeEmpresaFilter(auth()->user(), request()->query('companyFilter', 'todas'));
+
         return [
             'dateFilter' => request()->query('dateFilter', '30'),
             'fromDate' => request()->query('fromDate'),
             'toDate' => request()->query('toDate'),
             'userFilter' => request()->query('userFilter', 'todos'),
-            'companyFilter' => request()->query('companyFilter', 'todas'),
+            'companyFilter' => $empresaId ?: 'todas',
             'actionFilter' => request()->query('actionFilter', 'todas'),
             'searchFilter' => trim((string) request()->query('searchFilter', '')),
             'auditableType' => trim((string) request()->query('auditableType', '')),

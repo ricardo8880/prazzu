@@ -2,5 +2,7 @@
 
 return [
     App\Providers\AppServiceProvider::class,
+    App\Providers\AuditoriaServiceProvider::class,
+    App\Providers\AuditoriaEventosManuaisServiceProvider::class,
     App\Providers\Filament\AdminPanelProvider::class,
 ];
