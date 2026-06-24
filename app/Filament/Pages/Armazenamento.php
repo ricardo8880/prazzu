@@ -26,10 +26,10 @@ class Armazenamento extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-circle-stack';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
+    protected static string | UnitEnum | null $navigationGroup = 'Administração';
     protected static ?string $navigationLabel = 'Armazenamento';
     protected static ?string $title = 'Armazenamento';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 5;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.armazenamento';
@@ -43,6 +43,17 @@ class Armazenamento extends Page
     public static function canAccess(): bool
     {
         return static::canAdvancedPermission('armazenamento.view');
+    }
+
+
+    public function getHeading(): string
+    {
+        return 'Armazenamento';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Acompanhe o uso de espaço e mantenha os documentos organizados.';
     }
 
     public string $aba = 'visao-geral';
@@ -507,7 +518,7 @@ class Armazenamento extends Page
             $alertas[] = [
                 'tom' => 'warning',
                 'titulo' => count($arquivosExpirados) . ' arquivo(s) expirado(s)',
-                'texto' => 'Revise retenção, auditoria e descarte controlado para recuperar espaço.',
+                'texto' => 'Revise arquivos antigos e organize o que pode ser arquivado.',
                 'aba' => 'expirados',
                 'acao' => 'Revisar expirados',
             ];
@@ -755,7 +766,7 @@ class Armazenamento extends Page
         $recomendacoes = [];
         if ($percentual >= 90) { $recomendacoes[] = ['tom' => 'danger', 'texto' => 'Cliente acima de 90% do limite: revisar limite contratado ou iniciar limpeza de arquivos grandes.']; }
         elseif ($percentual >= 80) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Cliente próximo do limite: acompanhar crescimento antes de novos envios em massa.']; }
-        if ($expirados > 0) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Há arquivos expirados/antigos: validar retenção antes de excluir e priorizar os maiores.']; }
+        if ($expirados > 0) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Há arquivos antigos: revise antes de excluir e priorize os maiores.']; }
         if ($tarefasAtrasadas > 0) { $recomendacoes[] = ['tom' => 'danger', 'texto' => 'Existem tarefas atrasadas: o consumo pode estar ligado a pendências documentais.']; }
         if ($atendimentosCriticos > 0) { $recomendacoes[] = ['tom' => 'warning', 'texto' => 'Atendimentos críticos abertos: conferir se há solicitação de documentos pendente.']; }
         if ($valorVencido > 0) { $recomendacoes[] = ['tom' => 'danger', 'texto' => 'Cliente com cobrança vencida: avaliar regra comercial antes de ampliar limite de armazenamento.']; }

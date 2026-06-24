@@ -284,12 +284,20 @@ class AccountingProfileNavigation
 
         if ($user->isAdmin()) {
             return [
+                'Central Administrativa',
+                'Empresa',
                 'Usuários',
+                'Equipes',
                 'Central de Evolução',
                 'Configurações',
                 'Empresas',
                 'Perfis e Permissões',
                 'Permissões',
+                'Armazenamento',
+                'Assinatura',
+                'Gestão de Planos',
+                'Auditoria',
+                'Auditoria Administrativa',
             ];
         }
 

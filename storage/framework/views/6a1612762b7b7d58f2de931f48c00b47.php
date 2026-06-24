@@ -257,11 +257,18 @@
                     return;
                 }
 
+                if (forcedHidden.has(label) || forcedHidden.has(groupLabel)) {
+                    const container = getNavContainer(link);
+                    container.classList.add('prazzu-profile-hidden');
+                    container.setAttribute('aria-hidden', 'true');
+                    return;
+                }
+
                 if (administrativeAllowed.has(label) || administrativeAllowed.has(groupLabel)) {
                     return;
                 }
 
-                if ((allowed.has(label) || allowed.has(groupLabel)) && !forcedHidden.has(label) && !forcedHidden.has(groupLabel)) {
+                if (allowed.has(label) || allowed.has(groupLabel)) {
                     return;
                 }
 

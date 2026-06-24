@@ -107,7 +107,7 @@ class UserForm
                     ->searchable()
                     ->options(User::perfilContabilOptions())
                     ->default(fn (Get $get): ?string => User::perfilContabilPadraoPorRole($get('role')) ?? 'assistente')
-                    ->helperText('Define a função real do usuário no escritório. Neste lote, o campo é cadastral; a sidebar e os bloqueios por URL entram nos próximos lotes.'),
+                    ->helperText('Define a função do usuário no escritório e ajuda a organizar a experiência de navegação.'),
 
                 TextInput::make('password')
                     ->label('Senha')

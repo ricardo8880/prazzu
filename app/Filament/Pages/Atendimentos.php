@@ -1618,12 +1618,12 @@ Contexto do ticket:
     private function bancoDisponivel(): bool
     {
         if (! CachedSchema::hasTable('atendimentos')) {
-            $this->notify('danger', 'Tabela atendimentos não encontrada. Execute o SQL do Lote 1 antes de usar o módulo.');
+            $this->notify('danger', 'A estrutura de atendimentos ainda não está disponível. Verifique a instalação do módulo.');
             return false;
         }
 
         if (! CachedSchema::hasTable('atendimento_interacoes')) {
-            $this->notify('danger', 'Tabela atendimento_interacoes não encontrada. Execute o SQL do Lote 1 antes de usar o módulo.');
+            $this->notify('danger', 'A estrutura de interações do atendimento ainda não está disponível. Verifique a instalação do módulo.');
             return false;
         }
 

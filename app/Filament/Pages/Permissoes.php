@@ -27,10 +27,10 @@ class Permissoes extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
-    protected static string | UnitEnum | null $navigationGroup = 'Governança';
+    protected static string | UnitEnum | null $navigationGroup = 'Administração';
     protected static ?string $navigationLabel = 'Perfis e Permissões';
-    protected static ?string $title = 'Perfis e Permissões';
-    protected static ?int $navigationSort = 95;
+    protected static ?string $title = 'Permissões';
+    protected static ?int $navigationSort = 4;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.permissoes-management';
@@ -44,6 +44,17 @@ class Permissoes extends Page
     public static function canAccess(): bool
     {
         return static::canAdvancedPermission('governanca.view');
+    }
+
+
+    public function getHeading(): string
+    {
+        return 'Permissões';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Central Administrativa / Perfis, matriz de acesso, usuários, exceções, relatório efetivo e auditoria.';
     }
 
     public string $roleName = '';
@@ -171,7 +182,7 @@ class Permissoes extends Page
         }
 
         if (! CachedSchema::hasTable('prazzu_roles')) {
-            Notification::make()->title('Tabela de perfis não encontrada. Execute o SQL/migration do lote 1.')->danger()->send();
+            Notification::make()->title('A estrutura de perfis ainda não está disponível. Verifique a instalação do módulo.')->danger()->send();
             return;
         }
 
@@ -704,7 +715,7 @@ class Permissoes extends Page
         if (! $ready) {
             Notification::make()
                 ->title('Estrutura de permissões incompleta')
-                ->body('Execute o SQL/migration do lote 1 antes de configurar os perfis.')
+                ->body('A estrutura de permissões ainda não está completa. Verifique a instalação antes de configurar os perfis.')
                 ->warning()
                 ->send();
         }

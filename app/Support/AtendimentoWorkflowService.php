@@ -13,7 +13,7 @@ class AtendimentoWorkflowService
     public function findAutorizado(int $id, bool $notify = true, ?callable $notifier = null): ?Atendimento
     {
         if (! CachedSchema::hasTable('atendimentos')) {
-            $this->notify($notifier, 'danger', 'Tabela atendimentos não encontrada. Execute o SQL do Lote 1 antes de usar o módulo.');
+            $this->notify($notifier, 'danger', 'A estrutura de atendimentos ainda não está disponível. Verifique a instalação do módulo.');
             return null;
         }
 
