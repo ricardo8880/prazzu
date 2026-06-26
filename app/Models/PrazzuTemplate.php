@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
+use App\Services\PrazzuTemplateApplicationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class PrazzuTemplate extends Model
 {
@@ -86,80 +85,20 @@ class PrazzuTemplate extends Model
 
     public function instantiateFor(int $empresaId, ?int $responsavelId = null, ?Carbon $firstDueDate = null, ?int $userId = null): int
     {
-        $tasks = $this->payloadValue('tasks', []);
+        $summary = $this->instantiateDetailed([
+            'empresa_id' => $empresaId,
+            'responsavel_id' => $responsavelId,
+            'data_inicio' => $firstDueDate ?: now(),
+            'user_id' => $userId,
+            'create_dependencies' => true,
+            'create_documents' => true,
+        ]);
 
-        if (empty($tasks)) {
-            $tasks = [[
-                'title' => $this->name,
-                'description' => $this->description,
-                'type' => $this->module ?: 'tarefa',
-                'priority' => 'media',
-                'days_after_start' => 0,
-                'estimated_minutes' => null,
-                'checklist' => [],
-            ]];
-        }
+        return (int) ($summary['items_created'] ?? 0);
+    }
 
-        return DB::transaction(function () use ($tasks, $empresaId, $responsavelId, $firstDueDate, $userId): int {
-            $created = 0;
-            $startDate = $firstDueDate ?: now();
-
-            foreach ($tasks as $position => $task) {
-                $dueDate = (clone $startDate)->addDays((int) Arr::get($task, 'days_after_start', $position));
-                $slaHours = Arr::get($task, 'sla_hours');
-                $estimatedMinutes = Arr::get($task, 'estimated_minutes');
-                $approvalRequired = (bool) Arr::get($task, 'approval_required', false);
-
-                $item = ItemControle::query()->create([
-                    'empresa_id' => $empresaId,
-                    'responsavel_id' => $responsavelId,
-                    'titulo' => Str::limit((string) Arr::get($task, 'title', $this->name), 255, ''),
-                    'descricao' => Arr::get($task, 'description', $this->description),
-                    'tipo' => Arr::get($task, 'type', $this->module ?: 'tarefa'),
-                    'status' => Arr::get($task, 'status', 'pendente'),
-                    'prioridade' => Arr::get($task, 'priority', 'media'),
-                    'data_vencimento' => $dueDate->toDateString(),
-                    'sla_horas' => is_numeric($slaHours) ? (int) $slaHours : null,
-                    'estimated_minutes' => is_numeric($estimatedMinutes) ? (int) $estimatedMinutes : null,
-                    'template_id' => $this->id,
-                    'approval_required' => $approvalRequired,
-                    'approval_status' => $approvalRequired ? 'pendente' : null,
-                    'custom_payload' => [
-                        'template' => [
-                            'id' => $this->id,
-                            'name' => $this->name,
-                            'module' => $this->module,
-                        ],
-                        'custom_fields' => $this->payloadValue('custom_fields', []),
-                        'views' => $this->payloadValue('views', []),
-                        'automations' => $this->payloadValue('automations', []),
-                        'recurrence' => Arr::get($task, 'recurrence'),
-                        'proofing' => Arr::get($task, 'proofing', $this->payloadValue('proofing', [])),
-                        'docs' => $this->payloadValue('docs', []),
-                        'mind_map' => $this->payloadValue('mind_map', []),
-                        'created_from_template_by' => $userId,
-                    ],
-                ]);
-
-                foreach (Arr::get($task, 'checklist', []) as $order => $checklistTitle) {
-                    $checklistTitle = is_array($checklistTitle) ? Arr::get($checklistTitle, 'titulo', Arr::get($checklistTitle, 'title')) : $checklistTitle;
-
-                    if (blank($checklistTitle)) {
-                        continue;
-                    }
-
-                    ItemControleChecklist::query()->create([
-                        'item_controle_id' => $item->id,
-                        'titulo' => Str::limit((string) $checklistTitle, 255, ''),
-                        'concluido' => false,
-                        'ordem' => $order + 1,
-                    ]);
-                }
-
-                $created++;
-            }
-
-            return $created;
-        });
+    public function instantiateDetailed(array $options): array
+    {
+        return app(PrazzuTemplateApplicationService::class)->apply($this, $options);
     }
 }

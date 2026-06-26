@@ -151,6 +151,37 @@ class ItemControle extends Model
         return $this->belongsTo(CategoriaItemControle::class, 'categoria_id');
     }
 
+    public function template()
+    {
+        return $this->belongsTo(PrazzuTemplate::class, 'template_id');
+    }
+
+    public function scopeGeradosPorTemplates($query)
+    {
+        return $query->whereNotNull('template_id');
+    }
+
+    public function scopeTemplatesContabeis($query)
+    {
+        return $query->whereNotNull('template_id')
+            ->where(function ($query): void {
+                $query->whereIn('tipo', ['contabil', 'fiscal', 'dp', 'societario'])
+                    ->orWhereHas('template', function ($templateQuery): void {
+                        $templateQuery->where('module', 'contabil')
+                            ->orWhere('module', 'rh')
+                            ->orWhere('module', 'societario');
+                    });
+            });
+    }
+
+    public function getTemplateResumoAttribute(): ?string
+    {
+        $payload = is_array($this->custom_payload) ? $this->custom_payload : [];
+        $template = $payload['template'] ?? [];
+
+        return $template['name'] ?? $this->template?->name;
+    }
+
     public function comentarios()
     {
         return $this->hasMany(Comentario::class);

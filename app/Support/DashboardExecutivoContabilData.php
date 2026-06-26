@@ -22,6 +22,13 @@ class DashboardExecutivoContabilData
     public function data(): array
     {
         $decisionCards = $this->decisionCards();
+        $templateData = app(AccountingTemplateOperationalData::class);
+        $templateCard = $templateData->executiveDecisionCard();
+
+        if (($templateCard['raw'] ?? 0) > 0) {
+            $decisionCards[] = $templateCard;
+        }
+
         $risk = $this->riskSummary($decisionCards);
 
         return [
@@ -41,6 +48,8 @@ class DashboardExecutivoContabilData
             'resolve_now' => $this->resolveNowRows(),
             'blockers' => $this->blockerRows(),
             'trend' => $this->riskTrend($risk),
+            'templates_contabeis' => $templateData->summary(),
+            'template_risk_rows' => $templateData->riskRows(),
         ];
     }
 

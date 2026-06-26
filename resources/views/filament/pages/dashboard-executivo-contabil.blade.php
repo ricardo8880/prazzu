@@ -17,6 +17,8 @@
         $resolveNow = $dashboard['resolve_now'] ?? [];
         $blockers = $dashboard['blockers'] ?? [];
         $trend = $dashboard['trend'] ?? null;
+        $templatesContabeis = $dashboard['templates_contabeis'] ?? [];
+        $templateRiskRows = $dashboard['template_risk_rows'] ?? [];
         $updatedAt = $dashboard['updated_at'] ?? now()->format('d/m/Y H:i');
 
         $riskScore = max(0, min(100, (int) ($risk['score'] ?? 0)));
@@ -158,6 +160,67 @@
                 </article>
             </aside>
         </section>
+
+
+
+        @if (! empty($templatesContabeis) && ((int) ($templatesContabeis['tasks_open'] ?? 0) > 0 || (int) ($templatesContabeis['templates_active'] ?? 0) > 0))
+            <section class="dec-panel" aria-label="Integração dos templates contábeis">
+                <header class="dec-panel__header">
+                    <div>
+                        <span class="dec-eyebrow">Templates Contábeis</span>
+                        <h2>Execução integrada ao Escritório Contábil</h2>
+                        <p>Itens aplicados por template aparecem naturalmente na Central Operacional, Checklist, Documentos, SLA, Kanban, Timeline, Gantt, Relatórios e Auditoria.</p>
+                    </div>
+                    <strong>{{ (int) ($templatesContabeis['tasks_open'] ?? 0) }}</strong>
+                </header>
+
+                <div class="dec-decision-grid" style="margin-top: 1rem">
+                    <article class="dec-decision dec-decision--static dec-tone-info">
+                        <span class="dec-decision__label">Templates ativos</span>
+                        <strong>{{ (int) ($templatesContabeis['templates_active'] ?? 0) }}</strong>
+                        <p>Catálogo oficial disponível para aplicação.</p>
+                    </article>
+                    <article class="dec-decision dec-decision--static dec-tone-warning">
+                        <span class="dec-decision__label">Processos abertos</span>
+                        <strong>{{ (int) ($templatesContabeis['processes_open'] ?? 0) }}</strong>
+                        <p>Instâncias criadas a partir de templates.</p>
+                    </article>
+                    <article class="dec-decision dec-decision--static dec-tone-danger">
+                        <span class="dec-decision__label">Atrasadas</span>
+                        <strong>{{ (int) ($templatesContabeis['tasks_late'] ?? 0) }}</strong>
+                        <p>Tarefas de templates fora do prazo.</p>
+                    </article>
+                    <article class="dec-decision dec-decision--static dec-tone-warning">
+                        <span class="dec-decision__label">Bloqueios</span>
+                        <strong>{{ (int) ($templatesContabeis['blocked'] ?? 0) }}</strong>
+                        <p>Dependências, documentos ou aprovações pendentes.</p>
+                    </article>
+                </div>
+
+                @if (! empty($templateRiskRows))
+                    <div class="dec-action-list" style="margin-top: 1rem">
+                        @foreach ($templateRiskRows as $item)
+                            <article class="dec-action dec-tone-{{ $item['tone'] ?? 'warning' }}">
+                                <div class="dec-action__top">
+                                    <div>
+                                        <h3>{{ $item['title'] ?? 'Tarefa de template' }}</h3>
+                                        <small>{{ $item['meta'] ?? 'Template contábil' }}</small>
+                                    </div>
+                                    <span>{{ $item['status'] ?? 'Atenção' }}</span>
+                                </div>
+                                <p>{{ $item['description'] ?? 'Tarefa integrada ao ecossistema operacional.' }}</p>
+                                <div class="dec-action__footer">
+                                    <em>{{ ! empty($item['deadline']) ? 'Prazo ' . $item['deadline'] : 'Sem prazo' }}</em>
+                                    @if (! empty($item['url']))
+                                        <a href="{{ $item['url'] }}">{{ $item['action_label'] ?? 'Abrir tarefa' }}</a>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+        @endif
 
         <section class="dec-footer-note" aria-label="Critério da dashboard">
             <strong>Critério desta tela:</strong>

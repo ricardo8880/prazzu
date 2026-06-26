@@ -19,6 +19,7 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -71,6 +72,7 @@ class PrazzuTemplateResource extends Resource
                             'contratos' => 'Contratos',
                             'tarefas' => 'Tarefas gerais',
                         ]),
+
 
                     Select::make('active')
                         ->label('Disponível para uso')
@@ -273,6 +275,8 @@ class PrazzuTemplateResource extends Resource
             ->columns([
                 TextColumn::make('name')->label('Template')->searchable()->sortable()->description(fn (PrazzuTemplate $record): string => $record->description ? \Illuminate\Support\Str::limit($record->description, 80) : 'Sem descrição'),
                 TextColumn::make('module')->label('Módulo')->badge()->searchable()->sortable(),
+                TextColumn::make('payload.area')->label('Área')->badge()->toggleable(),
+                IconColumn::make('payload.official')->label('Oficial')->boolean()->toggleable(),
                 TextColumn::make('tasks_count')->label('Tarefas')->badge()->color('info'),
                 TextColumn::make('custom_fields_count')->label('Campos')->badge()->color('gray'),
                 TextColumn::make('automations_count')->label('Automações')->badge()->color('warning'),
@@ -294,6 +298,27 @@ class PrazzuTemplateResource extends Resource
                         'contratos' => 'Contratos',
                         'tarefas' => 'Tarefas gerais',
                     ]),
+
+
+                SelectFilter::make('templates_contabeis')
+                    ->label('Templates contábeis')
+                    ->options([
+                        'oficiais' => 'Somente oficiais',
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => ($data['value'] ?? null) === 'oficiais'
+                        ? $query->where(function (Builder $query): void {
+                            $query->where('payload->family', 'templates_contabeis')
+                                ->orWhereIn('name', [
+                                    'Fechamento Fiscal',
+                                    'Fechamento Contábil',
+                                    'Folha de Pagamento',
+                                    'Admissão',
+                                    'Demissão',
+                                    'Abertura de Empresa',
+                                    'Alteração Contratual',
+                                ]);
+                        })
+                        : $query),
             ])
             ->recordActions([
                 Action::make('aplicar')
@@ -316,6 +341,7 @@ class PrazzuTemplateResource extends Resource
 
                         Select::make('responsavel_id')
                             ->label('Responsável padrão')
+                            ->helperText('Se deixar em branco, o sistema usa o primeiro responsável operacional da empresa.')
                             ->native(false)
                             ->searchable()
                             ->preload()
@@ -331,18 +357,43 @@ class PrazzuTemplateResource extends Resource
                             ->default(now())
                             ->required()
                             ->native(false),
+
+                        Select::make('recurrence')
+                            ->label('Recorrência da aplicação')
+                            ->helperText('Grava a regra nos itens gerados para uso nos calendários, relatórios e próximas automações.')
+                            ->native(false)
+                            ->placeholder('Sob demanda / sem recorrência')
+                            ->options([
+                                'monthly' => 'Mensal',
+                                'quarterly' => 'Trimestral',
+                                'yearly' => 'Anual',
+                                'on_demand' => 'Sob demanda',
+                            ]),
+
+                        Toggle::make('create_dependencies')
+                            ->label('Criar dependências entre tarefas')
+                            ->helperText('Bloqueia cada tarefa até a conclusão da etapa anterior, respeitando o fluxo operacional.')
+                            ->default(true),
+
+                        Toggle::make('create_documents')
+                            ->label('Criar documentos previstos')
+                            ->helperText('Gera placeholders de documentos/versionamento vinculados aos itens criados.')
+                            ->default(true),
                     ])
                     ->action(function (PrazzuTemplate $record, array $data): void {
-                        $created = $record->instantiateFor(
-                            (int) $data['empresa_id'],
-                            filled($data['responsavel_id'] ?? null) ? (int) $data['responsavel_id'] : null,
-                            \Illuminate\Support\Carbon::parse($data['data_inicio']),
-                            Filament::auth()->id(),
-                        );
+                        $summary = $record->instantiateDetailed([
+                            'empresa_id' => (int) $data['empresa_id'],
+                            'responsavel_id' => filled($data['responsavel_id'] ?? null) ? (int) $data['responsavel_id'] : null,
+                            'data_inicio' => \Illuminate\Support\Carbon::parse($data['data_inicio']),
+                            'user_id' => Filament::auth()->id(),
+                            'recurrence' => $data['recurrence'] ?? null,
+                            'create_dependencies' => (bool) ($data['create_dependencies'] ?? true),
+                            'create_documents' => (bool) ($data['create_documents'] ?? true),
+                        ]);
 
                         Notification::make()
                             ->title('Template aplicado com sucesso')
-                            ->body($created . ' item(ns) criado(s) no controle operacional.')
+                            ->body(($summary['items_created'] ?? 0) . ' item(ns), ' . ($summary['checklists_created'] ?? 0) . ' checklist(s), ' . ($summary['documents_created'] ?? 0) . ' documento(s) e ' . ($summary['dependencies_created'] ?? 0) . ' dependência(s) criados no controle operacional.')
                             ->success()
                             ->send();
                     }),

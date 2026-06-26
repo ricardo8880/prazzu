@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ItemControles\Tables;
 use App\Models\Empresa;
 use App\Models\ItemControleChecklist;
 use App\Models\ItemControleTimeline;
+use App\Models\PrazzuTemplate;
 use App\Models\Responsável;
 use App\Services\PlanoService;
 use Filament\Actions\Action;
@@ -761,6 +762,13 @@ class ItemControlesTable
                 ->limit(48)
                 ->tooltip(fn ($record): ?string => $record?->titulo),
 
+                TextColumn::make('template.name')
+                    ->label('Template')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->placeholder('Manual'),
+
             TextColumn::make('responsavel.nome')
                 ->label('Responsável')
                 ->searchable()
@@ -996,6 +1004,42 @@ class ItemControlesTable
                     'alta' => 'Alta',
                     'urgente' => 'Urgente',
                 ]),
+
+
+
+            SelectFilter::make('template_id')
+                ->label('Template aplicado')
+                ->searchable()
+                ->getSearchResultsUsing(fn (string $search): array => PrazzuTemplate::query()
+                    ->select(['id', 'name'])
+                    ->where('name', 'like', "%{$search}%")
+                    ->orderBy('name')
+                    ->limit(50)
+                    ->pluck('name', 'id')
+                    ->toArray()
+                )
+                ->getOptionLabelUsing(fn ($value): ?string => blank($value)
+                    ? null
+                    : PrazzuTemplate::query()->whereKey($value)->value('name')
+                ),
+
+            SelectFilter::make('origem_template')
+                ->label('Origem')
+                ->options([
+                    'template' => 'Gerado por template',
+                    'template_contabil' => 'Template contábil/DP/societário',
+                    'manual' => 'Criado manualmente',
+                ])
+                ->query(function (Builder $query, array $data): Builder {
+                    $value = $data['value'] ?? null;
+
+                    return match ($value) {
+                        'template' => $query->whereNotNull('template_id'),
+                        'template_contabil' => $query->templatesContabeis(),
+                        'manual' => $query->whereNull('template_id'),
+                        default => $query,
+                    };
+                }),
 
             SelectFilter::make('status')
                 ->label('Status da tarefa')
