@@ -14,11 +14,22 @@ use UnitEnum;
 class Contratos extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
+    protected static string | UnitEnum | null $navigationGroup = 'Contratos';
     protected static ?string $navigationLabel = 'Contratos';
     protected static ?string $title = 'Contratos';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 7;
     protected string $view = 'filament.pages.contratos';
+
+    public function getHeading(): string
+    {
+        return 'Contratos';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Fonte oficial da gestão contratual: vigência, partes, valores, status e assinaturas vinculadas.';
+    }
+
 
     public static function shouldRegisterNavigation(): bool { return true; }
     public static function canAccess(): bool { return true; }

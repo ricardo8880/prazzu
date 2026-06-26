@@ -7,8 +7,8 @@
         <section class="pz-hero">
             <div>
                 <div class="pz-kicker">GANTT · ESTRATÉGIA · INTERDEPENDÊNCIA</div>
-                <h1>Gantt Enterprise</h1>
-                <p>Use esta tela para responder três perguntas de gestão: quais tarefas atrasam a entrega final, quais tarefas estão bloqueadas por dependência e quanto o cronograma real se afastou da linha de base.</p>
+                <h1>Cronograma Gantt</h1>
+                <p>Visualização de planejamento da operação: mostra dependências, bloqueios, linha de base e impacto no prazo final. A execução do trabalho permanece na Central Operacional.</p>
             </div>
             <div class="pz-actions">
                 <button class="pz-btn primary" wire:click="saveBaseline" wire:loading.attr="disabled">Salvar baseline atual</button>

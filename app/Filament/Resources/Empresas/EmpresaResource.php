@@ -27,7 +27,7 @@ class EmpresaResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Empresas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Administração';
 
     protected static ?int $navigationSort = 2;
 

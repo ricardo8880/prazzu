@@ -15,13 +15,13 @@ class SlaPrazos extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clock';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Calendário Operacional';
 
-    protected static ?string $navigationLabel = 'SLA e Prazos';
+    protected static ?string $navigationLabel = 'Monitor de SLA e Prazos';
 
-    protected static ?string $title = 'SLA e Prazos';
+    protected static ?string $title = 'Monitor de SLA e Prazos';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     protected string $view = 'filament.pages.sla-prazos';
 

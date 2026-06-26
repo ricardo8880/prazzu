@@ -29,9 +29,9 @@ class DashboardWidgetConfiguracaoResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-squares-2x2';
 
-    protected static ?string $navigationLabel = 'Dashboard Configurável';
+    protected static ?string $navigationLabel = 'Configuração de Painéis';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Relatórios';
+    protected static string|\UnitEnum|null $navigationGroup = 'Visão Geral Contábil';
 
     protected static ?int $navigationSort = 2;
 

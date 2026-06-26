@@ -22,7 +22,7 @@ class Configuracoes extends Page implements Forms\Contracts\HasForms
     protected static string | UnitEnum | null $navigationGroup = 'Configurações';
     protected static ?string $navigationLabel = 'Configurações';
     protected static ?string $title = 'Configurações';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.configuracoes';
 
     public ?array $data = [];

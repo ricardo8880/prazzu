@@ -101,10 +101,10 @@
         <section class="co-topbar">
             <div>
                 <div class="co-title-row">
-                    <h1>Centro Operacional</h1>
+                    <h1>Central Operacional</h1>
                     <span class="co-info">i</span>
                 </div>
-                <p>Veja primeiro o que pode gerar multa, atraso ou retrabalho hoje.</p>
+                <p>Mesa principal de execução: priorize, resolva, delegue e acompanhe o trabalho do dia sem sair do fluxo operacional.</p>
             </div>
 
             <div class="co-top-actions">
@@ -230,19 +230,33 @@
 
 
 
-        <nav class="co-page-cluster co-main-cluster" aria-label="Navegação do Centro Operacional">
+        <nav class="co-page-cluster co-main-cluster" aria-label="Navegação da Central Operacional">
             <a class="co-cluster-item active" href="{{ \App\Filament\Pages\CentroOperacional::getUrl() }}">
                 <span class="co-cluster-icon"><i class="bi bi-command"></i></span>
                 <span>
-                    <strong>Centro Operacional</strong>
-                    <small>Riscos, resolver agora e resultados</small>
+                    <strong>Mesa de Execução</strong>
+                    <small>Resolver agora, riscos, responsáveis e resultados</small>
                 </span>
             </a>
+            <button type="button" class="co-cluster-item" wire:click="criarTarefaOperacional" wire:loading.attr="disabled">
+                <span class="co-cluster-icon"><i class="bi bi-plus-circle"></i></span>
+                <span>
+                    <strong>Nova Tarefa</strong>
+                    <small>Criar demanda operacional no fluxo central</small>
+                </span>
+            </button>
+            <button type="button" class="co-cluster-item" wire:click="abrirFilaOperacional" wire:loading.attr="disabled">
+                <span class="co-cluster-icon"><i class="bi bi-list-check"></i></span>
+                <span>
+                    <strong>Fila Completa</strong>
+                    <small>Abrir lista detalhada de tarefas internas</small>
+                </span>
+            </button>
             <a class="co-cluster-item" href="{{ \App\Filament\Pages\CentroOperacionalGestao::getUrl() }}?aba=workload">
                 <span class="co-cluster-icon"><i class="bi bi-grid-1x2"></i></span>
                 <span>
-                    <strong>Operação Interna</strong>
-                    <small>Workload, aprovações e financeiro</small>
+                    <strong>Gestão da Operação</strong>
+                    <small>Workload, aprovações e financeiro como apoio interno</small>
                 </span>
             </a>
         </nav>

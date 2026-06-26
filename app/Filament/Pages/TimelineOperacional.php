@@ -17,10 +17,10 @@ use Throwable;
 class TimelineOperacional extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-bars-3-bottom-left';
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Visualizações da Operação';
     protected static ?string $navigationLabel = 'Timeline Operacional';
     protected static ?string $title = 'Timeline Operacional';
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.timeline-operacional';
 
     public ?string $search = null;

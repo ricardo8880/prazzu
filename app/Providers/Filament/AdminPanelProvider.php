@@ -93,19 +93,37 @@ class AdminPanelProvider extends PanelProvider
             )
 
             ->navigationGroups([
-                NavigationGroup::make('Trabalho')
+                NavigationGroup::make('Visão Geral Contábil')
                     ->collapsible(false),
-                NavigationGroup::make('Governança')
+                NavigationGroup::make('Central Operacional')
+                    ->collapsible(false),
+                NavigationGroup::make('Pendências e Alertas')
                     ->collapsible(false),
                 NavigationGroup::make('Clientes')
                     ->collapsible(false),
+                NavigationGroup::make('Atendimentos')
+                    ->collapsible(false),
                 NavigationGroup::make('Documentos')
+                    ->collapsible(false),
+                NavigationGroup::make('Contratos')
                     ->collapsible(false),
                 NavigationGroup::make('Financeiro')
                     ->collapsible(false),
+                NavigationGroup::make('Aprovações')
+                    ->collapsible(false),
+                NavigationGroup::make('Calendário Operacional')
+                    ->collapsible(false),
+                NavigationGroup::make('Visualizações da Operação')
+                    ->collapsible(false),
                 NavigationGroup::make('Relatórios')
                     ->collapsible(false),
+                NavigationGroup::make('Auditoria e Riscos')
+                    ->collapsible(false),
+                NavigationGroup::make('Administração')
+                    ->collapsible(false),
                 NavigationGroup::make('Configurações')
+                    ->collapsible(false),
+                NavigationGroup::make('Conta')
                     ->collapsible(false),
             ])
 

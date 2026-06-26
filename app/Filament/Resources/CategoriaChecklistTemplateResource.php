@@ -25,7 +25,7 @@ class CategoriaChecklistTemplateResource extends Resource
 
     protected static ?string $navigationLabel = 'Checklist';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'TRABALHO';
+    protected static string|\UnitEnum|null $navigationGroup = 'Central Operacional';
 
     protected static ?int $navigationSort = 6;
 

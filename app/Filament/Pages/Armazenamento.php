@@ -26,10 +26,10 @@ class Armazenamento extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-circle-stack';
-    protected static string | UnitEnum | null $navigationGroup = 'Administração';
+    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
     protected static ?string $navigationLabel = 'Armazenamento';
     protected static ?string $title = 'Armazenamento';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 50;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.armazenamento';
@@ -48,12 +48,12 @@ class Armazenamento extends Page
 
     public function getHeading(): string
     {
-        return 'Armazenamento';
+        return 'Armazenamento documental';
     }
 
     public function getSubheading(): ?string
     {
-        return 'Acompanhe o uso de espaço e mantenha os documentos organizados.';
+        return 'Área interna de Documentos para uso de espaço, limites, arquivos pesados, expiração e política de retenção.';
     }
 
     public string $aba = 'visao-geral';

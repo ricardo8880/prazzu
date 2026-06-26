@@ -15,7 +15,7 @@ class Checklist extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Central Operacional';
 
     protected static ?string $navigationLabel = 'Checklist';
 

@@ -16,10 +16,10 @@ class PlanosBilling extends Page
     use UsesAdvancedPermissions;
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
-    protected static string | UnitEnum | null $navigationGroup = 'Administração';
-    protected static ?string $navigationLabel = 'Assinatura';
-    protected static ?string $title = 'Assinatura';
-    protected static ?int $navigationSort = 6;
+    protected static string | UnitEnum | null $navigationGroup = 'Conta';
+    protected static ?string $navigationLabel = 'Conta';
+    protected static ?string $title = 'Conta';
+    protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.pages.planos-billing';
 

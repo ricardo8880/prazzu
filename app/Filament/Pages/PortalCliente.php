@@ -27,15 +27,26 @@ class PortalCliente extends Page
     use WithFileUploads;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Clientes';
+    protected static string | UnitEnum | null $navigationGroup = 'Atendimentos';
 
     protected static ?string $navigationLabel = 'Portal do Cliente';
 
-    protected static ?string $title = 'Central do Portal do Cliente';
+    protected static ?string $title = 'Portal do Cliente';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.portal-cliente';
+
+    public function getHeading(): string
+    {
+        return 'Portal do Cliente';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Canal de comunicação com o cliente. Solicitações que viram trabalho interno devem ser tratadas pela Central Operacional.';
+    }
+
 
     public ?int $empresaSelecionadaId = null;
 

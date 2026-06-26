@@ -18,13 +18,13 @@ class Kanban extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-view-columns';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Visualizações da Operação';
 
-    protected static ?string $navigationLabel = 'Kanban';
+    protected static ?string $navigationLabel = 'Kanban Operacional';
 
-    protected static ?string $title = 'Kanban';
+    protected static ?string $title = 'Kanban Operacional';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.kanban';
 

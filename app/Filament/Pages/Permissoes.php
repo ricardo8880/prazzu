@@ -38,7 +38,7 @@ class Permissoes extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        return false;
     }
 
     public static function canAccess(): bool

@@ -24,7 +24,7 @@ class UserResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-users';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Configurações';
+    protected static string | UnitEnum | null $navigationGroup = 'Administração';
 
     protected static ?string $navigationLabel = 'Usuários';
 
@@ -148,6 +148,11 @@ class UserResource extends Resource
 
         return $user->isAdminEmpresa()
             && (int) $user->empresa_id === (int) $record->empresa_id;
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
     }
 
     public static function getPages(): array

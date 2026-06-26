@@ -22,9 +22,20 @@ class Clientes extends Page
 
     protected static string|\UnitEnum|null $navigationGroup = 'Clientes';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 4;
 
     protected string $view = 'filament.pages.clientes';
+
+    public function getHeading(): string
+    {
+        return 'Clientes';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Visão 360º do cliente: cadastro, contexto, saúde, histórico e vínculos com documentos, contratos, atendimentos e cobranças.';
+    }
+
 
 
     public static function shouldRegisterNavigation(): bool

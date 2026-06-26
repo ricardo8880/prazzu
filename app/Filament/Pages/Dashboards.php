@@ -11,9 +11,9 @@ use UnitEnum;
 class Dashboards extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-line';
-    protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
-    protected static ?string $navigationLabel = 'Dashboards';
-    protected static ?string $title = 'Dashboards';
+    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral Contábil';
+    protected static ?string $navigationLabel = 'Painéis';
+    protected static ?string $title = 'Painéis';
     protected static ?int $navigationSort = 2;
 
     protected string $view = 'filament.pages.dashboards';

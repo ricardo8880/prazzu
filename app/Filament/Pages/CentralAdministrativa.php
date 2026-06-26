@@ -21,9 +21,9 @@ class CentralAdministrativa extends Page
 
     protected static string | UnitEnum | null $navigationGroup = 'Administração';
 
-    protected static ?string $navigationLabel = 'Central Administrativa';
+    protected static ?string $navigationLabel = 'Administração';
 
-    protected static ?string $title = 'Central Administrativa';
+    protected static ?string $title = 'Administração';
 
     protected static ?int $navigationSort = 1;
 

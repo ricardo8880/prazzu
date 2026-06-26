@@ -16,13 +16,18 @@ use UnitEnum;
 class Onboarding extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-rocket-launch';
-    protected static string | UnitEnum | null $navigationGroup = 'Configurações';
+    protected static string | UnitEnum | null $navigationGroup = 'Conta';
     protected static ?string $navigationLabel = 'Onboarding';
     protected static ?string $title = 'Onboarding';
     protected static ?int $navigationSort = 0;
     protected string $view = 'filament.pages.onboarding';
 
     public array $data = [];
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 
     public function mount(): void
     {

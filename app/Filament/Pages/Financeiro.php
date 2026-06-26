@@ -23,7 +23,7 @@ class Financeiro extends Page
     protected static string | UnitEnum | null $navigationGroup = 'Financeiro';
     protected static ?string $navigationLabel = 'Financeiro';
     protected static ?string $title = 'Financeiro';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.financeiro';
 
 

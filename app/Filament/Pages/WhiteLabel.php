@@ -42,13 +42,18 @@ class WhiteLabel extends Page implements HasForms
 
     protected static ?string $slug = 'white-label';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Conta';
 
     protected static ?int $navigationSort = 90;
 
     protected string $view = 'filament.pages.white-label';
 
     public ?array $data = [];
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
 
     public function mount(): void
     {

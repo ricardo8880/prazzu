@@ -17,9 +17,20 @@ class Validades extends Page
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar';
     protected static string | UnitEnum | null $navigationGroup = 'Documentos';
     protected static ?string $navigationLabel = 'Validades';
-    protected static ?string $title = 'Validades';
-    protected static ?int $navigationSort = 4;
+    protected static ?string $title = 'Validades Documentais';
+    protected static ?int $navigationSort = 40;
     protected string $view = 'filament.pages.validades';
+
+    public function getHeading(): string
+    {
+        return 'Validades documentais';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Visão especializada dos vencimentos documentais. A fonte oficial continua sendo Documentos.';
+    }
+
 
     protected function getViewData(): array
     {

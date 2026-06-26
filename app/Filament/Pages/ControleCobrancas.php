@@ -22,7 +22,7 @@ class ControleCobrancas extends Page
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Cobranças';
     protected static ?string $title = 'Cobranças';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.controle-cobrancas';
 
 

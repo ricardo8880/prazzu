@@ -12,10 +12,10 @@ use UnitEnum;
 class Riscos extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-exclamation-triangle';
-    protected static string | UnitEnum | null $navigationGroup = 'Governança';
+    protected static string | UnitEnum | null $navigationGroup = 'Auditoria e Riscos';
     protected static ?string $navigationLabel = 'Riscos';
     protected static ?string $title = 'Riscos';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.compliance-riscos';
 
     public $empresaId = null;

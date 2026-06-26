@@ -34,11 +34,11 @@ class RelatorioPersonalizadoResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
 
-    protected static ?string $navigationLabel = 'Relatórios';
+    protected static ?string $navigationLabel = 'Relatórios Personalizados';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Relatórios';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 13;
 
     public static function getNavigationGroup(): string|\UnitEnum|null
     {

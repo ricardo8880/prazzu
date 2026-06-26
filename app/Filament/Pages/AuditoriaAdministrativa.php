@@ -17,10 +17,10 @@ class AuditoriaAdministrativa extends Page
     use UsesAdvancedPermissions;
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-magnifying-glass-circle';
-    protected static string | UnitEnum | null $navigationGroup = 'Administração';
+    protected static string | UnitEnum | null $navigationGroup = 'Auditoria e Riscos';
     protected static ?string $navigationLabel = 'Auditoria Administrativa';
     protected static ?string $title = 'Auditoria Administrativa';
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 4;
 
     protected string $view = 'filament.pages.auditoria-administrativa';
 

@@ -31,7 +31,7 @@ class DashboardTabelasItemControles extends Page
 
     protected static ?string $title = 'Dashboard - Tabelas';
 
-    protected static ?string $navigationLabel = 'Dashboard - Tabelas';
+    protected static ?string $navigationLabel = 'Painéis - Tabelas';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-table-cells';
 

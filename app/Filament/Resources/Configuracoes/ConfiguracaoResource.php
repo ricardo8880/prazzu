@@ -91,6 +91,11 @@ class ConfiguracaoResource extends Resource
         return false;
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function getPages(): array
     {
         return [

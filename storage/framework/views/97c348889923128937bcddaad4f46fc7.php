@@ -31,7 +31,7 @@
             <div>
                 <span class="tp-eyebrow">TRABALHO</span>
                 <h2>Calendário operacional</h2>
-                <p>Controle vencimentos, itens atrasados, agenda da semana e tarefas sem data em uma visão mais prática.</p>
+                <p>Visualize vencimentos, agenda da semana e tarefas sem data. Esta tela organiza o tempo; a execução permanece na Central Operacional.</p>
             </div>
 
             <div class="tp-calendar-actions">

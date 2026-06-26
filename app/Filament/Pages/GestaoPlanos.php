@@ -17,7 +17,7 @@ class GestaoPlanos extends Page
     use UsesAdvancedPermissions;
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static string | UnitEnum | null $navigationGroup = 'Configurações';
+    protected static string | UnitEnum | null $navigationGroup = 'Conta';
     protected static ?string $navigationLabel = 'Gestão de Planos';
     protected static ?string $title = 'Gestão de Planos';
     protected static ?int $navigationSort = 4;
@@ -29,7 +29,7 @@ class GestaoPlanos extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        return false;
     }
 
     public static function canAccess(): bool

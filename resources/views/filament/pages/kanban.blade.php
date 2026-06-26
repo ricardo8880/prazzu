@@ -42,7 +42,7 @@
             <div class="tp-empty tp-empty-large tp-empty-actionable">
                 <div class="tp-empty-icon">▦</div>
                 <strong>Nenhum item no Kanban</strong>
-                <p>Assim que uma tarefa for criada, ela aparecerá aqui separada por status. Use o botão abaixo para começar o fluxo operacional.</p>
+                <p>Assim que uma tarefa for criada na Central Operacional, ela aparecerá aqui separada por status para acompanhamento visual.</p>
                 <a href="{{ $this->getUrlNovaTarefa() }}" class="tp-empty-link">Criar primeiro item</a>
             </div>
         @endif

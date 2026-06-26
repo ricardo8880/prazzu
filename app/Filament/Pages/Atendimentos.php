@@ -31,11 +31,22 @@ class Atendimentos extends Page
     use WithFileUploads;
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
-    protected static string | UnitEnum | null $navigationGroup = 'Clientes';
+    protected static string | UnitEnum | null $navigationGroup = 'Atendimentos';
     protected static ?string $navigationLabel = 'Atendimentos';
     protected static ?string $title = 'Central de Atendimentos';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
     protected string $view = 'filament.pages.atendimentos';
+
+    public function getHeading(): string
+    {
+        return 'Atendimentos';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Origem oficial das solicitações e comunicações do cliente. A execução operacional fica na Central Operacional.';
+    }
+
 
 
     public static function shouldRegisterNavigation(): bool

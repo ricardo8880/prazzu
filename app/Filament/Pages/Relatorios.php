@@ -22,8 +22,8 @@ class Relatorios extends Page
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
     protected static ?string $navigationLabel = 'Relatórios';
-    protected static ?string $title = 'Relatórios operacionais';
-    protected static ?int $navigationSort = 1;
+    protected static ?string $title = 'Relatórios';
+    protected static ?int $navigationSort = 12;
 
     protected string $view = 'filament.pages.relatorios';
 

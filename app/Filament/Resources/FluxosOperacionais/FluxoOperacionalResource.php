@@ -37,7 +37,7 @@ class FluxoOperacionalResource extends Resource
 
     protected static ?string $navigationLabel = 'Fluxos Operacionais';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Trabalho';
+    protected static string|\UnitEnum|null $navigationGroup = 'Central Operacional';
 
     protected static ?int $navigationSort = 1;
 

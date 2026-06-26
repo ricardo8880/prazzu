@@ -16,11 +16,22 @@ use UnitEnum;
 class Assinaturas extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
-    protected static string | UnitEnum | null $navigationGroup = 'Financeiro';
+    protected static string | UnitEnum | null $navigationGroup = 'Contratos';
     protected static ?string $navigationLabel = 'Assinaturas';
-    protected static ?string $title = 'Assinaturas';
-    protected static ?int $navigationSort = 2;
+    protected static ?string $title = 'Assinaturas Contratuais';
+    protected static ?int $navigationSort = 20;
     protected string $view = 'filament.pages.assinaturas';
+
+    public function getHeading(): string
+    {
+        return 'Assinaturas contratuais';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Área interna de Contratos para assinaturas, cobrança recorrente e vínculo com planos contratados.';
+    }
+
 
     public ?int $empresaFiltro = null;
     public string $statusFiltro = 'todas';

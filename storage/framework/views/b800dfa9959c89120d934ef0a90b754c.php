@@ -22,8 +22,8 @@
         <div class="tp-hero">
             <div>
                 <span class="tp-eyebrow">TRABALHO</span>
-                <h2>SLA e Prazos</h2>
-                <p>Controle visual de SLA, limites de atendimento e itens críticos com prazo vencendo.</p>
+                <h2>Monitor de SLA e Prazos</h2>
+                <p>Visão de apoio para prazos e SLA. A execução continua na Central Operacional; aqui o foco é enxergar risco de atraso.</p>
             </div>
         </div>
 

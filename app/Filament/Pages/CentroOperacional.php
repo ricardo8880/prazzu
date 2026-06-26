@@ -18,9 +18,9 @@ use UnitEnum;
 class CentroOperacional extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-command-line';
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
-    protected static ?string $navigationLabel = 'Centro Operacional';
-    protected static ?string $title = 'Centro Operacional';
+    protected static string | UnitEnum | null $navigationGroup = 'Central Operacional';
+    protected static ?string $navigationLabel = 'Central Operacional';
+    protected static ?string $title = 'Central Operacional';
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.centro-operacional';
 
@@ -54,6 +54,26 @@ class CentroOperacional extends Page
         return [
             'data' => app(CentroOperacionalService::class)->dashboard(Filament::auth()->user(), $this->dashboardFilters()),
         ];
+    }
+
+
+    public function criarTarefaOperacional(): void
+    {
+        $this->redirect(ItemControleResource::getUrl('create'));
+    }
+
+    public function abrirFilaOperacional(): void
+    {
+        $this->redirect(ItemControleResource::getUrl('index'));
+    }
+
+    public function abrirGestaoOperacional(string $aba = 'workload'): void
+    {
+        if (! in_array($aba, ['workload', 'aprovacoes', 'financeiro'], true)) {
+            $aba = 'workload';
+        }
+
+        $this->redirect(CentroOperacionalGestao::getUrl(['aba' => $aba]));
     }
 
     public function setDateRange(string $range): void

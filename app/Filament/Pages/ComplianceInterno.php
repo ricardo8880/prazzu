@@ -12,8 +12,8 @@ use UnitEnum;
 class ComplianceInterno extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
-    protected static string | UnitEnum | null $navigationGroup = 'Governança';
-    protected static ?string $navigationLabel = 'Interno';
+    protected static string | UnitEnum | null $navigationGroup = 'Auditoria e Riscos';
+    protected static ?string $navigationLabel = 'Compliance Interno';
     protected static ?string $title = 'Compliance Interno';
     protected static ?int $navigationSort = 5;
     protected string $view = 'filament.pages.compliance-interno';

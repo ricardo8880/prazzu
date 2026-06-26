@@ -38,11 +38,11 @@ class ItemControleResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-check-circle';
 
-    protected static ?string $navigationLabel = 'Tarefas';
+    protected static ?string $navigationLabel = 'Tarefas Operacionais';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Trabalho';
+    protected static string|\UnitEnum|null $navigationGroup = 'Central Operacional';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 

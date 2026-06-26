@@ -30,11 +30,11 @@ class DashboardGraficosItemControles extends Page
 
     protected static ?string $title = 'Dashboards';
 
-    protected static ?string $navigationLabel = 'Dashboards';
+    protected static ?string $navigationLabel = 'Painéis Operacionais';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-pie';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Relatórios';
+    protected static string | \UnitEnum | null $navigationGroup = 'Visão Geral Contábil';
 
     protected static ?int $navigationSort = 2;
 

@@ -9,7 +9,7 @@
         <section class="tl-hero">
             <div class="tl-kicker">TIMELINE · EXECUÇÃO · CAPACIDADE</div>
             <h1>Timeline Operacional</h1>
-            <p>Use esta tela para distribuir trabalho no dia a dia: quem faz o quê, quem está sobrecarregado, quais tarefas ainda não foram agendadas e onde existem conflitos de horário.</p>
+            <p>Visualização de apoio da operação: quem faz o quê, sobrecarga, tarefas sem agenda e conflitos de horário. A Central Operacional continua sendo a mesa principal de execução.</p>
         </section>
 
         <section class="tl-grid four">

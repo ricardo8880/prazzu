@@ -15,13 +15,13 @@ class Calendario extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Calendário Operacional';
 
-    protected static ?string $navigationLabel = 'Calendário';
+    protected static ?string $navigationLabel = 'Calendário Operacional';
 
-    protected static ?string $title = 'Calendário';
+    protected static ?string $title = 'Calendário Operacional';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.calendario';
 

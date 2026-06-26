@@ -20,7 +20,7 @@ class Usuarios extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-users';
-    protected static string | UnitEnum | null $navigationGroup = 'Configurações';
+    protected static string | UnitEnum | null $navigationGroup = 'Administração';
     protected static ?string $navigationLabel = 'Usuários';
     protected static ?string $title = 'Usuários';
     protected static ?int $navigationSort = 2;
@@ -29,7 +29,7 @@ class Usuarios extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canAccess();
+        return false;
     }
 
     public static function canAccess(): bool

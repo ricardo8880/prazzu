@@ -26,15 +26,15 @@ class AuditoriaDetalhadaResource extends Resource
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $navigationLabel = 'Auditoria completa';
+    protected static ?string $navigationLabel = 'Auditoria Completa';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Governança';
+    protected static string | UnitEnum | null $navigationGroup = 'Auditoria e Riscos';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 3;
 
     public static function getNavigationGroup(): string | UnitEnum | null
     {
-        return 'Governança';
+        return 'Auditoria e Riscos';
     }
 
     public static function canAccess(): bool

@@ -19,7 +19,7 @@ class CentralContratos extends Page
 
     protected static ?string $title = 'Contratos';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Documentos';
+    protected static string | \UnitEnum | null $navigationGroup = 'Contratos';
 
     protected static ?int $navigationSort = 2;
 

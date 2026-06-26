@@ -31,9 +31,20 @@ class Documentos extends Page
     protected static string | UnitEnum | null $navigationGroup = 'Documentos';
     protected static ?string $navigationLabel = 'Documentos';
     protected static ?string $title = 'Documentos';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 6;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected string $view = 'filament.pages.documentos';
+
+    public function getHeading(): string
+    {
+        return 'Documentos';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Fonte única da gestão documental: recebimento, pendências documentais, vencimentos, armazenamento e retenção.';
+    }
+
 
 
     public static function shouldRegisterNavigation(): bool
@@ -318,7 +329,7 @@ class Documentos extends Page
             ],
             [
                 'key' => 'vencimentos',
-                'label' => 'Vencimentos',
+                'label' => 'Validades',
                 'icon' => 'heroicon-o-calendar-days',
                 'sort' => 3,
                 'tone' => ((int) ($resumo['vencidos'] ?? 0)) > 0 ? 'danger' : (((int) ($resumo['vencem30'] ?? 0)) > 0 ? 'warning' : 'success'),
@@ -329,7 +340,7 @@ class Documentos extends Page
             ],
             [
                 'key' => 'enterprise',
-                'label' => 'Detalhes',
+                'label' => 'Consulta completa',
                 'icon' => 'heroicon-o-rocket-launch',
                 'sort' => 4,
                 'tone' => 'primary',
@@ -340,7 +351,7 @@ class Documentos extends Page
             ],
             [
                 'key' => 'fila',
-                'label' => 'Fila',
+                'label' => 'Fila documental',
                 'icon' => 'heroicon-o-list-bullet',
                 'sort' => 5,
                 'tone' => 'neutral',
@@ -545,8 +556,8 @@ class Documentos extends Page
                 'tom' => 'success',
             ],
             [
-                'label' => 'Validades',
-                'descricao' => 'Ver vencidos, prazos próximos e itens sem data.',
+                'label' => 'Validades documentais',
+                'descricao' => 'Ver vencidos, prazos próximos e itens sem data dentro de Documentos.',
                 'url' => $this->enterpriseUrl(['situacao' => 'vence_30']),
                 'tom' => 'warning',
             ],

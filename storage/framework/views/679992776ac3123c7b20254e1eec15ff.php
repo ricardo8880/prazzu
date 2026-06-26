@@ -18,7 +18,7 @@
         <section class="prazzu-hero">
             <div>
                 <h1>Empresa</h1>
-                <p>Centraliza os dados cadastrais e administrativos da conta. Esta tela é o ponto único para conferir identidade do escritório, responsável, contato e plano, sem procurar em resources espalhados.</p>
+                <p>Mantenha os dados do escritório atualizados para documentos, comunicações e identificação da conta.</p>
             </div>
         </section>
 
@@ -72,13 +72,13 @@
             </article>
 
             <article class="prazzu-card">
-                <h2>O que foi centralizado neste lote</h2>
-                <p>A empresa deixa de depender apenas do resource escondido e passa a ter uma porta clara dentro da Central Administrativa.</p>
+                <h2>Informações da conta</h2>
+                <p>Confira os principais dados usados na operação e na administração do escritório.</p>
                 <div class="prazzu-info">
                     <div><span>Identidade</span><strong>Razão social, nome fantasia e CNPJ</strong></div>
                     <div><span>Contato</span><strong>E-mail, telefone e responsável</strong></div>
                     <div><span>Conta</span><strong>Status e plano</strong></div>
-                    <div><span>Compatibilidade</span><strong>Resource antigo preservado</strong></div>
+                    <div><span>Acesso</span><strong>Dados disponíveis para administradores</strong></div>
                 </div>
             </article>
         </section>
