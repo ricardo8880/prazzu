@@ -33,7 +33,6 @@ class AccountingProfileNavigation
                 ],
                 'aliases' => [
                     'Dashboard' => 'Dashboard Executivo',
-                    'Dashboard Executivo Contábil' => 'Dashboard Executivo',
                     'Aprovações' => 'Central de Aprovações',
                 ],
             ],
@@ -72,7 +71,6 @@ class AccountingProfileNavigation
                     'Prazos' => 'SLA e Prazos',
                     'Portal Cliente' => 'Portal do Cliente',
                     'Aprovações' => 'Central de Aprovações',
-                    'Dashboard Executivo Contábil' => 'Dashboard Executivo',
                 ],
             ],
             'contador' => [
@@ -81,6 +79,7 @@ class AccountingProfileNavigation
                 'visible_labels' => [
                     'Home',
                     'Central de Evolução',
+                    'Dashboard Executivo Contábil',
                     'Centro Operacional',
                     'Tarefas',
                     'Fluxos Operacionais',
@@ -271,8 +270,6 @@ class AccountingProfileNavigation
             'Permissões' => 'Perfis e Permissões',
             'Relatar Bug / Melhoria' => 'Central de Evolução',
             'Central de Evolução' => 'Central de Evolução',
-            'Dashboard Executivo Contábil' => 'Dashboard Executivo',
-            'Dashboard Executivo' => 'Dashboard Executivo Contábil',
             'Perfis e Permissões' => 'Permissões',
         ];
 

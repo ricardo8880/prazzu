@@ -12,8 +12,8 @@ class DashboardExecutivo extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-presentation-chart-line';
     protected static string | UnitEnum | null $navigationGroup = 'Gestão';
-    protected static ?string $navigationLabel = 'Dashboard Executivo Contábil';
-    protected static ?string $title = 'Dashboard Executivo Contábil';
+    protected static ?string $navigationLabel = 'Dashboard Executivo';
+    protected static ?string $title = 'Dashboard Executivo';
     protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.prazzu-operational-tool-page';
 

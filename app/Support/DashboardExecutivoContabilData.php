@@ -2,14 +2,9 @@
 
 namespace App\Support;
 
-use App\Filament\Pages\Atendimentos;
-use App\Filament\Pages\CentralAprovacoes;
 use App\Filament\Pages\CentroOperacional;
 use App\Filament\Pages\ControleCobrancas;
 use App\Filament\Pages\Documentos;
-use App\Filament\Pages\Financeiro;
-use App\Filament\Pages\PortalCliente;
-use App\Filament\Pages\Relatorios;
 use App\Filament\Pages\SlaPrazos;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use Carbon\Carbon;
@@ -21,345 +16,670 @@ use Throwable;
 
 class DashboardExecutivoContabilData
 {
-    private const DONE_STATUSES = ['concluido', 'concluído', 'finalizado', 'finalizada', 'aprovado', 'aprovada', 'pago', 'paid'];
-    private const OPEN_STATUSES = ['pendente', 'aberto', 'em_andamento', 'aguardando_cliente', 'aguardando_equipe', 'em_aprovacao'];
+    private const DONE_STATUSES = ['concluido', 'concluído', 'finalizado', 'finalizada', 'aprovado', 'aprovada', 'pago', 'paid', 'resolvido', 'fechado', 'cancelado'];
+    private const BILLING_PAID_STATUSES = ['pago', 'paid', 'recebido', 'confirmed', 'received', 'liquidado', 'cancelado'];
 
     public function data(): array
     {
-        $cards = $this->cards();
+        $decisionCards = $this->decisionCards();
+        $risk = $this->riskSummary($decisionCards);
 
         return [
             'updated_at' => now()->format('d/m/Y H:i'),
-            'health' => $this->health($cards),
-            'cards' => $cards,
-            'decision_blocks' => $this->decisionBlocks(),
+            'risk' => $risk,
+            'top' => $this->top($decisionCards, $risk),
+
+            // Compatibilidade com a view atual. No lote 2 a Blade será simplificada para usar decision_cards.
+            'metrics' => $decisionCards,
+            'focus' => $this->executiveFocus($decisionCards),
             'sections' => $this->sections(),
-            'quick_actions' => $this->quickActions(),
+            'insights' => [],
+            'principles' => $this->principles(),
+
+            // Nova estrutura executiva que será consumida pela interface reformulada nos próximos lotes.
+            'decision_cards' => $decisionCards,
+            'resolve_now' => $this->resolveNowRows(),
+            'blockers' => $this->blockerRows(),
+            'trend' => $this->riskTrend($risk),
         ];
     }
 
-    private function cards(): array
+    private function decisionCards(): array
     {
-        $clientesAtivos = $this->countRows('empresas', function (Builder $query): void {
-            if ($this->hasColumn('empresas', 'ativo')) {
-                $query->where('ativo', 1);
-                return;
-            }
-
-            if ($this->hasColumn('empresas', 'status')) {
-                $query->whereIn('status', ['ativo', 'ativa', 'active']);
-            }
-        });
-
-        $tarefasAbertas = $this->itemsBase()
-            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
-            ->count();
-
-        $tarefasAtrasadas = $this->itemsBase()
-            ->whereNotNull('item_controles.data_vencimento')
-            ->whereDate('item_controles.data_vencimento', '<', now()->toDateString())
-            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
-            ->count();
-
-        $vencendoHoje = $this->itemsBase()
-            ->whereDate('item_controles.data_vencimento', now()->toDateString())
-            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
-            ->count();
-
-        $slaRisco = $this->slaRiskCount();
-        $documentosPendentes = $this->documentsPendingCount();
-        $atendimentosAbertos = $this->openAttendancesCount();
-        $cobrancasVencidas = $this->overdueBillingCount();
-        $valorVencido = $this->overdueBillingValue();
+        $obrigacoesCriticas = $this->criticalMonthlyObligationsCount();
+        $slaEmRisco = $this->slaRiskCount();
+        $documentosBloqueando = $this->documentBlockerCount();
+        $inadimplenciaComImpacto = $this->delinquencyWithOperationalImpactCount();
+        $valorVencidoComImpacto = $this->overdueBillingValueWithOperationalImpact();
 
         return [
             [
-                'key' => 'clientes',
-                'label' => 'Clientes ativos',
-                'value' => $this->formatNumber($clientesAtivos),
-                'hint' => 'Base atual do escritório',
-                'tone' => 'info',
+                'key' => 'obrigacoes_criticas',
+                'label' => 'Obrigações críticas',
+                'value' => $this->formatNumber($obrigacoesCriticas),
+                'raw' => $obrigacoesCriticas,
+                'hint' => 'Vencidas, vencendo nos próximos 7 dias ou com alto risco no mês atual',
+                'icon' => '📌',
+                'action_label' => 'Abrir origem',
+                'source_label' => 'Centro Operacional',
+                'priority' => 1,
+                'tone' => $obrigacoesCriticas > 0 ? 'danger' : 'success',
+                'url' => $this->safeUrl(CentroOperacional::class) ?: $this->safeUrl(ItemControleResource::class),
             ],
             [
-                'key' => 'risco',
-                'label' => 'Clientes em atenção',
-                'value' => $this->formatNumber($this->criticalClientsCount()),
-                'hint' => 'Com atraso, cobrança ou atendimento aberto',
-                'tone' => $this->criticalClientsCount() > 0 ? 'warning' : 'success',
-            ],
-            [
-                'key' => 'tarefas',
-                'label' => 'Tarefas abertas',
-                'value' => $this->formatNumber($tarefasAbertas),
-                'hint' => 'Ainda não concluídas',
-                'tone' => $tarefasAbertas > 0 ? 'info' : 'success',
-            ],
-            [
-                'key' => 'atrasos',
-                'label' => 'Atrasadas',
-                'value' => $this->formatNumber($tarefasAtrasadas),
-                'hint' => 'Exigem decisão rápida',
-                'tone' => $tarefasAtrasadas > 0 ? 'danger' : 'success',
-            ],
-            [
-                'key' => 'hoje',
-                'label' => 'Vencem hoje',
-                'value' => $this->formatNumber($vencendoHoje),
-                'hint' => 'Prazos do dia',
-                'tone' => $vencendoHoje > 0 ? 'warning' : 'success',
-            ],
-            [
-                'key' => 'sla',
+                'key' => 'sla_em_risco',
                 'label' => 'SLA em risco',
-                'value' => $this->formatNumber($slaRisco),
-                'hint' => 'Próximas 12h ou já vencidos',
-                'tone' => $slaRisco > 0 ? 'danger' : 'success',
+                'value' => $this->formatNumber($slaEmRisco),
+                'raw' => $slaEmRisco,
+                'hint' => 'SLA vencido ou estourando nas próximas 12 horas',
+                'icon' => '🚨',
+                'action_label' => 'Atacar SLA',
+                'source_label' => 'SLA e Prazos',
+                'priority' => 2,
+                'tone' => $slaEmRisco > 0 ? 'danger' : 'success',
+                'url' => $this->safeUrl(SlaPrazos::class) ?: $this->safeUrl(CentroOperacional::class),
             ],
             [
-                'key' => 'documentos',
-                'label' => 'Docs pendentes',
-                'value' => $this->formatNumber($documentosPendentes),
-                'hint' => 'Sem arquivo, revisão ou assinatura',
-                'tone' => $documentosPendentes > 0 ? 'warning' : 'success',
+                'key' => 'documentos_bloqueando',
+                'label' => 'Documentos bloqueando entrega',
+                'value' => $this->formatNumber($documentosBloqueando),
+                'raw' => $documentosBloqueando,
+                'hint' => 'Pendências documentais que impedem obrigação, aprovação, assinatura ou entrega próxima',
+                'icon' => '📄',
+                'action_label' => 'Destravar',
+                'source_label' => 'Documentos',
+                'priority' => 3,
+                'tone' => $documentosBloqueando > 0 ? 'warning' : 'success',
+                'url' => $this->safeUrl(Documentos::class) ?: $this->safeUrl(ItemControleResource::class),
             ],
             [
-                'key' => 'atendimentos',
-                'label' => 'Atendimentos abertos',
-                'value' => $this->formatNumber($atendimentosAbertos),
-                'hint' => 'Cliente aguardando retorno',
-                'tone' => $atendimentosAbertos > 0 ? 'warning' : 'success',
-            ],
-            [
-                'key' => 'cobrancas',
-                'label' => 'Cobranças vencidas',
-                'value' => $this->formatNumber($cobrancasVencidas),
-                'hint' => 'Total: R$ ' . number_format($valorVencido, 2, ',', '.'),
-                'tone' => $cobrancasVencidas > 0 ? 'danger' : 'success',
+                'key' => 'inadimplencia_com_impacto',
+                'label' => 'Inadimplência com impacto',
+                'value' => $this->formatNumber($inadimplenciaComImpacto),
+                'raw' => $inadimplenciaComImpacto,
+                'hint' => $valorVencidoComImpacto > 0
+                    ? 'R$ ' . number_format($valorVencidoComImpacto, 2, ',', '.') . ' vencidos em clientes com operação aberta'
+                    : 'Sem cliente inadimplente bloqueando decisão operacional',
+                'icon' => '💸',
+                'action_label' => 'Decidir cobrança',
+                'source_label' => 'Cobranças',
+                'priority' => 4,
+                'tone' => $inadimplenciaComImpacto > 0 ? 'danger' : 'success',
+                'url' => $this->safeUrl(ControleCobrancas::class),
             ],
         ];
     }
 
-    private function decisionBlocks(): array
+    private function top(array $cards, array $risk): array
     {
-        $late = (int) str_replace('.', '', (string) ($this->cards()[3]['value'] ?? 0));
-        $sla = (int) str_replace('.', '', (string) ($this->cards()[5]['value'] ?? 0));
-        $billing = (int) str_replace('.', '', (string) ($this->cards()[8]['value'] ?? 0));
+        $bottleneck = $this->mainBottleneck($cards);
+
+        if ($bottleneck['raw'] > 0) {
+            return [
+                'eyebrow' => 'Cockpit Executivo Contábil',
+                'primary_action' => $bottleneck['action_label'] ?? 'Abrir origem',
+                'primary_url' => $bottleneck['url'] ?? null,
+                'summary' => 'O maior risco agora é: ' . mb_strtolower($bottleneck['label']) . '.',
+                'next_step' => 'Resolva primeiro o gargalo principal. Detalhamento, execução e relatórios continuam nas abas próprias.',
+                'badge' => 'Gargalo: ' . $bottleneck['label'],
+                'tone' => $bottleneck['tone'] ?? $risk['tone'],
+            ];
+        }
 
         return [
-            [
-                'title' => 'O que olhar primeiro',
-                'value' => $late + $sla,
-                'tone' => ($late + $sla) > 0 ? 'danger' : 'success',
-                'description' => ($late + $sla) > 0
-                    ? 'Comece por tarefas atrasadas e SLA em risco. São os pontos que mais geram multa, retrabalho e desgaste com cliente.'
-                    : 'Nenhum atraso crítico encontrado agora. Use a tela para acompanhar vencimentos do dia e manter o ritmo.',
-                'url' => $this->safeUrl(CentroOperacional::class),
-                'action' => 'Abrir Centro Operacional',
-            ],
-            [
-                'title' => 'Risco financeiro',
-                'value' => $billing,
-                'tone' => $billing > 0 ? 'warning' : 'success',
-                'description' => $billing > 0
-                    ? 'Existem cobranças vencidas. Trate antes que isso afete caixa, relacionamento ou acesso do cliente.'
-                    : 'Sem cobrança vencida localizada no banco atual.',
-                'url' => $this->safeUrl(ControleCobrancas::class) ?: $this->safeUrl(Financeiro::class),
-                'action' => 'Ver cobranças',
-            ],
-            [
-                'title' => 'Comunicação com cliente',
-                'value' => $this->openAttendancesCount(),
-                'tone' => $this->openAttendancesCount() > 0 ? 'warning' : 'success',
-                'description' => $this->openAttendancesCount() > 0
-                    ? 'Há atendimentos abertos. Priorize pedidos parados para reduzir ruído operacional.'
-                    : 'Sem atendimento aberto localizado agora.',
-                'url' => $this->safeUrl(Atendimentos::class) ?: $this->safeUrl(PortalCliente::class),
-                'action' => 'Abrir atendimentos',
-            ],
+            'eyebrow' => 'Cockpit Executivo Contábil',
+            'primary_action' => 'Ver operação',
+            'primary_url' => $this->safeUrl(CentroOperacional::class) ?: $this->safeUrl(ItemControleResource::class),
+            'summary' => 'Nenhum risco executivo crítico localizado agora.',
+            'next_step' => 'Use esta tela para decisão rápida; use as abas específicas para gestão detalhada.',
+            'badge' => 'Sem gargalo crítico',
+            'tone' => 'success',
         ];
+    }
+
+    private function riskSummary(array $cards): array
+    {
+        $raw = collect($cards)->keyBy('key')->map(fn (array $card): int => (int) ($card['raw'] ?? 0));
+
+        $critical = ($raw->get('obrigacoes_criticas', 0) * 3)
+            + ($raw->get('sla_em_risco', 0) * 3)
+            + ($raw->get('documentos_bloqueando', 0) * 2)
+            + ($raw->get('inadimplencia_com_impacto', 0) * 2);
+
+        $score = max(0, min(100, 100 - min(100, $critical * 6)));
+        $count = $raw->sum();
+
+        if ($score < 55 || $raw->get('obrigacoes_criticas', 0) + $raw->get('sla_em_risco', 0) >= 5) {
+            return [
+                'label' => 'Alto risco operacional',
+                'headline' => 'Há risco real de atraso, multa, quebra de SLA ou desgaste com cliente.',
+                'tone' => 'danger',
+                'score' => $score,
+                'count' => $count,
+            ];
+        }
+
+        if ($count > 0 || $score < 90) {
+            return [
+                'label' => 'Atenção necessária hoje',
+                'headline' => 'A rotina está ativa, mas existe decisão operacional que não deve esperar relatório.',
+                'tone' => 'warning',
+                'score' => $score,
+                'count' => $count,
+            ];
+        }
+
+        return [
+            'label' => 'Escritório sob controle',
+            'headline' => 'Nenhum risco executivo crítico localizado neste momento.',
+            'tone' => 'success',
+            'score' => 100,
+            'count' => 0,
+        ];
+    }
+
+    private function executiveFocus(array $cards): array
+    {
+        $bottleneck = $this->mainBottleneck($cards);
+        $nextPenalty = $this->nextPenaltyRow();
+        $nextComplaint = $this->nextComplaintRiskRow();
+
+        return array_values(array_filter([
+            [
+                'title' => 'Gargalo do escritório',
+                'value' => (int) ($bottleneck['raw'] ?? 0),
+                'tone' => $bottleneck['raw'] > 0 ? ($bottleneck['tone'] ?? 'warning') : 'success',
+                'description' => $bottleneck['raw'] > 0
+                    ? 'O maior foco executivo agora é: ' . mb_strtolower($bottleneck['label']) . '.'
+                    : 'Nenhum gargalo crítico localizado agora.',
+                'action' => $bottleneck['action_label'] ?? 'Abrir origem',
+                'url' => $bottleneck['url'] ?? null,
+            ],
+            $nextPenalty ? [
+                'title' => 'Próxima multa possível',
+                'value' => 1,
+                'tone' => $nextPenalty['tone'] ?? 'danger',
+                'description' => ($nextPenalty['title'] ?? 'Obrigação crítica') . ' • ' . ($nextPenalty['description'] ?? 'Vencimento crítico próximo.'),
+                'action' => $nextPenalty['action_label'] ?? 'Abrir item',
+                'url' => $nextPenalty['url'] ?? null,
+            ] : null,
+            $nextComplaint ? [
+                'title' => 'Próximo cliente que pode reclamar',
+                'value' => 1,
+                'tone' => $nextComplaint['tone'] ?? 'warning',
+                'description' => ($nextComplaint['title'] ?? 'Cliente em risco') . ' • ' . ($nextComplaint['meta'] ?? 'risco operacional'),
+                'action' => $nextComplaint['action_label'] ?? 'Abrir origem',
+                'url' => $nextComplaint['url'] ?? null,
+            ] : null,
+        ]));
     }
 
     private function sections(): array
     {
         return [
             [
-                'title' => 'Clientes que precisam de atenção',
-                'description' => 'Empresas com sinais de atraso, cobrança, atendimento aberto ou documento pendente.',
-                'items' => $this->criticalClientsRows(),
+                'key' => 'resolver_agora',
+                'title' => 'Resolver agora',
+                'description' => 'No máximo 5 itens que podem gerar multa, atraso, quebra de SLA ou desgaste com cliente se forem ignorados hoje.',
+                'empty_title' => 'Nada crítico para resolver agora.',
+                'empty_description' => 'Não encontrei vencidos, SLA crítico ou obrigação de alto risco para hoje.',
+                'items' => $this->resolveNowRows(),
             ],
             [
-                'title' => 'Prazos críticos',
-                'description' => 'Obrigações vencidas, vencendo hoje ou com SLA em risco.',
-                'items' => $this->criticalDeadlineRows(),
+                'key' => 'bloqueios_operacionais',
+                'title' => 'Bloqueios que travam entrega',
+                'description' => 'Itens que dependem de documento, aprovação, assinatura, cliente ou desbloqueio de fluxo. O dashboard aponta; a aba de origem resolve.',
+                'empty_title' => 'Nenhum bloqueio acionável.',
+                'empty_description' => 'Não encontrei documento, aprovação, assinatura ou dependência travando entrega próxima.',
+                'items' => $this->blockerRows(),
             ],
             [
-                'title' => 'Operação por responsável',
-                'description' => 'Distribuição simples para o gestor enxergar gargalos de equipe.',
-                'items' => $this->responsibleRows(),
-            ],
-            [
-                'title' => 'Documentos e aprovações',
-                'description' => 'Itens que dependem de arquivo, revisão, assinatura ou decisão.',
-                'items' => $this->documentApprovalRows(),
+                'key' => 'obrigacoes_criticas_mes',
+                'title' => 'Obrigações críticas do mês',
+                'description' => 'Resumo executivo dos próximos vencimentos críticos do mês. Não substitui calendário, checklist ou Centro Operacional.',
+                'empty_title' => 'Nenhuma obrigação crítica no mês.',
+                'empty_description' => 'Não encontrei obrigação aberta de alto risco, vencida ou vencendo nos próximos dias.',
+                'items' => $this->criticalMonthlyObligationRows(),
             ],
         ];
     }
 
-    private function quickActions(): array
+    private function principles(): array
     {
-        return array_values(array_filter([
-            ['label' => 'Centro Operacional', 'url' => $this->safeUrl(CentroOperacional::class)],
-            ['label' => 'Prazos e SLA', 'url' => $this->safeUrl(SlaPrazos::class)],
-            ['label' => 'Tarefas', 'url' => $this->safeUrl(ItemControleResource::class)],
-            ['label' => 'Documentos', 'url' => $this->safeUrl(Documentos::class)],
-            ['label' => 'Cobranças', 'url' => $this->safeUrl(ControleCobrancas::class)],
-            ['label' => 'Aprovações', 'url' => $this->safeUrl(CentralAprovacoes::class)],
-            ['label' => 'Relatórios', 'url' => $this->safeUrl(Relatorios::class)],
-        ], fn (array $action): bool => ! empty($action['url'])));
+        return [
+            'Não repetir Clientes, Financeiro, Documentos, Calendário, Kanban, Gantt, Centro Operacional ou Relatórios.',
+            'Cada número precisa gerar decisão rápida: agir agora, cobrar, destravar ou acompanhar na aba correta.',
+            'Volume genérico fica fora; entram somente riscos com impacto executivo.',
+            'O dashboard é cockpit, não tela de gestão detalhada.',
+        ];
     }
 
-    private function health(array $cards): array
+    private function mainBottleneck(array $cards): array
     {
-        $danger = collect($cards)->where('tone', 'danger')->count();
-        $warning = collect($cards)->where('tone', 'warning')->count();
-        $score = max(0, 100 - ($danger * 18) - ($warning * 8));
+        $weights = [
+            'obrigacoes_criticas' => 4,
+            'sla_em_risco' => 4,
+            'documentos_bloqueando' => 3,
+            'inadimplencia_com_impacto' => 2,
+        ];
 
-        if ($score < 60) {
-            return ['score' => $score, 'label' => 'Atenção alta', 'tone' => 'danger', 'message' => 'Resolva atrasos, SLA e cobrança antes de abrir novas frentes.'];
-        }
-
-        if ($score < 82) {
-            return ['score' => $score, 'label' => 'Precisa acompanhar', 'tone' => 'warning', 'message' => 'A operação está andando, mas existem pontos que podem virar problema.'];
-        }
-
-        return ['score' => $score, 'label' => 'Saudável', 'tone' => 'success', 'message' => 'A operação está sob controle. Acompanhe os vencimentos do dia.'];
+        return collect($cards)
+            ->map(function (array $card) use ($weights): array {
+                $card['weighted_score'] = ((int) ($card['raw'] ?? 0)) * ($weights[$card['key']] ?? 1);
+                return $card;
+            })
+            ->sortByDesc('weighted_score')
+            ->first() ?? ['raw' => 0, 'label' => 'Sem gargalo', 'tone' => 'success', 'url' => null];
     }
 
-    private function criticalClientsRows(): array
+    private function riskTrend(array $risk): array
     {
-        if (! $this->hasTable('empresas')) {
-            return [];
-        }
+        $currentCritical = 100 - (int) ($risk['score'] ?? 100);
+        $previousCritical = $this->previousPeriodCriticalScore();
+        $delta = $previousCritical > 0 ? $currentCritical - $previousCritical : 0;
+        $score = (int) ($risk['score'] ?? 100);
 
-        $rows = DB::table('empresas')
-            ->select('id', 'razao_social', 'nome_fantasia', 'status')
-            ->when($this->hasColumn('empresas', 'ativo'), fn (Builder $query) => $query->where('ativo', 1))
-            ->orderByDesc('updated_at')
-            ->limit(10)
-            ->get();
-
-        return $rows->map(function ($empresa): array {
-            $itemQuery = $this->itemsBase()->where('item_controles.empresa_id', $empresa->id);
-            $late = (clone $itemQuery)->whereNotNull('item_controles.data_vencimento')->whereDate('item_controles.data_vencimento', '<', now()->toDateString())->whereNotIn('item_controles.status', self::DONE_STATUSES)->count();
-            $open = (clone $itemQuery)->whereNotIn('item_controles.status', self::DONE_STATUSES)->count();
-            $billing = $this->overdueBillingCount($empresa->id);
-            $attendances = $this->openAttendancesCount($empresa->id);
-            $score = ($late * 3) + ($billing * 2) + $attendances;
-
-            return [
-                'title' => $empresa->nome_fantasia ?: $empresa->razao_social,
-                'status' => $score > 0 ? 'Atenção' : 'OK',
-                'meta' => $open . ' tarefa(s) abertas • ' . $late . ' atrasada(s)',
-                'description' => $billing . ' cobrança(s) vencida(s) e ' . $attendances . ' atendimento(s) aberto(s).',
-                'tone' => $score >= 5 ? 'danger' : ($score > 0 ? 'warning' : 'success'),
-                'url' => $this->safeUrl(CentroOperacional::class),
-            ];
-        })->filter(fn (array $row): bool => $row['tone'] !== 'success')->values()->take(8)->all();
+        return [
+            'label' => 'Controle operacional',
+            'value' => $score . '%',
+            'current_score' => $score,
+            'delta' => $delta,
+            'tone' => $delta > 0 ? 'danger' : ($delta < 0 ? 'success' : 'info'),
+            'description' => $previousCritical > 0
+                ? ($delta > 0 ? 'Risco aumentou em relação ao período anterior.' : ($delta < 0 ? 'Risco caiu em relação ao período anterior.' : 'Risco está estável.'))
+                : 'Ainda não há base histórica suficiente para comparar tendência.',
+            'evidence' => $previousCritical > 0
+                ? 'Comparado com a janela anterior de 15 dias.'
+                : 'A tendência aparece quando houver histórico operacional suficiente.',
+        ];
     }
 
-    private function criticalDeadlineRows(): array
+    private function previousPeriodCriticalScore(): int
+    {
+        if (! $this->hasTable('item_controles')) {
+            return 0;
+        }
+
+        $start = now()->subDays(30)->startOfDay();
+        $end = now()->subDays(15)->endOfDay();
+
+        return (int) $this->itemsBase()
+            ->whereBetween('item_controles.updated_at', [$start, $end])
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('item_controles.data_vencimento')
+                    ->whereDate('item_controles.data_vencimento', '<', now()->subDays(15)->toDateString());
+
+                if ($this->hasColumn('item_controles', 'sla_limite_em')) {
+                    $query->orWhere('item_controles.sla_limite_em', '<', now()->subDays(15));
+                }
+            })
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->count() * 10;
+    }
+
+    private function resolveNowRows(): array
     {
         if (! $this->hasTable('item_controles')) {
             return [];
         }
 
         return $this->itemsBase()
-            ->whereNotNull('item_controles.data_vencimento')
-            ->whereDate('item_controles.data_vencimento', '<=', now()->addDays(3)->toDateString())
             ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->where(function (Builder $query): void {
+                $query->where(function (Builder $dateQuery): void {
+                    $dateQuery->whereNotNull('item_controles.data_vencimento')
+                        ->whereDate('item_controles.data_vencimento', '<=', now()->toDateString());
+                });
+
+                if ($this->hasColumn('item_controles', 'sla_limite_em')) {
+                    $query->orWhere(function (Builder $slaQuery): void {
+                        $slaQuery->whereNotNull('item_controles.sla_limite_em')
+                            ->where('item_controles.sla_limite_em', '<=', now()->addHours(12))
+                            ->where(function (Builder $doneQuery): void {
+                                $doneQuery->whereNull('item_controles.sla_concluido_em')
+                                    ->orWhere('item_controles.sla_concluido_em', '');
+                            });
+                    });
+                }
+
+                $this->orWhereHighRisk($query);
+            })
+            ->orderByRaw('CASE WHEN item_controles.data_vencimento IS NULL THEN 1 ELSE 0 END')
             ->orderBy('item_controles.data_vencimento')
-            ->limit(10)
+            ->limit(5)
             ->get()
-            ->map(fn ($item): array => $this->itemRow($item))
+            ->map(fn (object $item): array => $this->itemRow($item, null, 'Resolver agora'))
             ->all();
     }
 
-    private function responsibleRows(): array
-    {
-        if (! $this->hasTable('item_controles') || ! $this->hasTable('responsaveis')) {
-            return [];
-        }
-
-        return DB::table('responsaveis')
-            ->leftJoin('item_controles', 'item_controles.responsavel_id', '=', 'responsaveis.id')
-            ->select('responsaveis.nome', DB::raw("SUM(CASE WHEN item_controles.status NOT IN ('concluido','concluído','finalizado','finalizada','aprovado','aprovada','pago','paid') THEN 1 ELSE 0 END) as abertas"), DB::raw("SUM(CASE WHEN item_controles.data_vencimento < CURDATE() AND item_controles.status NOT IN ('concluido','concluído','finalizado','finalizada','aprovado','aprovada','pago','paid') THEN 1 ELSE 0 END) as atrasadas"))
-            ->when($this->empresaId(), fn (Builder $query, int $empresaId) => $query->where('responsaveis.empresa_id', $empresaId))
-            ->groupBy('responsaveis.id', 'responsaveis.nome')
-            ->orderByDesc('atrasadas')
-            ->orderByDesc('abertas')
-            ->limit(8)
-            ->get()
-            ->map(fn ($row): array => [
-                'title' => $row->nome ?: 'Sem responsável',
-                'status' => ((int) $row->atrasadas) > 0 ? 'Atraso' : 'Em dia',
-                'meta' => ((int) $row->abertas) . ' tarefa(s) abertas',
-                'description' => ((int) $row->atrasadas) . ' tarefa(s) atrasada(s).',
-                'tone' => ((int) $row->atrasadas) > 0 ? 'danger' : (((int) $row->abertas) > 0 ? 'info' : 'success'),
-                'url' => $this->safeUrl(ItemControleResource::class),
-            ])->all();
-    }
-
-    private function documentApprovalRows(): array
+    private function blockerRows(): array
     {
         if (! $this->hasTable('item_controles')) {
             return [];
         }
 
-        $query = $this->itemsBase();
-        $query->where(function (Builder $q): void {
-            if ($this->hasColumn('item_controles', 'document_status')) {
-                $q->orWhereIn('item_controles.document_status', ['pendente', 'aguardando', 'em_revisao', 'revisao']);
-            }
-            if ($this->hasColumn('item_controles', 'signature_status')) {
-                $q->orWhereIn('item_controles.signature_status', ['pendente', 'aguardando', 'enviado']);
-            }
-            if ($this->hasColumn('item_controles', 'approval_status')) {
-                $q->orWhereIn('item_controles.approval_status', ['pendente', 'aguardando', 'em_aprovacao']);
-            }
-            if ($this->hasColumn('item_controles', 'arquivo')) {
-                $q->orWhereNull('item_controles.arquivo');
-            }
-        });
-
-        return $query->whereNotIn('item_controles.status', self::DONE_STATUSES)
-            ->orderByDesc('item_controles.updated_at')
-            ->limit(10)
+        return $this->itemsBase()
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->where(function (Builder $query): void {
+                $this->whereBlockerCondition($query);
+            })
+            ->where(function (Builder $query): void {
+                $query->whereNull('item_controles.data_vencimento')
+                    ->orWhereDate('item_controles.data_vencimento', '<=', now()->addDays(15)->toDateString());
+                $this->orWhereHighRisk($query);
+            })
+            ->orderByRaw('CASE WHEN item_controles.data_vencimento IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('item_controles.data_vencimento')
+            ->limit(5)
             ->get()
-            ->map(fn ($item): array => $this->itemRow($item, 'Documento/Aprovação'))
+            ->map(fn (object $item): array => $this->itemRow($item, 'Bloqueio', 'Abrir origem'))
             ->all();
     }
 
-    private function itemRow(object $item, ?string $forcedStatus = null): array
+    private function criticalMonthlyObligationRows(): array
     {
-        $due = $item->data_vencimento ? Carbon::parse($item->data_vencimento) : null;
-        $late = $due && $due->isPast() && ! $due->isToday();
+        if (! $this->hasTable('item_controles')) {
+            return [];
+        }
+
+        return $this->criticalMonthlyObligationsQuery()
+            ->orderBy('item_controles.data_vencimento')
+            ->limit(5)
+            ->get()
+            ->map(fn (object $item): array => $this->itemRow($item, 'Obrigação', 'Abrir obrigação'))
+            ->all();
+    }
+
+    private function nextPenaltyRow(): ?array
+    {
+        $rows = $this->criticalMonthlyObligationRows();
+
+        return $rows[0] ?? null;
+    }
+
+    private function nextComplaintRiskRow(): ?array
+    {
+        $rows = $this->clientRiskRows();
+
+        return $rows[0] ?? null;
+    }
+
+    private function clientRiskRows(): array
+    {
+        if (! $this->hasTable('empresas')) {
+            return [];
+        }
+
+        $rows = DB::table('empresas')
+            ->select('id', 'razao_social', 'nome_fantasia')
+            ->when($this->hasColumn('empresas', 'ativo'), fn (Builder $query) => $query->where('ativo', 1))
+            ->when($this->empresaId(), fn (Builder $query, int $empresaId) => $query->where('id', $empresaId))
+            ->orderByDesc('updated_at')
+            ->limit(40)
+            ->get();
+
+        return $rows->map(function (object $empresa): array {
+            $criticalObligations = $this->criticalMonthlyObligationsCount($empresa->id);
+            $sla = $this->slaRiskCount($empresa->id);
+            $blockers = $this->documentBlockerCount($empresa->id);
+            $billing = $this->overdueBillingCount($empresa->id);
+            $score = ($criticalObligations * 5) + ($sla * 4) + ($blockers * 3) + ($billing * 2);
+
+            $reasons = array_values(array_filter([
+                $criticalObligations > 0 ? $criticalObligations . ' obrigação(ões) crítica(s)' : null,
+                $sla > 0 ? $sla . ' SLA em risco' : null,
+                $blockers > 0 ? $blockers . ' bloqueio(s) documental(is)' : null,
+                $billing > 0 ? $billing . ' cobrança(s) vencida(s)' : null,
+            ]));
+
+            return [
+                'title' => $empresa->nome_fantasia ?: $empresa->razao_social,
+                'status' => $score >= 8 ? 'Crítico' : 'Atenção',
+                'meta' => implode(' • ', $reasons),
+                'description' => 'Cliente aparece aqui porque combina risco operacional, documento, SLA ou inadimplência. O detalhe deve ser aberto na aba de origem.',
+                'tone' => $score >= 8 ? 'danger' : 'warning',
+                'url' => $this->safeUrl(CentroOperacional::class) ?: $this->safeUrl(ItemControleResource::class),
+                'action_label' => $billing > 0 ? 'Decidir cobrança' : ($blockers > 0 ? 'Destravar entrega' : 'Abrir operação'),
+                'score' => $score,
+            ];
+        })
+            ->filter(fn (array $row): bool => ($row['score'] ?? 0) > 0)
+            ->sortByDesc('score')
+            ->values()
+            ->take(5)
+            ->map(function (array $row): array {
+                unset($row['score']);
+                return $row;
+            })
+            ->all();
+    }
+
+    private function criticalMonthlyObligationsCount(?int $empresaId = null): int
+    {
+        if (! $this->hasTable('item_controles')) {
+            return 0;
+        }
+
+        return $this->criticalMonthlyObligationsQuery($empresaId)->count();
+    }
+
+    private function criticalMonthlyObligationsQuery(?int $empresaId = null): Builder
+    {
+        return $this->itemsBase($empresaId)
+            ->whereNotNull('item_controles.data_vencimento')
+            ->whereBetween('item_controles.data_vencimento', [now()->startOfMonth()->toDateString(), now()->endOfMonth()->toDateString()])
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->where(function (Builder $query): void {
+                $query->whereDate('item_controles.data_vencimento', '<=', now()->addDays(7)->toDateString());
+                $this->orWhereHighRisk($query);
+            });
+    }
+
+    private function slaRiskCount(?int $empresaId = null): int
+    {
+        if (! $this->hasTable('item_controles') || ! $this->hasColumn('item_controles', 'sla_limite_em')) {
+            return 0;
+        }
+
+        return $this->itemsBase($empresaId)
+            ->whereNotNull('item_controles.sla_limite_em')
+            ->where(function (Builder $query): void {
+                $query->whereNull('item_controles.sla_concluido_em')
+                    ->orWhere('item_controles.sla_concluido_em', '');
+            })
+            ->where('item_controles.sla_limite_em', '<=', now()->addHours(12))
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->count();
+    }
+
+    private function documentBlockerCount(?int $empresaId = null): int
+    {
+        if (! $this->hasTable('item_controles')) {
+            return 0;
+        }
+
+        return $this->itemsBase($empresaId)
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
+            ->where(function (Builder $query): void {
+                $this->whereBlockerCondition($query);
+            })
+            ->where(function (Builder $query): void {
+                $query->whereNull('item_controles.data_vencimento')
+                    ->orWhereDate('item_controles.data_vencimento', '<=', now()->addDays(15)->toDateString());
+                $this->orWhereHighRisk($query);
+            })
+            ->count();
+    }
+
+    private function delinquencyWithOperationalImpactCount(): int
+    {
+        $clientIds = $this->overdueBillingClientIds();
+
+        if (empty($clientIds)) {
+            return 0;
+        }
+
+        return collect($clientIds)
+            ->filter(fn (int $empresaId): bool => $this->criticalMonthlyObligationsCount($empresaId) > 0 || $this->slaRiskCount($empresaId) > 0 || $this->documentBlockerCount($empresaId) > 0)
+            ->count();
+    }
+
+    private function overdueBillingValueWithOperationalImpact(): float
+    {
+        $table = $this->billingTable();
+        $clientIds = collect($this->overdueBillingClientIds())
+            ->filter(fn (int $empresaId): bool => $this->criticalMonthlyObligationsCount($empresaId) > 0 || $this->slaRiskCount($empresaId) > 0 || $this->documentBlockerCount($empresaId) > 0)
+            ->values()
+            ->all();
+
+        if (! $table || empty($clientIds)) {
+            return 0.0;
+        }
+
+        return (float) DB::table($table)
+            ->whereIn('empresa_id', $clientIds)
+            ->whereNotNull('vencimento')
+            ->whereDate('vencimento', '<', now()->toDateString())
+            ->whereNotIn('status', self::BILLING_PAID_STATUSES)
+            ->sum('valor');
+    }
+
+    private function overdueBillingCount(?int $empresaId = null): int
+    {
+        $table = $this->billingTable();
+
+        if (! $table) {
+            return 0;
+        }
+
+        return DB::table($table)
+            ->when($empresaId, fn (Builder $query, int $id) => $query->where('empresa_id', $id))
+            ->when(! $empresaId && $this->empresaId(), fn (Builder $query, int $id) => $query->where('empresa_id', $id))
+            ->whereNotNull('vencimento')
+            ->whereDate('vencimento', '<', now()->toDateString())
+            ->whereNotIn('status', self::BILLING_PAID_STATUSES)
+            ->count();
+    }
+
+    private function overdueBillingClientIds(): array
+    {
+        $table = $this->billingTable();
+
+        if (! $table) {
+            return [];
+        }
+
+        return DB::table($table)
+            ->when($this->empresaId(), fn (Builder $query, int $id) => $query->where('empresa_id', $id))
+            ->whereNotNull('vencimento')
+            ->whereDate('vencimento', '<', now()->toDateString())
+            ->whereNotIn('status', self::BILLING_PAID_STATUSES)
+            ->whereNotNull('empresa_id')
+            ->distinct()
+            ->pluck('empresa_id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+    }
+
+    private function billingTable(): ?string
+    {
+        foreach (['financeiro_cobrancas', 'pagamentos', 'cobrancas'] as $table) {
+            if ($this->hasTable($table) && $this->hasColumn($table, 'vencimento') && $this->hasColumn($table, 'status') && $this->hasColumn($table, 'empresa_id')) {
+                return $table;
+            }
+        }
+
+        return null;
+    }
+
+    private function itemRow(object $item, ?string $forcedStatus = null, ?string $actionLabel = null): array
+    {
+        $due = ! empty($item->data_vencimento) ? Carbon::parse($item->data_vencimento) : null;
+        $late = $due && $due->lt(now()->startOfDay());
+        $today = $due && $due->isToday();
+        $slaCritical = ! empty($item->sla_limite_em) && empty($item->sla_concluido_em) && Carbon::parse($item->sla_limite_em)->lte(now()->addHours(12));
+        $riskScore = (int) ($item->risk_score ?? $item->risco_score ?? 0);
+
+        $status = $forcedStatus ?: ($late ? 'Vencido' : ($today ? 'Hoje' : ($slaCritical ? 'SLA' : 'Risco')));
+        $tone = ($late || $slaCritical || $riskScore >= 70) ? 'danger' : ($today || $riskScore >= 40 ? 'warning' : 'info');
 
         return [
             'title' => $item->titulo ?? 'Item sem título',
-            'status' => $forcedStatus ?: ($late ? 'Vencido' : ($due && $due->isToday() ? 'Hoje' : 'Próximo')),
+            'status' => $status,
             'meta' => trim(($item->empresa_nome ?? 'Empresa') . ' • ' . ($item->responsavel_nome ?? 'Sem responsável')),
-            'description' => 'Status atual: ' . ($item->status ?? '-') . ($due ? ' • Vencimento: ' . $due->format('d/m/Y') : ''),
-            'tone' => $late ? 'danger' : ($due && $due->isToday() ? 'warning' : 'info'),
-            'url' => $this->safeUrl(ItemControleResource::class),
+            'description' => $this->itemRiskDescription($item, $due, $slaCritical, $riskScore),
+            'tone' => $tone,
+            'url' => $this->safeUrl(ItemControleResource::class) ?: $this->safeUrl(CentroOperacional::class),
+            'action_label' => $actionLabel ?: ($late || $slaCritical ? 'Resolver agora' : 'Abrir origem'),
+            'deadline' => $due ? $due->format('d/m') : null,
         ];
     }
 
-    private function criticalClientsCount(): int
+    private function itemRiskDescription(object $item, ?Carbon $due, bool $slaCritical, int $riskScore): string
     {
-        return count($this->criticalClientsRows());
+        $parts = array_values(array_filter([
+            'Status: ' . ($item->status ?? '-'),
+            $due ? 'Vence em ' . $due->format('d/m/Y') : null,
+            $slaCritical ? 'SLA em risco nas próximas 12h' : null,
+            $riskScore > 0 ? 'Risco ' . $riskScore . '/100' : null,
+            ! empty($item->prioridade) ? 'Prioridade ' . $item->prioridade : null,
+        ]));
+
+        return implode(' • ', $parts);
     }
 
-    private function itemsBase(): Builder
+    private function whereBlockerCondition(Builder $query): void
+    {
+        $hasCondition = false;
+
+        foreach (['bloqueado', 'bloqueado_por_dependencia', 'blocked_by_dependency'] as $column) {
+            if ($this->hasColumn('item_controles', $column)) {
+                $query->orWhere('item_controles.' . $column, 1);
+                $hasCondition = true;
+            }
+        }
+
+        if ($this->hasColumn('item_controles', 'document_status')) {
+            $query->orWhereIn('item_controles.document_status', ['pendente', 'aguardando', 'aguardando_cliente', 'em_revisao', 'revisao']);
+            $hasCondition = true;
+        }
+
+        if ($this->hasColumn('item_controles', 'signature_status')) {
+            $query->orWhereIn('item_controles.signature_status', ['pendente', 'aguardando', 'enviado']);
+            $hasCondition = true;
+        }
+
+        if ($this->hasColumn('item_controles', 'approval_status')) {
+            $query->orWhereIn('item_controles.approval_status', ['pendente', 'aguardando', 'em_aprovacao']);
+            $hasCondition = true;
+        }
+
+        if ($this->hasColumn('item_controles', 'portal_status')) {
+            $query->orWhereIn('item_controles.portal_status', ['aguardando_cliente', 'pendente', 'enviado']);
+            $hasCondition = true;
+        }
+
+        if (! $hasCondition) {
+            $query->whereRaw('1 = 0');
+        }
+    }
+
+    private function orWhereHighRisk(Builder $query): void
+    {
+        if ($this->hasColumn('item_controles', 'risk_score')) {
+            $query->orWhere('item_controles.risk_score', '>=', 70);
+        }
+
+        if ($this->hasColumn('item_controles', 'risco_score')) {
+            $query->orWhere('item_controles.risco_score', '>=', 70);
+        }
+
+        if ($this->hasColumn('item_controles', 'urgencia')) {
+            $query->orWhereIn('item_controles.urgencia', ['critica', 'crítica', 'alta']);
+        }
+    }
+
+    private function itemsBase(?int $empresaId = null): Builder
     {
         $query = DB::table('item_controles');
 
@@ -381,111 +701,11 @@ class DashboardExecutivoContabilData
             $query->addSelect('responsaveis.nome as responsavel_nome');
         }
 
-        if ($empresaId = $this->empresaId()) {
-            $query->where('item_controles.empresa_id', $empresaId);
+        if ($empresaId || $this->empresaId()) {
+            $query->where('item_controles.empresa_id', $empresaId ?: $this->empresaId());
         }
 
         return $query;
-    }
-
-    private function documentsPendingCount(): int
-    {
-        if (! $this->hasTable('item_controles')) {
-            return 0;
-        }
-
-        return $this->itemsBase()
-            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
-            ->where(function (Builder $q): void {
-                if ($this->hasColumn('item_controles', 'document_status')) {
-                    $q->orWhereIn('item_controles.document_status', ['pendente', 'aguardando', 'em_revisao', 'revisao']);
-                }
-                if ($this->hasColumn('item_controles', 'signature_status')) {
-                    $q->orWhereIn('item_controles.signature_status', ['pendente', 'aguardando', 'enviado']);
-                }
-                if ($this->hasColumn('item_controles', 'arquivo')) {
-                    $q->orWhereNull('item_controles.arquivo');
-                }
-            })
-            ->count();
-    }
-
-    private function slaRiskCount(): int
-    {
-        if (! $this->hasTable('item_controles') || ! $this->hasColumn('item_controles', 'sla_limite_em')) {
-            return 0;
-        }
-
-        return $this->itemsBase()
-            ->whereNotNull('item_controles.sla_limite_em')
-            ->where(function (Builder $query): void {
-                $query->whereNull('item_controles.sla_concluido_em')
-                    ->orWhere('item_controles.sla_concluido_em', '');
-            })
-            ->where('item_controles.sla_limite_em', '<=', now()->addHours(12))
-            ->whereNotIn('item_controles.status', self::DONE_STATUSES)
-            ->count();
-    }
-
-    private function openAttendancesCount(?int $empresaId = null): int
-    {
-        if (! $this->hasTable('atendimentos')) {
-            return 0;
-        }
-
-        return DB::table('atendimentos')
-            ->when($empresaId, fn (Builder $query, int $id) => $query->where('empresa_id', $id))
-            ->when(! $empresaId && $this->empresaId(), fn (Builder $query, int $id) => $query->where('empresa_id', $id))
-            ->whereIn('status', ['aberto', 'em_andamento', 'aguardando_cliente', 'aguardando_suporte'])
-            ->count();
-    }
-
-    private function overdueBillingCount(?int $empresaId = null): int
-    {
-        if (! $this->hasTable('pagamentos')) {
-            return 0;
-        }
-
-        return DB::table('pagamentos')
-            ->when($empresaId, fn (Builder $query, int $id) => $query->where('empresa_id', $id))
-            ->when(! $empresaId && $this->empresaId(), fn (Builder $query, int $id) => $query->where('empresa_id', $id))
-            ->whereNotNull('vencimento')
-            ->whereDate('vencimento', '<', now()->toDateString())
-            ->whereNotIn('status', ['pago', 'paid', 'recebido', 'confirmed', 'received'])
-            ->count();
-    }
-
-    private function overdueBillingValue(): float
-    {
-        if (! $this->hasTable('pagamentos')) {
-            return 0.0;
-        }
-
-        return (float) DB::table('pagamentos')
-            ->when($this->empresaId(), fn (Builder $query, int $id) => $query->where('empresa_id', $id))
-            ->whereNotNull('vencimento')
-            ->whereDate('vencimento', '<', now()->toDateString())
-            ->whereNotIn('status', ['pago', 'paid', 'recebido', 'confirmed', 'received'])
-            ->sum('valor');
-    }
-
-    private function countRows(string $table, ?callable $callback = null): int
-    {
-        if (! $this->hasTable($table)) {
-            return 0;
-        }
-
-        $query = DB::table($table);
-
-        if ($table !== 'empresas' && $this->hasColumn($table, 'empresa_id') && $this->empresaId()) {
-            $query->where('empresa_id', $this->empresaId());
-        }
-
-        if ($callback) {
-            $callback($query);
-        }
-
-        return $query->count();
     }
 
     private function safeUrl(string $class): ?string

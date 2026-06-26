@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 19-Jun-2026 às 20:39
+-- Tempo de geração: 25-Jun-2026 às 15:05
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.2.12
 
@@ -61,6 +61,40 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `AddIndexTotalSafe` (IN `tableName` 
             EXECUTE stmt;
             DEALLOCATE PREPARE stmt;
         END IF;
+    END IF;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_column_if_not_exists` (IN `table_name` VARCHAR(100), IN `column_name` VARCHAR(100), IN `column_definition` VARCHAR(255))   BEGIN
+    DECLARE column_count INT DEFAULT 0;
+    
+    SELECT COUNT(*) INTO column_count
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = table_name
+    AND COLUMN_NAME = column_name;
+    
+    IF column_count = 0 THEN
+        SET @sql = CONCAT('ALTER TABLE `', table_name, '` ADD COLUMN ', column_definition);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_index_if_not_exists` (IN `table_name` VARCHAR(100), IN `index_name` VARCHAR(100), IN `index_columns` VARCHAR(255))   BEGIN
+    DECLARE index_count INT DEFAULT 0;
+    
+    SELECT COUNT(*) INTO index_count
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+    AND TABLE_NAME = table_name
+    AND INDEX_NAME = index_name;
+    
+    IF index_count = 0 THEN
+        SET @sql = CONCAT('CREATE INDEX `', index_name, '` ON `', table_name, '` (', index_columns, ')');
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
     END IF;
 END$$
 
@@ -211,7 +245,7 @@ INSERT INTO `assinaturas` (`id`, `empresa_id`, `gateway`, `gateway_customer_id`,
 (1, 13, 'asaas', 'cus_000007891665', 'sub_2gsdj8xz8mcrp0sm', 'profissional', 247.00, 'MONTHLY', 'ACTIVE', '2026-06-01', NULL, '2026-05-01 16:09:40', '2026-05-01 16:09:40'),
 (2, 18, 'asaas', 'cus_000007891937', 'sub_e63ermcilkur78fp', 'business_plus', 697.00, 'MONTHLY', 'ACTIVE', '2026-06-01', NULL, '2026-05-01 17:35:42', '2026-05-01 17:35:42'),
 (3, 21, 'asaas', 'cus_000007891970', 'sub_ybfxt28jcw2zjmiu', 'business', 397.00, 'MONTHLY', 'ACTIVE', '2026-06-01', NULL, '2026-05-01 17:53:11', '2026-05-01 17:53:11'),
-(4, 22, 'asaas', 'cus_000007891989', 'sub_2sfju62w845xahpz', 'business', 397.00, 'MONTHLY', 'ACTIVE', '2026-06-01', NULL, '2026-05-01 17:59:12', '2026-05-01 17:59:12');
+(4, 22, 'asaas', 'cus_000007891989', 'sub_2sfju62w845xahpz', 'starter', 0.00, 'MONTHLY', 'ACTIVE', '2026-06-01', NULL, '2026-05-01 17:59:12', '2026-06-22 15:10:28');
 
 -- --------------------------------------------------------
 
@@ -887,18 +921,18 @@ CREATE TABLE `empresas` (
 --
 
 INSERT INTO `empresas` (`id`, `razao_social`, `nome_fantasia`, `cnpj`, `email`, `telefone`, `responsavel_nome`, `status`, `created_at`, `updated_at`, `plano`, `limite_usuarios`, `limite_itens`, `limite_armazenamento_mb`, `limite_interacoes_ia`, `ativo`, `crm_status_contrato`, `crm_contato_nome`, `crm_contato_email`, `crm_contato_whatsapp`, `crm_health_manual`, `crm_observacoes`, `crm_ultima_reuniao_em`, `portal_token`, `portal_ativo`, `portal_expira_em`) VALUES
-(4, 'Empresa Alpha LTDA', 'Alpha', '11111111000101', 'alpha@email.com', '11999990001', 'Admin Alpha', 'ativo', '2026-04-24 17:57:10', '2026-06-18 19:37:55', 'enterprise', 50, 10000, 15360, 5000, 1, 'em_implementacao', 'Admin Alpha', 'alpha@email.com', '11999990001', NULL, NULL, NULL, '6Gn3Oz4nDDaQSBXXKuvexIErlylEeq8PwfXaeLLegS4pBhVANIcsEwn44fXlqFGZ', 1, '2027-05-08 15:25:44'),
-(5, 'Empresa Beta LTDA', 'Beta', '22222222000102', 'beta@email.com', '11999990002', 'Admin Beta', 'ativo', '2026-04-24 17:57:10', '2026-05-08 19:01:59', 'starter', 3, 200, 6144, 150, 1, 'Ativo', 'Admin Beta', 'beta@email.com', '11999990002', NULL, NULL, NULL, '539170b44b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
-(6, 'Empresa Gamma LTDA', 'Gamma', '33333333000103', 'gamma@email.com', '11999990003', 'Admin Gamma', 'ativo', '2026-04-24 17:57:10', '2026-05-08 19:01:59', 'starter', 3, 200, 1024, 150, 1, 'Ativo', 'Admin Gamma', 'gamma@email.com', '11999990003', NULL, NULL, NULL, '539171ef4b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
+(4, 'Empresa Alpha LTDA', 'Alpha', '11111111000101', 'alpha@email.com', '11999990001', 'Admin Alpha', 'ativo', '2026-04-24 17:57:10', '2026-06-18 19:37:55', 'enterprise', 999999, 999999, 40960, 15000, 1, 'em_implementacao', 'Admin Alpha', 'alpha@email.com', '11999990001', NULL, NULL, NULL, '6Gn3Oz4nDDaQSBXXKuvexIErlylEeq8PwfXaeLLegS4pBhVANIcsEwn44fXlqFGZ', 1, '2027-05-08 15:25:44'),
+(5, 'Empresa Beta LTDA', 'Beta', '22222222000102', 'beta@email.com', '11999990002', 'Admin Beta', 'ativo', '2026-04-24 17:57:10', '2026-06-22 18:10:10', 'starter', 3, 200, 6144, 150, 1, 'Ativo', 'Admin Beta', 'beta@email.com', '11999990002', NULL, NULL, NULL, '539170b44b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
+(6, 'Empresa Gamma LTDA', 'Gamma', '33333333000103', 'gamma@email.com', '11999990003', 'Admin Gamma', 'ativo', '2026-04-24 17:57:10', '2026-05-08 19:01:59', 'starter', 3, 200, 6144, 150, 1, 'Ativo', 'Admin Gamma', 'gamma@email.com', '11999990003', NULL, NULL, NULL, '539171ef4b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
 (7, 'Empresa Teste Completa LTDA', 'Teste Completo', '99999999000199', 'testecompleto@prazzu.com', '11999999999', 'Administrador Teste', 'ativo', '2026-04-28 14:58:04', '2026-05-08 19:01:59', 'enterprise', 999999, 999999, 40960, 15000, 1, 'Ativo', 'Administrador Teste', 'testecompleto@prazzu.com', '11999999999', NULL, NULL, NULL, '539172364b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
 (8, 'Empresa Teste Completa LTDA', 'Teste Completo', '99999999000199', 'testecompleto@prazzu.com', '11999999999', 'Administrador Teste', 'ativo', '2026-04-28 14:58:14', '2026-05-08 19:01:59', 'enterprise', 999999, 999999, 40960, 15000, 1, 'Ativo', 'Administrador Teste', 'testecompleto@prazzu.com', '11999999999', NULL, NULL, NULL, '539172e84b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
 (9, 'Empresa Teste Completa LTDA', 'Teste Completo', '99999999000195', 'testecompleto@prazzu.com', '11999999999', 'Administrador Teste', 'ativo', '2026-04-28 14:59:54', '2026-05-08 19:01:59', 'business_plus', 50, 10000, 20480, 5000, 1, 'Ativo', 'Administrador Teste', 'testecompleto@prazzu.com', '11999999999', NULL, NULL, NULL, '539173254b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
 (10, 'Empresa Teste Completa LTDA', 'Teste Completo', '99999999000193', 'testecompleto@prazzu.com', '11999999999', NULL, 'ativo', '2026-04-28 14:59:58', '2026-05-08 19:01:59', 'business', 25, 5000, 10240, 2000, 1, 'Ativo', NULL, 'testecompleto@prazzu.com', '11999999999', NULL, NULL, NULL, '5391736d4b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
-(11, 'Empresa Seed Teste LTDA', 'Seed Teste', '88999999000181', 'empresa.seed@prazzu.com', '11999998888', NULL, 'ativo', '2026-04-28 15:06:22', '2026-06-18 18:51:59', 'profissional', 10, 1000, 4096, 700, 1, 'Ativo', NULL, 'empresa.seed@prazzu.com', '11999998888', NULL, NULL, NULL, '37374CjmDpb7q94AY9AlCPiuHypk7xallwZtJyJh15JmKXxISkrjBBdQcTONanXU', 1, '2027-05-08 15:25:44'),
-(13, 'webconta', 'webconta', '11222333000181', 'webconta@webconta.com', '(11) 90000-0000', NULL, 'ativo', '2026-05-01 19:09:37', '2026-05-08 19:01:59', 'profissional', 10, 1000, 5120, 700, 1, 'Ativo', NULL, 'webconta@webconta.com', '(11) 90000-0000', NULL, NULL, NULL, '539173eb4b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
+(11, 'Empresa Seed Teste LTDA', 'Seed Teste', '88999999000181', 'empresa.seed@prazzu.com', '11999998888', NULL, 'ativo', '2026-04-28 15:06:22', '2026-06-18 18:51:59', 'profissional', 3, 200, 15360, 2000, 1, 'Ativo', NULL, 'empresa.seed@prazzu.com', '11999998888', NULL, NULL, NULL, '37374CjmDpb7q94AY9AlCPiuHypk7xallwZtJyJh15JmKXxISkrjBBdQcTONanXU', 1, '2027-05-08 15:25:44'),
+(13, 'webconta', 'webconta', '11222333000181', 'webconta@webconta.com', '(11) 90000-0000', NULL, 'ativo', '2026-05-01 19:09:37', '2026-05-08 19:01:59', 'profissional', 3, 200, 15360, 2000, 1, 'Ativo', NULL, 'webconta@webconta.com', '(11) 90000-0000', NULL, NULL, NULL, '539173eb4b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
 (18, 'webconta2', 'webconta2', '12345678000195', 'roni@roni2.com', '(11) 90000-0000', NULL, 'ativo', '2026-05-01 20:35:39', '2026-05-08 19:01:59', 'business_plus', 50, 10000, 20480, 5000, 1, 'Ativo', NULL, 'roni@roni2.com', '(11) 90000-0000', NULL, NULL, NULL, '539174614b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
 (21, 'ricardo empresa', 'ricardo empresa', '32.724.443/0001-11', 'ricardo-s-a@hotmail.com', '(11) 90000-0000', NULL, 'ativo', '2026-05-01 20:53:08', '2026-05-08 19:01:59', 'business', 25, 5000, 10240, 2000, 1, 'Ativo', NULL, 'ricardo-s-a@hotmail.com', '(11) 90000-0000', NULL, NULL, NULL, '5391749c4b0b11f1933d18a59cb167c9', 1, '2027-05-08 15:25:44'),
-(22, 'joyce empresa', 'joyce empresa', '43.061.009/0001-15', 'joyce@joyce.com', '(11) 90000-0000', NULL, 'ativo', '2026-05-01 20:59:09', '2026-06-18 19:31:34', 'business', 25, 5000, 8192, 2000, 1, 'Implementação', NULL, 'joyce@joyce.com', '(11) 90000-0000', NULL, NULL, NULL, 'ajlFeRYijcQCzx4cAJCuuZuqDTktgXrcSNS2zCXpuqGnnfCoufQc0s58UuFjJCsL', 1, '2027-05-08 15:25:44');
+(22, 'joyce empresa', 'joyce empresa', '43.061.009/0001-15', 'joyce@joyce.com', '(11) 90000-0000', NULL, 'ativo', '2026-05-01 20:59:09', '2026-06-22 18:10:28', 'starter', 3, 200, 6144, 150, 1, 'Implementação', NULL, 'joyce@joyce.com', '(11) 90000-0000', NULL, NULL, NULL, 'ajlFeRYijcQCzx4cAJCuuZuqDTktgXrcSNS2zCXpuqGnnfCoufQc0s58UuFjJCsL', 1, '2027-05-08 15:25:44');
 
 -- --------------------------------------------------------
 
@@ -1321,18 +1355,18 @@ INSERT INTO `item_controles` (`id`, `titulo`, `descricao`, `tipo`, `categoria_id
 (65, 'Onboarding - Diagnóstico inicial - Alpha', 'Etapa de onboarding criada pela aba Clientes para organizar a implantação do cliente.', 'tarefa', NULL, 'pendente', '2026-06-18 14:04:16', NULL, NULL, 'alta', 'alta', 72, 0, 0, NULL, '2026-06-19', NULL, 0, 1, 0, 'Seed redistribuído: vence hoje para testar o card Vencem hoje.', 1, '1a884d22ed2ba2715abcabd84c549e65', NULL, NULL, NULL, 'em_execucao', '2026-06-17 14:04:16', NULL, '2026-06-17 11:04:16', '2026-06-19 23:00:00', '2026-06-20 02:00:00', NULL, 'em_andamento', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, 147, '2026-06-19 14:04:16', '2026-06-19 14:04:16', 1, NULL, NULL, '2026-05-11 14:28:48', '2026-06-19 14:04:16', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
 (66, 'Onboarding - Documentos e acessos - Alpha', 'Etapa de onboarding criada pela aba Clientes para organizar a implantação do cliente.', 'tarefa', NULL, 'pendente', '2026-06-19 14:04:16', NULL, NULL, 'media', 'media', 45, 0, 0, NULL, '2026-06-22', NULL, 1, 0, 0, 'Seed redistribuído: vence em 3 dias.', 1, '5757cc037fa795a56642c655f8b777c7', NULL, NULL, NULL, 'em_execucao', '2026-06-17 14:04:16', NULL, '2026-06-19 11:04:16', '2026-06-22 11:04:16', '2026-06-22 14:04:16', NULL, 'em_andamento', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, 147, '2026-06-19 14:04:16', NULL, 0, NULL, NULL, '2026-05-11 14:28:48', '2026-06-19 14:04:16', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
 (67, 'Onboarding - Primeira entrega para aprovação - Alpha', 'Etapa de onboarding criada pela aba Clientes para organizar a implantação do cliente.', 'tarefa', NULL, 'pendente', '2026-06-19 14:04:16', NULL, NULL, 'media', 'baixa', 35, 0, 0, NULL, '2026-06-26', NULL, 0, 0, 0, 'Seed redistribuído: vence em 7 dias para testar previsões da Home.', 1, '11981ea580fe4991bd18f92fb20f1cbd', NULL, NULL, NULL, 'em_execucao', '2026-06-17 14:04:16', NULL, '2026-06-19 11:04:16', '2026-06-26 11:04:16', '2026-06-26 14:04:16', NULL, 'em_andamento', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, 147, NULL, NULL, 0, NULL, NULL, '2026-05-11 14:28:48', '2026-06-19 14:04:16', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(69, 'DEMO ARMAZENAMENTO - SPED Fiscal 2025 Ricardo', 'Arquivo pesado para testar ranking de maiores arquivos.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-05-30', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 404, NULL, NULL, 0, NULL, NULL, '2026-05-05 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(70, 'DEMO ARMAZENAMENTO - Backup XML NF-e Ricardo', 'Backup compactado para testar espaço recuperável.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-06-09', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 404, NULL, NULL, 0, NULL, NULL, '2026-04-20 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(71, 'DEMO ARMAZENAMENTO - Folha Pagamento 2026 Ricardo', 'Documento médio dentro do prazo.', 'documento', NULL, 'em_andamento', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-07-14', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 404, NULL, NULL, 0, NULL, NULL, '2026-06-11 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(72, 'DEMO ARMAZENAMENTO - Contrato Social Ricardo', 'Arquivo leve e válido.', 'documento', NULL, 'concluido', NULL, NULL, NULL, 'baixa', NULL, NULL, 0, 0, NULL, '2026-12-16', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 404, NULL, NULL, 0, NULL, NULL, '2026-06-16 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(73, 'DEMO ARMAZENAMENTO - Dossiê Fiscal Joyce', 'Cliente próximo do limite para testar alerta.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-06-14', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, NULL, 405, NULL, NULL, 0, NULL, NULL, '2026-05-25 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(74, 'DEMO ARMAZENAMENTO - Arquivo Morto Joyce', 'Arquivo antigo expirado para testar limpeza.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-02-19', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, NULL, 405, NULL, NULL, 0, NULL, NULL, '2025-12-21 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(75, 'DEMO ARMAZENAMENTO - Guias e DARFs Joyce', 'Documento comum.', 'documento', NULL, 'em_andamento', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-07-04', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, NULL, 405, NULL, NULL, 0, NULL, NULL, '2026-06-08 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(76, 'DEMO ARMAZENAMENTO - SPED Contribuições Webconta', 'Outro arquivo pesado para top consumidores.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-05-10', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13, NULL, 398, NULL, NULL, 0, NULL, NULL, '2026-04-10 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(77, 'DEMO ARMAZENAMENTO - Balancete Webconta', 'Documento médio.', 'documento', NULL, 'concluido', NULL, NULL, NULL, 'baixa', NULL, NULL, 0, 0, NULL, '2026-09-17', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13, NULL, 398, NULL, NULL, 0, NULL, NULL, '2026-06-06 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(78, 'DEMO ARMAZENAMENTO - Pasta Trabalhista Seed', 'Arquivo pesado e vencido.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-03-31', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11, NULL, 396, NULL, NULL, 0, NULL, NULL, '2026-03-16 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(79, 'DEMO ARMAZENAMENTO - Obrigações Alpha', 'Empresa maior com consumo relevante.', 'documento', NULL, 'em_andamento', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-08-03', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, 371, NULL, NULL, 0, NULL, NULL, '2026-05-30 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
-(80, 'DEMO ARMAZENAMENTO - Temporários Beta', 'Arquivos temporários para espaço recuperável.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'baixa', NULL, NULL, 0, 0, NULL, '2026-06-17', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5, NULL, 376, NULL, NULL, 0, NULL, NULL, '2026-05-15 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
+(69, 'DEMO ARMAZENAMENTO - SPED Fiscal 2025 Ricardo', 'Arquivo pesado para testar ranking de maiores arquivos.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-05-30', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 171, NULL, NULL, 0, NULL, NULL, '2026-05-05 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(70, 'DEMO ARMAZENAMENTO - Backup XML NF-e Ricardo', 'Backup compactado para testar espaço recuperável.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-06-09', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 171, NULL, NULL, 0, NULL, NULL, '2026-04-20 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(71, 'DEMO ARMAZENAMENTO - Folha Pagamento 2026 Ricardo', 'Documento médio dentro do prazo.', 'documento', NULL, 'em_andamento', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-07-14', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 171, NULL, NULL, 0, NULL, NULL, '2026-06-11 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(72, 'DEMO ARMAZENAMENTO - Contrato Social Ricardo', 'Arquivo leve e válido.', 'documento', NULL, 'concluido', NULL, NULL, NULL, 'baixa', NULL, NULL, 0, 0, NULL, '2026-12-16', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 21, NULL, 171, NULL, NULL, 0, NULL, NULL, '2026-06-16 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(73, 'DEMO ARMAZENAMENTO - Dossiê Fiscal Joyce', 'Cliente próximo do limite para testar alerta.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-06-14', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, NULL, 172, NULL, NULL, 0, NULL, NULL, '2026-05-25 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(74, 'DEMO ARMAZENAMENTO - Arquivo Morto Joyce', 'Arquivo antigo expirado para testar limpeza.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-02-19', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, NULL, 172, NULL, NULL, 0, NULL, NULL, '2025-12-21 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(75, 'DEMO ARMAZENAMENTO - Guias e DARFs Joyce', 'Documento comum.', 'documento', NULL, 'em_andamento', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-07-04', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 22, NULL, 172, NULL, NULL, 0, NULL, NULL, '2026-06-08 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(76, 'DEMO ARMAZENAMENTO - SPED Contribuições Webconta', 'Outro arquivo pesado para top consumidores.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-05-10', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13, NULL, 170, NULL, NULL, 0, NULL, NULL, '2026-04-10 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(77, 'DEMO ARMAZENAMENTO - Balancete Webconta', 'Documento médio.', 'documento', NULL, 'concluido', NULL, NULL, NULL, 'baixa', NULL, NULL, 0, 0, NULL, '2026-09-17', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 13, NULL, 170, NULL, NULL, 0, NULL, NULL, '2026-06-06 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(78, 'DEMO ARMAZENAMENTO - Pasta Trabalhista Seed', 'Arquivo pesado e vencido.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'alta', NULL, NULL, 0, 0, NULL, '2026-03-31', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 11, NULL, 168, NULL, NULL, 0, NULL, NULL, '2026-03-16 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(79, 'DEMO ARMAZENAMENTO - Obrigações Alpha', 'Empresa maior com consumo relevante.', 'documento', NULL, 'em_andamento', NULL, NULL, NULL, 'media', NULL, NULL, 0, 0, NULL, '2026-08-03', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 4, NULL, 147, NULL, NULL, 0, NULL, NULL, '2026-05-30 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL),
+(80, 'DEMO ARMAZENAMENTO - Temporários Beta', 'Arquivos temporários para espaço recuperável.', 'documento', NULL, 'pendente', NULL, NULL, NULL, 'baixa', NULL, NULL, 0, 0, NULL, '2026-06-17', NULL, 0, 0, 0, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 5, NULL, 154, NULL, NULL, 0, NULL, NULL, '2026-05-15 15:54:23', '2026-06-19 15:54:23', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1728,7 +1762,9 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (3, '0001_01_01_000002_create_jobs_table', 1),
 (4, '2026_04_14_144610_create_empresas_table', 1),
 (5, '2026_04_14_144619_create_responsavels_table', 1),
-(6, '2026_04_15_150455_add_arquivo_to_item_controles_table', 2);
+(6, '2026_04_15_150455_add_arquivo_to_item_controles_table', 2),
+(7, '2026_06_22_000001_harden_prazzu_permissions_lote1', 3),
+(8, '2026_06_22_000002_prepare_users_for_permissions_tests_lote4', 4);
 
 -- --------------------------------------------------------
 
@@ -2161,8 +2197,252 @@ CREATE TABLE `prazzu_permissions` (
 --
 
 INSERT INTO `prazzu_permissions` (`id`, `role_id`, `module`, `action`, `scope`, `created_at`, `updated_at`, `name`) VALUES
-(3, 6, 'segurança', 'visibility', 'private_default', '2026-05-06 11:37:52', '2026-05-06 11:37:52', 'Visibilidade padrão privada'),
-(4, 11, 'workflow', 'manage_tags_status', 'admin_or_gestor', '2026-05-06 11:37:52', '2026-05-06 11:37:52', 'Gestão centralizada de tags e status');
+(5, 1, 'clientes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - view'),
+(6, 1, 'clientes', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - create'),
+(7, 1, 'clientes', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - edit'),
+(8, 1, 'clientes', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - delete'),
+(9, 1, 'clientes', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - export'),
+(10, 1, 'documentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - view'),
+(11, 1, 'documentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - create'),
+(12, 1, 'documentos', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - edit'),
+(13, 1, 'documentos', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - delete'),
+(14, 1, 'documentos', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - approve'),
+(15, 1, 'documentos', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - export'),
+(16, 1, 'cobrancas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - view'),
+(17, 1, 'cobrancas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - create'),
+(18, 1, 'cobrancas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - edit'),
+(19, 1, 'cobrancas', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - delete'),
+(20, 1, 'cobrancas', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - approve'),
+(21, 1, 'cobrancas', 'cancel', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - cancel'),
+(22, 1, 'financeiro', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - view'),
+(23, 1, 'financeiro', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - create'),
+(24, 1, 'financeiro', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - edit'),
+(25, 1, 'financeiro', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - delete'),
+(26, 1, 'financeiro', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - approve'),
+(27, 1, 'financeiro', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - export'),
+(28, 1, 'atendimentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - view'),
+(29, 1, 'atendimentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - create'),
+(30, 1, 'atendimentos', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - edit'),
+(31, 1, 'atendimentos', 'reply', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reply'),
+(32, 1, 'atendimentos', 'close', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - close'),
+(33, 1, 'atendimentos', 'reassign', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reassign'),
+(34, 1, 'tarefas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - view'),
+(35, 1, 'tarefas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - create'),
+(36, 1, 'tarefas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - edit'),
+(37, 1, 'tarefas', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - delete'),
+(38, 1, 'tarefas', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - approve'),
+(39, 1, 'tarefas', 'reassign', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - reassign'),
+(40, 1, 'aprovacoes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Aprovacoes - view'),
+(41, 1, 'aprovacoes', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Aprovacoes - approve'),
+(42, 1, 'armazenamento', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - view'),
+(43, 1, 'armazenamento', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - create'),
+(44, 1, 'armazenamento', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - edit'),
+(45, 1, 'armazenamento', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - delete'),
+(46, 1, 'armazenamento', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - export'),
+(47, 1, 'relatorios', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Relatorios - view'),
+(48, 1, 'relatorios', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Relatorios - export'),
+(49, 1, 'governanca', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Governanca - view'),
+(50, 1, 'governanca', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Governanca - create'),
+(51, 1, 'governanca', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Governanca - edit'),
+(52, 1, 'governanca', 'delete', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Governanca - delete'),
+(53, 1, 'governanca', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Governanca - approve'),
+(68, 11, 'clientes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - view'),
+(69, 11, 'clientes', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - create'),
+(70, 11, 'clientes', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - edit'),
+(71, 11, 'clientes', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - export'),
+(72, 11, 'documentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - view'),
+(73, 11, 'documentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - create'),
+(74, 11, 'documentos', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - edit'),
+(75, 11, 'documentos', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - approve'),
+(76, 11, 'documentos', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - export'),
+(77, 11, 'cobrancas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - view'),
+(78, 11, 'cobrancas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - create'),
+(79, 11, 'cobrancas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - edit'),
+(80, 11, 'cobrancas', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - approve'),
+(81, 11, 'cobrancas', 'cancel', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - cancel'),
+(82, 11, 'financeiro', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - view'),
+(83, 11, 'financeiro', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - export'),
+(84, 11, 'atendimentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - view'),
+(85, 11, 'atendimentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - create'),
+(86, 11, 'atendimentos', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - edit'),
+(87, 11, 'atendimentos', 'reply', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reply'),
+(88, 11, 'atendimentos', 'close', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - close'),
+(89, 11, 'atendimentos', 'reassign', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reassign'),
+(90, 11, 'tarefas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - view'),
+(91, 11, 'tarefas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - create'),
+(92, 11, 'tarefas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - edit'),
+(93, 11, 'tarefas', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - approve'),
+(94, 11, 'tarefas', 'reassign', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - reassign'),
+(95, 11, 'aprovacoes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Aprovacoes - view'),
+(96, 11, 'aprovacoes', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Aprovacoes - approve'),
+(97, 11, 'armazenamento', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - view'),
+(98, 11, 'armazenamento', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - create'),
+(99, 11, 'armazenamento', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - edit'),
+(100, 11, 'armazenamento', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - export'),
+(101, 11, 'relatorios', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Relatorios - view'),
+(102, 11, 'relatorios', 'export', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Relatorios - export'),
+(103, 11, 'governanca', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Governanca - view'),
+(131, 13, 'clientes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - view'),
+(132, 13, 'clientes', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - edit'),
+(133, 13, 'documentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - view'),
+(134, 13, 'documentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - create'),
+(135, 13, 'documentos', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - edit'),
+(136, 13, 'documentos', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - approve'),
+(137, 13, 'cobrancas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - view'),
+(138, 13, 'financeiro', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Financeiro - view'),
+(139, 13, 'atendimentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - view'),
+(140, 13, 'atendimentos', 'reply', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reply'),
+(141, 13, 'atendimentos', 'close', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - close'),
+(142, 13, 'atendimentos', 'reassign', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reassign'),
+(143, 13, 'tarefas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - view'),
+(144, 13, 'tarefas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - create'),
+(145, 13, 'tarefas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - edit'),
+(146, 13, 'tarefas', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - approve'),
+(147, 13, 'tarefas', 'reassign', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - reassign'),
+(148, 13, 'aprovacoes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Aprovacoes - view'),
+(149, 13, 'aprovacoes', 'approve', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Aprovacoes - approve'),
+(150, 13, 'armazenamento', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - view'),
+(151, 13, 'armazenamento', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - create'),
+(152, 13, 'armazenamento', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - edit'),
+(153, 13, 'relatorios', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Relatorios - view'),
+(162, 14, 'clientes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - view'),
+(163, 14, 'clientes', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - edit'),
+(164, 14, 'documentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - view'),
+(165, 14, 'documentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - create'),
+(166, 14, 'documentos', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - edit'),
+(167, 14, 'cobrancas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Cobrancas - view'),
+(168, 14, 'atendimentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - view'),
+(169, 14, 'atendimentos', 'reply', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reply'),
+(170, 14, 'tarefas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - view'),
+(171, 14, 'tarefas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - create'),
+(172, 14, 'tarefas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - edit'),
+(173, 14, 'armazenamento', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - view'),
+(174, 14, 'armazenamento', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - create'),
+(175, 14, 'relatorios', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Relatorios - view'),
+(177, 15, 'clientes', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Clientes - view'),
+(178, 15, 'documentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - view'),
+(179, 15, 'documentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - create'),
+(180, 15, 'atendimentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - view'),
+(181, 15, 'atendimentos', 'reply', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reply'),
+(182, 15, 'tarefas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - view'),
+(183, 15, 'tarefas', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - create'),
+(184, 15, 'tarefas', 'edit', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - edit'),
+(185, 15, 'armazenamento', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Armazenamento - view'),
+(192, 16, 'documentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - view'),
+(193, 16, 'documentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Documentos - create'),
+(194, 16, 'atendimentos', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - view'),
+(195, 16, 'atendimentos', 'create', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - create'),
+(196, 16, 'atendimentos', 'reply', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Atendimentos - reply'),
+(197, 16, 'tarefas', 'view', 'empresa', '2026-06-19 19:41:11', '2026-06-19 19:41:11', 'Tarefas - view'),
+(200, 2, 'clientes', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Clientes - view'),
+(201, 2, 'clientes', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Clientes - create'),
+(202, 2, 'clientes', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Clientes - edit'),
+(203, 2, 'documentos', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - view'),
+(204, 2, 'documentos', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - create'),
+(205, 2, 'documentos', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - edit'),
+(206, 2, 'documentos', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - export'),
+(207, 2, 'atendimentos', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - view'),
+(208, 2, 'atendimentos', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - create'),
+(209, 2, 'atendimentos', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - edit'),
+(210, 2, 'atendimentos', 'reply', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - reply'),
+(211, 2, 'atendimentos', 'close', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - close'),
+(212, 2, 'atendimentos', 'reassign', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - reassign'),
+(213, 2, 'tarefas', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - view'),
+(214, 2, 'tarefas', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - create'),
+(215, 2, 'tarefas', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - edit'),
+(216, 2, 'tarefas', 'reassign', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - reassign'),
+(217, 2, 'armazenamento', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Armazenamento - view'),
+(218, 2, 'armazenamento', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Armazenamento - create'),
+(219, 2, 'armazenamento', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Armazenamento - edit'),
+(220, 2, 'relatorios', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Relatorios - view'),
+(231, 3, 'clientes', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Clientes - view'),
+(232, 3, 'clientes', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Clientes - export'),
+(233, 3, 'documentos', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - view'),
+(234, 3, 'cobrancas', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - view'),
+(235, 3, 'cobrancas', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - create'),
+(236, 3, 'cobrancas', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - edit'),
+(237, 3, 'cobrancas', 'delete', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - delete'),
+(238, 3, 'cobrancas', 'approve', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - approve'),
+(239, 3, 'cobrancas', 'cancel', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - cancel'),
+(240, 3, 'financeiro', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - view'),
+(241, 3, 'financeiro', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - create'),
+(242, 3, 'financeiro', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - edit'),
+(243, 3, 'financeiro', 'delete', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - delete'),
+(244, 3, 'financeiro', 'approve', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - approve'),
+(245, 3, 'financeiro', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - export'),
+(246, 3, 'relatorios', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Relatorios - view'),
+(247, 3, 'relatorios', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Relatorios - export'),
+(262, 4, 'clientes', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Clientes - view'),
+(263, 4, 'documentos', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - view'),
+(264, 4, 'documentos', 'approve', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - approve'),
+(265, 4, 'documentos', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - export'),
+(266, 4, 'cobrancas', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Cobrancas - view'),
+(267, 4, 'financeiro', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Financeiro - view'),
+(268, 4, 'atendimentos', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - view'),
+(269, 4, 'tarefas', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - view'),
+(270, 4, 'tarefas', 'approve', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - approve'),
+(271, 4, 'aprovacoes', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Aprovacoes - view'),
+(272, 4, 'aprovacoes', 'approve', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Aprovacoes - approve'),
+(273, 4, 'armazenamento', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Armazenamento - view'),
+(274, 4, 'armazenamento', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Armazenamento - export'),
+(275, 4, 'relatorios', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Relatorios - view'),
+(276, 4, 'relatorios', 'export', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Relatorios - export'),
+(277, 4, 'governanca', 'view', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Governanca - view'),
+(278, 4, 'governanca', 'create', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Governanca - create'),
+(279, 4, 'governanca', 'edit', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Governanca - edit'),
+(280, 4, 'governanca', 'approve', 'empresa', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Governanca - approve'),
+(293, 5, 'documentos', 'view', 'proprio', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - view'),
+(294, 5, 'documentos', 'create', 'proprio', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Documentos - create'),
+(295, 5, 'atendimentos', 'view', 'proprio', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - view'),
+(296, 5, 'atendimentos', 'create', 'proprio', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - create'),
+(297, 5, 'atendimentos', 'reply', 'proprio', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Atendimentos - reply'),
+(298, 5, 'tarefas', 'view', 'proprio', '2026-06-22 13:02:15', '2026-06-22 13:02:15', 'Tarefas - view'),
+(299, 1, 'governanca', 'export', 'empresa', '2026-06-24 14:40:24', '2026-06-24 14:40:24', 'Governança - export'),
+(300, 11, 'governanca', 'export', 'empresa', '2026-06-24 14:40:24', '2026-06-24 14:40:24', 'Governança - export'),
+(301, 4, 'governanca', 'export', 'empresa', '2026-06-24 14:40:24', '2026-06-24 14:40:24', 'Governança - export');
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `prazzu_permission_audits`
+--
+
+CREATE TABLE `prazzu_permission_audits` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `actor_user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `target_user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `role_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `event` varchar(80) NOT NULL,
+  `module` varchar(80) DEFAULT NULL,
+  `action` varchar(80) DEFAULT NULL,
+  `scope` varchar(80) DEFAULT NULL,
+  `allowed` tinyint(1) DEFAULT NULL,
+  `reason` text DEFAULT NULL,
+  `before_payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`before_payload`)),
+  `after_payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`after_payload`)),
+  `ip_address` varchar(64) DEFAULT NULL,
+  `user_agent` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Extraindo dados da tabela `prazzu_permission_audits`
+--
+
+INSERT INTO `prazzu_permission_audits` (`id`, `actor_user_id`, `target_user_id`, `role_id`, `event`, `module`, `action`, `scope`, `allowed`, `reason`, `before_payload`, `after_payload`, `ip_address`, `user_agent`, `created_at`, `updated_at`) VALUES
+(1, 111, NULL, 5, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 13:10:16', '2026-06-22 13:10:16'),
+(2, 111, NULL, 14, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 13:30:21', '2026-06-22 13:30:21'),
+(3, 111, NULL, 15, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 13:30:25', '2026-06-22 13:30:25'),
+(4, 111, NULL, 3, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:00:44', '2026-06-22 14:00:44'),
+(5, 111, NULL, 11, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:00:48', '2026-06-22 14:00:48'),
+(6, 111, NULL, 2, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:00:55', '2026-06-22 14:00:55'),
+(7, 111, NULL, 13, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:01:05', '2026-06-22 14:01:05'),
+(8, 111, NULL, 6, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":false}', '{\"active\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:01:09', '2026-06-22 14:01:09'),
+(9, 111, NULL, 9, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:01:13', '2026-06-22 14:01:13'),
+(10, 111, NULL, 4, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:02:12', '2026-06-22 14:02:12'),
+(11, 111, NULL, 4, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":false}', '{\"active\":true}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:02:19', '2026-06-22 14:02:19'),
+(12, 111, NULL, 6, 'role.status.updated', NULL, NULL, NULL, NULL, 'Status do perfil alterado.', '{\"active\":true}', '{\"active\":false}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-06-22 14:09:02', '2026-06-22 14:09:02');
 
 -- --------------------------------------------------------
 
@@ -2227,18 +2507,22 @@ CREATE TABLE `prazzu_roles` (
 --
 
 INSERT INTO `prazzu_roles` (`id`, `name`, `description`, `active`, `created_at`, `updated_at`) VALUES
-(1, 'Administrador', 'Acesso total à plataforma.', 1, '2026-05-04 20:51:37', '2026-05-04 20:51:37'),
-(2, 'Operação', 'Acesso operacional a clientes, atendimentos, pendências e documentos.', 1, '2026-05-04 20:51:37', '2026-05-04 20:51:37'),
-(3, 'Financeiro', 'Acesso ao módulo financeiro, cobranças e assinaturas.', 1, '2026-05-04 20:51:37', '2026-05-04 20:51:37'),
-(4, 'Compliance', 'Acesso a auditoria, riscos, evidências e SLA.', 1, '2026-05-04 20:51:37', '2026-05-04 20:51:37'),
-(5, 'Cliente Portal', 'Perfil externo limitado ao portal do cliente.', 1, '2026-05-04 20:51:37', '2026-05-04 20:51:37'),
-(6, 'Admin', 'Administrador da empresa com acesso amplo aos módulos internos.', 1, '2026-05-06 11:33:22', '2026-05-06 11:33:22'),
-(7, 'Member', 'Usuário interno com acesso operacional controlado.', 1, '2026-05-06 11:33:22', '2026-05-06 11:33:22'),
-(8, 'Guest', 'Convidado externo com acesso limitado ao que foi compartilhado.', 1, '2026-05-06 11:33:22', '2026-05-06 11:33:22'),
-(9, 'Estagiário', 'Perfil operacional restrito, sem exclusão e sem exportação.', 1, '2026-05-06 11:33:22', '2026-05-06 11:33:22'),
-(10, 'Visualizador Externo', 'Perfil somente leitura para cliente, auditor externo ou freelancer.', 1, '2026-05-06 11:33:22', '2026-05-06 11:33:22'),
-(11, 'Gestor', 'Gestor interno com acesso administrativo parcial.', 1, '2026-05-06 11:37:51', '2026-05-06 11:37:51'),
-(12, 'Sistema - Segurança', 'Cargo interno usado para regras sensíveis globais do sistema.', 1, '2026-05-13 11:15:19', '2026-05-13 11:15:19');
+(1, 'Administrador', 'Acesso completo ao ambiente da empresa.', 1, '2026-05-04 20:51:37', '2026-06-22 13:02:15'),
+(2, 'Operação', 'Acesso operacional a clientes, atendimentos, pendências e documentos.', 0, '2026-05-04 20:51:37', '2026-06-22 14:00:55'),
+(3, 'Financeiro', 'Acesso ao módulo financeiro, cobranças e assinaturas.', 0, '2026-05-04 20:51:37', '2026-06-22 14:00:44'),
+(4, 'Compliance', 'Acesso a auditoria, riscos, evidências e SLA.', 1, '2026-05-04 20:51:37', '2026-06-22 14:02:19'),
+(5, 'Cliente Portal', 'Perfil externo limitado ao portal do cliente.', 0, '2026-05-04 20:51:37', '2026-06-22 13:10:16'),
+(6, 'Admin', 'Perfil legado consolidado em Administrador.', 0, '2026-05-06 11:33:22', '2026-06-22 14:09:02'),
+(7, 'Member', 'Perfil legado consolidado em Analista.', 0, '2026-05-06 11:33:22', '2026-06-22 13:02:15'),
+(8, 'Guest', 'Perfil legado consolidado em Cliente Portal.', 0, '2026-05-06 11:33:22', '2026-06-22 13:02:15'),
+(9, 'Estagiário', 'Perfil operacional restrito, sem exclusão e sem exportação.', 0, '2026-05-06 11:33:22', '2026-06-22 14:01:13'),
+(10, 'Visualizador Externo', 'Perfil legado consolidado em Cliente Portal.', 0, '2026-05-06 11:33:22', '2026-06-22 13:02:15'),
+(11, 'Gestor', 'Gestão operacional com aprovações e edição ampla.', 0, '2026-05-06 11:37:51', '2026-06-22 14:00:48'),
+(12, 'Sistema - Segurança', 'Perfil técnico interno ocultado da tela operacional.', 0, '2026-05-13 11:15:19', '2026-06-22 13:02:15'),
+(13, 'Supervisor', 'Acompanha equipe, revisa tarefas e aprova documentos.', 0, '2026-06-19 19:41:11', '2026-06-22 14:01:05'),
+(14, 'Analista', 'Executa tarefas, documentos e atendimentos sem ações destrutivas.', 0, '2026-06-19 19:41:11', '2026-06-22 13:30:21'),
+(15, 'Assistente', 'Executa rotinas básicas e acompanha pendências.', 0, '2026-06-19 19:41:11', '2026-06-22 13:30:25'),
+(16, 'Cliente', 'Perfil legado consolidado em Cliente Portal.', 0, '2026-06-19 19:41:11', '2026-06-22 13:02:15');
 
 -- --------------------------------------------------------
 
@@ -2454,6 +2738,25 @@ CREATE TABLE `prazzu_time_tracking` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura da tabela `prazzu_user_permissions`
+--
+
+CREATE TABLE `prazzu_user_permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `module` varchar(80) NOT NULL,
+  `action` varchar(80) NOT NULL,
+  `scope` varchar(80) NOT NULL DEFAULT 'empresa',
+  `allowed` tinyint(1) NOT NULL DEFAULT 1,
+  `reason` varchar(255) DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura da tabela `prazzu_user_roles`
 --
 
@@ -2464,6 +2767,36 @@ CREATE TABLE `prazzu_user_roles` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Extraindo dados da tabela `prazzu_user_roles`
+--
+
+INSERT INTO `prazzu_user_roles` (`id`, `user_id`, `role_id`, `created_at`, `updated_at`) VALUES
+(1, 111, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(2, 371, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(3, 372, 11, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(4, 373, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(5, 374, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(6, 375, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(7, 376, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(8, 377, 11, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(9, 378, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(10, 379, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(11, 380, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(12, 381, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(13, 382, 11, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(14, 383, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(15, 384, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(16, 385, 5, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(17, 386, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(18, 387, 11, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(19, 388, 15, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(20, 396, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(21, 398, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(22, 401, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(23, 404, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15'),
+(24, 405, 1, '2026-06-22 13:02:15', '2026-06-22 13:02:15');
 
 -- --------------------------------------------------------
 
@@ -2570,7 +2903,10 @@ INSERT INTO `responsaveis` (`id`, `nome`, `email`, `telefone`, `cargo`, `empresa
 (164, 'User Gamma 2', 'user.gamma2@empresa.com', NULL, 'Funcionário', 6, 384, 382, '2026-04-24 17:57:10', '2026-04-24 17:57:10'),
 (165, 'User Gamma 3', 'user.gamma3@empresa.com', NULL, 'Funcionário', 6, 385, 382, '2026-04-24 17:57:10', '2026-04-24 17:57:10'),
 (168, 'Responsável Seed Teste', 'responsavel.seed@prazzu.com', '11988887777', 'Responsável Operacional', 11, 396, NULL, '2026-04-28 15:06:22', '2026-04-28 15:06:22'),
-(169, 'Responsável Portal Cliente Empresa 21', 'responsavel.portal.21@teste.local', NULL, 'Responsável Operacional', 21, NULL, NULL, '2026-05-08 17:59:00', '2026-05-08 17:59:00');
+(169, 'Responsável Portal Cliente Empresa 21', 'responsavel.portal.21@teste.local', NULL, 'Responsável Operacional', 21, NULL, NULL, '2026-05-08 17:59:00', '2026-05-08 17:59:00'),
+(170, 'Roni', 'webconta@webconta.com', NULL, 'Administrador', 13, 398, NULL, '2026-06-22 11:59:01', '2026-06-22 11:59:01'),
+(171, 'ricardo empresa', 'ricardo-s-a@hotmail.com', NULL, 'Administrador', 21, 404, NULL, '2026-06-22 11:59:01', '2026-06-22 11:59:01'),
+(172, 'joyce', 'joyce@joyce.com', NULL, 'Administrador', 22, 405, NULL, '2026-06-22 11:59:01', '2026-06-22 11:59:01');
 
 -- --------------------------------------------------------
 
@@ -2630,7 +2966,7 @@ CREATE TABLE `sugestoes_melhorias` (
 --
 
 INSERT INTO `sugestoes_melhorias` (`id`, `empresa_id`, `user_id`, `tipo`, `prioridade`, `status`, `titulo`, `descricao`, `resposta_admin`, `analisado_por`, `analisado_em`, `created_at`, `updated_at`) VALUES
-(2, 6, 383, 'funcionalidade', 'media', 'aceita', 'xxxx xxxxx xxxxx xxxxxx xxxxxx xxxx', 'xxxxxx xxxxx xxxxx xxxxxx xxxxx xxx xxxx xxx xxxx xxx xxxx xxxx xxxx xxxxx xx xx', 'YYYYYY YYYYY YYYYY YYYYY YYYY YYYY\nZZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZ ZZZ ZZ Z', 111, '2026-04-26 00:09:54', '2026-04-25 23:31:43', '2026-04-26 00:09:54');
+(3, NULL, 111, 'melhoria', 'media', 'recusada', 'tetaet', 'etste', 'teste', 111, '2026-06-22 17:34:39', '2026-06-22 16:11:54', '2026-06-22 17:34:39');
 
 -- --------------------------------------------------------
 
@@ -2727,6 +3063,7 @@ CREATE TABLE `users` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `role` varchar(30) NOT NULL DEFAULT 'user',
+  `perfil_contabil` varchar(50) DEFAULT NULL,
   `empresa_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -2734,31 +3071,31 @@ CREATE TABLE `users` (
 -- Extraindo dados da tabela `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `last_access_at`, `last_login_at`, `last_seen_at`, `created_at`, `updated_at`, `role`, `empresa_id`) VALUES
-(111, 'admin', 'admin@admin.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-17 22:11:30', '2026-05-25 18:21:44', 'super_admin', NULL),
-(371, 'Admin Alpha', 'admin.alpha@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'admin', 4),
-(372, 'Gestor Alpha', 'gestor.alpha@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'gestor', 4),
-(373, 'User Alpha 1', 'user.alpha1@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 4),
-(374, 'User Alpha 2', 'user.alpha2@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 4),
-(375, 'User Alpha 3', 'user.alpha3@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 4),
-(376, 'Admin Beta', 'admin.beta@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', 'TPNOFZ4qWE6wMAdNtdrZ4ygoBLNLO4jrXcBYAR1TjJbFz2C0QWteE4SBpm4l', NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'admin', 5),
-(377, 'Gestor Beta', 'gestor.beta@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'gestor', 5),
-(378, 'User Beta 1', 'user.beta1@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 5),
-(379, 'User Beta 2', 'user.beta2@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 5),
-(380, 'User Beta 3', 'user.beta3@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 5),
-(381, 'Admin Gamma', 'admin.gamma@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'admin', 6),
-(382, 'Gestor Gamma', 'gestor.gamma@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'gestor', 6),
-(383, 'User Gamma 1', 'user.gamma1@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 6),
-(384, 'User Gamma 2', 'user.gamma2@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 6),
-(385, 'User Gamma 3', 'user.gamma3@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'guest', 6),
-(386, 'Admin Teste Completo', 'admin.teste.completo@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 14:58:04', '2026-05-25 18:21:44', 'admin', 7),
-(387, 'Gestor Teste Completo', 'gestor.teste.completo@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 14:58:04', '2026-05-25 18:21:44', 'gestor', 7),
-(388, 'Usuário Teste Completo', 'usuario.teste.completo@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 14:58:04', '2026-05-25 18:21:44', 'user', 7),
-(396, 'Admin Seed Teste', 'admin.seed@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 15:06:22', '2026-05-25 18:21:44', 'admin', 11),
-(398, 'Roni', 'webconta@webconta.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 19:09:38', '2026-05-25 18:21:44', 'admin', 13),
-(401, 'Roni2', 'webconta@webconta2.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 20:35:39', '2026-05-25 18:21:44', 'admin', 18),
-(404, 'ricardo empresa', 'ricardo-s-a@hotmail.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 20:53:08', '2026-05-25 18:21:44', 'admin', 21),
-(405, 'joyce', 'joyce@joyce.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 20:59:10', '2026-05-25 18:21:44', 'admin', 22);
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `last_access_at`, `last_login_at`, `last_seen_at`, `created_at`, `updated_at`, `role`, `perfil_contabil`, `empresa_id`) VALUES
+(111, 'admin', 'admin@admin.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-17 22:11:30', '2026-05-25 18:21:44', 'super_admin', NULL, NULL),
+(371, 'Admin Alpha', 'admin.alpha@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'admin', 'socio', 4),
+(372, 'Gestor Alpha', 'gestor.alpha@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'gestor', 'gestor', 4),
+(373, 'User Alpha 1', 'user.alpha1@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 4),
+(374, 'User Alpha 2', 'user.alpha2@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 4),
+(375, 'User Alpha 3', 'user.alpha3@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 4),
+(376, 'Admin Beta', 'admin.beta@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', 'TPNOFZ4qWE6wMAdNtdrZ4ygoBLNLO4jrXcBYAR1TjJbFz2C0QWteE4SBpm4l', NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'admin', 'socio', 5),
+(377, 'Gestor Beta', 'gestor.beta@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'gestor', 'gestor', 5),
+(378, 'User Beta 1', 'user.beta1@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 5),
+(379, 'User Beta 2', 'user.beta2@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 5),
+(380, 'User Beta 3', 'user.beta3@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 5),
+(381, 'Admin Gamma', 'admin.gamma@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'admin', 'socio', 6),
+(382, 'Gestor Gamma', 'gestor.gamma@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'gestor', 'gestor', 6),
+(383, 'User Gamma 1', 'user.gamma1@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 6),
+(384, 'User Gamma 2', 'user.gamma2@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'user', 'assistente', 6),
+(385, 'User Gamma 3', 'user.gamma3@empresa.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-24 17:57:10', '2026-05-25 18:21:44', 'guest', 'cliente', 6),
+(386, 'Admin Teste Completo', 'admin.teste.completo@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 14:58:04', '2026-05-25 18:21:44', 'admin', 'socio', 7),
+(387, 'Gestor Teste Completo', 'gestor.teste.completo@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 14:58:04', '2026-05-25 18:21:44', 'gestor', 'gestor', 7),
+(388, 'Usuário Teste Completo', 'usuario.teste.completo@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 14:58:04', '2026-05-25 18:21:44', 'user', 'assistente', 7),
+(396, 'Admin Seed Teste', 'admin.seed@prazzu.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-04-28 15:06:22', '2026-05-25 18:21:44', 'admin', 'socio', 11),
+(398, 'Roni', 'webconta@webconta.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 19:09:38', '2026-05-25 18:21:44', 'admin', 'socio', 13),
+(401, 'Roni2', 'webconta@webconta2.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 20:35:39', '2026-05-25 18:21:44', 'admin', 'socio', 18),
+(404, 'ricardo empresa', 'ricardo-s-a@hotmail.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 20:53:08', '2026-05-25 18:21:44', 'admin', 'socio', 21),
+(405, 'joyce', 'joyce@joyce.com', NULL, '$2y$12$86cQwU2SuBXe45g0Hoo2Yey13MMPoz5Mi4an8pMJ9gj4Cpzygowby', NULL, NULL, NULL, NULL, '2026-05-01 20:59:10', '2026-05-25 18:21:44', 'admin', 'socio', 22);
 
 -- --------------------------------------------------------
 
@@ -3004,7 +3341,8 @@ ALTER TABLE `empresas`
   ADD KEY `idx_empresas_plano` (`plano`),
   ADD KEY `idx_empresas_ativo_plano` (`ativo`,`plano`),
   ADD KEY `idx_empresas_portal_token` (`portal_token`),
-  ADD KEY `idx_empresas_nome_razao` (`nome_fantasia`,`razao_social`);
+  ADD KEY `idx_empresas_nome_razao` (`nome_fantasia`,`razao_social`),
+  ADD KEY `empresas_plano_index` (`plano`);
 
 --
 -- Índices para tabela `failed_jobs`
@@ -3485,9 +3823,22 @@ ALTER TABLE `prazzu_document_versions`
 --
 ALTER TABLE `prazzu_permissions`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `prazzu_permissions_role_module_action_scope_unique` (`role_id`,`module`,`action`,`scope`),
   ADD KEY `idx_prazzu_permissions_role` (`role_id`),
   ADD KEY `idx_prazzu_permissions_module` (`module`),
-  ADD KEY `idx_prazzu_permissions_role_id` (`role_id`);
+  ADD KEY `idx_prazzu_permissions_role_id` (`role_id`),
+  ADD KEY `idx_prazzu_permissions_module_action` (`module`,`action`);
+
+--
+-- Índices para tabela `prazzu_permission_audits`
+--
+ALTER TABLE `prazzu_permission_audits`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `prazzu_permission_audits_event_created_at_index` (`event`,`created_at`),
+  ADD KEY `prazzu_permission_audits_target_user_id_created_at_index` (`target_user_id`,`created_at`),
+  ADD KEY `prazzu_permission_audits_role_id_created_at_index` (`role_id`,`created_at`),
+  ADD KEY `prazzu_permission_audits_module_action_index` (`module`,`action`),
+  ADD KEY `prazzu_permission_audits_actor_user_id_foreign` (`actor_user_id`);
 
 --
 -- Índices para tabela `prazzu_permission_rules`
@@ -3501,7 +3852,8 @@ ALTER TABLE `prazzu_permission_rules`
 --
 ALTER TABLE `prazzu_roles`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uk_prazzu_roles_name` (`name`);
+  ADD UNIQUE KEY `uk_prazzu_roles_name` (`name`),
+  ADD UNIQUE KEY `prazzu_roles_name_unique` (`name`);
 
 --
 -- Índices para tabela `prazzu_sla_policies`
@@ -3589,10 +3941,21 @@ ALTER TABLE `prazzu_time_tracking`
   ADD KEY `idx_ptt_started` (`started_at`);
 
 --
+-- Índices para tabela `prazzu_user_permissions`
+--
+ALTER TABLE `prazzu_user_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_prazzu_user_permissions_user_module_action_scope` (`user_id`,`module`,`action`,`scope`),
+  ADD UNIQUE KEY `prazzu_user_permissions_user_module_action_scope_unique` (`user_id`,`module`,`action`,`scope`),
+  ADD KEY `idx_prazzu_user_permissions_module_action` (`module`,`action`),
+  ADD KEY `idx_prazzu_user_permissions_created_by` (`created_by`);
+
+--
 -- Índices para tabela `prazzu_user_roles`
 --
 ALTER TABLE `prazzu_user_roles`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `prazzu_user_roles_user_role_unique` (`user_id`,`role_id`),
   ADD KEY `idx_prazzu_user_roles_user` (`user_id`),
   ADD KEY `idx_prazzu_user_roles_role` (`role_id`);
 
@@ -3994,7 +4357,7 @@ ALTER TABLE `logs_sistema`
 -- AUTO_INCREMENT de tabela `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT de tabela `notificacoes_internas`
@@ -4090,7 +4453,13 @@ ALTER TABLE `prazzu_document_versions`
 -- AUTO_INCREMENT de tabela `prazzu_permissions`
 --
 ALTER TABLE `prazzu_permissions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=302;
+
+--
+-- AUTO_INCREMENT de tabela `prazzu_permission_audits`
+--
+ALTER TABLE `prazzu_permission_audits`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT de tabela `prazzu_permission_rules`
@@ -4102,7 +4471,7 @@ ALTER TABLE `prazzu_permission_rules`
 -- AUTO_INCREMENT de tabela `prazzu_roles`
 --
 ALTER TABLE `prazzu_roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT de tabela `prazzu_sla_policies`
@@ -4171,10 +4540,16 @@ ALTER TABLE `prazzu_time_tracking`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `prazzu_user_permissions`
+--
+ALTER TABLE `prazzu_user_permissions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `prazzu_user_roles`
 --
 ALTER TABLE `prazzu_user_roles`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT de tabela `relatorios_personalizados`
@@ -4198,7 +4573,7 @@ ALTER TABLE `relatorios_personalizados_filtros`
 -- AUTO_INCREMENT de tabela `responsaveis`
 --
 ALTER TABLE `responsaveis`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=170;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT de tabela `sla_rules`
@@ -4210,7 +4585,7 @@ ALTER TABLE `sla_rules`
 -- AUTO_INCREMENT de tabela `sugestoes_melhorias`
 --
 ALTER TABLE `sugestoes_melhorias`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT de tabela `tags`
@@ -4385,6 +4760,34 @@ ALTER TABLE `notificacoes_internas`
 --
 ALTER TABLE `portal_cliente_tokens`
   ADD CONSTRAINT `portal_cliente_tokens_cliente_fk` FOREIGN KEY (`cliente_portal_user_id`) REFERENCES `cliente_portal_users` (`id`) ON DELETE CASCADE;
+
+--
+-- Limitadores para a tabela `prazzu_permissions`
+--
+ALTER TABLE `prazzu_permissions`
+  ADD CONSTRAINT `prazzu_permissions_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `prazzu_roles` (`id`) ON DELETE CASCADE;
+
+--
+-- Limitadores para a tabela `prazzu_permission_audits`
+--
+ALTER TABLE `prazzu_permission_audits`
+  ADD CONSTRAINT `prazzu_permission_audits_actor_user_id_foreign` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `prazzu_permission_audits_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `prazzu_roles` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `prazzu_permission_audits_target_user_id_foreign` FOREIGN KEY (`target_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Limitadores para a tabela `prazzu_user_permissions`
+--
+ALTER TABLE `prazzu_user_permissions`
+  ADD CONSTRAINT `prazzu_user_permissions_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `prazzu_user_permissions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Limitadores para a tabela `prazzu_user_roles`
+--
+ALTER TABLE `prazzu_user_roles`
+  ADD CONSTRAINT `prazzu_user_roles_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `prazzu_roles` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `prazzu_user_roles_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Limitadores para a tabela `relatorios_personalizados`

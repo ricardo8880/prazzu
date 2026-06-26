@@ -12,9 +12,11 @@ use UnitEnum;
 
 class DashboardExecutivoContabil extends Page
 {
+    public array $dashboardData = [];
+
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-pie';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
+    protected static string | UnitEnum | null $navigationGroup = 'Gestão';
 
     protected static ?string $navigationLabel = 'Dashboard Executivo Contábil';
 
@@ -22,7 +24,7 @@ class DashboardExecutivoContabil extends Page
 
     protected static ?string $slug = 'dashboard-executivo-contabil';
 
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 2;
 
     protected string $view = 'filament.pages.dashboard-executivo-contabil';
 
@@ -51,10 +53,15 @@ class DashboardExecutivoContabil extends Page
         return Width::Full;
     }
 
+    public function mount(): void
+    {
+        $this->dashboardData = app(DashboardExecutivoContabilData::class)->data();
+    }
+
     protected function getViewData(): array
     {
         return [
-            'dashboard' => app(DashboardExecutivoContabilData::class)->data(),
+            'dashboard' => $this->dashboardData ?: app(DashboardExecutivoContabilData::class)->data(),
         ];
     }
 }

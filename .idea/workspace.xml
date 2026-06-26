@@ -6,14 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivo.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivo.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Http/Middleware/EnsureAccountingProfileCanAccessFilament.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Middleware/EnsureAccountingProfileCanAccessFilament.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Services/PrazzuEnterpriseMaturityService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/PrazzuEnterpriseMaturityService.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Support/AccountingProfileNavigation.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/AccountingProfileNavigation.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/prazzu-operational-tool-page.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/prazzu-operational-tool-page.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/khhkRNuV4dOuqlTauxPV9g09RL1AR5PpZHCedAUY" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/khhkRNuV4dOuqlTauxPV9g09RL1AR5PpZHCedAUY" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

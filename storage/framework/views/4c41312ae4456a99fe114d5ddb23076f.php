@@ -10,173 +10,171 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <link rel="stylesheet" href="<?php echo e(asset('css/dashboard-executivo-contabil.css')); ?>?v=<?php echo e(file_exists(public_path('css/dashboard-executivo-contabil.css')) ? filemtime(public_path('css/dashboard-executivo-contabil.css')) : time()); ?>">
+    <?php if (! $__env->hasRenderedOnce('8d95b383-6ce6-432f-8cc9-02725dd9589c')): $__env->markAsRenderedOnce('8d95b383-6ce6-432f-8cc9-02725dd9589c'); ?>
+        <link rel="stylesheet" href="<?php echo e(asset('css/dashboard-executivo-contabil.css')); ?>?v=<?php echo e(file_exists(public_path('css/dashboard-executivo-contabil.css')) ? filemtime(public_path('css/dashboard-executivo-contabil.css')) : time()); ?>">
+    <?php endif; ?>
 
     <?php
-        $cards = $dashboard['cards'] ?? [];
-        $health = $dashboard['health'] ?? ['score' => 0, 'label' => 'Sem dados', 'tone' => 'info', 'message' => 'Dados ainda não encontrados.'];
-        $decisionBlocks = $dashboard['decision_blocks'] ?? [];
-        $sections = $dashboard['sections'] ?? [];
-        $quickActions = $dashboard['quick_actions'] ?? [];
+        $dashboard = $dashboard ?? ($this->dashboardData ?? []);
+        $risk = $dashboard['risk'] ?? [
+            'label' => 'Sem dados suficientes',
+            'headline' => 'Ainda não há dados suficientes para calcular o risco executivo contábil.',
+            'tone' => 'info',
+            'score' => 0,
+            'count' => 0,
+        ];
+        $top = $dashboard['top'] ?? [];
+        $decisionCards = collect($dashboard['decision_cards'] ?? ($dashboard['metrics'] ?? []))->sortBy('priority')->values()->all();
+        $resolveNow = $dashboard['resolve_now'] ?? [];
+        $blockers = $dashboard['blockers'] ?? [];
+        $trend = $dashboard['trend'] ?? null;
         $updatedAt = $dashboard['updated_at'] ?? now()->format('d/m/Y H:i');
+
+        $riskScore = max(0, min(100, (int) ($risk['score'] ?? 0)));
     ?>
 
-    <div class="dec-page" data-executive-accounting-dashboard>
-        <section class="dec-hero dec-tone-<?php echo e($health['tone'] ?? 'info'); ?>">
+    <div class="dec-cockpit" data-executive-accounting-dashboard>
+        <section class="dec-hero dec-tone-<?php echo e($top['tone'] ?? ($risk['tone'] ?? 'info')); ?>" aria-label="Estado executivo do escritório contábil">
             <div class="dec-hero__content">
-                <span class="dec-eyebrow">Gestão do escritório</span>
-                <h1>Dashboard Executivo Contábil</h1>
-                <p>Uma leitura simples para o sócio ou gestor entender clientes, prazos, documentos, equipe e financeiro sem abrir várias telas.</p>
+                <span class="dec-eyebrow"><?php echo e($top['eyebrow'] ?? 'Cockpit Executivo Contábil'); ?></span>
+                <h1><?php echo e($risk['label'] ?? 'Dashboard Executivo Contábil'); ?></h1>
+                <p><?php echo e($top['summary'] ?? ($risk['headline'] ?? 'Veja somente o que exige decisão executiva hoje.')); ?></p>
 
                 <div class="dec-hero__meta">
+                    <span><?php echo e((int) ($risk['count'] ?? 0)); ?> ponto(s) críticos consolidados</span>
                     <span>Atualizado em <?php echo e($updatedAt); ?></span>
-                    <span><?php echo e(count($cards)); ?> indicadores principais</span>
                 </div>
             </div>
 
-            <aside class="dec-health">
-                <span>Saúde da operação</span>
-                <strong><?php echo e($health['score'] ?? 0); ?>%</strong>
-                <b><?php echo e($health['label'] ?? 'Sem dados'); ?></b>
-                <p><?php echo e($health['message'] ?? 'Acompanhe os indicadores para tomar decisões.'); ?></p>
+            <aside class="dec-control" aria-label="Índice de controle operacional">
+                <div class="dec-control__head">
+                    <span><?php echo e($top['badge'] ?? 'Controle operacional'); ?></span>
+                    <strong><?php echo e($riskScore); ?>%</strong>
+                </div>
+                <div class="dec-control__bar" aria-hidden="true">
+                    <i style="width: <?php echo e($riskScore); ?>%"></i>
+                </div>
+                <p><?php echo e($risk['headline'] ?? 'Índice calculado a partir de obrigações, SLA, documentos e inadimplência com impacto.'); ?></p>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($top['primary_url'])): ?>
+                    <a class="dec-primary" href="<?php echo e($top['primary_url']); ?>"><?php echo e($top['primary_action'] ?? 'Abrir origem'); ?></a>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
             </aside>
         </section>
 
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($quickActions)): ?>
-            <nav class="dec-actions" aria-label="Ações rápidas do dashboard">
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $quickActions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $action): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                    <a href="<?php echo e($action['url']); ?>"><?php echo e($action['label']); ?></a>
-                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-            </nav>
-        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-
-        <section class="dec-kpis">
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $cards; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $card): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <article class="dec-kpi dec-tone-<?php echo e($card['tone'] ?? 'info'); ?>">
-                    <span><?php echo e($card['label'] ?? '-'); ?></span>
+        <section class="dec-decision-grid" aria-label="Quatro decisões executivas">
+            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $decisionCards; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $card): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                <a
+                    class="dec-decision dec-tone-<?php echo e($card['tone'] ?? 'info'); ?> <?php echo e(empty($card['url']) ? 'dec-decision--static' : ''); ?>"
+                    href="<?php echo e($card['url'] ?: '#'); ?>"
+                    <?php if(empty($card['url'])): ?> aria-disabled="true" onclick="return false" <?php endif; ?>
+                >
+                    <span class="dec-decision__icon" aria-hidden="true"><?php echo e($card['icon'] ?? '•'); ?></span>
+                    <span class="dec-decision__label"><?php echo e($card['label'] ?? 'Indicador executivo'); ?></span>
                     <strong><?php echo e($card['value'] ?? '0'); ?></strong>
-                    <p><?php echo e($card['hint'] ?? 'Indicador do escritório'); ?></p>
-                </article>
+                    <p><?php echo e($card['hint'] ?? 'Indicador consolidado das telas de origem.'); ?></p>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($card['url'])): ?>
+                        <em><?php echo e($card['action_label'] ?? 'Abrir origem'); ?> · <?php echo e($card['source_label'] ?? 'aba de origem'); ?></em>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </a>
             <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
                 <article class="dec-empty dec-empty--wide">
-                    <strong>Nenhum indicador encontrado.</strong>
-                    <p>Quando houver dados no banco, o dashboard vai exibir os principais números do escritório aqui.</p>
+                    <strong>Nenhuma decisão crítica encontrada.</strong>
+                    <p>Quando houver dados, esta área mostrará apenas riscos executivos, não métricas genéricas.</p>
                 </article>
             <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
         </section>
 
-        <section class="dec-decision-grid">
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $decisionBlocks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $block): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <article class="dec-decision dec-tone-<?php echo e($block['tone'] ?? 'info'); ?>">
+        <section class="dec-main-grid" aria-label="Filas executivas acionáveis">
+            <article class="dec-panel dec-panel--primary">
+                <header class="dec-panel__header">
                     <div>
-                        <span><?php echo e($block['title'] ?? 'Decisão'); ?></span>
-                        <strong><?php echo e(number_format((int) ($block['value'] ?? 0), 0, ',', '.')); ?></strong>
+                        <span class="dec-eyebrow">Resolver primeiro</span>
+                        <h2>Resolver agora</h2>
+                        <p>No máximo 5 itens que podem gerar multa, atraso, quebra de SLA ou desgaste com cliente.</p>
                     </div>
-                    <p><?php echo e($block['description'] ?? 'Analise os dados antes de decidir.'); ?></p>
-                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($block['url'])): ?>
-                        <a href="<?php echo e($block['url']); ?>"><?php echo e($block['action'] ?? 'Abrir tela'); ?></a>
-                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                </article>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-        </section>
+                    <strong><?php echo e(count($resolveNow)); ?></strong>
+                </header>
 
-        <section class="dec-command">
-            <div>
-                <strong>Encontrar informação</strong>
-                <p>Busque por cliente, responsável, status, tarefa ou cobrança dentro deste dashboard.</p>
-            </div>
-            <div class="dec-command__controls">
-                <input type="search" placeholder="Buscar no dashboard..." data-dec-search>
-                <select data-dec-tone>
-                    <option value="all">Todos os status</option>
-                    <option value="danger">Crítico</option>
-                    <option value="warning">Atenção</option>
-                    <option value="success">Saudável</option>
-                    <option value="info">Informativo</option>
-                </select>
-            </div>
-        </section>
-
-        <div class="dec-sections">
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $sections; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $section): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <section class="dec-card">
-                    <header>
-                        <div>
-                            <h2><?php echo e($section['title'] ?? 'Seção'); ?></h2>
-                            <p><?php echo e($section['description'] ?? 'Dados consolidados do escritório.'); ?></p>
+                <div class="dec-action-list">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $resolveNow; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                        <article class="dec-action dec-tone-<?php echo e($item['tone'] ?? 'info'); ?>">
+                            <div class="dec-action__top">
+                                <div>
+                                    <h3><?php echo e($item['title'] ?? 'Item crítico'); ?></h3>
+                                    <small><?php echo e($item['meta'] ?? 'Origem operacional'); ?></small>
+                                </div>
+                                <span><?php echo e($item['status'] ?? 'Ação'); ?></span>
+                            </div>
+                            <p><?php echo e($item['description'] ?? 'Abra a origem para executar sem duplicar gestão nesta tela.'); ?></p>
+                            <div class="dec-action__footer">
+                                <em><?php echo e(! empty($item['deadline']) ? 'Prazo ' . $item['deadline'] : 'Ação executiva'); ?></em>
+                                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($item['url'])): ?>
+                                    <a href="<?php echo e($item['url']); ?>"><?php echo e($item['action_label'] ?? 'Abrir origem'); ?></a>
+                                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                            </div>
+                        </article>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        <div class="dec-empty">
+                            <strong>Nada crítico para resolver agora.</strong>
+                            <p>Esta fila não lista tarefas comuns. Ela só aparece quando existe risco real de impacto.</p>
                         </div>
-                        <span><?php echo e(count($section['items'] ?? [])); ?></span>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            </article>
+
+            <aside class="dec-side-stack">
+                <article class="dec-panel">
+                    <header class="dec-panel__header dec-panel__header--compact">
+                        <div>
+                            <span class="dec-eyebrow">Gargalos</span>
+                            <h2>Bloqueios que travam entrega</h2>
+                            <p>Clientes ou fluxos que impedem entrega, obrigação, aprovação ou cobrança.</p>
+                        </div>
+                        <strong><?php echo e(count($blockers)); ?></strong>
                     </header>
 
-                    <div class="dec-list">
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_2 = true; $__currentLoopData = ($section['items'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_2 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                            <article class="dec-item dec-tone-<?php echo e($item['tone'] ?? 'info'); ?>" data-dec-item data-tone="<?php echo e($item['tone'] ?? 'info'); ?>" data-search="<?php echo e(\Illuminate\Support\Str::lower(($item['title'] ?? '') . ' ' . ($item['status'] ?? '') . ' ' . ($item['meta'] ?? '') . ' ' . ($item['description'] ?? ''))); ?>">
-                                <div class="dec-item__top">
-                                    <h3><?php echo e($item['title'] ?? 'Sem título'); ?></h3>
-                                    <span><?php echo e($item['status'] ?? '-'); ?></span>
+                    <div class="dec-blocker-list">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = $blockers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <article class="dec-blocker dec-tone-<?php echo e($item['tone'] ?? 'warning'); ?>">
+                                <div>
+                                    <h3><?php echo e($item['title'] ?? 'Bloqueio operacional'); ?></h3>
+                                    <small><?php echo e($item['meta'] ?? ($item['status'] ?? 'Bloqueio')); ?></small>
                                 </div>
-                                <small><?php echo e($item['meta'] ?? 'Sem contexto'); ?></small>
-                                <p><?php echo e($item['description'] ?? 'Sem descrição cadastrada.'); ?></p>
+                                <p><?php echo e($item['description'] ?? 'Bloqueio identificado a partir das telas de origem.'); ?></p>
                                 <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($item['url'])): ?>
-                                    <a href="<?php echo e($item['url']); ?>">Abrir origem</a>
+                                    <a href="<?php echo e($item['url']); ?>"><?php echo e($item['action_label'] ?? 'Abrir origem'); ?></a>
                                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                             </article>
-                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_2): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                            <div class="dec-empty">
-                                <strong>Nada crítico nesta fila.</strong>
-                                <p>Quando houver risco, atraso ou pendência, os registros aparecerão aqui de forma priorizada.</p>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                            <div class="dec-empty dec-empty--compact">
+                                <strong>Nenhum bloqueio relevante.</strong>
+                                <p>Documentos e pendências comuns continuam nas abas próprias.</p>
                             </div>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </div>
-                </section>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-                <section class="dec-card dec-card--wide">
-                    <div class="dec-empty">
-                        <strong>Nenhuma seção disponível.</strong>
-                        <p>O dashboard está ativo, mas ainda não encontrou dados suficientes no banco.</p>
+                </article>
+
+                <article class="dec-trend dec-tone-<?php echo e($trend['tone'] ?? 'info'); ?>">
+                    <span class="dec-eyebrow">Tendência executiva</span>
+                    <div class="dec-trend__metric">
+                        <strong><?php echo e($trend['value'] ?? ($riskScore . '%')); ?></strong>
+                        <span><?php echo e($trend['label'] ?? 'Risco operacional'); ?></span>
                     </div>
-                </section>
-            <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-        </div>
+                    <p><?php echo e($trend['description'] ?? 'Leitura resumida para saber se a rotina crítica está melhorando ou piorando.'); ?></p>
+                    <div class="dec-origin-note">Dados consolidados de SLA, Centro Operacional, Documentos e Cobranças.</div>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($trend['evidence'])): ?>
+                        <small><?php echo e($trend['evidence']); ?></small>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </article>
+            </aside>
+        </section>
 
-        <div class="dec-no-results" data-dec-empty hidden>
-            <strong>Nenhum resultado encontrado.</strong>
-            <p>Limpe a busca ou altere o status para visualizar os dados do dashboard.</p>
-        </div>
+        <section class="dec-footer-note" aria-label="Critério da dashboard">
+            <strong>Critério desta tela:</strong>
+            <span>não substituir Clientes, Financeiro, Documentos, SLA ou Centro Operacional; apenas apontar decisões executivas que não podem esperar.</span>
+        </section>
     </div>
-
-    <script>
-        (() => {
-            const root = document.querySelector('[data-executive-accounting-dashboard]');
-            if (! root) return;
-
-            const search = root.querySelector('[data-dec-search]');
-            const tone = root.querySelector('[data-dec-tone]');
-            const items = Array.from(root.querySelectorAll('[data-dec-item]'));
-            const empty = root.querySelector('[data-dec-empty]');
-
-            const normalize = (value) => (value || '').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-            const apply = () => {
-                const term = normalize(search?.value || '');
-                const selectedTone = tone?.value || 'all';
-                let visible = 0;
-
-                items.forEach((item) => {
-                    const text = normalize(item.dataset.search || item.textContent || '');
-                    const itemTone = item.dataset.tone || 'info';
-                    const show = (! term || text.includes(term)) && (selectedTone === 'all' || itemTone === selectedTone);
-                    item.hidden = ! show;
-                    if (show) visible++;
-                });
-
-                if (empty) empty.hidden = visible > 0 || items.length === 0;
-            };
-
-            search?.addEventListener('input', apply);
-            tone?.addEventListener('change', apply);
-        })();
-    </script>
  <?php echo $__env->renderComponent(); ?>
 <?php endif; ?>
 <?php if (isset($__attributesOriginal166a02a7c5ef5a9331faf66fa665c256)): ?>
