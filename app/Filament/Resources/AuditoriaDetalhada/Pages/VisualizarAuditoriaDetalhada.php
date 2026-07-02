@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AuditoriaDetalhada\Pages;
 
+use App\Filament\Pages\Auditoria;
 use App\Filament\Resources\AuditoriaDetalhada\AuditoriaDetalhadaResource;
 use App\Models\AuditoriaDetalhada;
 use App\Models\Empresa;
@@ -22,6 +23,11 @@ class VisualizarAuditoriaDetalhada extends Page
     protected string $view = 'filament.resources.auditoria-detalhada.pages.visualizar-auditoria-detalhada';
 
     protected static ?string $title = 'Investigação de Auditoria';
+
+    public function mount(): void
+    {
+        $this->redirect(Auditoria::getUrl() . '#auditoria-detalhada');
+    }
 
     public function getTitle(): string
     {

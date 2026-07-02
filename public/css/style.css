@@ -42416,3 +42416,112 @@ body.planos-page {
     .dark .storage-client-file strong { color: white; }
     @media (max-width: 900px) { .storage-client-hero, .storage-client-grid { grid-template-columns: 1fr; } .storage-client-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* ===== Fim migrado de resources/views/filament/pages/partials/armazenamento-cliente-modal.blade.php ===== */
+
+/* Auditoria unificada: resumo + investigação detalhada na mesma tela */
+.ad-unified-shell {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+    scroll-margin-top: 6rem;
+}
+
+.ad-unified-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    background: linear-gradient(135deg, rgba(15, 23, 42, .98), rgba(30, 64, 175, .92));
+    color: #fff;
+    box-shadow: 0 18px 50px rgba(15, 23, 42, .18);
+}
+
+.ad-unified-hero span {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .78);
+}
+
+.ad-unified-hero h2 {
+    margin: .35rem 0 .25rem;
+    font-size: clamp(1.35rem, 2vw, 2rem);
+    font-weight: 900;
+    color: #fff;
+}
+
+.ad-unified-hero p {
+    max-width: 58rem;
+    margin: 0;
+    color: rgba(255, 255, 255, .78);
+}
+
+.ad-unified-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .7rem;
+}
+
+.ad-unified-actions .compliance-link {
+    border: 1px solid rgba(255, 255, 255, .2);
+    color: #fff;
+    background: rgba(255, 255, 255, .08);
+}
+
+.ad-unified-shell .ad-panel,
+.ad-unified-shell .ad-metric-card {
+    border: 1px solid rgba(148, 163, 184, .24);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, .08);
+}
+
+.ad-unified-shell .ad-panel-header h3 {
+    margin: 0;
+    font-weight: 900;
+}
+
+.ad-unified-shell .ad-panel-header p {
+    margin: .2rem 0 0;
+    color: #64748b;
+}
+
+.ad-unified-shell .ad-timeline-item--ux {
+    border-left: 4px solid rgba(59, 130, 246, .36);
+}
+
+.ad-unified-shell .ad-diff--ux strong {
+    word-break: break-word;
+}
+
+@media (max-width: 900px) {
+    .ad-unified-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ad-unified-actions {
+        justify-content: flex-start;
+        width: 100%;
+    }
+}
+
+/* Ajuste Auditoria e Rastreabilidade: conteúdo separado em páginas internas sem quebrar o layout. */
+.compliance-grid.audit-single,
+.compliance-grid.compliance-grid-summary {
+    grid-template-columns: 1fr;
+}
+.compliance-grid-summary > .compliance-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+@media (max-width: 900px) {
+    .compliance-grid-summary > .compliance-list {
+        grid-template-columns: 1fr;
+    }
+}

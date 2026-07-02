@@ -40,6 +40,12 @@
             return url()->current() . (count($query) ? '?' . http_build_query($query) : '');
         };
 
+        $auditAbas = ['resumo', 'timeline', 'aprovacoes', 'investigacao'];
+        $aba = (string) request('aba', 'resumo');
+        if (! in_array($aba, $auditAbas, true)) {
+            $aba = 'resumo';
+        }
+
         $formatAuditLabel = fn ($value) => \App\Support\AuditoriaFormatter::modulo((string) $value);
         $formatAuditValue = fn ($value, $field = null) => \App\Support\AuditoriaFormatter::valor($value, $field);
         $formatAuditEvent = fn ($value) => \App\Support\AuditoriaFormatter::evento((string) $value);
@@ -51,6 +57,14 @@
                 'dateFilter' => 'todos',
             ], ['fromDate', 'toDate', 'searchFilter', 'userFilter', 'companyFilter', 'actionFilter']);
         };
+
+        $detalheMetricas = $detalheMetricas ?? [];
+        $detalheRecentes = $detalheRecentes ?? collect();
+        $detalheSuspeitas = $detalheSuspeitas ?? collect();
+        $detalheUsuarios = $detalheUsuarios ?? collect();
+        $detalheModulos = $detalheModulos ?? collect();
+        $detalheEmpresas = $detalheEmpresas ?? collect();
+        $detalheEventos = $detalheEventos ?? collect();
     ?>
 
     <div class="compliance-page">
@@ -65,22 +79,18 @@
                     <button type="button" class="compliance-export-button" wire:click="exportAuditoriaCsv" wire:loading.attr="disabled" wire:target="exportAuditoriaCsv"><i class="bi bi-filetype-csv"></i> Exportar CSV</button>
                     <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel</button>
                 <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                <a href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>"><i class="bi bi-search"></i> Investigar em detalhes</a>
+                <a href="<?php echo e($filterUrl(['aba' => 'investigacao'])); ?>"><i class="bi bi-search"></i> Ver investigação</a>
             </div>
         </section>
 
 
-        <section class="audit-purpose-strip">
-            <article><i class="bi bi-clock-history"></i><strong>Histórico</strong><span>Linha do tempo dos eventos e alterações.</span></article>
-            <article><i class="bi bi-person-check"></i><strong>Responsabilidade</strong><span>Usuário, empresa, IP e contexto da ação.</span></article>
-            <article><i class="bi bi-arrow-left-right"></i><strong>Antes e depois</strong><span>Comparação objetiva do valor anterior e novo.</span></article>
-        </section>
-
-        <section class="compliance-stats">
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($data['stats'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $stat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
-                <article class="compliance-stat"><span><?php echo e($stat['label']); ?></span><strong><?php echo e($stat['value']); ?></strong><small><?php echo e($stat['hint']); ?></small></article>
-            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
-        </section>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aba === 'resumo'): ?>
+            <section class="compliance-stats">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($data['stats'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $stat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                    <article class="compliance-stat"><span><?php echo e($stat['label']); ?></span><strong><?php echo e($stat['value']); ?></strong><small><?php echo e($stat['hint']); ?></small></article>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+            </section>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
         <section class="compliance-card compliance-filters">
             <header>
@@ -94,6 +104,7 @@
             </header>
 
             <form method="GET" action="<?php echo e(url()->current()); ?>" class="compliance-filter-grid compliance-filter-grid-advanced">
+                <input type="hidden" name="aba" value="<?php echo e($aba); ?>">
                 <label>
                     <span>Período rápido</span>
                     <select name="dateFilter">
@@ -179,12 +190,12 @@
 
                 <div class="compliance-filter-actions wide">
                     <button type="submit">Aplicar filtros</button>
-                    <a href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>">Abrir visão limpa de investigação</a>
+                    <a href="<?php echo e($filterUrl(['aba' => 'investigacao'])); ?>">Abrir visão limpa de investigação</a>
                 </div>
             </form>
         </section>
 
-        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($historyContext['active'])): ?>
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aba === 'resumo' && ! empty($historyContext['active'])): ?>
             <section class="compliance-card compliance-history-overview">
                 <header>
                     <div>
@@ -209,7 +220,8 @@
             </section>
         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
-        <section class="compliance-grid">
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aba === 'timeline'): ?>
+        <section class="compliance-grid audit-single">
             <article class="compliance-card">
                 <header><div><h2><?php echo e(! empty($historyContext['active']) ? 'Timeline do item selecionado' : 'Timeline de auditoria'); ?></h2><p><?php echo e(! empty($historyContext['active']) ? 'Histórico completo do registro focado, ordenado pelos eventos mais recentes.' : 'Últimos eventos reais registrados no banco' . ($hasActiveFilters ? ' conforme os filtros aplicados' : '') . '.'); ?></p></div></header>
                 <div class="compliance-list">
@@ -256,6 +268,11 @@
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                 </div>
             </article>
+        </section>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aba === 'resumo'): ?>
+        <section class="compliance-grid compliance-grid-summary">
 
             <div class="compliance-list">
                 <article class="compliance-card">
@@ -281,8 +298,11 @@
             </div>
         </section>
 
-        <section class="compliance-card">
-            <header><div><h2>Aprovações recentes</h2><p>Decisões internas que ajudam a comprovar governança.</p></div></header>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aba === 'aprovacoes'): ?>
+            <section class="compliance-card">
+                <header><div><h2>Aprovações recentes</h2><p>Decisões internas que ajudam a comprovar governança.</p></div></header>
             <div class="compliance-table-wrap"><table class="compliance-table"><thead><tr><th>Item</th><th>Empresa</th><th>Status</th><th>Observação</th><th>Data</th></tr></thead><tbody>
                     <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__empty_1 = true; $__currentLoopData = ($data['recentApprovals'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
                         <tr><td><strong><?php echo e($row['title']); ?></strong><br><small><?php echo e($row['meta']); ?></small></td><td><?php echo e(explode(' · ', $row['meta'])[0] ?? '-'); ?></td><td><span class="compliance-badge <?php echo e($row['tone']); ?>"><?php echo e($row['status']); ?></span></td><td><?php echo e($row['description']); ?></td><td><?php echo e($row['date']); ?></td></tr>
@@ -290,7 +310,155 @@
                         <tr><td colspan="5" class="compliance-empty">Nenhuma aprovação recente encontrada.</td></tr>
                     <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
                     </tbody></table></div>
+            </section>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+
+
+        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($aba === 'investigacao'): ?>
+            <section id="auditoria-detalhada" class="ad-unified-shell">
+            <div class="ad-unified-hero">
+                <div>
+                    <span><i class="bi bi-fingerprint"></i> Auditoria detalhada centralizada</span>
+                    <h2>Tudo em uma única central</h2>
+                    <p>Resumo executivo no topo, investigação logo abaixo e leitura em formato de timeline para o usuário entender rapidamente quem fez, quando fez, onde mexeu e o que mudou.</p>
+                </div>
+                <div class="ad-unified-actions">
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($this->canExportAuditoria()): ?>
+                        <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar recorte</button>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if(! empty($auditoriaDetalhadaManageUrl)): ?>
+                        <a href="<?php echo e($auditoriaDetalhadaManageUrl); ?>" class="compliance-link compliance-link-light"><i class="bi bi-table"></i> Tabela avançada</a>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </div>
+            </div>
+
+            <section class="ad-metrics ad-metrics--five">
+                <article class="ad-metric-card"><span>Total filtrado</span><strong><?php echo e(number_format((int) ($detalheMetricas['total'] ?? 0), 0, ',', '.')); ?></strong><small>Eventos dentro do recorte atual</small></article>
+                <article class="ad-metric-card ad-metric-card--info"><span>Hoje</span><strong><?php echo e(number_format((int) ($detalheMetricas['hoje'] ?? 0), 0, ',', '.')); ?></strong><small>Movimentações do dia</small></article>
+                <article class="ad-metric-card ad-metric-card--warning"><span>Alterações</span><strong><?php echo e(number_format((int) ($detalheMetricas['alteracoes'] ?? 0), 0, ',', '.')); ?></strong><small>Campos que mudaram</small></article>
+                <article class="ad-metric-card ad-metric-card--danger"><span>Exclusões</span><strong><?php echo e(number_format((int) ($detalheMetricas['exclusoes'] ?? 0), 0, ',', '.')); ?></strong><small>Registros removidos</small></article>
+                <article class="ad-metric-card ad-metric-card--critical"><span>Revisar</span><strong><?php echo e(number_format((int) ($detalheMetricas['sensiveis'] ?? 0), 0, ',', '.')); ?></strong><small>Senha, permissão, status, exportação ou falha</small></article>
+            </section>
+
+            <section class="ad-panel ad-panel--large ad-focus-panel">
+                <div class="ad-panel-header">
+                    <div>
+                        <h3>Linha do tempo detalhada</h3>
+                        <p>Leitura direta para investigação: usuário, empresa, módulo, registro, IP e comparação antes/depois.</p>
+                    </div>
+                    <div class="ad-panel-counter"><?php echo e(number_format((int) $detalheRecentes->count(), 0, ',', '.')); ?> recentes</div>
+                </div>
+
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detalheRecentes->isEmpty()): ?>
+                    <div class="ad-empty">Nenhuma movimentação encontrada para os filtros aplicados.</div>
+                <?php else: ?>
+                    <div class="ad-timeline">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $detalheRecentes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $registro): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <div class="ad-timeline-item ad-timeline-item--ux">
+                                <div class="ad-avatar" title="<?php echo e($registro->user?->name ?? 'Sistema'); ?>"><?php echo e($this->iniciaisUsuario($registro)); ?></div>
+                                <div class="ad-timeline-content">
+                                    <div class="ad-timeline-top">
+                                        <div class="ad-timeline-badges">
+                                            <span class="ad-badge <?php echo e($this->eventoClasse($registro->evento)); ?>"><?php echo e($formatAuditEvent($registro->evento)); ?></span>
+                                            <span class="ad-badge <?php echo e($this->sensivelClasse($registro)); ?>"><?php echo e($this->sensivelLabel($registro)); ?></span>
+                                        </div>
+                                        <time><?php echo e($this->dataHumana($registro->created_at)); ?></time>
+                                    </div>
+                                    <h4><?php echo e($this->resumoAcao($registro)); ?></h4>
+                                    <div class="ad-timeline-meta">
+                                        <span>Usuário: <?php echo e($registro->user?->name ?? 'Sistema'); ?></span>
+                                        <span>Empresa: <?php echo e($this->nomeEmpresa($registro)); ?></span>
+                                        <span>Módulo: <?php echo e($formatAuditLabel($registro->auditable_type)); ?></span>
+                                        <span>Registro: <?php echo e($formatAuditRecord($registro->auditable_type, $registro->auditable_id)); ?></span>
+                                        <span>IP: <?php echo e($registro->ip ?: '-'); ?></span>
+                                    </div>
+                                    <div class="ad-diff ad-diff--ux">
+                                        <div><span>Valor anterior</span><strong><?php echo e($this->valorRegistro($registro->valor_anterior, $registro->campo)); ?></strong></div>
+                                        <div><span>Valor novo</span><strong><?php echo e($this->valorRegistro($registro->valor_novo, $registro->campo)); ?></strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                    </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </section>
+
+            <section class="ad-panel">
+                <div class="ad-panel-header">
+                    <div><h3>Ações que merecem revisão</h3><p>Eventos com maior impacto em segurança, permissões, status, exportações, exclusões e integrações.</p></div>
+                    <div class="ad-panel-counter"><?php echo e(number_format((int) $detalheSuspeitas->count(), 0, ',', '.')); ?> recentes</div>
+                </div>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detalheSuspeitas->isEmpty()): ?>
+                    <div class="ad-empty">Nenhuma ação sensível encontrada no recorte atual.</div>
+                <?php else: ?>
+                    <div class="ad-sensitive-grid">
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $detalheSuspeitas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $registro): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                            <article class="ad-sensitive-card">
+                                <div class="ad-sensitive-top"><span class="ad-badge ad-badge--danger">Revisar</span><time><?php echo e(optional($registro->created_at)->format('d/m/Y H:i') ?: '-'); ?></time></div>
+                                <h4><?php echo e($formatAuditRecord($registro->auditable_type, $registro->auditable_id)); ?></h4>
+                                <p><?php echo e($this->resumoAcao($registro)); ?></p>
+                                <div class="ad-timeline-meta"><span><?php echo e($registro->user?->name ?? 'Sistema'); ?></span><span><?php echo e($this->nomeEmpresa($registro)); ?></span></div>
+                            </article>
+                        <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                    </div>
+                <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+            </section>
+
+            <section class="ad-layout ad-layout--balanced">
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Eventos por tipo</h3><p>Distribuição das ações registradas no filtro atual.</p></div></div>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detalheEventos->isEmpty()): ?>
+                        <div class="ad-empty">Nenhum evento encontrado.</div>
+                    <?php else: ?>
+                        <div class="ad-chart">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $detalheEventos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $evento): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <div class="ad-chart-row"><div class="ad-chart-label"><span class="ad-badge <?php echo e($evento['classe']); ?>"><?php echo e($evento['label']); ?></span></div><div class="ad-chart-track"><div class="ad-chart-bar" style="width: <?php echo e($evento['percentual']); ?>%"></div></div><strong><?php echo e(number_format((int) $evento['valor'], 0, ',', '.')); ?></strong></div>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </article>
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Usuários mais ativos</h3><p>Quem mais gerou movimentações.</p></div></div>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detalheUsuarios->isEmpty()): ?>
+                        <div class="ad-empty">Sem usuários auditados.</div>
+                    <?php else: ?>
+                        <div class="ad-ranking">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $detalheUsuarios; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $usuario): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <div class="ad-ranking-row ad-ranking-row--stacked"><span><?php echo e($usuario['nome']); ?></span><small>Última ação: <?php echo e($usuario['ultima']); ?></small><strong><?php echo e(number_format((int) $usuario['total'], 0, ',', '.')); ?></strong></div>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </article>
+            </section>
+
+            <section class="ad-layout ad-layout--balanced">
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Auditoria por empresa</h3><p>Empresas com maior volume de rastreio.</p></div></div>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detalheEmpresas->isEmpty()): ?>
+                        <div class="ad-empty">Nenhuma empresa encontrada.</div>
+                    <?php else: ?>
+                        <div class="ad-ranking">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $detalheEmpresas; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $empresa): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <div class="ad-ranking-row"><span><?php echo e($empresa['nome']); ?></span><strong><?php echo e(number_format((int) $empresa['total'], 0, ',', '.')); ?></strong></div>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </article>
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Áreas mais movimentadas</h3><p>Módulos do sistema com mais alterações.</p></div></div>
+                    <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($detalheModulos->isEmpty()): ?>
+                        <div class="ad-empty">Nenhum módulo encontrado.</div>
+                    <?php else: ?>
+                        <div class="ad-ranking">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $detalheModulos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $modulo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <div class="ad-ranking-row"><span><?php echo e($modulo['nome']); ?></span><strong><?php echo e(number_format((int) $modulo['total'], 0, ',', '.')); ?></strong></div>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
+                </article>
+            </section>
         </section>
+        <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
 
 
         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($data['timeline'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $modalEventIndex => $modalEvent): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
@@ -454,7 +622,7 @@
                         <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php endif; ?><?php if($eventDetailHistoryUrl !== '#'): ?>
                             <a class="compliance-modal-primary-action" href="<?php echo e($eventDetailHistoryUrl); ?>">Ver histórico completo deste item</a>
                         <?php endif; ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php endif; ?>
-                        <a class="compliance-modal-secondary-action" href="<?php echo e($auditoriaDetalhadaUrl ?? '#'); ?>">Abrir auditoria detalhada</a>
+                        <a class="compliance-modal-secondary-action" href="<?php echo e($filterUrl(['aba' => 'investigacao'])); ?>">Ir para auditoria detalhada</a>
                     </div>
                 </div>
              <?php echo $__env->renderComponent(); ?>

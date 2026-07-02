@@ -29,6 +29,12 @@
             return url()->current() . (count($query) ? '?' . http_build_query($query) : '');
         };
 
+        $auditAbas = ['resumo', 'timeline', 'aprovacoes', 'investigacao'];
+        $aba = (string) request('aba', 'resumo');
+        if (! in_array($aba, $auditAbas, true)) {
+            $aba = 'resumo';
+        }
+
         $formatAuditLabel = fn ($value) => \App\Support\AuditoriaFormatter::modulo((string) $value);
         $formatAuditValue = fn ($value, $field = null) => \App\Support\AuditoriaFormatter::valor($value, $field);
         $formatAuditEvent = fn ($value) => \App\Support\AuditoriaFormatter::evento((string) $value);
@@ -40,6 +46,14 @@
                 'dateFilter' => 'todos',
             ], ['fromDate', 'toDate', 'searchFilter', 'userFilter', 'companyFilter', 'actionFilter']);
         };
+
+        $detalheMetricas = $detalheMetricas ?? [];
+        $detalheRecentes = $detalheRecentes ?? collect();
+        $detalheSuspeitas = $detalheSuspeitas ?? collect();
+        $detalheUsuarios = $detalheUsuarios ?? collect();
+        $detalheModulos = $detalheModulos ?? collect();
+        $detalheEmpresas = $detalheEmpresas ?? collect();
+        $detalheEventos = $detalheEventos ?? collect();
     @endphp
 
     <div class="compliance-page">
@@ -54,22 +68,18 @@
                     <button type="button" class="compliance-export-button" wire:click="exportAuditoriaCsv" wire:loading.attr="disabled" wire:target="exportAuditoriaCsv"><i class="bi bi-filetype-csv"></i> Exportar CSV</button>
                     <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel</button>
                 @endif
-                <a href="{{ $auditoriaDetalhadaUrl ?? '#' }}"><i class="bi bi-search"></i> Investigar em detalhes</a>
+                <a href="{{ $filterUrl(['aba' => 'investigacao']) }}"><i class="bi bi-search"></i> Ver investigação</a>
             </div>
         </section>
 
 
-        <section class="audit-purpose-strip">
-            <article><i class="bi bi-clock-history"></i><strong>Histórico</strong><span>Linha do tempo dos eventos e alterações.</span></article>
-            <article><i class="bi bi-person-check"></i><strong>Responsabilidade</strong><span>Usuário, empresa, IP e contexto da ação.</span></article>
-            <article><i class="bi bi-arrow-left-right"></i><strong>Antes e depois</strong><span>Comparação objetiva do valor anterior e novo.</span></article>
-        </section>
-
-        <section class="compliance-stats">
-            @foreach (($data['stats'] ?? []) as $stat)
-                <article class="compliance-stat"><span>{{ $stat['label'] }}</span><strong>{{ $stat['value'] }}</strong><small>{{ $stat['hint'] }}</small></article>
-            @endforeach
-        </section>
+        @if ($aba === 'resumo')
+            <section class="compliance-stats">
+                @foreach (($data['stats'] ?? []) as $stat)
+                    <article class="compliance-stat"><span>{{ $stat['label'] }}</span><strong>{{ $stat['value'] }}</strong><small>{{ $stat['hint'] }}</small></article>
+                @endforeach
+            </section>
+        @endif
 
         <section class="compliance-card compliance-filters">
             <header>
@@ -83,6 +93,7 @@
             </header>
 
             <form method="GET" action="{{ url()->current() }}" class="compliance-filter-grid compliance-filter-grid-advanced">
+                <input type="hidden" name="aba" value="{{ $aba }}">
                 <label>
                     <span>Período rápido</span>
                     <select name="dateFilter">
@@ -168,12 +179,12 @@
 
                 <div class="compliance-filter-actions wide">
                     <button type="submit">Aplicar filtros</button>
-                    <a href="{{ $auditoriaDetalhadaUrl ?? '#' }}">Abrir visão limpa de investigação</a>
+                    <a href="{{ $filterUrl(['aba' => 'investigacao']) }}">Abrir visão limpa de investigação</a>
                 </div>
             </form>
         </section>
 
-        @if (! empty($historyContext['active']))
+        @if ($aba === 'resumo' && ! empty($historyContext['active']))
             <section class="compliance-card compliance-history-overview">
                 <header>
                     <div>
@@ -198,7 +209,8 @@
             </section>
         @endif
 
-        <section class="compliance-grid">
+        @if ($aba === 'timeline')
+        <section class="compliance-grid audit-single">
             <article class="compliance-card">
                 <header><div><h2>{{ ! empty($historyContext['active']) ? 'Timeline do item selecionado' : 'Timeline de auditoria' }}</h2><p>{{ ! empty($historyContext['active']) ? 'Histórico completo do registro focado, ordenado pelos eventos mais recentes.' : 'Últimos eventos reais registrados no banco' . ($hasActiveFilters ? ' conforme os filtros aplicados' : '') . '.' }}</p></div></header>
                 <div class="compliance-list">
@@ -245,6 +257,11 @@
                     @endforelse
                 </div>
             </article>
+        </section>
+        @endif
+
+        @if ($aba === 'resumo')
+        <section class="compliance-grid compliance-grid-summary">
 
             <div class="compliance-list">
                 <article class="compliance-card">
@@ -270,8 +287,11 @@
             </div>
         </section>
 
-        <section class="compliance-card">
-            <header><div><h2>Aprovações recentes</h2><p>Decisões internas que ajudam a comprovar governança.</p></div></header>
+        @endif
+
+        @if ($aba === 'aprovacoes')
+            <section class="compliance-card">
+                <header><div><h2>Aprovações recentes</h2><p>Decisões internas que ajudam a comprovar governança.</p></div></header>
             <div class="compliance-table-wrap"><table class="compliance-table"><thead><tr><th>Item</th><th>Empresa</th><th>Status</th><th>Observação</th><th>Data</th></tr></thead><tbody>
                     @forelse (($data['recentApprovals'] ?? []) as $row)
                         <tr><td><strong>{{ $row['title'] }}</strong><br><small>{{ $row['meta'] }}</small></td><td>{{ explode(' · ', $row['meta'])[0] ?? '-' }}</td><td><span class="compliance-badge {{ $row['tone'] }}">{{ $row['status'] }}</span></td><td>{{ $row['description'] }}</td><td>{{ $row['date'] }}</td></tr>
@@ -279,7 +299,155 @@
                         <tr><td colspan="5" class="compliance-empty">Nenhuma aprovação recente encontrada.</td></tr>
                     @endforelse
                     </tbody></table></div>
+            </section>
+        @endif
+
+
+        @if ($aba === 'investigacao')
+            <section id="auditoria-detalhada" class="ad-unified-shell">
+            <div class="ad-unified-hero">
+                <div>
+                    <span><i class="bi bi-fingerprint"></i> Auditoria detalhada centralizada</span>
+                    <h2>Tudo em uma única central</h2>
+                    <p>Resumo executivo no topo, investigação logo abaixo e leitura em formato de timeline para o usuário entender rapidamente quem fez, quando fez, onde mexeu e o que mudou.</p>
+                </div>
+                <div class="ad-unified-actions">
+                    @if ($this->canExportAuditoria())
+                        <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar recorte</button>
+                    @endif
+                    @if (! empty($auditoriaDetalhadaManageUrl))
+                        <a href="{{ $auditoriaDetalhadaManageUrl }}" class="compliance-link compliance-link-light"><i class="bi bi-table"></i> Tabela avançada</a>
+                    @endif
+                </div>
+            </div>
+
+            <section class="ad-metrics ad-metrics--five">
+                <article class="ad-metric-card"><span>Total filtrado</span><strong>{{ number_format((int) ($detalheMetricas['total'] ?? 0), 0, ',', '.') }}</strong><small>Eventos dentro do recorte atual</small></article>
+                <article class="ad-metric-card ad-metric-card--info"><span>Hoje</span><strong>{{ number_format((int) ($detalheMetricas['hoje'] ?? 0), 0, ',', '.') }}</strong><small>Movimentações do dia</small></article>
+                <article class="ad-metric-card ad-metric-card--warning"><span>Alterações</span><strong>{{ number_format((int) ($detalheMetricas['alteracoes'] ?? 0), 0, ',', '.') }}</strong><small>Campos que mudaram</small></article>
+                <article class="ad-metric-card ad-metric-card--danger"><span>Exclusões</span><strong>{{ number_format((int) ($detalheMetricas['exclusoes'] ?? 0), 0, ',', '.') }}</strong><small>Registros removidos</small></article>
+                <article class="ad-metric-card ad-metric-card--critical"><span>Revisar</span><strong>{{ number_format((int) ($detalheMetricas['sensiveis'] ?? 0), 0, ',', '.') }}</strong><small>Senha, permissão, status, exportação ou falha</small></article>
+            </section>
+
+            <section class="ad-panel ad-panel--large ad-focus-panel">
+                <div class="ad-panel-header">
+                    <div>
+                        <h3>Linha do tempo detalhada</h3>
+                        <p>Leitura direta para investigação: usuário, empresa, módulo, registro, IP e comparação antes/depois.</p>
+                    </div>
+                    <div class="ad-panel-counter">{{ number_format((int) $detalheRecentes->count(), 0, ',', '.') }} recentes</div>
+                </div>
+
+                @if($detalheRecentes->isEmpty())
+                    <div class="ad-empty">Nenhuma movimentação encontrada para os filtros aplicados.</div>
+                @else
+                    <div class="ad-timeline">
+                        @foreach($detalheRecentes as $registro)
+                            <div class="ad-timeline-item ad-timeline-item--ux">
+                                <div class="ad-avatar" title="{{ $registro->user?->name ?? 'Sistema' }}">{{ $this->iniciaisUsuario($registro) }}</div>
+                                <div class="ad-timeline-content">
+                                    <div class="ad-timeline-top">
+                                        <div class="ad-timeline-badges">
+                                            <span class="ad-badge {{ $this->eventoClasse($registro->evento) }}">{{ $formatAuditEvent($registro->evento) }}</span>
+                                            <span class="ad-badge {{ $this->sensivelClasse($registro) }}">{{ $this->sensivelLabel($registro) }}</span>
+                                        </div>
+                                        <time>{{ $this->dataHumana($registro->created_at) }}</time>
+                                    </div>
+                                    <h4>{{ $this->resumoAcao($registro) }}</h4>
+                                    <div class="ad-timeline-meta">
+                                        <span>Usuário: {{ $registro->user?->name ?? 'Sistema' }}</span>
+                                        <span>Empresa: {{ $this->nomeEmpresa($registro) }}</span>
+                                        <span>Módulo: {{ $formatAuditLabel($registro->auditable_type) }}</span>
+                                        <span>Registro: {{ $formatAuditRecord($registro->auditable_type, $registro->auditable_id) }}</span>
+                                        <span>IP: {{ $registro->ip ?: '-' }}</span>
+                                    </div>
+                                    <div class="ad-diff ad-diff--ux">
+                                        <div><span>Valor anterior</span><strong>{{ $this->valorRegistro($registro->valor_anterior, $registro->campo) }}</strong></div>
+                                        <div><span>Valor novo</span><strong>{{ $this->valorRegistro($registro->valor_novo, $registro->campo) }}</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+
+            <section class="ad-panel">
+                <div class="ad-panel-header">
+                    <div><h3>Ações que merecem revisão</h3><p>Eventos com maior impacto em segurança, permissões, status, exportações, exclusões e integrações.</p></div>
+                    <div class="ad-panel-counter">{{ number_format((int) $detalheSuspeitas->count(), 0, ',', '.') }} recentes</div>
+                </div>
+                @if($detalheSuspeitas->isEmpty())
+                    <div class="ad-empty">Nenhuma ação sensível encontrada no recorte atual.</div>
+                @else
+                    <div class="ad-sensitive-grid">
+                        @foreach($detalheSuspeitas as $registro)
+                            <article class="ad-sensitive-card">
+                                <div class="ad-sensitive-top"><span class="ad-badge ad-badge--danger">Revisar</span><time>{{ optional($registro->created_at)->format('d/m/Y H:i') ?: '-' }}</time></div>
+                                <h4>{{ $formatAuditRecord($registro->auditable_type, $registro->auditable_id) }}</h4>
+                                <p>{{ $this->resumoAcao($registro) }}</p>
+                                <div class="ad-timeline-meta"><span>{{ $registro->user?->name ?? 'Sistema' }}</span><span>{{ $this->nomeEmpresa($registro) }}</span></div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+
+            <section class="ad-layout ad-layout--balanced">
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Eventos por tipo</h3><p>Distribuição das ações registradas no filtro atual.</p></div></div>
+                    @if($detalheEventos->isEmpty())
+                        <div class="ad-empty">Nenhum evento encontrado.</div>
+                    @else
+                        <div class="ad-chart">
+                            @foreach($detalheEventos as $evento)
+                                <div class="ad-chart-row"><div class="ad-chart-label"><span class="ad-badge {{ $evento['classe'] }}">{{ $evento['label'] }}</span></div><div class="ad-chart-track"><div class="ad-chart-bar" style="width: {{ $evento['percentual'] }}%"></div></div><strong>{{ number_format((int) $evento['valor'], 0, ',', '.') }}</strong></div>
+                            @endforeach
+                        </div>
+                    @endif
+                </article>
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Usuários mais ativos</h3><p>Quem mais gerou movimentações.</p></div></div>
+                    @if($detalheUsuarios->isEmpty())
+                        <div class="ad-empty">Sem usuários auditados.</div>
+                    @else
+                        <div class="ad-ranking">
+                            @foreach($detalheUsuarios as $usuario)
+                                <div class="ad-ranking-row ad-ranking-row--stacked"><span>{{ $usuario['nome'] }}</span><small>Última ação: {{ $usuario['ultima'] }}</small><strong>{{ number_format((int) $usuario['total'], 0, ',', '.') }}</strong></div>
+                            @endforeach
+                        </div>
+                    @endif
+                </article>
+            </section>
+
+            <section class="ad-layout ad-layout--balanced">
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Auditoria por empresa</h3><p>Empresas com maior volume de rastreio.</p></div></div>
+                    @if($detalheEmpresas->isEmpty())
+                        <div class="ad-empty">Nenhuma empresa encontrada.</div>
+                    @else
+                        <div class="ad-ranking">
+                            @foreach($detalheEmpresas as $empresa)
+                                <div class="ad-ranking-row"><span>{{ $empresa['nome'] }}</span><strong>{{ number_format((int) $empresa['total'], 0, ',', '.') }}</strong></div>
+                            @endforeach
+                        </div>
+                    @endif
+                </article>
+                <article class="ad-panel">
+                    <div class="ad-panel-header"><div><h3>Áreas mais movimentadas</h3><p>Módulos do sistema com mais alterações.</p></div></div>
+                    @if($detalheModulos->isEmpty())
+                        <div class="ad-empty">Nenhum módulo encontrado.</div>
+                    @else
+                        <div class="ad-ranking">
+                            @foreach($detalheModulos as $modulo)
+                                <div class="ad-ranking-row"><span>{{ $modulo['nome'] }}</span><strong>{{ number_format((int) $modulo['total'], 0, ',', '.') }}</strong></div>
+                            @endforeach
+                        </div>
+                    @endif
+                </article>
+            </section>
         </section>
+        @endif
 
 
         @foreach (($data['timeline'] ?? []) as $modalEventIndex => $modalEvent)
@@ -430,7 +598,7 @@
                         @if ($eventDetailHistoryUrl !== '#')
                             <a class="compliance-modal-primary-action" href="{{ $eventDetailHistoryUrl }}">Ver histórico completo deste item</a>
                         @endif
-                        <a class="compliance-modal-secondary-action" href="{{ $auditoriaDetalhadaUrl ?? '#' }}">Abrir auditoria detalhada</a>
+                        <a class="compliance-modal-secondary-action" href="{{ $filterUrl(['aba' => 'investigacao']) }}">Ir para auditoria detalhada</a>
                     </div>
                 </div>
             </x-filament::modal>
