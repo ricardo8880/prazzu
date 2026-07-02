@@ -5,13 +5,13 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\Auth\Login;
 use App\Filament\Pages\Home;
 use App\Http\Middleware\CheckEmpresaPagamento;
-use App\Http\Middleware\EnsureAccountingProfileCanAccessFilament;
 use App\Support\WhiteLabelSettings;
+use App\Support\PrazzuSidebarNavigation;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationBuilder;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Assets\Css;
@@ -63,14 +63,6 @@ class AdminPanelProvider extends PanelProvider
                 'prazzu-global',
                 asset('css/prazzu-global.css') . '?v=20260520-sidebar-logo-final'
             ),
-            Css::make(
-                'workmode-order',
-                asset('css/workmode-order.css') . '?v=20260601-product-profiles-lote3'
-            ),
-            Css::make(
-                'workmode-ux',
-                asset('css/workmode-ux.css') . '?v=20260619-accounting-profiles-lote3'
-            ),
         ]);
 
         return $panel
@@ -92,40 +84,7 @@ class AdminPanelProvider extends PanelProvider
                 $whiteLabel->favicon() ?: asset('favicon.ico')
             )
 
-            ->navigationGroups([
-                NavigationGroup::make('Visão Geral Contábil')
-                    ->collapsible(false),
-                NavigationGroup::make('Central Operacional')
-                    ->collapsible(false),
-                NavigationGroup::make('Pendências e Alertas')
-                    ->collapsible(false),
-                NavigationGroup::make('Clientes')
-                    ->collapsible(false),
-                NavigationGroup::make('Atendimentos')
-                    ->collapsible(false),
-                NavigationGroup::make('Documentos')
-                    ->collapsible(false),
-                NavigationGroup::make('Contratos')
-                    ->collapsible(false),
-                NavigationGroup::make('Financeiro')
-                    ->collapsible(false),
-                NavigationGroup::make('Aprovações')
-                    ->collapsible(false),
-                NavigationGroup::make('Calendário Operacional')
-                    ->collapsible(false),
-                NavigationGroup::make('Visualizações da Operação')
-                    ->collapsible(false),
-                NavigationGroup::make('Relatórios')
-                    ->collapsible(false),
-                NavigationGroup::make('Auditoria e Riscos')
-                    ->collapsible(false),
-                NavigationGroup::make('Administração')
-                    ->collapsible(false),
-                NavigationGroup::make('Configurações')
-                    ->collapsible(false),
-                NavigationGroup::make('Conta')
-                    ->collapsible(false),
-            ])
+            ->navigation(fn (NavigationBuilder $builder): NavigationBuilder => PrazzuSidebarNavigation::build($builder, $panel))
 
             ->login(Login::class)
 
@@ -180,7 +139,7 @@ class AdminPanelProvider extends PanelProvider
 
             ->renderHook(
                 PanelsRenderHook::SIDEBAR_NAV_START,
-                fn () => Blade::render('@include("components.sidebar-workmode-controls")')
+                fn () => Blade::render('@include("components.sidebar-toggle")')
             )
 
             ->renderHook(
@@ -193,7 +152,6 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 CheckEmpresaPagamento::class,
-                EnsureAccountingProfileCanAccessFilament::class,
             ]);
     }
 }

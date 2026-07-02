@@ -52,7 +52,7 @@ class WhiteLabel extends Page implements HasForms
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return true;
     }
 
     public function mount(): void

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Support\AccountingProfileNavigation;
 use App\Support\DashboardExecutivoContabilData;
 use BackedEnum;
 use Filament\Facades\Filament;
@@ -35,17 +34,7 @@ class DashboardExecutivoContabil extends Page
 
     public static function canAccess(): bool
     {
-        $user = Filament::auth()->user();
-
-        if (! $user) {
-            return false;
-        }
-
-        if (method_exists($user, 'isSuperAdmin') && $user->isSuperAdmin()) {
-            return true;
-        }
-
-        return AccountingProfileNavigation::canAccessLabel($user, 'Dashboard Executivo Contábil');
+        return Filament::auth()->check();
     }
 
     public function getMaxContentWidth(): Width|string|null

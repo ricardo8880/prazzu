@@ -4,7 +4,45 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="" />
+    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/AssistenteOperacional.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/AssistenteOperacional.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/AuditoriaAdministrativa.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/AuditoriaAdministrativa.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/CentroOperacionalGestao.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/CentroOperacionalGestao.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivo.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivo.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivoContabil.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivoContabil.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/DashboardGlobal.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/DashboardGlobal.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/EmpresaAdministrativa.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/EmpresaAdministrativa.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Equipes.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Equipes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/GestaoPlanos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/GestaoPlanos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/NavegacaoContextual.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/NavegacaoContextual.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Onboarding.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Onboarding.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Permissoes.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Permissoes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/RelatoriosExportaveis.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/RelatoriosExportaveis.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/TemplatesEnterprise.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/TemplatesEnterprise.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Usuarios.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Usuarios.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/WhiteLabel.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/WhiteLabel.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/AuditoriaDetalhada/AuditoriaDetalhadaResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/AuditoriaDetalhada/AuditoriaDetalhadaResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/CategoriaItemControles/CategoriaItemControleResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/CategoriaItemControles/CategoriaItemControleResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/Configuracoes/ConfiguracaoResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/Configuracoes/ConfiguracaoResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/Empresas/EmpresaResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/Empresas/EmpresaResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/ItemControleTags/ItemControleTagResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/ItemControleTags/ItemControleTagResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/Users/UserResource.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/Users/UserResource.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Middleware/EnsureAccountingProfileCanAccessFilament.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Providers/Filament/AdminPanelProvider.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Providers/Filament/AdminPanelProvider.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/AccountingProfileNavigation.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Support/ProductProfileNavigation.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/prazzu-theme.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/css/prazzu-theme.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/workmode-order.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/css/workmode-ux.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/components/sidebar-workmode-controls.blade.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/resources/views/components/workmode-selector.blade.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/igv9xNVUWgvZC3Wd0v0LrZlAfHVmxDbm9ksHjg9K" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -228,6 +266,7 @@
       <workItem from="1782127057560" duration="81000" />
       <workItem from="1782134842537" duration="4864000" />
       <workItem from="1782480490785" duration="4715000" />
+      <workItem from="1782991073000" duration="1743000" />
     </task>
     <servers />
   </component>

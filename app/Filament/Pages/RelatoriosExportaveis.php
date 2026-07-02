@@ -18,7 +18,7 @@ class RelatoriosExportaveis extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return true;
     }
 
     protected function getViewData(): array

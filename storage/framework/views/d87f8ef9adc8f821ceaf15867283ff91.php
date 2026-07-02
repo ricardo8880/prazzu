@@ -1,0 +1,1 @@
+<?php echo $__env->make("components.sidebar-toggle", array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\prazzu\storage\framework\views/72513d5b1874ee580feef7ec00bb4776.blade.php ENDPATH**/ ?>

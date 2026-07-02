@@ -39,7 +39,7 @@ class EmpresaAdministrativa extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return false;
+        return true;
     }
 
     public static function canAccess(): bool

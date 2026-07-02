@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Services\PrazzuEnterpriseMaturityService;
-use App\Support\AccountingProfileNavigation;
 use BackedEnum;
 use Filament\Pages\Page;
 use UnitEnum;
@@ -19,12 +18,12 @@ class DashboardExecutivo extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && AccountingProfileNavigation::canAccessLabel(auth()->user(), 'Dashboard Executivo');
+        return auth()->check();
     }
 
     public static function canAccess(): bool
     {
-        return auth()->check() && AccountingProfileNavigation::canAccessLabel(auth()->user(), 'Dashboard Executivo');
+        return auth()->check();
     }
 
     protected function getViewData(): array
