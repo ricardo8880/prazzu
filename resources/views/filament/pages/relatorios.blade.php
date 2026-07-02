@@ -1,7 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/relatorios-premium.css') }}">
-
     <div class="rel-premium-page">
         <section class="rel-hero">
             <div>

@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/prazzu-timeline-global.css') }}?v={{ file_exists(public_path('css/prazzu-timeline-global.css')) ? filemtime(public_path('css/prazzu-timeline-global.css')) : time() }}">
 
     @php
         $filters = $data['filters'] ?? [];

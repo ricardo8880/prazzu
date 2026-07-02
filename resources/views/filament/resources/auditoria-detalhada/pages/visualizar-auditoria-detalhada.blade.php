@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/auditoria-detalhada.css') }}">
-
     @php($metricas = $this->metricas())
     @php($eventos = $this->eventos())
     @php($usuarios = $this->usuariosMaisAtivos())

@@ -1,7 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/central-aprovacoes.css') }}?v={{ file_exists(public_path('css/central-aprovacoes.css')) ? filemtime(public_path('css/central-aprovacoes.css')) : time() }}">
 
     <div class="ca-page">
         <section class="contabilidade-lote3-scope" aria-label="Propósito da aba Aprovações">

@@ -36,32 +36,16 @@ class AdminPanelProvider extends PanelProvider
 
         FilamentAsset::register([
             Css::make(
+                'bootstrap',
+                'https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css'
+            ),
+            Css::make(
                 'bootstrap-icons',
                 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css'
             ),
             Css::make(
-                'prazzu-theme',
-                asset('css/prazzu-theme.css') . '?v=20260520-sidebar-logo-final'
-            ),
-            Css::make(
-                'white-label',
-                asset('css/white-label.css') . '?v=20260515-white-label-e2e-fix'
-            ),
-            Css::make(
-                'prazzu-global-search',
-                asset('css/prazzu-global-search.css') . '?v=20260512-global-search-v2'
-            ),
-            Css::make(
-                'prazzu-menu-ux',
-                asset('css/prazzu-menu-ux.css') . '?v=20260512-menu-ux'
-            ),
-            Css::make(
-                'prazzu-ui-standard',
-                asset('css/prazzu-ui-standard.css') . '?v=20260514-restore-original-ui-standard'
-            ),
-            Css::make(
-                'prazzu-global',
-                asset('css/prazzu-global.css') . '?v=20260520-sidebar-logo-final'
+                'prazzu-style',
+                asset('css/style.css') . '?v=20260702-css-migration-lote12'
             ),
         ]);
 

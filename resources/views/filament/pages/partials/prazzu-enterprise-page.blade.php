@@ -5,8 +5,6 @@
         $enterpriseLabel = $whiteLabel->enterpriseLabel();
     @endphp
 
-    <link rel="stylesheet" href="{{ asset('css/prazzu-enterprise.css') }}">
-
     <div class="prazzu-enterprise-page">
         <section class="prazzu-enterprise-hero">
             <div>

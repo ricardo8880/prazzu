@@ -1,5 +1,4 @@
 <x-filament-widgets::widget>
-    <link rel="stylesheet" href="{{ asset('css/item-controle-versionamento.css') }}?v={{ file_exists(public_path('css/item-controle-versionamento.css')) ? filemtime(public_path('css/item-controle-versionamento.css')) : time() }}">
 
     <section id="painel-versionamento" class="icv-card">
         <header class="icv-header">

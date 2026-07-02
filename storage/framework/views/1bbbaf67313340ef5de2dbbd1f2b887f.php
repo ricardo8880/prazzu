@@ -10,9 +10,6 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <link rel="stylesheet" href="<?php echo e(asset('css/contabilidade-ux-lote6.css')); ?>?v=<?php echo e(file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time()); ?>">
-    <link rel="stylesheet" href="<?php echo e(asset('css/contabilidade-operacao-lote3.css')); ?>?v=<?php echo e(file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time()); ?>">
-    <link rel="stylesheet" href="<?php echo e(asset('css/centro-operacional.css')); ?>?v=<?php echo e(file_exists(public_path('css/centro-operacional.css')) ? filemtime(public_path('css/centro-operacional.css')) : time()); ?>">
 
     <?php
         $loadError = $loadError ?? null;

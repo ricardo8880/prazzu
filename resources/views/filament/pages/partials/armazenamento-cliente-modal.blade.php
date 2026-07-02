@@ -12,45 +12,6 @@
     $recomendacoes = $detail['recomendacoes'] ?? [];
     $pesados = $storage['pesados'] ?? [];
 @endphp
-
-<style>
-    .storage-client-modal { display: grid; gap: 1rem; }
-    .storage-client-hero { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(260px, .8fr); gap: 1rem; align-items: stretch; }
-    .storage-client-card, .storage-client-section, .storage-client-kpi { border: 1px solid rgba(148, 163, 184, .22); border-radius: 20px; padding: 1rem; background: rgba(248, 250, 252, .76); }
-    .dark .storage-client-card, .dark .storage-client-section, .dark .storage-client-kpi { background: rgba(15, 23, 42, .58); border-color: rgba(148, 163, 184, .16); }
-    .storage-client-card h3, .storage-client-section h4 { margin: 0; font-weight: 900; color: rgb(15, 23, 42); }
-    .dark .storage-client-card h3, .dark .storage-client-section h4 { color: white; }
-    .storage-client-card p { margin: .35rem 0 0; color: rgb(100, 116, 139); font-size: .86rem; line-height: 1.5; }
-    .storage-client-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
-    .storage-client-kpi span { display: block; font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 850; color: rgb(100, 116, 139); }
-    .storage-client-kpi strong { display: block; margin-top: .3rem; font-size: 1.25rem; font-weight: 950; color: rgb(15, 23, 42); }
-    .dark .storage-client-kpi strong { color: white; }
-    .storage-client-progress { height: .65rem; border-radius: 999px; background: rgba(148, 163, 184, .20); overflow: hidden; margin-top: .75rem; color: rgb(34, 197, 94); }
-    .storage-client-progress.warning { color: rgb(245, 158, 11); }
-    .storage-client-progress.danger { color: rgb(239, 68, 68); }
-    .storage-client-progress span { display:block; height:100%; border-radius: inherit; max-width:100%; background: currentColor; }
-    .storage-client-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
-    .storage-client-section h4 { margin-bottom: .65rem; }
-    .storage-client-line { display: flex; justify-content: space-between; gap: .75rem; padding: .38rem 0; border-bottom: 1px solid rgba(148, 163, 184, .12); font-size: .84rem; color: rgb(100, 116, 139); }
-    .storage-client-line:last-child { border-bottom: 0; }
-    .storage-client-line strong { color: rgb(15, 23, 42); font-weight: 900; text-align: right; }
-    .dark .storage-client-line strong { color: white; }
-    .storage-client-recos { display: grid; gap: .5rem; }
-    .storage-client-reco { border-radius: 14px; padding: .65rem .75rem; font-size: .84rem; font-weight: 700; background: rgba(148, 163, 184, .13); color: rgb(71, 85, 105); }
-    .storage-client-reco.success { background: rgba(34, 197, 94, .12); color: rgb(21, 128, 61); }
-    .storage-client-reco.warning { background: rgba(245, 158, 11, .14); color: rgb(180, 83, 9); }
-    .storage-client-reco.danger { background: rgba(239, 68, 68, .13); color: rgb(185, 28, 28); }
-    .storage-client-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-    .storage-client-action { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: .5rem .8rem; font-size: .78rem; font-weight: 900; text-decoration: none; border: 1px solid rgba(124, 58, 237, .20); background: rgba(124, 58, 237, .10); color: rgb(109, 40, 217); }
-    .storage-client-action.primary { background: rgb(124, 58, 237); color: white; }
-    .storage-client-files { display: grid; gap: .45rem; }
-    .storage-client-file { display: flex; justify-content: space-between; gap: .75rem; border-radius: 14px; padding: .6rem .7rem; background: rgba(248, 250, 252, .85); font-size: .82rem; color: rgb(100, 116, 139); }
-    .dark .storage-client-file { background: rgba(15, 23, 42, .48); }
-    .storage-client-file strong { color: rgb(15, 23, 42); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .dark .storage-client-file strong { color: white; }
-    @media (max-width: 900px) { .storage-client-hero, .storage-client-grid { grid-template-columns: 1fr; } .storage-client-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-</style>
-
 <div class="storage-client-modal">
     <section class="storage-client-hero">
         <article class="storage-client-card">

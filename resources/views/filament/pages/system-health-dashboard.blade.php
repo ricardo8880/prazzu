@@ -1,8 +1,4 @@
 <x-filament-panels::page>
-    @once
-        <link rel="stylesheet" href="{{ asset('css/system-health-dashboard.css') }}?v=20260518">
-    @endonce
-
     @php
         $report = $this->report ?? [];
         $summary = $report['summary'] ?? ['ok' => 0, 'warning' => 0, 'error' => 0, 'total' => 0];

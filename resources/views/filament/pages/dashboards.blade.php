@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/relatorios-dashboard.css') }}">
-
     <div class="rd-page rd-profile-page">
         <section class="rd-hero rd-profile-hero">
             <div>

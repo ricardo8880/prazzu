@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/configuracoes-prazzu.css') }}">
 
     <div class="prazzu-admin-page lote4-cadastro-page">
         <section class="prazzu-hero lote4-cadastro-hero">

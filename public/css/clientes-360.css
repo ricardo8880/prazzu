@@ -1,9 +1,0 @@
-
-.cliente-360 { padding:20px; background:#fff; border-radius:10px; }
-.cliente-360 .header { display:flex; justify-content:space-between; margin-bottom:15px; }
-.cliente-360 .sections { display:grid; grid-template-columns:1fr 1fr; gap:15px; }
-.cliente-360 .section { background:#f9f9f9; padding:15px; border-radius:8px; }
-.cliente-360 .item { margin-bottom:8px; font-size:14px; }
-@media(max-width:768px){
-    .cliente-360 .sections { grid-template-columns:1fr; }
-}

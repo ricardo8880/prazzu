@@ -1,6 +1,5 @@
 <x-filament-panels::page>
     @once
-        <link rel="stylesheet" href="{{ asset('css/central-notificacoes.css') }}">
     @endonce
 
     @php

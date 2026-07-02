@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/prazzu-operational-tool.css') }}?v={{ file_exists(public_path('css/prazzu-operational-tool.css')) ? filemtime(public_path('css/prazzu-operational-tool.css')) : time() }}">
 
     @php
         $cards = $data['cards'] ?? [];

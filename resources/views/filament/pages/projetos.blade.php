@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/trabalho-pages.css') }}">
 
     @php
         $resumo = $this->getResumo();

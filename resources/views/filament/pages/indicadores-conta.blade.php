@@ -1,7 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/tarefas-qa-standard.css') }}?v=20260513-lote7-visual">
-    <link rel="stylesheet" href="{{ asset('css/indicadores-conta.css') }}?v={{ file_exists(public_path('css/indicadores-conta.css')) ? filemtime(public_path('css/indicadores-conta.css')) : time() }}">
-
     <div class="account-indicators-page prazzu-docs-page">
         <section class="account-indicators-hero prazzu-hero">
             <div>

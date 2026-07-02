@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/compliance-module.css') }}?v={{ file_exists(public_path('css/compliance-module.css')) ? filemtime(public_path('css/compliance-module.css')) : time() }}">
 
     <div class="compliance-page compliance-page-interno compliance-page-interno-workflow" data-compliance-interno>
         <section class="compliance-hero compliance-hero-interno">

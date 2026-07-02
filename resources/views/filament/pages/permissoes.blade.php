@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/prazzu-enterprise-80.css') }}">
 
     @php
         $permissoesAvancadas = $advancedPermissions ?? [];

@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/gestao-documental-enterprise.css') }}?v={{ file_exists(public_path('css/gestao-documental-enterprise.css')) ? filemtime(public_path('css/gestao-documental-enterprise.css')) : time() }}">
 
     @php
         $resumo = $resumo ?? [];

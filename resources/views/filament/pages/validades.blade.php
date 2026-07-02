@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/prazzu-fase2-pages.css') }}?v={{ filemtime(public_path('css/prazzu-fase2-pages.css')) }}">
 
     <div class="prazzu-page prazzu-docs-page">
         <div class="prazzu-hero prazzu-hero-docs">

@@ -1,8 +1,4 @@
 <x-filament-panels::page>
-    @once
-        <link rel="stylesheet" href="{{ asset('css/dashboard-executivo-contabil.css') }}?v={{ file_exists(public_path('css/dashboard-executivo-contabil.css')) ? filemtime(public_path('css/dashboard-executivo-contabil.css')) : time() }}">
-    @endonce
-
     @php
         $dashboard = $dashboard ?? ($this->dashboardData ?? []);
         $risk = $dashboard['risk'] ?? [
@@ -174,7 +170,7 @@
                     <strong>{{ (int) ($templatesContabeis['tasks_open'] ?? 0) }}</strong>
                 </header>
 
-                <div class="dec-decision-grid" style="margin-top: 1rem">
+                <div class="dec-decision-grid dec-spaced-top">
                     <article class="dec-decision dec-decision--static dec-tone-info">
                         <span class="dec-decision__label">Templates ativos</span>
                         <strong>{{ (int) ($templatesContabeis['templates_active'] ?? 0) }}</strong>
@@ -198,7 +194,7 @@
                 </div>
 
                 @if (! empty($templateRiskRows))
-                    <div class="dec-action-list" style="margin-top: 1rem">
+                    <div class="dec-action-list dec-spaced-top">
                         @foreach ($templateRiskRows as $item)
                             <article class="dec-action dec-tone-{{ $item['tone'] ?? 'warning' }}">
                                 <div class="dec-action__top">

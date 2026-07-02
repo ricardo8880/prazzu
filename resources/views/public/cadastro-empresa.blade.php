@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <title>Cadastro de Empresa</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <link rel="stylesheet" href="{{ asset('css/style-cadastro-empresa.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=lote3">
 </head>
-<body>
+<body class="cadastro-empresa-public">
 
 <div class="cadastro-container">
     <div class="cadastro-card">

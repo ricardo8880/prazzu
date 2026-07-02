@@ -1,7 +1,5 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/financeiro-cliente.css') }}">
-
-    <div class="fincli-page">
+<div class="fincli-page">
         @if (! $instalado)
             <section class="fincli-alert">
                 <strong>Módulo financeiro do cliente ainda não instalado</strong>

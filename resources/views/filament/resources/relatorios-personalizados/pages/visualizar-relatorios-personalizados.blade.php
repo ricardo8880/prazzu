@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/relatorios-personalizados.css') }}">
-
     @php($grupos = $this->relatoriosPorEmpresa())
 
     <div class="rp-page">

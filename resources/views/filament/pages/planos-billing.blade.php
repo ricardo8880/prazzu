@@ -1,8 +1,4 @@
 <x-filament-panels::page>
-    <style>
-        .pb-shell{display:flex;flex-direction:column;gap:1.25rem}.pb-hero{border-radius:1.5rem;padding:1.5rem;background:linear-gradient(135deg,rgba(15,23,42,.96),rgba(30,41,59,.9));color:#fff;box-shadow:0 18px 45px rgba(15,23,42,.18)}.pb-hero h2{font-size:1.55rem;font-weight:800;margin:0}.pb-hero p{margin:.4rem 0 0;color:rgba(255,255,255,.78);max-width:64rem}.pb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}.pb-two{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.pb-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}.pb-card,.pb-panel{border:1px solid rgba(148,163,184,.24);background:rgba(255,255,255,.9);border-radius:1.25rem;padding:1rem;box-shadow:0 12px 30px rgba(15,23,42,.06)}.dark .pb-card,.dark .pb-panel{background:rgba(15,23,42,.78);border-color:rgba(148,163,184,.18)}.pb-muted,.pb-card small{font-size:.78rem;color:rgb(100,116,139)}.dark .pb-muted,.dark .pb-card small{color:rgb(148,163,184)}.pb-kpi strong{display:block;font-size:1.35rem;margin-top:.2rem}.pb-card h3,.pb-row h4{font-weight:800;margin:0}.pb-pill{display:inline-flex;border-radius:999px;padding:.25rem .55rem;font-size:.72rem;font-weight:700;background:rgba(59,130,246,.12);color:rgb(37,99,235)}.pb-pill.success{background:rgba(34,197,94,.14);color:rgb(22,101,52)}.pb-pill.warning{background:rgba(245,158,11,.14);color:rgb(180,83,9)}.pb-pill.danger{background:rgba(239,68,68,.14);color:rgb(185,28,28)}.pb-pill.muted{background:rgba(100,116,139,.12);color:rgb(71,85,105)}.pb-toolbar{display:flex;justify-content:space-between;gap:.75rem;align-items:center}.pb-toolbar input,.pb-toolbar select{border:1px solid rgba(148,163,184,.35);border-radius:.85rem;padding:.55rem .7rem;background:white;min-width:12rem}.dark .pb-toolbar input,.dark .pb-toolbar select{background:rgba(15,23,42,.95)}.pb-row{display:grid;grid-template-columns:minmax(0,1.2fr) auto auto;gap:.75rem;align-items:center;border-top:1px solid rgba(148,163,184,.18);padding-top:.75rem;margin-top:.75rem}.pb-empty{text-align:center;border:1px dashed rgba(148,163,184,.45);border-radius:1rem;padding:1.5rem;color:rgb(100,116,139)}@media(max-width:1100px){.pb-grid,.pb-three,.pb-two{grid-template-columns:1fr 1fr}.pb-row{grid-template-columns:1fr}}@media(max-width:720px){.pb-grid,.pb-three,.pb-two{grid-template-columns:1fr}.pb-toolbar{align-items:stretch;flex-direction:column}.pb-toolbar input,.pb-toolbar select{width:100%}}
-    </style>
-
     <div class="pb-shell">
         <section class="pb-hero">
             <h2>Assinatura</h2>
@@ -25,8 +21,8 @@
         </section>
 
         <section class="pb-panel pb-toolbar">
-            <div><h3 style="font-weight:800;margin:0">Filtros</h3><p class="pb-muted" style="margin:.25rem 0 0">Busque empresas, assinaturas ou pagamentos.</p></div>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <div><h3 class="pb-filter-title">Filtros</h3><p class="pb-muted pb-filter-subtitle">Busque empresas, assinaturas ou pagamentos.</p></div>
+            <div class="pb-filter-controls">
                 <input type="search" wire:model.live.debounce.400ms="search" placeholder="Buscar empresa, gateway ou cobrança">
                 <select wire:model.live="planFilter"><option value="todos">Todos os planos</option>@foreach($planOptions as $codigo => $nome)<option value="{{ $codigo }}">{{ $nome }}</option>@endforeach</select>
                 <button type="button" class="pb-pill" wire:click="clearFilters">Limpar</button>
@@ -38,7 +34,7 @@
                 <article class="pb-card">
                     <small>{{ $plano['codigo'] }}</small><h3>{{ $plano['nome'] }}</h3><p><strong>{{ $plano['preco'] }}</strong></p>
                     <p class="pb-muted">Usuários: {{ number_format($plano['usuarios'], 0, ',', '.') }} · Itens: {{ number_format($plano['itens'], 0, ',', '.') }} · Armazenamento: {{ $plano['armazenamento'] }} · IA: {{ number_format($plano['ia'], 0, ',', '.') }}</p>
-                    <div style="display:flex;gap:.35rem;flex-wrap:wrap">@foreach($plano['features'] as $feature)<span class="pb-pill">{{ str_replace('_', ' ', $feature) }}</span>@endforeach</div>
+                    <div class="pb-feature-list">@foreach($plano['features'] as $feature)<span class="pb-pill">{{ str_replace('_', ' ', $feature) }}</span>@endforeach</div>
                 </article>
             @endforeach
         </section>

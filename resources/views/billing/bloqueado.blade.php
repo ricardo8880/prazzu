@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Acesso bloqueado</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ asset('css/style-cadastro-empresa.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=20260702-css-migration-lote10">
 </head>
 <body>
 <div class="cadastro-container">

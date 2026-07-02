@@ -1,7 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('css/relatorios-auditoria-lote5.css') }}">
-
 
     <div class="audit-admin">
         <section class="audit-hero">
@@ -65,7 +62,7 @@
                     @endforelse
                 </div>
 
-                <h2 style="margin-top:22px">Usuários mais auditados</h2>
+                <h2 class="audit-section-title">Usuários mais auditados</h2>
                 <div class="audit-list">
                     @forelse ($eventosPorUsuario as $row)
                         <div class="audit-row"><div><h3>{{ $row['label'] }}</h3><small>Eventos registrados</small></div><b>{{ $row['total'] }}</b></div>

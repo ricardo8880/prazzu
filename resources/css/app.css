@@ -1,11 +1,10 @@
-@import 'tailwindcss';
-
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
-}
+/*
+ |--------------------------------------------------------------------------
+ | Prazzu CSS migration - Lote 1
+ |--------------------------------------------------------------------------
+ | Tailwind foi neutralizado como ponto de entrada do Vite.
+ | O CSS visual do projeto passa a ser centralizado em public/css/style.css
+ | e Bootstrap é carregado globalmente pelo Filament AdminPanelProvider.
+ |
+ | Mantemos este arquivo para não quebrar builds/referências futuras ao Vite.
+ */

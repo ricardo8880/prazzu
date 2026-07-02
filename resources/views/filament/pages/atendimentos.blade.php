@@ -1,10 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/atendimentos.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/atendimentos-ticket-modal.css') }}">
-    @once
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    @endonce
-
     @php
         $ready = (bool) ($ready ?? false);
         $summary = $summary ?? [];
@@ -388,7 +382,7 @@
                     <input type="text" readonly x-ref="linkCadastroCliente" value="{{ $portalCadastroClienteLink ?: 'Nenhuma empresa disponível para gerar o link.' }}">
                 </label>
 
-                <section class="at-alert" style="margin:14px 0 0;">
+                <section class="at-alert at-client-link-help">
                     <strong>Como usar</strong>
                     <span>Copie o link e envie para o cliente. Ao preencher o formulário, o cadastro dele será separado automaticamente pela empresa selecionada acima.</span>
                 </section>

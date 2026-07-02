@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/clientes-crm.css') }}">
 
     @php
         $summary = $crm['summary'] ?? [];

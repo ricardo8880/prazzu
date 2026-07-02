@@ -1,6 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/dashboard-configuravel.css') }}">
-
     @php($grupos = $this->widgetsPorEmpresa())
 
     <div class="dc-page">

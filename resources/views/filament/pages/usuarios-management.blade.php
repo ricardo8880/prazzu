@@ -1,9 +1,5 @@
 <x-filament-panels::page>
-    <style>
-        .prazzu-admin-page{display:grid;gap:20px}.prazzu-hero{border-radius:24px;padding:24px;background:linear-gradient(135deg,#111827,#1f2937);color:#fff;display:flex;justify-content:space-between;gap:20px;align-items:flex-start}.prazzu-hero h1{font-size:28px;font-weight:800;margin:0}.prazzu-hero p{margin:8px 0 0;color:#d1d5db;max-width:860px}.prazzu-grid{display:grid;gap:16px}.prazzu-grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}.prazzu-card{border:1px solid #e5e7eb;border-radius:20px;background:#fff;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06)}.prazzu-card h2{font-size:18px;font-weight:800;margin:0}.prazzu-card p{color:#64748b;margin:6px 0 0}.prazzu-stat span{display:block;color:#64748b;font-size:13px}.prazzu-stat strong{display:block;font-size:26px;margin-top:6px}.prazzu-filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:12px;align-items:end}.prazzu-input,.prazzu-select{width:100%;border:1px solid #d1d5db;border-radius:12px;padding:10px 12px;background:#fff}.prazzu-button{border:0;border-radius:12px;padding:10px 14px;background:#111827;color:#fff;font-weight:700;cursor:pointer}.prazzu-button.light{background:#f3f4f6;color:#111827}.prazzu-table-wrap{overflow:auto}.prazzu-table{width:100%;border-collapse:collapse}.prazzu-table th,.prazzu-table td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}.prazzu-table th{font-size:12px;text-transform:uppercase;color:#64748b}.prazzu-badge{display:inline-flex;border-radius:999px;background:#eef2ff;color:#3730a3;padding:4px 10px;font-size:12px;font-weight:700}.prazzu-muted{color:#64748b;font-size:12px}.prazzu-danger{color:#b91c1c;font-weight:700}.prazzu-empty{padding:18px;text-align:center;color:#64748b}@media(max-width:1100px){.prazzu-grid.four,.prazzu-filters{grid-template-columns:1fr}.prazzu-hero{display:block}}
-    </style>
-
-    <div class="prazzu-admin-page">
+<div class="prazzu-admin-page">
         <section class="prazzu-hero">
             <div>
                 <h1>Usuários</h1>

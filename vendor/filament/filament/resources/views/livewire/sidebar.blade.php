@@ -104,7 +104,7 @@
         <nav class="fi-sidebar-nav">
             {{ \Filament\Support\Facades\FilamentView::renderHook(\Filament\View\PanelsRenderHook::SIDEBAR_NAV_START) }}
 
-            <ul class="fi-sidebar-nav-groups">
+            <ul class="fi-sidebar-nav-groups p-0">
                 @foreach ($navigation as $group)
                     @php
                         $isGroupActive = $group->isActive();

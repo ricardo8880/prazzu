@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/compliance-module.css') }}?v={{ file_exists(public_path('css/compliance-module.css')) ? filemtime(public_path('css/compliance-module.css')) : time() }}">
     <div class="compliance-page">
         <section class="compliance-hero"><div><span>COMPLIANCE</span><h1>Riscos</h1><p>Mapa enxuto de riscos reais, com score, responsável, prazo e ação direta para não deixar nada perdido.</p></div></section>
         <section class="compliance-stats">@foreach (($data['stats'] ?? []) as $stat)<article class="compliance-stat"><span>{{ $stat['label'] }}</span><strong>{{ $stat['value'] }}</strong><small>{{ $stat['hint'] }}</small></article>@endforeach</section>

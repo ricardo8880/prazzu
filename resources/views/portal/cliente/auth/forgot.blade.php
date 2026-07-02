@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Recuperar senha | Portal do Cliente</title>
-    <link rel="stylesheet" href="{{ asset('css/prazzu-global.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/prazzu-theme.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}?v=lote3">
 </head>
-<body class="portal-cliente-login">
+<body class="portal-cliente-login portal-auth-public">
     <main class="portal-login-shell">
         <section class="portal-login-brand" aria-label="Recuperação de acesso">
             <div class="portal-login-logo" aria-hidden="true">🔐</div>

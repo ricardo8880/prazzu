@@ -10,8 +10,6 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <link rel="stylesheet" href="<?php echo e(asset('css/relatorios-dashboard.css')); ?>">
-
     <div class="rd-page rd-profile-page">
         <section class="rd-hero rd-profile-hero">
             <div>

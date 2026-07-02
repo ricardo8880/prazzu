@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    <link rel="stylesheet" href="{{ asset('css/fluxos-operacionais.css') }}">
 
     @php($etapas = $this->etapas())
     @php($itensRecentes = $this->itensRecentes())
