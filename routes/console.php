@@ -4,7 +4,11 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
-    $this->comment(\Illuminate\Foundation\Inspiring::quote());
+    /** @var \Illuminate\Console\Command $command */
+    // @phpstan-ignore-next-line
+    $command = $this;
+
+    $command->comment(\Illuminate\Foundation\Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
 // 🔔 NOTIFICAÇÕES
@@ -40,23 +44,27 @@ Schedule::command('centro-operacional:processar --silent-notifications')
 
 // 🧪 DIAGNÓSTICO FINAL / COMPATIBILIDADE
 Artisan::command('prazzu:diagnostico-producao {--limite=500} {--arquivo=} {--sem-arquivos} {--somente-erros}', function () {
+    /** @var \Illuminate\Console\Command $command */
+    // @phpstan-ignore-next-line
+    $command = $this;
+
     $options = [
-        '--limite' => (int) $this->option('limite'),
+        '--limite' => (int) $command->option('limite'),
     ];
 
-    if ($this->option('arquivo')) {
-        $options['--arquivo'] = (string) $this->option('arquivo');
+    if ($command->option('arquivo')) {
+        $options['--arquivo'] = (string) $command->option('arquivo');
     }
 
-    if ($this->option('sem-arquivos')) {
+    if ($command->option('sem-arquivos')) {
         $options['--sem-arquivos'] = true;
     }
 
-    if ($this->option('somente-erros')) {
+    if ($command->option('somente-erros')) {
         $options['--somente-erros'] = true;
     }
 
-    return Artisan::call('sistemrh:diagnostico', $options, $this->getOutput());
+    return Artisan::call('sistemrh:diagnostico', $options, $command->getOutput());
 })->purpose('Alias de compatibilidade para o diagnóstico profundo do SistemRH/Prazzu.');
 
 // 🗂️ RETENÇÃO DE ARQUIVOS

@@ -1,1 +1,0 @@
-<?php echo $__env->make("components.top-navigation", array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\prazzu\storage\framework\views/988e6a9f70a2cea3679bb35b006c297b.blade.php ENDPATH**/ ?>

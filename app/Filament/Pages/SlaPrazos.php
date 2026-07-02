@@ -4,8 +4,11 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
+use App\Support\CachedSchema;
 use BackedEnum;
 use Filament\Facades\Filament;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Str;
@@ -23,17 +26,50 @@ class SlaPrazos extends Page
 
     protected static ?int $navigationSort = 20;
 
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+
     protected string $view = 'filament.pages.sla-prazos';
+
+    public string $aba = 'sla-prazos';
 
     public ?int $itemSelecionadoId = null;
 
     public bool $modalAberto = false;
 
+    public function mount(): void
+    {
+        $aba = request()->query('aba');
+
+        if (is_string($aba) && collect($this->abas())->contains(fn (array $item): bool => $item['key'] === $aba)) {
+            $this->aba = $aba;
+        }
+    }
+
+    public function getSubNavigation(): array
+    {
+        return collect($this->abas())
+            ->map(fn (array $item): NavigationItem => NavigationItem::make($item['label'])
+                ->icon($item['icon'])
+                ->url(static::getUrl(['aba' => $item['key']]))
+                ->isActiveWhen(fn (): bool => $this->aba === $item['key'])
+                ->sort($item['sort']))
+            ->all();
+    }
+
+    /** @return array<int, array{key: string, label: string, icon: string, sort: int}> */
+    protected function abas(): array
+    {
+        return [
+            ['key' => 'sla-prazos', 'label' => 'SLA e Prazos', 'icon' => 'heroicon-o-clock', 'sort' => 1],
+            ['key' => 'validades', 'label' => 'Validades', 'icon' => 'heroicon-o-calendar-days', 'sort' => 2],
+        ];
+    }
+
     protected function baseQuery(): Builder
     {
         return ItemControle::query()
             ->with([
-                'empresa:id,razao_social',
+                'empresa:id,razao_social,nome_fantasia',
                 'responsavel:id,nome',
                 'categoria:id,nome',
                 'checklists:id,item_controle_id,titulo,concluido,ordem',
@@ -81,6 +117,63 @@ class SlaPrazos extends Page
             ->limit(12)
             ->get()
             ->map(fn (ItemControle $item): array => $this->formatarItemSla($item))
+            ->all();
+    }
+
+
+    public function getResumoValidades(): array
+    {
+        if (! CachedSchema::hasTable('item_controles') || ! $this->hasColumn('data_vencimento')) {
+            return ['total' => 0, 'vencidos' => 0, 'sete_dias' => 0, 'trinta_dias' => 0, 'sem_data' => 0, 'concluidos' => 0];
+        }
+
+        $query = $this->baseQuery();
+
+        return [
+            'total' => (clone $query)->whereNotNull('data_vencimento')->count(),
+            'vencidos' => (clone $query)->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->count(),
+            'sete_dias' => (clone $query)->whereBetween('data_vencimento', [now()->toDateString(), now()->copy()->addDays(7)->toDateString()])->count(),
+            'trinta_dias' => (clone $query)->whereBetween('data_vencimento', [now()->toDateString(), now()->copy()->addDays(30)->toDateString()])->count(),
+            'sem_data' => (clone $query)->whereNull('data_vencimento')->count(),
+            'concluidos' => $this->hasColumn('status') ? (clone $query)->whereIn('status', $this->statusFinalizados())->count() : 0,
+        ];
+    }
+
+    public function getValidadesDocumentais(): array
+    {
+        if (! CachedSchema::hasTable('item_controles') || ! $this->hasColumn('data_vencimento')) {
+            return [];
+        }
+
+        return $this->baseQuery()
+            ->whereNotNull('data_vencimento')
+            ->orderBy('data_vencimento')
+            ->orderByDesc($this->hasColumn('updated_at') ? 'updated_at' : 'id')
+            ->limit(24)
+            ->get()
+            ->map(function (ItemControle $item): array {
+                $vencimento = $item->data_vencimento;
+                $dias = $vencimento ? now()->startOfDay()->diffInDays($vencimento->copy()->startOfDay(), false) : null;
+                $vencido = $dias !== null && $dias < 0;
+
+                return [
+                    'id' => $item->id,
+                    'titulo' => $item->titulo ?: 'Documento sem título',
+                    'descricao' => filled($item->descricao) ? (string) $item->descricao : 'Sem descrição cadastrada.',
+                    'tipo' => ucfirst(str_replace('_', ' ', (string) ($item->tipo ?: '-'))),
+                    'status' => ucfirst(str_replace('_', ' ', (string) ($item->status ?: '-'))),
+                    'prioridade' => ucfirst(str_replace('_', ' ', (string) ($item->prioridade ?: '-'))),
+                    'empresa' => $item->empresa?->nome_fantasia ?: ($item->empresa?->razao_social ?? '-'),
+                    'responsavel' => $item->responsavel?->nome ?? '-',
+                    'vencimento' => $vencimento?->format('d/m/Y') ?? '-',
+                    'dias' => $dias,
+                    'situacao' => $dias === null ? 'Sem data' : ($vencido ? 'Vencido há ' . abs((int) $dias) . ' dia(s)' : 'Faltam ' . (int) $dias . ' dia(s)'),
+                    'vencido' => $vencido,
+                    'lembretes' => (int) ($item->qtd_lembretes_enviados ?? 0),
+                    'ultimo_lembrete' => filled($item->ultimo_lembrete_enviado_em) ? \Carbon\Carbon::parse($item->ultimo_lembrete_enviado_em)->format('d/m/Y H:i') : '-',
+                    'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
+                ];
+            })
             ->all();
     }
 
@@ -143,6 +236,18 @@ class SlaPrazos extends Page
             'responsavel' => $item->responsavel?->nome ?? '-',
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
         ];
+    }
+
+
+    protected function hasColumn(string $column): bool
+    {
+        return CachedSchema::hasColumn('item_controles', $column);
+    }
+
+    /** @return array<int, string> */
+    protected function statusFinalizados(): array
+    {
+        return ['concluido', 'concluído', 'finalizado', 'cancelado', 'aprovado'];
     }
 
     protected function formatarTempoRestante(ItemControle $item): string

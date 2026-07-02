@@ -6,7 +6,7 @@ use App\Models\Empresa;
 use App\Models\ItemControleChecklist;
 use App\Models\ItemControleTimeline;
 use App\Models\PrazzuTemplate;
-use App\Models\Responsável;
+use App\Models\Responsavel;
 use App\Services\PlanoService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;

@@ -4,6 +4,8 @@
         $resumo = $this->getResumo();
         $itens = $this->getItensCriticos();
         $selecionado = $this->getItemSelecionado();
+        $resumoValidades = $this->getResumoValidades();
+        $validades = $this->getValidadesDocumentais();
     @endphp
 
     <div class="tp-page">
@@ -23,12 +25,13 @@
 
         <div class="tp-hero">
             <div>
-                <span class="tp-eyebrow">TRABALHO</span>
-                <h2>Monitor de SLA e Prazos</h2>
-                <p>Visão de apoio para prazos e SLA. A execução continua na Central Operacional; aqui o foco é enxergar risco de atraso.</p>
+                <span class="tp-eyebrow">{{ $this->aba === 'validades' ? 'DOCUMENTOS' : 'TRABALHO' }}</span>
+                <h2>{{ $this->aba === 'validades' ? 'Validades e Vencimentos' : 'Monitor de SLA e Prazos' }}</h2>
+                <p>{{ $this->aba === 'validades' ? 'Controle documental de vencidos, próximos vencimentos, lembretes e acesso rápido ao item.' : 'Visão de apoio para prazos e SLA. A execução continua na Central Operacional; aqui o foco é enxergar risco de atraso.' }}</p>
             </div>
         </div>
 
+        @if($this->aba === 'sla-prazos')
         <div class="tp-metrics tp-metrics-4">
             <div class="tp-card"><span>Com SLA</span><strong>{{ $resumo['com_sla'] }}</strong><small>itens monitorados</small></div>
             <div class="tp-card"><span>Em andamento</span><strong>{{ $resumo['em_andamento'] }}</strong><small>dentro do fluxo</small></div>
@@ -67,6 +70,76 @@
                 </table>
             </div>
         </x-filament::section>
+        @endif
+
+        @if($this->aba === 'validades')
+        <x-filament::section>
+            <x-slot name="heading">Validades e vencimentos documentais</x-slot>
+            <x-slot name="description">Conteúdo centralizado da antiga aba Validades e Vencimentos dentro de SLA e Prazos.</x-slot>
+
+            <div class="tp-metrics tp-metrics-4">
+                <div class="tp-card"><span>Com validade</span><strong>{{ number_format($resumoValidades['total'] ?? 0, 0, ',', '.') }}</strong><small>itens com data</small></div>
+                <div class="tp-card tp-danger"><span>Vencidos</span><strong>{{ number_format($resumoValidades['vencidos'] ?? 0, 0, ',', '.') }}</strong><small>ação imediata</small></div>
+                <div class="tp-card"><span>Próx. 7 dias</span><strong>{{ number_format($resumoValidades['sete_dias'] ?? 0, 0, ',', '.') }}</strong><small>urgente</small></div>
+                <div class="tp-card tp-success"><span>Concluídos</span><strong>{{ number_format($resumoValidades['concluidos'] ?? 0, 0, ',', '.') }}</strong><small>encerrados</small></div>
+            </div>
+
+            <div class="tp-sla-modal-columns">
+                <div class="tp-detail-card">
+                    <div class="tp-detail-title">
+                        <strong>Saúde dos vencimentos</strong>
+                    </div>
+                    <div class="tp-info-list">
+                        <p><span>Sem data</span><b>{{ number_format($resumoValidades['sem_data'] ?? 0, 0, ',', '.') }}</b></p>
+                        <p><span>Próx. 30 dias</span><b>{{ number_format($resumoValidades['trinta_dias'] ?? 0, 0, ',', '.') }}</b></p>
+                    </div>
+                </div>
+
+                <div class="tp-detail-card">
+                    <div class="tp-detail-title">
+                        <strong>Ações úteis</strong>
+                    </div>
+                    <div class="tp-info-list">
+                        <p><span>Criar validade</span><b><a href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('create') }}">Novo item</a></b></p>
+                        <p><span>Dashboard</span><b><a href="{{ \App\Filament\Resources\ItemControles\ItemControleResource::getUrl('dashboard-tabelas') }}">Ver dados</a></b></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tp-table-wrap" style="margin-top: 1rem;">
+                <table class="tp-table tp-sla-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Empresa</th>
+                            <th>Tipo</th>
+                            <th>Prioridade</th>
+                            <th>Status</th>
+                            <th>Vencimento</th>
+                            <th>Lembretes</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($validades as $validade)
+                            <tr>
+                                <td><strong>{{ $validade['titulo'] }}</strong><small>{{ \Illuminate\Support\Str::limit($validade['descricao'], 55) }}</small></td>
+                                <td>{{ $validade['empresa'] }}</td>
+                                <td>{{ $validade['tipo'] }}</td>
+                                <td><span class="tp-badge">{{ $validade['prioridade'] }}</span></td>
+                                <td><span class="tp-badge @if($validade['vencido']) tp-badge-danger @endif">{{ $validade['status'] }}</span></td>
+                                <td><strong>{{ $validade['vencimento'] }}</strong><small>{{ $validade['situacao'] }}</small></td>
+                                <td><strong>{{ number_format($validade['lembretes'], 0, ',', '.') }}</strong><small>Último: {{ $validade['ultimo_lembrete'] }}</small></td>
+                                <td><a href="{{ $validade['url'] }}" class="tp-table-link-button">Abrir</a></td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="8" class="tp-empty">Nenhuma validade encontrada.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </x-filament::section>
+        @endif
 
         @if($modalAberto && $selecionado)
             <div class="tp-modal-backdrop" wire:click="fecharModal">

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Empresa;
 use App\Models\ItemControle;
 use App\Models\ItemControleChecklist;
+use App\Models\ItemControleTimeline;
 use App\Models\PrazzuDependency;
 use App\Models\PrazzuDocumentVersion;
 use App\Models\PrazzuTemplate;
@@ -181,6 +182,25 @@ class PrazzuTemplateApplicationService
                 'proofing' => Arr::get($task, 'proofing', $template->payloadValue('proofing', [])),
                 'docs' => $this->documentsForPayload($template, $task),
                 'mind_map' => $template->payloadValue('mind_map', []),
+            ],
+        ]);
+    }
+
+    private function registerOperationalTimeline(ItemControle $item, PrazzuTemplate $template, array $task, ?int $userId, string $processInstanceId): void
+    {
+        ItemControleTimeline::query()->create([
+            'item_controle_id' => $item->id,
+            'empresa_id' => $item->empresa_id,
+            'user_id' => $userId,
+            'tipo' => 'criacao',
+            'titulo' => 'Tarefa criada a partir de template',
+            'descricao' => 'Criada automaticamente pelo template "' . $template->name . '".',
+            'dados' => [
+                'template_id' => $template->id,
+                'template_name' => $template->name,
+                'process_instance_id' => $processInstanceId,
+                'task_title' => Arr::get($task, 'title'),
+                'task_key' => Arr::get($task, 'key'),
             ],
         ]);
     }
