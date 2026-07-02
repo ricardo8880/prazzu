@@ -10,7 +10,6 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <link rel="stylesheet" href="<?php echo e(asset('css/prazzu-fase2-pages.css')); ?>?v=<?php echo e(filemtime(public_path('css/prazzu-fase2-pages.css'))); ?>">
 
     <div class="prazzu-page prazzu-docs-page">
         <div class="prazzu-hero prazzu-hero-docs">

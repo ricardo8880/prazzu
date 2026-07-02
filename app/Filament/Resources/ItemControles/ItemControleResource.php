@@ -323,13 +323,11 @@ class ItemControleResource extends Resource
             'assinaturas' => ListItemControlesAssinaturas::route('/assinaturas'),
             'aprovacoes' => ListItemControlesAprovacoes::route('/aprovacoes'),
             'anexos' => ListItemControlesAnexos::route('/anexos-comentarios'),
-            'dashboard-graficos' => DashboardGraficosItemControles::route('/dashboard/graficos'),
             'dashboard-tabelas' => DashboardTabelasItemControles::route('/dashboard/tabelas'),
             'list' => ListItemControles::route('/list'),
             'create' => CreateItemControle::route('/create'),
             'edit' => EditItemControle::route('/{record}/edit'),
             'central-notificacoes' => CentralNotificacoes::route('/central-notificacoes'),
-            'central-contratos' => CentralContratos::route('/central-contratos'),
             'relatorios-internos' => RelatoriosInternos::route('/relatorios-internos'),
         ];
     }

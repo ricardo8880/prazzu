@@ -69,11 +69,7 @@ class CentroOperacional extends Page
 
     public function abrirGestaoOperacional(string $aba = 'workload'): void
     {
-        if (! in_array($aba, ['workload', 'aprovacoes', 'financeiro'], true)) {
-            $aba = 'workload';
-        }
-
-        $this->redirect(CentroOperacionalGestao::getUrl(['aba' => $aba]));
+        $this->notifySuccess('Gestão da Operação foi removida. Use a Mesa Operacional para acompanhar workload, aprovações e financeiro.');
     }
 
     public function setDateRange(string $range): void

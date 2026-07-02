@@ -296,7 +296,8 @@ class RelatoriosDashboardService
                 'create' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'create'),
                 'manage' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'gerenciar')
                     ?: $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'index'),
-                'dashboards' => $this->pageUrl(\App\Filament\Pages\Dashboards::class),
+                'dashboards' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'visualizar')
+                    ?: $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'index'),
             ],
             'fontes' => $this->fontesDisponiveis(),
         ];

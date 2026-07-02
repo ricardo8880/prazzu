@@ -10,12 +10,6 @@
 <?php $component->withAttributes([]); ?>
 <?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::processComponentKey($component); ?>
 
-    <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos.css')); ?>">
-    <link rel="stylesheet" href="<?php echo e(asset('css/atendimentos-ticket-modal.css')); ?>">
-    <?php if (! $__env->hasRenderedOnce('df5daefa-3c91-425f-847e-4b4f1a024759')): $__env->markAsRenderedOnce('df5daefa-3c91-425f-847e-4b4f1a024759'); ?>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <?php endif; ?>
-
     <?php
         $ready = (bool) ($ready ?? false);
         $summary = $summary ?? [];
@@ -399,7 +393,7 @@
                     <input type="text" readonly x-ref="linkCadastroCliente" value="<?php echo e($portalCadastroClienteLink ?: 'Nenhuma empresa disponível para gerar o link.'); ?>">
                 </label>
 
-                <section class="at-alert" style="margin:14px 0 0;">
+                <section class="at-alert at-client-link-help">
                     <strong>Como usar</strong>
                     <span>Copie o link e envie para o cliente. Ao preencher o formulário, o cadastro dele será separado automaticamente pela empresa selecionada acima.</span>
                 </section>

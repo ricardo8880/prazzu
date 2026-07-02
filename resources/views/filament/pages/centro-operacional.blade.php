@@ -267,13 +267,6 @@
                     <small>Abrir lista detalhada de tarefas internas</small>
                 </span>
             </button>
-            <a class="co-cluster-item" href="{{ \App\Filament\Pages\CentroOperacionalGestao::getUrl() }}?aba=workload">
-                <span class="co-cluster-icon"><i class="bi bi-grid-1x2"></i></span>
-                <span>
-                    <strong>Gestão da Operação</strong>
-                    <small>Workload, aprovações e financeiro como apoio interno</small>
-                </span>
-            </a>
         </nav>
 
         @if($loadError)
@@ -566,7 +559,7 @@
                     </div>
                 </div>
                 <div class="co-header-actions-inline">
-                    <a class="co-see-all" href="{{ \App\Filament\Pages\CentroOperacionalGestao::getUrl() }}?aba=workload">Ver workload</a>
+                    <button type="button" class="co-see-all" wire:click="abrirFilaOperacional" wire:loading.attr="disabled">Ver workload</button>
                     <button type="button" class="co-mobile-toggle" @click="open = ! open" :aria-expanded="open.toString()">
                         <i class="bi" :class="open ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
                         <span x-text="open ? 'Ocultar' : 'Mostrar'"></span>
