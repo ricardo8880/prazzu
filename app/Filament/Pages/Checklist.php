@@ -15,13 +15,13 @@ class Checklist extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Central Operacional';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
 
-    protected static ?string $navigationLabel = 'Checklist';
+    protected static ?string $navigationLabel = 'Checklists';
 
-    protected static ?string $title = 'Checklist';
+    protected static ?string $title = 'Checklists';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 30;
 
     protected string $view = 'filament.pages.checklist';
 

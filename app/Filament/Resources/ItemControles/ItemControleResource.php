@@ -40,7 +40,7 @@ class ItemControleResource extends Resource
 
     protected static ?string $navigationLabel = 'Tarefas Operacionais';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Central Operacional';
+    protected static string|\UnitEnum|null $navigationGroup = 'Operação';
 
     protected static ?int $navigationSort = 2;
 

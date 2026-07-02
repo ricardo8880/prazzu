@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/trabalho-pages.css') }}?v=20260513-lote5-empty-states">
     <link rel="stylesheet" href="{{ asset('css/tarefas-qa-standard.css') }}?v=20260513-lote7-visual">
 
@@ -8,6 +10,20 @@
     @endphp
 
     <div class="tp-page">
+        <section class="contabilidade-lote3-scope" aria-label="Propósito da aba Checklists">
+            <div class="contabilidade-lote3-scope__top">
+                <div>
+                    <span class="contabilidade-lote3-eyebrow"><i class="bi bi-card-checklist"></i> Checklists</span>
+                    <h2>Conferência das etapas obrigatórias</h2>
+                    <p>Esta aba concentra etapas e validações. Ela não substitui Pendências nem Documentos; apenas mostra o que precisa ser conferido para avançar com segurança.</p>
+                </div>
+                <div class="contabilidade-lote3-actions">
+                    <a class="contabilidade-lote3-action primary" href="{{ \App\Filament\Pages\Pendencias::getUrl() }}"><i class="bi bi-list-check"></i> Pendências</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Kanban::getUrl() }}"><i class="bi bi-columns-gap"></i> Kanban</a>
+                </div>
+            </div>
+        </section>
+
         <div class="tp-action-loading" wire:loading.flex>
             <span class="tp-spinner"></span>
             <span>Carregando checklist...</span>

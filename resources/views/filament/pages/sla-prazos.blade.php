@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/trabalho-pages.css') }}?v=20260504-drop-sla">
 
     @php
@@ -8,6 +10,20 @@
     @endphp
 
     <div class="tp-page">
+        <section class="contabilidade-lote3-scope" aria-label="Propósito da aba SLA e Prazos">
+            <div class="contabilidade-lote3-scope__top">
+                <div>
+                    <span class="contabilidade-lote3-eyebrow"><i class="bi bi-clock-history"></i> SLA e Prazos</span>
+                    <h2>Monitor exclusivo de prazos, vencimentos e risco de atraso</h2>
+                    <p>Esta aba mostra controle temporal e evolução de SLA. A correção prática do item fica em Pendências; a visão mensal fica no Calendário.</p>
+                </div>
+                <div class="contabilidade-lote3-actions">
+                    <a class="contabilidade-lote3-action primary" href="{{ \App\Filament\Pages\Pendencias::getUrl() }}"><i class="bi bi-list-check"></i> Resolver item</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Calendario::getUrl() }}"><i class="bi bi-calendar-event"></i> Calendário</a>
+                </div>
+            </div>
+        </section>
+
         <div class="tp-hero">
             <div>
                 <span class="tp-eyebrow">TRABALHO</span>

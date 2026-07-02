@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/prazzu-fase2-pages.css') }}?v={{ filemtime(public_path('css/prazzu-fase2-pages.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/prazzu-ux-essentials.css') }}?v={{ file_exists(public_path('css/prazzu-ux-essentials.css')) ? filemtime(public_path('css/prazzu-ux-essentials.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/documentos-hub.css') }}?v={{ file_exists(public_path('css/documentos-hub.css')) ? filemtime(public_path('css/documentos-hub.css')) : time() }}">
@@ -20,6 +22,25 @@
         $documentosClusterAtivo = $documentosPorCluster[$clusterDocumentos] ?? ($documentos ?? []);
         $principalFoco = $inteligenciaDocumental['principalFoco'] ?? null;
     @endphp
+
+    <section class="contabilidade-lote3-scope" aria-label="Propósito da aba Documentos">
+        <div class="contabilidade-lote3-scope__top">
+            <div>
+                <span class="contabilidade-lote3-eyebrow"><i class="bi bi-folder2-open"></i> Documentos</span>
+                <h2>Central exclusiva para documentos, anexos e irregularidades documentais</h2>
+                <p>Todos os vencidos, vencendo, sem arquivo, solicitações de anexo e saúde documental ficam aqui. A Home e Pendências apenas apontam para este módulo quando o problema é documental.</p>
+            </div>
+            <div class="contabilidade-lote3-actions">
+                <a class="contabilidade-lote3-action primary" href="#documentos-prioritarios"><i class="bi bi-folder-check"></i> Tratar documentos</a>
+                <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Pendencias::getUrl() }}"><i class="bi bi-list-check"></i> Pendências</a>
+            </div>
+        </div>
+        <div class="contabilidade-lote3-rules">
+            <div class="contabilidade-lote3-rule"><strong><i class="bi bi-bullseye"></i> Propósito</strong><span>Gerenciar documentos e corrigir irregularidades documentais.</span></div>
+            <div class="contabilidade-lote3-rule"><strong><i class="bi bi-files"></i> Conteúdo dono</strong><span>Vencidos, anexos, pendências documentais e solicitações ficam nesta aba.</span></div>
+            <div class="contabilidade-lote3-rule"><strong><i class="bi bi-link-45deg"></i> Integração</strong><span>Se um documento gerar tarefa, a execução vai para Pendências com vínculo.</span></div>
+        </div>
+    </section>
 
     <div class="prazzu-page prazzu-docs-page documentos-hub-page documentos-cluster-page">
         <div class="prazzu-hero prazzu-hero-docs documentos-hub-hero">
@@ -120,7 +141,7 @@
                 </div>
             </section>
         @elseif ($clusterDocumentos === 'pendencias')
-            <section class="documentos-priority-panel" aria-label="Irregularidades documentais">
+            <section id="documentos-prioritarios" class="documentos-priority-panel" aria-label="Irregularidades documentais">
                 <div class="documentos-priority-panel__intro">
                     <span class="pz-ux-kicker">Irregularidades</span>
                     <h2>Documentos que comprometem a saúde da base</h2>

@@ -19,13 +19,13 @@ class Projetos extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-folder';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
 
     protected static ?string $navigationLabel = 'Projetos';
 
     protected static ?string $title = 'Projetos';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 11;
 
     protected string $view = 'filament.pages.projetos';
 

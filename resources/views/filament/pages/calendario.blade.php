@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/trabalho-pages.css') }}?v=20260513-lote5-empty-states">
     <link rel="stylesheet" href="{{ asset('css/tarefas-qa-standard.css') }}?v=20260513-lote7-visual">
 
@@ -12,6 +14,20 @@
     @endphp
 
     <div class="tp-page">
+        <section class="contabilidade-lote3-scope" aria-label="Propósito do Calendário Operacional">
+            <div class="contabilidade-lote3-scope__top">
+                <div>
+                    <span class="contabilidade-lote3-eyebrow"><i class="bi bi-calendar3"></i> Calendário</span>
+                    <h2>Mapa visual de vencimentos e agenda operacional</h2>
+                    <p>Use para enxergar distribuição no mês e abrir o item certo. Não é a tela para explicar ou resolver pendências; ela direciona para a aba adequada.</p>
+                </div>
+                <div class="contabilidade-lote3-actions">
+                    <a class="contabilidade-lote3-action primary" href="{{ \App\Filament\Pages\SlaPrazos::getUrl() }}"><i class="bi bi-clock-history"></i> SLA e Prazos</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Pendencias::getUrl() }}"><i class="bi bi-list-check"></i> Pendências</a>
+                </div>
+            </div>
+        </section>
+
         <div class="tp-action-loading" wire:loading.flex wire:target="mesAnterior,proximoMes,voltarParaHoje,abrirItem,fecharModal,alterarStatusSelecionado">
             <span class="tp-spinner"></span>
             <span>Atualizando calendário...</span>

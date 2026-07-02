@@ -18,10 +18,10 @@ use UnitEnum;
 class CentroOperacional extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-command-line';
-    protected static string | UnitEnum | null $navigationGroup = 'Central Operacional';
-    protected static ?string $navigationLabel = 'Central Operacional';
-    protected static ?string $title = 'Central Operacional';
-    protected static ?int $navigationSort = 1;
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
+    protected static ?string $navigationLabel = 'Mesa Operacional';
+    protected static ?string $title = 'Mesa Operacional';
+    protected static ?int $navigationSort = 10;
     protected string $view = 'filament.pages.centro-operacional';
 
     public string $dateRange = 'all';

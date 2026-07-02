@@ -38,17 +38,17 @@ class PrazzuTemplateResource extends Resource
     protected static ?string $slug = 'templates-enterprise/modelos';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-squares-plus';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
-    protected static ?string $navigationLabel = 'Modelos Enterprise';
+    protected static string | UnitEnum | null $navigationGroup = 'Cadastros e Configurações';
+    protected static ?string $navigationLabel = 'Modelos Operacionais';
     protected static ?string $modelLabel = 'Template Enterprise';
     protected static ?string $pluralModelLabel = 'Templates Enterprise';
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 41;
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Identificação do template')
-                ->description('Monte um modelo reutilizável com tarefas, checklists, campos personalizados, visões, automações e regras de recorrência.')
+            Section::make('Identificação do modelo operacional')
+                ->description('Cadastre modelos reutilizáveis. A execução das tarefas geradas continua nas abas Operação, Pendências e Documentos.')
                 ->schema([
                     TextInput::make('name')
                         ->label('Nome do template')

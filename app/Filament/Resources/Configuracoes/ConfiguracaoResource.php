@@ -16,15 +16,15 @@ class ConfiguracaoResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cog-6-tooth';
 
-    protected static ?string $navigationLabel = 'Configurações';
+    protected static ?string $navigationLabel = 'Configurações Avançadas';
 
     protected static ?string $modelLabel = 'Configuração';
 
     protected static ?string $pluralModelLabel = 'Configurações';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
+    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros e Configurações';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 60;
 
     public static function form(Schema $schema): Schema
     {

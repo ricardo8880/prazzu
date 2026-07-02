@@ -24,10 +24,10 @@ class CentralAprovacoes extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-inbox-stack';
-    protected static string | UnitEnum | null $navigationGroup = 'Aprovações';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
     protected static ?string $navigationLabel = 'Aprovações';
     protected static ?string $title = 'Central de Aprovações';
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.central-aprovacoes';
 

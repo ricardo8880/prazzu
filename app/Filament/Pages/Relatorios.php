@@ -20,10 +20,10 @@ class Relatorios extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
-    protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
-    protected static ?string $navigationLabel = 'Relatórios';
-    protected static ?string $title = 'Relatórios';
-    protected static ?int $navigationSort = 12;
+    protected static string | UnitEnum | null $navigationGroup = 'Relatórios e Auditoria';
+    protected static ?string $navigationLabel = 'Relatórios Operacionais';
+    protected static ?string $title = 'Relatórios Operacionais';
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.relatorios';
 

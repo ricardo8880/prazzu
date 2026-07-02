@@ -15,11 +15,11 @@ class CentralContratos extends Page
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationLabel = 'Contratos';
+    protected static ?string $navigationLabel = 'Contratos e Financeiro';
 
-    protected static ?string $title = 'Contratos';
+    protected static ?string $title = 'Contratos e Financeiro';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Contratos';
+    protected static string | \UnitEnum | null $navigationGroup = 'Contratos e Financeiro';
 
     protected static ?int $navigationSort = 2;
 

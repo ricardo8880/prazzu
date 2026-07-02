@@ -74,10 +74,10 @@ class Pendencias extends Page
     }
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static string | UnitEnum | null $navigationGroup = 'Pendências e Alertas';
-    protected static ?string $navigationLabel = 'Pendências e Alertas';
-    protected static ?string $title = 'Pendências e Alertas';
-    protected static ?int $navigationSort = 3;
+    protected static string | UnitEnum | null $navigationGroup = 'Pendências e Prazos';
+    protected static ?string $navigationLabel = 'Pendências';
+    protected static ?string $title = 'Pendências';
+    protected static ?int $navigationSort = 10;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected string $view = 'filament.pages.compliance-pendencias';
 

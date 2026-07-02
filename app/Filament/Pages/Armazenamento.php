@@ -26,10 +26,10 @@ class Armazenamento extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-circle-stack';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
+    protected static string | UnitEnum | null $navigationGroup = 'Documentos e Modelos';
     protected static ?string $navigationLabel = 'Armazenamento';
     protected static ?string $title = 'Armazenamento';
-    protected static ?int $navigationSort = 50;
+    protected static ?int $navigationSort = 3;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.armazenamento';

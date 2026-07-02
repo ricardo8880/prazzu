@@ -27,13 +27,13 @@ class PortalCliente extends Page
     use WithFileUploads;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Atendimentos';
+    protected static string | UnitEnum | null $navigationGroup = 'Clientes e Atendimentos';
 
     protected static ?string $navigationLabel = 'Portal do Cliente';
 
     protected static ?string $title = 'Portal do Cliente';
 
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 5;
 
     protected string $view = 'filament.pages.portal-cliente';
 

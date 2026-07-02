@@ -15,10 +15,10 @@ use UnitEnum;
 class Validades extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-calendar';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
-    protected static ?string $navigationLabel = 'Validades';
+    protected static string | UnitEnum | null $navigationGroup = 'Pendências e Prazos';
+    protected static ?string $navigationLabel = 'Validades e Vencimentos';
     protected static ?string $title = 'Validades Documentais';
-    protected static ?int $navigationSort = 40;
+    protected static ?int $navigationSort = 4;
     protected string $view = 'filament.pages.validades';
 
     public function getHeading(): string

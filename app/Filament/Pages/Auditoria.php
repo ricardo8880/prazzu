@@ -18,13 +18,13 @@ class Auditoria extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Auditoria e Riscos';
+    protected static string | UnitEnum | null $navigationGroup = 'Relatórios e Auditoria';
 
-    protected static ?string $navigationLabel = 'Auditoria';
+    protected static ?string $navigationLabel = 'Auditoria e Rastreabilidade';
 
-    protected static ?string $title = 'Auditoria';
+    protected static ?string $title = 'Auditoria e Rastreabilidade';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     protected string $view = 'filament.pages.compliance-auditoria';
 

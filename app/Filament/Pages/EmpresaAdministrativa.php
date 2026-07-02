@@ -17,13 +17,13 @@ class EmpresaAdministrativa extends Page
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Administração';
+    protected static string | UnitEnum | null $navigationGroup = 'Cadastros e Configurações';
 
-    protected static ?string $navigationLabel = 'Empresa';
+    protected static ?string $navigationLabel = 'Dados do Escritório';
 
-    protected static ?string $title = 'Empresa';
+    protected static ?string $title = 'Dados do Escritório';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 10;
 
     protected string $view = 'filament.pages.empresa-administrativa';
 

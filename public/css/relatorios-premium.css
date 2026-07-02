@@ -202,3 +202,60 @@
     .rel-summary-grid, .rel-summary-grid.compact, .rel-validation-grid { grid-template-columns: 1fr; }
     .rel-card-header { flex-direction: column; }
 }
+
+/* Lote 5 — reforço de UX: relatórios são leitura, análise e exportação. */
+.rel-kicker i,
+.rel-actions button i { margin-right: .35rem; }
+.rel-purpose-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .85rem;
+}
+.rel-purpose-card {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: .8rem;
+    align-items: start;
+    border: 1px solid rgba(148, 163, 184, .24);
+    background: rgba(255,255,255,.96);
+    border-radius: 20px;
+    padding: 1rem;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .05);
+}
+.rel-purpose-card i {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 1.1rem;
+}
+.rel-purpose-card strong { display:block; color:#0f172a; font-weight: 950; }
+.rel-purpose-card span { display:block; color:#64748b; font-size:.88rem; margin-top:.18rem; }
+@media (max-width: 860px) { .rel-purpose-grid { grid-template-columns: 1fr; } }
+.dark .rel-purpose-card,
+.dark .rel-hero,
+.dark .rel-card,
+.dark .rel-stat,
+.dark .rel-tabs { background: rgba(15, 23, 42, .92); border-color: rgba(148, 163, 184, .22); }
+.dark .rel-purpose-card strong,
+.dark .rel-card-header h2,
+.dark .rel-stat strong,
+.dark .rel-table td strong,
+.dark .rel-empty strong { color: #f8fafc; }
+.dark .rel-purpose-card span,
+.dark .rel-card-header p,
+.dark .rel-table td,
+.dark .rel-table small,
+.dark .rel-list-row span,
+.dark .rel-check p,
+.dark .rel-check small,
+.dark .rel-validation p { color: #cbd5e1; }
+.dark .rel-tabs button,
+.dark .rel-table th,
+.dark .rel-list-row,
+.dark .rel-check,
+.dark .rel-validation,
+.dark .rel-table-wrap { background: rgba(30, 41, 59, .82); border-color: rgba(148, 163, 184, .2); }

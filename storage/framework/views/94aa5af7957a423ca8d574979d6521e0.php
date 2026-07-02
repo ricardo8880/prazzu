@@ -25,10 +25,10 @@
         <section class="co-topbar co-operational-detail-hero">
             <div>
                 <div class="co-title-row">
-                    <h1>Operação Interna</h1>
+                    <h1>Gestão da Operação</h1>
                     <span class="co-info">i</span>
                 </div>
-                <p>Workload, aprovações e pendências financeiras em uma área própria, com espaço para operar sem apertar os cards.</p>
+                <p>Área de apoio da Central Operacional para redistribuir carga, tratar aprovações e acompanhar pendências financeiras sem duplicar a mesa de execução.</p>
             </div>
 
             <div class="co-top-actions">
@@ -45,8 +45,8 @@
             <a class="co-cluster-item" href="<?php echo e(\App\Filament\Pages\CentroOperacional::getUrl()); ?>">
                 <span class="co-cluster-icon"><i class="bi bi-command"></i></span>
                 <span>
-                    <strong>Centro Operacional</strong>
-                    <small>Riscos, resolver agora e resultados</small>
+                    <strong>Central Operacional</strong>
+                    <small>Voltar para a mesa de execução</small>
                 </span>
             </a>
             <a class="co-cluster-item <?php echo e($activeTab === 'workload' ? 'active' : ''); ?>" href="<?php echo e(\App\Filament\Pages\CentroOperacionalGestao::getUrl()); ?>?aba=workload">

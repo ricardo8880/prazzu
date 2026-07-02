@@ -2684,3 +2684,41 @@
         text-align: left;
     }
 }
+
+/* Lote 5 — Auditoria: rastrear, comprovar e apontar para a origem. */
+.compliance-hero span i,
+.compliance-hero-actions a i,
+.compliance-export-button i { margin-right: .35rem; }
+.audit-purpose-strip {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .85rem;
+    margin: 1rem 0;
+}
+.audit-purpose-strip article {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: .8rem;
+    align-items: start;
+    border: 1px solid rgba(148, 163, 184, .24);
+    background: rgba(255,255,255,.96);
+    border-radius: 20px;
+    padding: 1rem;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .05);
+}
+.audit-purpose-strip i {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 1.1rem;
+}
+.audit-purpose-strip strong { display:block; color:#0f172a; font-weight:950; }
+.audit-purpose-strip span { display:block; color:#64748b; font-size:.88rem; margin-top:.15rem; }
+@media (max-width: 860px) { .audit-purpose-strip { grid-template-columns: 1fr; } }
+.dark .audit-purpose-strip article { background: rgba(15,23,42,.92); border-color: rgba(148,163,184,.22); }
+.dark .audit-purpose-strip strong { color:#f8fafc; }
+.dark .audit-purpose-strip span { color:#cbd5e1; }

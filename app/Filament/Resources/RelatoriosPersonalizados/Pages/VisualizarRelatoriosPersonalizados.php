@@ -24,7 +24,7 @@ class VisualizarRelatoriosPersonalizados extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-line';
 
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 3;
 
     public static function canAccess(array $parameters = []): bool
     {

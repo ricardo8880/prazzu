@@ -18,22 +18,22 @@ class Clientes extends Page
     use UsesAdvancedPermissions;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?string $navigationLabel = 'Clientes';
+    protected static ?string $navigationLabel = 'Carteira de Clientes';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Clientes';
+    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros e Configurações';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.clientes';
 
     public function getHeading(): string
     {
-        return 'Clientes';
+        return 'Carteira de Clientes';
     }
 
     public function getSubheading(): ?string
     {
-        return 'Visão 360º do cliente: cadastro, contexto, saúde, histórico e vínculos com documentos, contratos, atendimentos e cobranças.';
+        return 'Cadastro e contexto da carteira. Aqui ficam dados do cliente, saúde, histórico e vínculos; execução operacional continua nas abas de Pendências, Documentos e Aprovações.';
     }
 
 

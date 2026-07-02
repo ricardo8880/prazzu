@@ -10,10 +10,10 @@ use UnitEnum;
 class RelatoriosExportaveis extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-arrow-down-tray';
-    protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
-    protected static ?string $navigationLabel = 'Relatórios Exportáveis';
-    protected static ?string $title = 'Relatórios Exportáveis';
-    protected static ?int $navigationSort = 7;
+    protected static string | UnitEnum | null $navigationGroup = 'Relatórios e Auditoria';
+    protected static ?string $navigationLabel = 'Exportações';
+    protected static ?string $title = 'Exportações';
+    protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.prazzu-operational-tool-page';
 
     public static function shouldRegisterNavigation(): bool

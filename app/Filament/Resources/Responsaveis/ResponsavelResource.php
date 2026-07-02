@@ -21,15 +21,15 @@ class ResponsavelResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationLabel = 'Clientes';
+    protected static ?string $navigationLabel = 'Responsáveis';
 
     protected static ?string $modelLabel = 'Responsável';
 
     protected static ?string $pluralModelLabel = 'Clientes';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Clientes';
+    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros e Configurações';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 30;
 
     public static function form(Schema $schema): Schema
     {

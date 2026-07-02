@@ -31,15 +31,15 @@ class CategoriaItemControleResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationLabel = 'Categorias';
+    protected static ?string $navigationLabel = 'Categorias Operacionais';
 
     protected static ?string $modelLabel = 'Categoria';
 
     protected static ?string $pluralModelLabel = 'Categorias';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Trabalho';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 21;
 
     public static function form(Schema $schema): Schema
     {

@@ -1,18 +1,19 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/relatorios-premium.css') }}">
 
     <div class="rel-premium-page">
         <section class="rel-hero">
             <div>
-                <span class="rel-kicker">Relatórios, segurança e validação final</span>
-                <h1>Central operacional de relatórios</h1>
-                <p>Documentos vencidos, vencendo, aprovações, assinaturas, produtividade e visão por cliente usando dados reais do banco.</p>
+                <span class="rel-kicker"><i class="bi bi-bar-chart-line"></i> Relatórios Operacionais</span>
+                <h1>Análise consolidada, não execução</h1>
+                <p>Esta tela concentra indicadores, comparativos e exportações. Pendências, documentos e aprovações continuam sendo resolvidos nas abas operacionais corretas.</p>
             </div>
 
             <div class="rel-actions">
-                <button type="button" wire:click="exportarCsv" wire:loading.attr="disabled" wire:target="exportarCsv">CSV</button>
-                <button type="button" wire:click="exportarExcel" wire:loading.attr="disabled" wire:target="exportarExcel">Excel</button>
-                <button type="button" wire:click="exportarPdf" wire:loading.attr="disabled" wire:target="exportarPdf">PDF</button>
+                <button type="button" wire:click="exportarCsv" wire:loading.attr="disabled" wire:target="exportarCsv"><i class="bi bi-filetype-csv"></i> CSV</button>
+                <button type="button" wire:click="exportarExcel" wire:loading.attr="disabled" wire:target="exportarExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Excel</button>
+                <button type="button" wire:click="exportarPdf" wire:loading.attr="disabled" wire:target="exportarPdf"><i class="bi bi-filetype-pdf"></i> PDF</button>
             </div>
         </section>
 
@@ -20,6 +21,30 @@
             <span></span>
             <strong>Processando relatório...</strong>
         </div>
+
+        <section class="rel-purpose-grid" aria-label="Propósito da seção">
+            <article class="rel-purpose-card">
+                <i class="bi bi-eye"></i>
+                <div>
+                    <strong>Ver</strong>
+                    <span>Resumo consolidado por cliente, prazo, prioridade, status e responsável.</span>
+                </div>
+            </article>
+            <article class="rel-purpose-card">
+                <i class="bi bi-funnel"></i>
+                <div>
+                    <strong>Analisar</strong>
+                    <span>Comparar gargalos, risco de atraso, produtividade e tendência sem alterar registros.</span>
+                </div>
+            </article>
+            <article class="rel-purpose-card">
+                <i class="bi bi-box-arrow-down"></i>
+                <div>
+                    <strong>Exportar</strong>
+                    <span>Gerar CSV, Excel ou PDF para reunião, auditoria, controle interno ou prestação de contas.</span>
+                </div>
+            </article>
+        </section>
 
         <section class="rel-summary-grid">
             @foreach (($resumo ?? []) as $card)
@@ -58,7 +83,7 @@
                 <header class="rel-card-header">
                     <div>
                         <h2>{{ $tipos[$tipoAtual] ?? 'Relatório operacional' }}</h2>
-                        <p>Os itens mais urgentes aparecem primeiro. Use a exportação quando precisar compartilhar ou analisar fora do sistema.</p>
+                        <p>Os itens mais urgentes aparecem primeiro. Para resolver um item, use a aba dona do fluxo: Pendências, Documentos, Aprovações ou SLA.</p>
                     </div>
                     <span class="rel-pill">{{ count($linhas ?? []) }} registro(s)</span>
                 </header>
@@ -105,7 +130,7 @@
             <aside class="rel-side-stack">
                 <article class="rel-card">
                     <header class="rel-card-header simple">
-                        <h2>Clientes que pedem atenção</h2>
+                        <h2>Clientes com maior impacto</h2>
                     </header>
                     <div class="rel-list">
                         @forelse (($clientesCriticos ?? []) as $cliente)
@@ -124,7 +149,7 @@
 
                 <article class="rel-card">
                     <header class="rel-card-header simple">
-                        <h2>Segurança revisada</h2>
+                        <h2>Qualidade da base</h2>
                         <span class="rel-score">{{ $seguranca['score'] ?? 0 }}%</span>
                     </header>
                     <div class="rel-checklist">
@@ -146,8 +171,8 @@
         <section class="rel-card">
             <header class="rel-card-header">
                 <div>
-                    <h2>Rotina de validação final</h2>
-                    <p>Checklist operacional para não deixar página quebrada, ação sem feedback, upload inseguro ou relatório lento.</p>
+                    <h2>Checklist de leitura do relatório</h2>
+                    <p>Use este bloco para validar se a leitura do relatório está confiável antes de exportar ou apresentar os dados.</p>
                 </div>
                 <span class="rel-score">{{ $validacao['score'] ?? 0 }}%</span>
             </header>

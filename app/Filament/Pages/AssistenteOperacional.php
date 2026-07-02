@@ -10,10 +10,10 @@ use UnitEnum;
 class AssistenteOperacional extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
-    protected static string | UnitEnum | null $navigationGroup = 'Trabalho';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
     protected static ?string $navigationLabel = 'Assistente Operacional';
     protected static ?string $title = 'Assistente Operacional';
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 12;
     protected string $view = 'filament.pages.prazzu-operational-tool-page';
 
     public static function shouldRegisterNavigation(): bool

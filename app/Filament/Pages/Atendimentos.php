@@ -31,15 +31,15 @@ class Atendimentos extends Page
     use WithFileUploads;
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
-    protected static string | UnitEnum | null $navigationGroup = 'Atendimentos';
-    protected static ?string $navigationLabel = 'Atendimentos';
+    protected static string | UnitEnum | null $navigationGroup = 'Clientes e Atendimentos';
+    protected static ?string $navigationLabel = 'Clientes e Atendimentos';
     protected static ?string $title = 'Central de Atendimentos';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 4;
     protected string $view = 'filament.pages.atendimentos';
 
     public function getHeading(): string
     {
-        return 'Atendimentos';
+        return 'Clientes e Atendimentos';
     }
 
     public function getSubheading(): ?string

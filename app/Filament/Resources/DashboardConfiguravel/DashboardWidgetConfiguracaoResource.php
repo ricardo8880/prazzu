@@ -31,9 +31,9 @@ class DashboardWidgetConfiguracaoResource extends Resource
 
     protected static ?string $navigationLabel = 'Configuração de Painéis';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Visão Geral Contábil';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Schema $schema): Schema
     {

@@ -18,11 +18,11 @@ use UnitEnum;
 class ControleCobrancas extends Page
 {
     use UsesAdvancedPermissions;
-    protected static string | UnitEnum | null $navigationGroup = 'Financeiro';
+    protected static string | UnitEnum | null $navigationGroup = 'Contratos e Financeiro';
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Cobranças';
     protected static ?string $title = 'Cobranças';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 5;
     protected string $view = 'filament.pages.controle-cobrancas';
 
 

@@ -15,15 +15,15 @@ class DashboardExecutivoContabil extends Page
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-pie';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral Contábil';
+    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral';
 
-    protected static ?string $navigationLabel = 'Visão Geral Contábil';
+    protected static ?string $navigationLabel = 'Resumo Executivo';
 
-    protected static ?string $title = 'Dashboard Executivo Contábil';
+    protected static ?string $title = 'Resumo Executivo Contábil';
 
     protected static ?string $slug = 'dashboard-executivo-contabil';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     protected string $view = 'filament.pages.dashboard-executivo-contabil';
 

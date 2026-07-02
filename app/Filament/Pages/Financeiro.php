@@ -20,10 +20,10 @@ class Financeiro extends Page
 {
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
-    protected static string | UnitEnum | null $navigationGroup = 'Financeiro';
-    protected static ?string $navigationLabel = 'Financeiro';
-    protected static ?string $title = 'Financeiro';
-    protected static ?int $navigationSort = 1;
+    protected static string | UnitEnum | null $navigationGroup = 'Contratos e Financeiro';
+    protected static ?string $navigationLabel = 'Contratos e Financeiro';
+    protected static ?string $title = 'Contratos e Financeiro';
+    protected static ?int $navigationSort = 4;
     protected string $view = 'filament.pages.financeiro';
 
 

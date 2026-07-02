@@ -34,9 +34,9 @@ class DashboardGraficosItemControles extends Page
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chart-pie';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Visão Geral Contábil';
+    protected static string | \UnitEnum | null $navigationGroup = 'Visão Geral';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
 
     public function getTitle(): string

@@ -13,13 +13,13 @@ class IndicadoresConta extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Relatórios';
+    protected static string | UnitEnum | null $navigationGroup = 'Relatórios e Auditoria';
 
-    protected static ?string $navigationLabel = 'Indicadores da Conta';
+    protected static ?string $navigationLabel = 'Indicadores Consolidados';
 
-    protected static ?string $title = 'Indicadores da Conta';
+    protected static ?string $title = 'Indicadores Consolidados';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.pages.indicadores-conta';
 

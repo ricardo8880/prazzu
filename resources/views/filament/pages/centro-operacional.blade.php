@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/centro-operacional.css') }}?v={{ file_exists(public_path('css/centro-operacional.css')) ? filemtime(public_path('css/centro-operacional.css')) : time() }}">
 
     @php
@@ -96,6 +98,22 @@
         $alertasInformativosTotal = $alertasInformativos->sum(fn ($group) => count($group['items'] ?? []));
         $alertasTotal = $alertasCriticosTotal + $alertasInformativosTotal;
     @endphp
+
+    <section class="contabilidade-lote3-scope" aria-label="Propósito da Mesa Operacional">
+        <div class="contabilidade-lote3-scope__top">
+            <div>
+                <span class="contabilidade-lote3-eyebrow"><i class="bi bi-command"></i> Mesa Operacional</span>
+                <h2>Visão de comando da operação diária</h2>
+                <p>Esta tela organiza prioridades, carga, gargalos e redistribuição. A execução detalhada permanece nas abas donas: Pendências, Documentos, Aprovações, SLA e Timeline.</p>
+            </div>
+            <div class="contabilidade-lote3-actions">
+                <a class="contabilidade-lote3-action primary" href="{{ \App\Filament\Pages\Pendencias::getUrl() }}"><i class="bi bi-list-check"></i> Resolver pendências</a>
+                <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Kanban::getUrl() }}"><i class="bi bi-columns-gap"></i> Kanban</a>
+                <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\TimelineOperacional::getUrl() }}"><i class="bi bi-calendar2-week"></i> Timeline</a>
+            </div>
+        </div>
+        <div class="contabilidade-lote3-note">Regra do Lote 3: Mesa Operacional orienta e prioriza; não deve virar duplicata completa de Pendências ou Aprovações.</div>
+    </section>
 
     <div class="co-page co-model" wire:loading.class="is-loading" x-data="{ searchOpen: false }" @keydown.window.ctrl.k.prevent="$refs.globalSearch.focus(); searchOpen = true" @keydown.window.meta.k.prevent="$refs.globalSearch.focus(); searchOpen = true" @keydown.escape.window="searchOpen = false">
         <section class="co-topbar">

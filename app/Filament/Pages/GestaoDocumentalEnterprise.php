@@ -12,10 +12,10 @@ use UnitEnum;
 class GestaoDocumentalEnterprise extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-magnifying-glass';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
-    protected static ?string $navigationLabel = 'Gestão Documental Enterprise';
+    protected static string | UnitEnum | null $navigationGroup = 'Documentos e Modelos';
+    protected static ?string $navigationLabel = 'Gestão Documental';
     protected static ?string $title = 'Gestão Documental Enterprise';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.gestao-documental-enterprise';
 
     protected function getViewData(): array

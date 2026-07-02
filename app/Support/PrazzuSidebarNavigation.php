@@ -16,7 +16,7 @@ class PrazzuSidebarNavigation
 {
     private const SECTION_FAVORITES = 'Favoritos';
     private const SECTION_GLOBAL = 'Global';
-    private const SECTION_ACCOUNTING = 'Escritório Contábil / Contabilidade';
+    private const SECTION_ACCOUNTING = 'Escritório Contábil';
     private const SECTION_SUPER_ADMIN = 'Super Admin';
 
     /**
@@ -24,18 +24,65 @@ class PrazzuSidebarNavigation
      */
     private const ACCOUNTING_GROUPS = [
         '',
+        'Visão Geral',
         'Visão Geral Contábil',
+        'Operação',
         'Central Operacional',
+        'Pendências e Prazos',
         'Pendências e Alertas',
+        'Calendário Operacional',
+        'Clientes e Atendimentos',
         'Clientes',
         'Atendimentos',
+        'Documentos e Modelos',
         'Documentos',
+        'Contratos e Financeiro',
         'Contratos',
         'Financeiro',
         'Aprovações',
-        'Calendário Operacional',
+        'Relatórios e Auditoria',
         'Relatórios',
         'Auditoria e Riscos',
+        'Trabalho',
+        'Visualizações da Operação',
+    ];
+
+    /**
+     * Ordem e nomes finais dos blocos da área contábil na sidebar.
+     */
+    private const ACCOUNTING_GROUP_LABELS = [
+        '' => 'Contabilidade · Visão Geral',
+        'Visão Geral' => 'Contabilidade · Visão Geral',
+        'Visão Geral Contábil' => 'Contabilidade · Visão Geral',
+        'Operação' => 'Contabilidade · Operação',
+        'Central Operacional' => 'Contabilidade · Operação',
+        'Aprovações' => 'Contabilidade · Operação',
+        'Trabalho' => 'Contabilidade · Operação',
+        'Visualizações da Operação' => 'Contabilidade · Operação',
+        'Pendências e Prazos' => 'Contabilidade · Pendências e Prazos',
+        'Pendências e Alertas' => 'Contabilidade · Pendências e Prazos',
+        'Calendário Operacional' => 'Contabilidade · Pendências e Prazos',
+        'Clientes e Atendimentos' => 'Contabilidade · Clientes e Atendimento',
+        'Clientes' => 'Contabilidade · Clientes e Atendimento',
+        'Atendimentos' => 'Contabilidade · Clientes e Atendimento',
+        'Documentos e Modelos' => 'Contabilidade · Documentos e Modelos',
+        'Documentos' => 'Contabilidade · Documentos e Modelos',
+        'Contratos e Financeiro' => 'Contabilidade · Contratos e Financeiro',
+        'Contratos' => 'Contabilidade · Contratos e Financeiro',
+        'Financeiro' => 'Contabilidade · Contratos e Financeiro',
+        'Relatórios e Auditoria' => 'Contabilidade · Relatórios e Auditoria',
+        'Relatórios' => 'Contabilidade · Relatórios e Auditoria',
+        'Auditoria e Riscos' => 'Contabilidade · Relatórios e Auditoria',
+    ];
+
+    private const ACCOUNTING_GROUP_SORT = [
+        'Contabilidade · Visão Geral' => 10,
+        'Contabilidade · Operação' => 20,
+        'Contabilidade · Pendências e Prazos' => 30,
+        'Contabilidade · Clientes e Atendimento' => 40,
+        'Contabilidade · Documentos e Modelos' => 50,
+        'Contabilidade · Contratos e Financeiro' => 60,
+        'Contabilidade · Relatórios e Auditoria' => 70,
     ];
 
     /**
@@ -65,8 +112,6 @@ class PrazzuSidebarNavigation
      */
     private const SUPER_ADMIN_GROUPS = [
         'Governança',
-        'Trabalho',
-        'Visualizações da Operação',
     ];
 
     public static function build(NavigationBuilder $builder, Panel $panel): NavigationBuilder
@@ -91,16 +136,18 @@ class PrazzuSidebarNavigation
         $favoriteItems = self::favoriteNavigationItems($allowedItems);
         $favoriteSection = self::makeSection(self::SECTION_FAVORITES, $favoriteItems, false);
 
+        $accountingSections = self::makeAccountingSections($accountingItems);
+
         $groups = $isSuperAdmin
             ? [
                 $favoriteSection,
+                ...$accountingSections,
                 self::makeSection(self::SECTION_GLOBAL, $globalItems),
-                self::makeSection(self::SECTION_ACCOUNTING, $accountingItems),
                 self::makeSection(self::SECTION_SUPER_ADMIN, $superAdminItems),
             ]
             : [
                 $favoriteSection,
-                self::makeSection(self::SECTION_ACCOUNTING, $accountingItems),
+                ...$accountingSections,
                 self::makeSection(self::SECTION_GLOBAL, $globalItems),
             ];
 
@@ -265,6 +312,30 @@ class PrazzuSidebarNavigation
         return NavigationGroup::make($label)
             ->collapsible(false)
             ->items($items);
+    }
+
+    /**
+     * Divide a antiga seção única de contabilidade em blocos menores e previsíveis.
+     * Isso reduz carga cognitiva na sidebar e deixa cada área com um propósito claro.
+     *
+     * @return array<NavigationGroup>
+     */
+    private static function makeAccountingSections(array $items): array
+    {
+        return collect($items)
+            ->groupBy(fn (NavigationItem $item): string => self::accountingGroupLabel($item))
+            ->sortBy(fn ($items, string $label): int => self::ACCOUNTING_GROUP_SORT[$label] ?? 999)
+            ->map(fn ($groupItems, string $label): ?NavigationGroup => self::makeSection($label, $groupItems->all()))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private static function accountingGroupLabel(NavigationItem $item): string
+    {
+        $group = self::normalizeGroup($item->getGroup());
+
+        return self::ACCOUNTING_GROUP_LABELS[$group] ?? self::SECTION_ACCOUNTING;
     }
 
     private static function sectionFor(NavigationItem $item): string

@@ -11,10 +11,10 @@ use UnitEnum;
 class DashboardConfiguravel extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-adjustments-horizontal';
-    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral Contábil';
+    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral';
     protected static ?string $navigationLabel = 'Painel Configurável';
     protected static ?string $title = 'Painel Configurável';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
 
     protected string $view = 'filament.pages.dashboard-configuravel';
 

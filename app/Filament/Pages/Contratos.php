@@ -14,15 +14,15 @@ use UnitEnum;
 class Contratos extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
-    protected static string | UnitEnum | null $navigationGroup = 'Contratos';
-    protected static ?string $navigationLabel = 'Contratos';
-    protected static ?string $title = 'Contratos';
-    protected static ?int $navigationSort = 7;
+    protected static string | UnitEnum | null $navigationGroup = 'Contratos e Financeiro';
+    protected static ?string $navigationLabel = 'Contratos e Financeiro';
+    protected static ?string $title = 'Contratos e Financeiro';
+    protected static ?int $navigationSort = 1;
     protected string $view = 'filament.pages.contratos';
 
     public function getHeading(): string
     {
-        return 'Contratos';
+        return 'Contratos e Financeiro';
     }
 
     public function getSubheading(): ?string

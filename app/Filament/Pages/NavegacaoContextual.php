@@ -10,10 +10,10 @@ use UnitEnum;
 class NavegacaoContextual extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
-    protected static string | UnitEnum | null $navigationGroup = 'Clientes';
-    protected static ?string $navigationLabel = 'Navegação Contextual';
+    protected static string | UnitEnum | null $navigationGroup = 'Clientes e Atendimentos';
+    protected static ?string $navigationLabel = 'Contexto do Cliente';
     protected static ?string $title = 'Navegação Contextual';
-    protected static ?int $navigationSort = 12;
+    protected static ?int $navigationSort = 3;
     protected string $view = 'filament.pages.prazzu-operational-tool-page';
 
     public static function shouldRegisterNavigation(): bool

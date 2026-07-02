@@ -21,15 +21,15 @@ class EmpresaResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-office';
 
-    protected static ?string $navigationLabel = 'Empresas';
+    protected static ?string $navigationLabel = 'Empresas Cadastradas';
 
     protected static ?string $modelLabel = 'Empresa';
 
     protected static ?string $pluralModelLabel = 'Empresas';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Administração';
+    protected static string|\UnitEnum|null $navigationGroup = 'Cadastros e Configurações';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 11;
 
     public static function form(Schema $schema): Schema
     {

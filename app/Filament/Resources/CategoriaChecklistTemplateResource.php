@@ -23,9 +23,9 @@ class CategoriaChecklistTemplateResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-check-badge';
 
-    protected static ?string $navigationLabel = 'Checklist';
+    protected static ?string $navigationLabel = 'Templates de Checklist';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Central Operacional';
+    protected static string|\UnitEnum|null $navigationGroup = 'Operação';
 
     protected static ?int $navigationSort = 6;
 

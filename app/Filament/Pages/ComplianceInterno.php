@@ -12,10 +12,10 @@ use UnitEnum;
 class ComplianceInterno extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-building-office-2';
-    protected static string | UnitEnum | null $navigationGroup = 'Auditoria e Riscos';
-    protected static ?string $navigationLabel = 'Compliance Interno';
-    protected static ?string $title = 'Compliance Interno';
-    protected static ?int $navigationSort = 5;
+    protected static string | UnitEnum | null $navigationGroup = 'Relatórios e Auditoria';
+    protected static ?string $navigationLabel = 'Conformidade Interna';
+    protected static ?string $title = 'Conformidade Interna';
+    protected static ?int $navigationSort = 7;
     protected string $view = 'filament.pages.compliance-interno';
 
     protected function getViewData(): array

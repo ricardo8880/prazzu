@@ -17,9 +17,9 @@ class DashboardGlobal extends Page
 
     protected static ?string $navigationLabel = 'Painéis Globais';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral Contábil';
+    protected static string | UnitEnum | null $navigationGroup = 'Visão Geral';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     public static function canAccess(): bool
     {

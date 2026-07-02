@@ -28,16 +28,16 @@ class Documentos extends Page
     use WithFileUploads;
     use UsesAdvancedPermissions;
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document';
-    protected static string | UnitEnum | null $navigationGroup = 'Documentos';
+    protected static string | UnitEnum | null $navigationGroup = 'Documentos e Modelos';
     protected static ?string $navigationLabel = 'Documentos';
     protected static ?string $title = 'Documentos';
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 1;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
     protected string $view = 'filament.pages.documentos';
 
     public function getHeading(): string
     {
-        return 'Documentos';
+        return 'Documentos e Modelos';
     }
 
     public function getSubheading(): ?string

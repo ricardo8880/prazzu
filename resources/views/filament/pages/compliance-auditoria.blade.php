@@ -1,4 +1,5 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/compliance-module.css') }}?v={{ file_exists(public_path('css/compliance-module.css')) ? filemtime(public_path('css/compliance-module.css')) : time() }}">
 
     @php
@@ -46,17 +47,24 @@
     <div class="compliance-page">
         <section class="compliance-hero">
             <div>
-                <span>AUDITORIA COMPLETA</span>
-                <h1>Quem fez, quando fez e o que mudou</h1>
-                <p>Visão resumida da rastreabilidade do sistema. Use os filtros para chegar rápido ao usuário, empresa, módulo, IP, campo alterado e comparação antes/depois.</p>
+                <span><i class="bi bi-shield-check"></i> Auditoria e Rastreabilidade</span>
+                <h1>Evidência, histórico e investigação</h1>
+                <p>Esta aba não resolve pendências nem altera documentos. Ela mostra quem fez, quando fez, o que mudou e onde investigar o registro original.</p>
             </div>
             <div class="compliance-hero-actions compliance-hero-actions-export">
                 @if ($this->canExportAuditoria())
-                    <button type="button" class="compliance-export-button" wire:click="exportAuditoriaCsv" wire:loading.attr="disabled" wire:target="exportAuditoriaCsv">Exportar CSV</button>
-                    <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel">Exportar Excel</button>
+                    <button type="button" class="compliance-export-button" wire:click="exportAuditoriaCsv" wire:loading.attr="disabled" wire:target="exportAuditoriaCsv"><i class="bi bi-filetype-csv"></i> Exportar CSV</button>
+                    <button type="button" class="compliance-export-button compliance-export-button-primary" wire:click="exportAuditoriaExcel" wire:loading.attr="disabled" wire:target="exportAuditoriaExcel"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel</button>
                 @endif
-                <a href="{{ $auditoriaDetalhadaUrl ?? '#' }}">Investigar em detalhes</a>
+                <a href="{{ $auditoriaDetalhadaUrl ?? '#' }}"><i class="bi bi-search"></i> Investigar em detalhes</a>
             </div>
+        </section>
+
+
+        <section class="audit-purpose-strip">
+            <article><i class="bi bi-clock-history"></i><strong>Histórico</strong><span>Linha do tempo dos eventos e alterações.</span></article>
+            <article><i class="bi bi-person-check"></i><strong>Responsabilidade</strong><span>Usuário, empresa, IP e contexto da ação.</span></article>
+            <article><i class="bi bi-arrow-left-right"></i><strong>Antes e depois</strong><span>Comparação objetiva do valor anterior e novo.</span></article>
         </section>
 
         <section class="compliance-stats">
@@ -68,8 +76,8 @@
         <section class="compliance-card compliance-filters">
             <header>
                 <div>
-                    <h2>Encontre rapidamente o que aconteceu</h2>
-                    <p>Filtre por período, empresa, usuário, tipo de ação ou texto livre. A busca aceita campo, módulo, registro, valor, IP e evento.</p>
+                    <h2>Filtrar evidências de auditoria</h2>
+                    <p>Use os filtros para localizar evidências. A ação operacional deve continuar na tela de origem do registro.</p>
                 </div>
                 @if ($hasActiveFilters)
                     <a class="compliance-link compliance-link-light" href="{{ url()->current() }}">Limpar filtros</a>

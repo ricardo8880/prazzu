@@ -1,0 +1,81 @@
+/* Lote 6 — Camada transversal de UX/UI para a área Escritório Contábil
+   Escopo: consistência visual, legibilidade, responsividade, acessibilidade e estados interativos.
+   Não altera regras de negócio nem responsabilidade das abas definidas nos Lotes 1–5. */
+:root{
+  --ctb-bg:#f8fafc;
+  --ctb-card:#ffffff;
+  --ctb-card-soft:#f1f5f9;
+  --ctb-border:rgba(148,163,184,.28);
+  --ctb-border-strong:rgba(100,116,139,.35);
+  --ctb-text:#0f172a;
+  --ctb-muted:#64748b;
+  --ctb-primary:#2563eb;
+  --ctb-primary-soft:rgba(37,99,235,.1);
+  --ctb-success:#047857;
+  --ctb-warning:#b45309;
+  --ctb-danger:#b91c1c;
+  --ctb-radius-xs:.65rem;
+  --ctb-radius-sm:.9rem;
+  --ctb-radius-md:1.15rem;
+  --ctb-radius-lg:1.5rem;
+  --ctb-shadow:0 18px 45px rgba(15,23,42,.07);
+  --ctb-shadow-soft:0 10px 28px rgba(15,23,42,.05);
+}
+.dark{
+  --ctb-bg:#020617;
+  --ctb-card:rgba(15,23,42,.94);
+  --ctb-card-soft:rgba(30,41,59,.82);
+  --ctb-border:rgba(148,163,184,.22);
+  --ctb-border-strong:rgba(203,213,225,.28);
+  --ctb-text:#f8fafc;
+  --ctb-muted:#cbd5e1;
+  --ctb-primary:#60a5fa;
+  --ctb-primary-soft:rgba(96,165,250,.14);
+  --ctb-shadow:none;
+  --ctb-shadow-soft:none;
+}
+.compliance-page,.ca-page,.rel-premium-page,.audit-admin,.configuracoes-prazzu,.prazzu-admin-page,.co-page,.docs-hub-page,.tl-page,.kanban-page,.checklist-page,.calendario-page,.sla-page{scroll-behavior:smooth}
+:is(.compliance-page,.ca-page,.rel-premium-page,.audit-admin,.configuracoes-prazzu,.prazzu-admin-page,.co-page,.docs-hub-page,.tl-page) :is(h1,h2,h3){letter-spacing:-.025em}
+:is(.compliance-page,.ca-page,.rel-premium-page,.audit-admin,.configuracoes-prazzu,.prazzu-admin-page,.co-page,.docs-hub-page,.tl-page) p{line-height:1.6}
+:is(.compliance-card,.audit-card,.audit-panel,.audit-source,.configuracoes-card,.prazzu-card,.rel-card,.rel-panel,.co-card,.docs-card,.ca-card,.tl-card){border-color:var(--ctb-border)!important;box-shadow:var(--ctb-shadow-soft);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;background-clip:padding-box}
+:is(.compliance-card,.audit-card,.audit-panel,.audit-source,.configuracoes-card,.prazzu-card,.rel-card,.rel-panel,.co-card,.docs-card,.ca-card,.tl-card):hover{border-color:var(--ctb-border-strong)!important;box-shadow:var(--ctb-shadow);transform:translateY(-1px)}
+:is(.contabilidade-lote3-action,.audit-actions a,.audit-link,.rel-action,.configuracoes-action,.prazzu-action,.compliance-link,.pz-ux-toolbar a,button,a)[disabled],:is(button,a).is-disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+:is(.contabilidade-lote3-action,.audit-actions a,.audit-link,.rel-action,.configuracoes-action,.prazzu-action,.compliance-link,.pz-ux-toolbar a,button,a):focus-visible{outline:3px solid rgba(37,99,235,.28);outline-offset:3px;border-radius:.85rem}
+.dark :is(.contabilidade-lote3-action,.audit-actions a,.audit-link,.rel-action,.configuracoes-action,.prazzu-action,.compliance-link,.pz-ux-toolbar a,button,a):focus-visible{outline-color:rgba(96,165,250,.42)}
+.contabilidade-lote6-shell{display:grid;gap:1rem}
+.contabilidade-lote6-section-title{display:flex;align-items:center;justify-content:space-between;gap:.85rem;margin:0 0 .85rem}
+.contabilidade-lote6-section-title h2{margin:0;color:var(--ctb-text);font-weight:900;font-size:1.05rem}.contabilidade-lote6-section-title p{margin:.2rem 0 0;color:var(--ctb-muted);font-size:.86rem}
+.contabilidade-lote6-chip{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.28rem .6rem;font-size:.72rem;font-weight:850;background:var(--ctb-primary-soft);color:var(--ctb-primary);white-space:nowrap}
+:is(.compliance-empty,.audit-empty,.rel-empty,.configuracoes-empty,.prazzu-empty,.docs-empty,.ca-empty){border-radius:var(--ctb-radius-md)!important;border:1px dashed var(--ctb-border-strong)!important;background:linear-gradient(135deg,rgba(241,245,249,.92),rgba(255,255,255,.75))!important;color:var(--ctb-muted)!important;padding:1.25rem!important;text-align:center!important}
+.dark :is(.compliance-empty,.audit-empty,.rel-empty,.configuracoes-empty,.prazzu-empty,.docs-empty,.ca-empty){background:linear-gradient(135deg,rgba(30,41,59,.82),rgba(15,23,42,.74))!important;color:var(--ctb-muted)!important}
+:is(.compliance-table,.rel-table,.audit-table,.docs-table){width:100%;border-collapse:separate!important;border-spacing:0 .55rem!important}
+:is(.compliance-table,.rel-table,.audit-table,.docs-table) thead th{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ctb-muted);font-weight:850;padding:.35rem .7rem;text-align:left}
+:is(.compliance-table,.rel-table,.audit-table,.docs-table) tbody tr{background:var(--ctb-card);box-shadow:var(--ctb-shadow-soft)}
+:is(.compliance-table,.rel-table,.audit-table,.docs-table) tbody td{padding:.85rem .7rem;border-top:1px solid var(--ctb-border);border-bottom:1px solid var(--ctb-border);vertical-align:middle;color:var(--ctb-text)}
+:is(.compliance-table,.rel-table,.audit-table,.docs-table) tbody td:first-child{border-left:1px solid var(--ctb-border);border-radius:.9rem 0 0 .9rem}
+:is(.compliance-table,.rel-table,.audit-table,.docs-table) tbody td:last-child{border-right:1px solid var(--ctb-border);border-radius:0 .9rem .9rem 0}
+.contabilidade-lote6-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem}.contabilidade-lote6-form-grid.full{grid-template-columns:1fr}
+:is(input,select,textarea).contabilidade-lote6-input{width:100%;border:1px solid var(--ctb-border);border-radius:.9rem;padding:.72rem .85rem;background:var(--ctb-card);color:var(--ctb-text)}
+:is(input,select,textarea).contabilidade-lote6-input:focus{outline:none;border-color:var(--ctb-primary);box-shadow:0 0 0 4px var(--ctb-primary-soft)}
+:is(.badge,.status,.pill,[class*="badge"],[class*="pill"]){font-weight:800}
+@media(max-width:1100px){:is(.audit-grid,.audit-sources,.rel-grid,.configuracoes-grid,.prazzu-grid){grid-template-columns:repeat(2,minmax(0,1fr))!important}:is(.audit-columns,.rel-columns,.co-columns,.docs-columns){grid-template-columns:1fr!important}}
+@media(max-width:760px){:is(.audit-grid,.audit-sources,.rel-grid,.configuracoes-grid,.prazzu-grid,.contabilidade-lote6-form-grid){grid-template-columns:1fr!important}:is(.audit-hero,.rel-hero,.configuracoes-hero,.prazzu-hero,.compliance-hero){padding:1.15rem!important;border-radius:1.15rem!important}:is(.audit-hero h1,.rel-hero h1,.configuracoes-hero h1,.prazzu-hero h1,.compliance-hero h1){font-size:1.35rem!important}:is(.audit-row,.compliance-row,.rel-row){display:grid!important;gap:.55rem!important}:is(.compliance-table,.rel-table,.audit-table,.docs-table){display:block;overflow-x:auto;white-space:nowrap;padding-bottom:.5rem}.contabilidade-lote6-section-title{display:grid}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+
+/* Lote 7 — Refinamento final
+   Ajustes de acabamento para manter consistência entre grupos, títulos, navegação contextual e componentes reutilizados. */
+.contabilidade-final-shell{display:grid;gap:1.1rem}
+.contabilidade-final-review-card{border:1px solid var(--ctb-border);background:var(--ctb-card);border-radius:var(--ctb-radius-lg);box-shadow:var(--ctb-shadow-soft);padding:1rem}
+.contabilidade-final-review-card h3{margin:0;color:var(--ctb-text);font-size:.98rem;font-weight:900;letter-spacing:-.02em}
+.contabilidade-final-review-card p{margin:.35rem 0 0;color:var(--ctb-muted);font-size:.86rem;line-height:1.55}
+.contabilidade-final-nav-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem}
+.contabilidade-final-nav-card{display:flex;align-items:flex-start;gap:.7rem;padding:.9rem;border:1px solid var(--ctb-border);border-radius:var(--ctb-radius-md);background:linear-gradient(135deg,var(--ctb-card),var(--ctb-card-soft));text-decoration:none;color:var(--ctb-text);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.contabilidade-final-nav-card:hover{transform:translateY(-1px);border-color:var(--ctb-border-strong);box-shadow:var(--ctb-shadow-soft)}
+.contabilidade-final-nav-card i{font-size:1rem;color:var(--ctb-primary);margin-top:.1rem}
+.contabilidade-final-nav-card strong{display:block;font-size:.86rem;font-weight:900;color:var(--ctb-text)}
+.contabilidade-final-nav-card span{display:block;margin-top:.18rem;font-size:.75rem;color:var(--ctb-muted);line-height:1.4}
+:is(.co-page,.docs-hub-page,.ca-page,.sla-page,.calendario-page,.kanban-page,.checklist-page,.tl-page,.configuracoes-prazzu,.prazzu-admin-page,.rel-premium-page,.audit-admin,.compliance-page) .section-kicker{display:inline-flex;align-items:center;gap:.35rem;border-radius:999px;padding:.25rem .55rem;background:var(--ctb-primary-soft);color:var(--ctb-primary);font-weight:850;font-size:.72rem}
+:is(.co-page,.docs-hub-page,.ca-page,.sla-page,.calendario-page,.kanban-page,.checklist-page,.tl-page,.configuracoes-prazzu,.prazzu-admin-page,.rel-premium-page,.audit-admin,.compliance-page) small{color:var(--ctb-muted)}
+@media(max-width:1180px){.contabilidade-final-nav-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.contabilidade-final-nav-grid{grid-template-columns:1fr}.contabilidade-final-review-card{padding:.9rem}}

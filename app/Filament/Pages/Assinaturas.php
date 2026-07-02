@@ -16,10 +16,10 @@ use UnitEnum;
 class Assinaturas extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
-    protected static string | UnitEnum | null $navigationGroup = 'Contratos';
+    protected static string | UnitEnum | null $navigationGroup = 'Contratos e Financeiro';
     protected static ?string $navigationLabel = 'Assinaturas';
     protected static ?string $title = 'Assinaturas Contratuais';
-    protected static ?int $navigationSort = 20;
+    protected static ?int $navigationSort = 3;
     protected string $view = 'filament.pages.assinaturas';
 
     public function getHeading(): string

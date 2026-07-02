@@ -1,7 +1,29 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/central-aprovacoes.css') }}?v={{ file_exists(public_path('css/central-aprovacoes.css')) ? filemtime(public_path('css/central-aprovacoes.css')) : time() }}">
 
     <div class="ca-page">
+        <section class="contabilidade-lote3-scope" aria-label="Propósito da aba Aprovações">
+            <div class="contabilidade-lote3-scope__top">
+                <div>
+                    <span class="contabilidade-lote3-eyebrow"><i class="bi bi-check2-square"></i> Aprovações</span>
+                    <h2>Central exclusiva para decisões e rastreabilidade</h2>
+                    <p>Aqui ficam aprovar, reprovar, pedir ajuste e acompanhar histórico de decisão. Pendências continuam em Pendências; documentos continuam em Documentos.</p>
+                </div>
+                <div class="contabilidade-lote3-actions">
+                    <a class="contabilidade-lote3-action primary" href="#fila-aprovacoes"><i class="bi bi-inbox"></i> Ver fila</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Pendencias::getUrl() }}"><i class="bi bi-list-check"></i> Pendências</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\Auditoria::getUrl() }}"><i class="bi bi-shield-check"></i> Auditoria</a>
+                </div>
+            </div>
+            <div class="contabilidade-lote3-rules">
+                <div class="contabilidade-lote3-rule"><strong><i class="bi bi-bullseye"></i> Propósito</strong><span>Tomar decisões com contexto suficiente e registro claro.</span></div>
+                <div class="contabilidade-lote3-rule"><strong><i class="bi bi-box-arrow-up-right"></i> Não duplicar</strong><span>Não explicar resolução de pendências nem gestão documental nesta tela.</span></div>
+                <div class="contabilidade-lote3-rule"><strong><i class="bi bi-shield-lock"></i> UX segura</strong><span>Decisão só depois de revisar contexto, motivo e impacto.</span></div>
+            </div>
+        </section>
+
         <section class="ca-hero {{ $diagnostico['tom'] ?? 'info' }}">
             <div>
                 <span>GOVERNANÇA / APROVAÇÕES</span>

@@ -8,10 +8,10 @@ use UnitEnum;
 class CentroOperacionalGestao extends CentroOperacional
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-squares-2x2';
-    protected static string | UnitEnum | null $navigationGroup = 'Central Operacional';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
     protected static ?string $navigationLabel = 'Gestão da Operação';
     protected static ?string $title = 'Gestão da Operação';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
     protected string $view = 'filament.pages.centro-operacional-gestao';
 
     public string $operationalTab = 'workload';

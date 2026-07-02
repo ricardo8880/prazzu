@@ -11,10 +11,10 @@ use UnitEnum;
 class Gantt extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar-square';
-    protected static string | UnitEnum | null $navigationGroup = 'Visualizações da Operação';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação';
     protected static ?string $navigationLabel = 'Cronograma Gantt';
     protected static ?string $title = 'Cronograma Gantt';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 9;
     protected string $view = 'filament.pages.gantt-enterprise';
 
     public ?string $search = null;

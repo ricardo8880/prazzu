@@ -29,15 +29,15 @@ class ItemControleTagResource extends Resource
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-hashtag';
 
-    protected static ?string $navigationLabel = 'Tags';
+    protected static ?string $navigationLabel = 'Tags Operacionais';
 
     protected static ?string $modelLabel = 'Tag';
 
     protected static ?string $pluralModelLabel = 'Tags';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Trabalho';
+    protected static string|\UnitEnum|null $navigationGroup = 'Configurações';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 22;
 
     public static function form(Schema $schema): Schema
     {

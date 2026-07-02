@@ -1,4 +1,6 @@
 <x-filament-panels::page>
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-ux-lote6.css') }}?v={{ file_exists(public_path('css/contabilidade-ux-lote6.css')) ? filemtime(public_path('css/contabilidade-ux-lote6.css')) : time() }}">
+    <link rel="stylesheet" href="{{ asset('css/contabilidade-operacao-lote3.css') }}?v={{ file_exists(public_path('css/contabilidade-operacao-lote3.css')) ? filemtime(public_path('css/contabilidade-operacao-lote3.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/compliance-module.css') }}?v={{ file_exists(public_path('css/compliance-module.css')) ? filemtime(public_path('css/compliance-module.css')) : time() }}">
     <link rel="stylesheet" href="{{ asset('css/prazzu-ux-essentials.css') }}?v={{ file_exists(public_path('css/prazzu-ux-essentials.css')) ? filemtime(public_path('css/prazzu-ux-essentials.css')) : time() }}">
 
@@ -53,6 +55,26 @@
     @endphp
 
     <div class="compliance-page pendencias-lote1-page pendencias-lote11-page">
+        <section class="contabilidade-lote3-scope" aria-label="Propósito da aba Pendências">
+            <div class="contabilidade-lote3-scope__top">
+                <div>
+                    <span class="contabilidade-lote3-eyebrow"><i class="bi bi-list-check"></i> Pendências</span>
+                    <h2>Mesa exclusiva para resolver pendências</h2>
+                    <p>Esta aba concentra triagem, priorização, conclusão, aprovação e bloqueios das pendências. A Home apenas sinaliza riscos e envia o usuário para cá.</p>
+                </div>
+                <div class="contabilidade-lote3-actions">
+                    <a class="contabilidade-lote3-action primary" href="#lista-pendencias"><i class="bi bi-arrow-down-circle"></i> Ver fila</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\SlaPrazos::getUrl() }}"><i class="bi bi-clock-history"></i> Ver SLA</a>
+                    <a class="contabilidade-lote3-action" href="{{ \App\Filament\Pages\CentralAprovacoes::getUrl() }}"><i class="bi bi-check2-square"></i> Aprovações</a>
+                </div>
+            </div>
+            <div class="contabilidade-lote3-rules">
+                <div class="contabilidade-lote3-rule"><strong><i class="bi bi-bullseye"></i> Propósito</strong><span>Resolver pendências abertas, atrasadas, críticas ou sem responsável.</span></div>
+                <div class="contabilidade-lote3-rule"><strong><i class="bi bi-box-arrow-up-right"></i> Vai para outra aba</strong><span>Documentos, aprovações finais e análise histórica ficam nos módulos próprios.</span></div>
+                <div class="contabilidade-lote3-rule"><strong><i class="bi bi-link-45deg"></i> Ligação correta</strong><span>Quando a pendência depender de documento, SLA ou aprovação, use o link contextual.</span></div>
+            </div>
+        </section>
+
         <div class="pendencias-lote6-livewire-loading" wire:loading.delay.flex wire:target="aplicarFiltroPendencias,limparFiltrosPendencias,abrirPendencia,concluirPendenciaSelecionada,solicitarAprovacaoPendenciaSelecionada,aprovarPendenciaSelecionada,reprovarPendenciaSelecionada,iniciarSlaPendenciaSelecionada,atualizarSlaPendenciaSelecionada,finalizarSlaPendenciaSelecionada,criarPendencia">
             <i class="pz-ux-spinner"></i> Atualizando a central sem sair da tela...
         </div>

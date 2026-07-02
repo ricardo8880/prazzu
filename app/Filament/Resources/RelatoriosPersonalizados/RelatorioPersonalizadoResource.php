@@ -36,13 +36,13 @@ class RelatorioPersonalizadoResource extends Resource
 
     protected static ?string $navigationLabel = 'Relatórios Personalizados';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Relatórios';
+    protected static string|\UnitEnum|null $navigationGroup = 'Relatórios e Auditoria';
 
-    protected static ?int $navigationSort = 13;
+    protected static ?int $navigationSort = 2;
 
     public static function getNavigationGroup(): string|\UnitEnum|null
     {
-        return 'Relatórios';
+        return 'Relatórios e Auditoria';
     }
 
     public static function form(Schema $schema): Schema

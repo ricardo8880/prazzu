@@ -19,10 +19,10 @@ class Configuracoes extends Page implements Forms\Contracts\HasForms
     use Forms\Concerns\InteractsWithForms;
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-cog-6-tooth';
-    protected static string | UnitEnum | null $navigationGroup = 'Configurações';
-    protected static ?string $navigationLabel = 'Configurações';
-    protected static ?string $title = 'Configurações';
-    protected static ?int $navigationSort = 2;
+    protected static string | UnitEnum | null $navigationGroup = 'Cadastros e Configurações';
+    protected static ?string $navigationLabel = 'Parâmetros do Escritório';
+    protected static ?string $title = 'Parâmetros do Escritório';
+    protected static ?int $navigationSort = 50;
     protected string $view = 'filament.pages.configuracoes';
 
     public ?array $data = [];
@@ -40,8 +40,8 @@ class Configuracoes extends Page implements Forms\Contracts\HasForms
 
         return $form
             ->schema([
-                Section::make('Empresa e notificações de vencimento')
-                    ->description('Essas opções já são usadas pelo comando de notificação de vencimentos do sistema.')
+                Section::make('Parâmetros de vencimento e notificações')
+                    ->description('Defina regras globais usadas pela operação. O acompanhamento dos prazos permanece em SLA e Prazos.')
                     ->schema([
                         Forms\Components\Select::make('empresa_id')
                             ->label('Empresa')

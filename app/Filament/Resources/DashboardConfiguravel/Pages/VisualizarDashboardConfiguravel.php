@@ -19,13 +19,13 @@ class VisualizarDashboardConfiguravel extends Page
 
     protected static ?string $title = 'Visualizar Dashboard';
 
-    protected static ?string $navigationLabel = 'Visualizar Dashboard';
+    protected static ?string $navigationLabel = 'Visualizar Painéis';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Relatórios';
+    protected static string|\UnitEnum|null $navigationGroup = 'Relatórios e Auditoria';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     public static function canAccess(array $parameters = []): bool
     {
