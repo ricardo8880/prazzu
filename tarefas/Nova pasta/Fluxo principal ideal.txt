@@ -1,0 +1,19 @@
+Fluxo principal ideal
+
+O fluxo que deveria mandar no sistema é:
+
+Home / Resumo Executivo
+↓
+Mesa Operacional
+↓
+Pendência / Tarefa / Documento / Aprovação / Cobrança
+↓
+Responsável executa
+↓
+Cliente responde pelo portal, se necessário
+↓
+SLA/notificação acompanha
+↓
+Auditoria registra tudo
+↓
+Relatório mostra o que foi salvo, atrasado ou resolvido

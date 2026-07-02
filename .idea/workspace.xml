@@ -4,31 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Auditoria.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Auditoria.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/AuditoriaDetalhada/AuditoriaDetalhadaResource.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/AuditoriaDetalhada/Pages/ListAuditoriaDetalhada.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/AuditoriaDetalhada/Pages/VisualizarAuditoriaDetalhada.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/public/css/style.css" beforeDir="false" afterPath="$PROJECT_DIR$/public/css/style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/compliance-auditoria.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/compliance-auditoria.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/20/19/2019be086ac767b6402d59e465807db40cbf5e1d" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/20/19/2019be086ac767b6402d59e465807db40cbf5e1d" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/23/a4/23a4a7a0e3e218b8269da0d1ed65d9a5e8e196a3" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/23/a4/23a4a7a0e3e218b8269da0d1ed65d9a5e8e196a3" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/83/31837ec52562960f449e9f5b6dfbc6b0b18b8372" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/83/31837ec52562960f449e9f5b6dfbc6b0b18b8372" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/41/33/41339cfc02e3a49b95a2c3bb9c2ad6858ce77854" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/41/33/41339cfc02e3a49b95a2c3bb9c2ad6858ce77854" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/49/21/4921b507f7d37bf7cf559a36449ef1b08c004a67" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/49/21/4921b507f7d37bf7cf559a36449ef1b08c004a67" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/63/f2/63f2082cf5e2071499f4a2261b192dc164594d67" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/63/f2/63f2082cf5e2071499f4a2261b192dc164594d67" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/65/44/6544633c447f65c0ceb85de01b0c968ffaafb6b4" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/65/44/6544633c447f65c0ceb85de01b0c968ffaafb6b4" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/aa/96/aa968f55ff0a2eb42302af2e2d99db56df5c4b0b" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/aa/96/aa968f55ff0a2eb42302af2e2d99db56df5c4b0b" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/ad/5f/ad5feeb7d6a03b70b4340039eec1b792c26ffd7e" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/ad/5f/ad5feeb7d6a03b70b4340039eec1b792c26ffd7e" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/c2/bb/c2bb18db8d3bbdc24a75ad2294b2da87cc15f2bb" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/c2/bb/c2bb18db8d3bbdc24a75ad2294b2da87cc15f2bb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d4/6f/d46f3f053e2407398aac0c4e8d6e23f5b68cecbf" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d4/6f/d46f3f053e2407398aac0c4e8d6e23f5b68cecbf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/e5/6c/e56c30c5de014e017245bb89a9ba5afc981ff032" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/e5/6c/e56c30c5de014e017245bb89a9ba5afc981ff032" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/ef/43/ef43a52e543dd3efaaaaa62f69cce540aa23c5af" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/ef/43/ef43a52e543dd3efaaaaa62f69cce540aa23c5af" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/mZ50uNO2js2iChXwFmNPZ9pzC7CaAkTsNvrApLZ1" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/sessions/mZ50uNO2js2iChXwFmNPZ9pzC7CaAkTsNvrApLZ1" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/views/405dbdfaa3a5814437c7aeae448b1044.php" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/views/405dbdfaa3a5814437c7aeae448b1044.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
-    </list>
+    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -202,6 +178,7 @@
       <path value="$PROJECT_DIR$/vendor/league/uri-interfaces" />
       <path value="$PROJECT_DIR$/vendor/ramsey/uuid" />
       <path value="$PROJECT_DIR$/vendor/ramsey/collection" />
+      <path value="$PROJECT_DIR$/vendor/phpstan/phpstan" />
     </include_path>
   </component>
   <component name="ProjectColorInfo">{
