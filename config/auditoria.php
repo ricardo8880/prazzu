@@ -16,7 +16,6 @@ use App\Models\ClientePortalUser;
 use App\Models\Comentario;
 use App\Models\Configuracao;
 use App\Models\CrmCliente;
-use App\Models\DashboardWidgetConfiguracao;
 use App\Models\Empresa;
 use App\Models\FluxoOperacional;
 use App\Models\FluxoOperacionalEtapa;
@@ -92,7 +91,6 @@ return [
         Comentario::class,
         Configuracao::class,
         CrmCliente::class,
-        DashboardWidgetConfiguracao::class,
         Empresa::class,
         FluxoOperacional::class,
         FluxoOperacionalEtapa::class,

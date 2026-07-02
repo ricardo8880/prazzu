@@ -71,11 +71,6 @@ class Empresa extends Model
         return $this->hasMany(RelatorioPersonalizado::class);
     }
 
-    public function dashboardWidgets()
-    {
-        return $this->hasMany(DashboardWidgetConfiguracao::class);
-    }
-
     public function fluxosOperacionais()
     {
         return $this->hasMany(FluxoOperacional::class);

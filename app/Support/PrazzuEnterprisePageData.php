@@ -22,7 +22,6 @@ class PrazzuEnterprisePageData
             'financeiro' => self::financeiro(),
             'relatorios' => self::relatorios(),
             'dashboards' => self::dashboards(),
-            'dashboard-configuravel' => self::dashboardConfiguravel(),
             'configuracoes' => self::configuracoes(),
             'usuarios' => self::usuarios(),
             'permissoes' => self::permissoes(),
@@ -161,16 +160,6 @@ class PrazzuEnterprisePageData
             'KPIs operacionais', 'SLA visual', 'Kanban resumido', 'Riscos e pendências', 'Próximos vencimentos', 'Assistente operacional IA'
         ], self::dashboardRows(), self::dashboardActions());
     }
-
-    private static function dashboardConfiguravel(): array
-    {
-        $data = self::dashboards();
-        $data['title'] = 'Dashboard Configurável';
-        $data['subtitle'] = 'Monte dashboards por perfil, empresa, nicho, KPI, SLA e relatório gerencial.';
-        $data['features'] = ['Widgets por perfil', 'KPIs customizados', 'Filtros salvos', 'Cards financeiros', 'SLA por operação', 'Permissões por dashboard'];
-        return $data;
-    }
-
     private static function configuracoes(): array
     {
         return self::base('configuracoes', 'Configurações', 'Parâmetros enterprise para notificações, SLA, automações, portal, compliance e financeiro.', [

@@ -4,7 +4,6 @@ namespace App\Filament\Resources\ItemControles\Pages;
 
 use App\Filament\Pages\Pendencias;
 use App\Exports\ItemControlesExport;
-use App\Filament\Resources\DashboardConfiguravel\DashboardWidgetConfiguracaoResource;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Filament\Resources\ItemControles\Pages\Concerns\HasItemControleSubNavigation;
 use App\Filament\Resources\ItemControles\Pages\Concerns\DiagnosesItemControlePerformance;
@@ -53,8 +52,8 @@ class ListItemControles extends ListRecords
                     ->label('Dashboard - Graficos')
                     ->icon('heroicon-o-chart-pie')
                     ->color('info')
-                    ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_DASHBOARD_OPERACIONAL))
-                    ->url(ItemControleResource::getUrl('dashboard-graficos')),
+                    ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_DASHBOARD_OPERACIONAL)),
+
 
                 Action::make('dashboardTabelas')
                     ->label('Dashboard - Tabelas')
@@ -62,13 +61,6 @@ class ListItemControles extends ListRecords
                     ->color('gray')
                     ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_DASHBOARD_OPERACIONAL))
                     ->url(ItemControleResource::getUrl('dashboard-tabelas')),
-
-                Action::make('dashboardConfiguravel')
-                    ->label('Dashboard Configurável')
-                    ->icon('heroicon-o-squares-2x2')
-                    ->color('success')
-                    ->visible(fn (): bool => PlanoService::usuarioPossuiFeature($user, PlanoService::FEATURE_DASHBOARDS_PERSONALIZADOS))
-                    ->url(DashboardWidgetConfiguracaoResource::getUrl('visualizar')),
 
                 Action::make('pendencias')
                     ->label('Pendências')

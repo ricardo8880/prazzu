@@ -6,7 +6,6 @@ namespace App\Services;
 use App\Support\CachedSchema;
 use App\Filament\Pages\Pendencias;
 use App\Filament\Resources\ItemControles\ItemControleResource;
-use App\Filament\Resources\PrazzuTemplates\PrazzuTemplateResource;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -23,11 +22,8 @@ class PrazzuEnterpriseMaturityService
             'central-aprovacoes' => $this->centralAprovacoes(),
             'gestao-documental' => $this->gestaoDocumental(),
             'automacao-visual' => $this->automacaoVisual(),
-            'compliance-engine' => $this->complianceEngine(),
             'relatorios-exportaveis' => $this->relatoriosExportaveis(),
             'dashboard-executivo' => $this->dashboardExecutivo(),
-            'timeline-global' => $this->timelineGlobal(),
-            'templates-enterprise' => $this->templatesEnterprise(),
             'assistente-operacional' => $this->assistenteOperacional(),
             'navegacao-contextual' => $this->navegacaoContextual(),
             default => $this->centroOperacional(),
@@ -163,36 +159,6 @@ class PrazzuEnterpriseMaturityService
         ];
     }
 
-    private function complianceEngine(): array
-    {
-        $docs = $this->documentosVencidosRows(12);
-        $contracts = $this->contractsDueRows(12);
-        $sla = $this->slaRows(12);
-        $billing = $this->billingRows(12);
-        $risks = $this->riskRows(12);
-
-        return [
-            'module' => 'compliance-engine',
-            'group' => 'COMPLIANCE',
-            'title' => 'Compliance Engine Interno',
-            'subtitle' => 'Motor de verificação local para documentos, contratos, SLA, cobrança e risco operacional.',
-            'cards' => [
-                ['label' => 'Docs vencidos', 'value' => count($docs), 'tone' => 'danger', 'hint' => 'Vencimento documental'],
-                ['label' => 'Contratos vencendo', 'value' => count($contracts), 'tone' => 'warning', 'hint' => 'Próximos 30 dias'],
-                ['label' => 'SLA rompido/risco', 'value' => count($sla), 'tone' => 'danger', 'hint' => 'Atuação imediata'],
-                ['label' => 'Financeiro crítico', 'value' => count($billing), 'tone' => 'info', 'hint' => 'Cobrança local'],
-            ],
-            'sections' => [
-                ['title' => 'Documentos vencidos', 'description' => 'Itens com vencimento expirado e ainda não encerrados.', 'items' => $docs],
-                ['title' => 'Contratos vencendo', 'description' => 'Renovações e encerramentos dos próximos 30 dias.', 'items' => $contracts],
-                ['title' => 'SLA crítico', 'description' => 'Prazos rompidos ou próximos do limite.', 'items' => $sla],
-                ['title' => 'Cobrança crítica', 'description' => 'Pagamentos vencidos ou em aberto.', 'items' => $billing],
-                ['title' => 'Score de risco operacional', 'description' => 'Pontuação por atraso, SLA, prioridade, cobrança e documentos.', 'items' => $risks],
-            ],
-            'quickActions' => $this->quickActions(),
-        ];
-    }
-
     private function relatoriosExportaveis(): array
     {
         $reports = [
@@ -269,92 +235,6 @@ class PrazzuEnterpriseMaturityService
                 ['title' => 'Prazos, SLA e documentos críticos', 'description' => 'Fila objetiva de itens que podem gerar reclamação, multa, retrabalho ou perda de confiança.', 'items' => $this->riskRows(12)],
             ],
             'quickActions' => $this->quickActions(),
-        ];
-    }
-
-    private function timelineGlobal(): array
-    {
-        return [
-            'module' => 'timeline-global',
-            'group' => 'AUDITORIA',
-            'title' => 'Timeline Global Consolidada',
-            'subtitle' => 'Linha do tempo única da empresa: eventos, comentários, anexos, aprovações e mudanças relevantes.',
-            'cards' => [
-                ['label' => 'Eventos', 'value' => $this->tableCount('item_controle_timeline'), 'tone' => 'info', 'hint' => 'Timeline operacional'],
-                ['label' => 'Comentários', 'value' => $this->tableCount('item_controle_comentarios'), 'tone' => 'success', 'hint' => 'Interações'],
-                ['label' => 'Anexos', 'value' => $this->tableCount('item_controle_anexos'), 'tone' => 'warning', 'hint' => 'Evidências'],
-                ['label' => 'Aprovações', 'value' => $this->tableCount('item_controle_aprovacoes'), 'tone' => 'danger', 'hint' => 'Decisões'],
-            ],
-            'timeline' => $this->globalTimelineRows(60),
-            'sections' => [
-                ['title' => 'Eventos recentes', 'description' => 'Histórico consolidado para auditoria e acompanhamento.', 'items' => $this->globalTimelineRows(20)],
-            ],
-            'quickActions' => $this->quickActions(),
-        ];
-    }
-
-    private function templatesEnterprise(): array
-    {
-        $templates = $this->templateRows(50);
-        $templatesCollection = $this->hasTable('prazzu_templates')
-            ? DB::table('prazzu_templates')->get()
-            : collect();
-
-        $tasks = 0;
-        $checklists = 0;
-        $customFields = 0;
-        $automations = 0;
-        $views = 0;
-        $recurrences = 0;
-        $docs = 0;
-        $mindMapNodes = 0;
-
-        foreach ($templatesCollection as $template) {
-            $payload = json_decode((string) ($template->payload ?? ''), true) ?: [];
-            $templateTasks = $payload['tasks'] ?? [];
-            $tasks += count($templateTasks);
-            $customFields += count($payload['custom_fields'] ?? []);
-            $automations += count($payload['automations'] ?? []);
-            $views += count($payload['views'] ?? []);
-            $docs += count($payload['docs'] ?? []);
-            $mindMapNodes += count($payload['mind_map'] ?? []);
-
-            foreach ($templateTasks as $task) {
-                $checklists += count($task['checklist'] ?? []);
-                if (! empty($task['recurrence'])) {
-                    $recurrences++;
-                }
-            }
-        }
-
-        $featureRows = [
-            ['title' => 'Organização e visualização', 'meta' => 'Dashboards, Everything View, Kanban, Calendário, Me Mode e LineUp', 'status' => $views . ' visão(ões)', 'tone' => $views > 0 ? 'success' : 'warning', 'description' => 'Total de visões configuradas nos templates ativos e inativos.'],
-            ['title' => 'Campos personalizados', 'meta' => 'Moeda, fórmula, etiqueta, menu, data, pessoa, número e texto', 'status' => $customFields . ' campo(s)', 'tone' => $customFields > 0 ? 'success' : 'warning', 'description' => 'Campos gravados no payload e reaproveitados nas tarefas criadas pelo template.'],
-            ['title' => 'Automação e velocidade', 'meta' => 'Regras do tipo Quando/Faça e tarefas recorrentes', 'status' => ($automations + $recurrences) . ' regra(s)', 'tone' => ($automations + $recurrences) > 0 ? 'success' : 'warning', 'description' => 'Automações e recorrências salvas para orientar a execução operacional.'],
-            ['title' => 'Colaboração e documentação', 'meta' => 'Checklists, aprovações, documentação interna, proofing e comentários', 'status' => ($checklists + $docs) . ' item(ns)', 'tone' => ($checklists + $docs) > 0 ? 'success' : 'warning', 'description' => 'Estrutura colaborativa que acompanha cada tarefa gerada.'],
-            ['title' => 'Planejamento visual', 'meta' => 'Mind map e quebra do processo em tarefas executáveis', 'status' => $mindMapNodes . ' nó(s)', 'tone' => $mindMapNodes > 0 ? 'success' : 'warning', 'description' => 'Nós de mapa mental cadastrados nos templates para organizar fluxos complexos.'],
-        ];
-
-        return [
-            'module' => 'templates-enterprise',
-            'group' => 'TEMPLATES',
-            'title' => 'Templates Enterprise',
-            'subtitle' => 'Central para criar, organizar e aplicar modelos reais de trabalho com tarefas, checklists, campos personalizados, automações, visões e documentação.',
-            'cards' => [
-                ['label' => 'Templates salvos', 'value' => count($templates), 'tone' => 'info', 'hint' => 'Modelos cadastrados'],
-                ['label' => 'Tarefas geráveis', 'value' => $tasks, 'tone' => 'success', 'hint' => 'Criadas ao aplicar'],
-                ['label' => 'Automações/recorrências', 'value' => $automations + $recurrences, 'tone' => 'warning', 'hint' => 'Regras configuradas'],
-                ['label' => 'Campos e visões', 'value' => $customFields + $views, 'tone' => 'danger', 'hint' => 'Organização avançada'],
-            ],
-            'sections' => [
-                ['title' => 'Templates cadastrados no banco', 'description' => 'Use o botão “Gerenciar templates” para criar, editar e aplicar modelos em empresas reais.', 'items' => $templates],
-                ['title' => 'Maturidade da biblioteca', 'description' => 'Resumo calculado a partir do payload dos templates cadastrados.', 'items' => $featureRows],
-            ],
-            'quickActions' => [
-                ['label' => 'Gerenciar templates', 'url' => PrazzuTemplateResource::getUrl('index')],
-                ['label' => 'Novo template', 'url' => PrazzuTemplateResource::getUrl('create')],
-                ...$this->quickActions(),
-            ],
         ];
     }
 

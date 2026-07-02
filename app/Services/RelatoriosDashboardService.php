@@ -4,10 +4,8 @@ namespace App\Services;
 
 
 use App\Support\CachedSchema;
-use App\Filament\Resources\DashboardConfiguravel\DashboardWidgetConfiguracaoResource;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\Comentario;
-use App\Models\DashboardWidgetConfiguracao;
 use App\Models\ItemControle;
 use App\Models\ItemControleComentario;
 use App\Models\Responsavel;
@@ -115,8 +113,6 @@ class RelatoriosDashboardService
             'actions' => [
                 'nova_demanda' => $this->resourceUrl(ItemControleResource::class, 'create'),
                 'tarefas' => $this->resourceUrl(ItemControleResource::class, 'index'),
-                'configurar' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'gerenciar')
-                    ?: $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'index'),
             ],
             'missing_columns' => $this->missingRecommendedColumns(),
         ];
@@ -261,48 +257,6 @@ class RelatoriosDashboardService
             ],
         };
     }
-
-    public function configuravel(?User $user): array
-    {
-        $widgets = DashboardWidgetConfiguracao::query()
-            ->visibleForUser($user)
-            ->where('ativo', true)
-            ->orderBy('ordem')
-            ->orderBy('id')
-            ->limit(18)
-            ->get();
-
-        $configService = app(DashboardConfiguravelService::class);
-
-        return [
-            'title' => 'Dashboard Configurável',
-            'subtitle' => 'Monte a tela por função: aprovação, cobrança, vencidos, bloqueios, carga por responsável e gargalos de status.',
-            'widgets' => $widgets->map(function (DashboardWidgetConfiguracao $widget) use ($configService): array {
-                $tipo = (string) $widget->tipo;
-
-                return [
-                    'id' => $widget->id,
-                    'titulo' => $widget->titulo,
-                    'tipo' => $tipo,
-                    'fonte' => $this->labelFonte((string) $widget->fonte),
-                    'largura' => $widget->largura,
-                    'valor' => $tipo === 'card' ? $configService->valor($widget) : null,
-                    'tabela' => $tipo === 'tabela' ? $configService->dadosTabela($widget)->toArray() : [],
-                    'grafico' => $tipo === 'grafico' ? $configService->dadosGrafico($widget)->toArray() : [],
-                    'edit_url' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'edit', ['record' => $widget]),
-                ];
-            })->values()->toArray(),
-            'actions' => [
-                'create' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'create'),
-                'manage' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'gerenciar')
-                    ?: $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'index'),
-                'dashboards' => $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'visualizar')
-                    ?: $this->resourceUrl(DashboardWidgetConfiguracaoResource::class, 'index'),
-            ],
-            'fontes' => $this->fontesDisponiveis(),
-        ];
-    }
-
     protected function baseQuery(?User $user): Builder
     {
         return ItemControle::query()

@@ -16,7 +16,7 @@ class AccountingTemplateOperationalData
 
     public function summary(): array
     {
-        if (! $this->hasTable('item_controles')) {
+        if (! $this->hasTable('item_controles') || ! $this->hasColumn('item_controles', 'template_id')) {
             return $this->emptySummary();
         }
 
@@ -67,7 +67,7 @@ class AccountingTemplateOperationalData
 
     public function riskRows(int $limit = 5): array
     {
-        if (! $this->hasTable('item_controles')) {
+        if (! $this->hasTable('item_controles') || ! $this->hasColumn('item_controles', 'template_id')) {
             return [];
         }
 
@@ -109,7 +109,7 @@ class AccountingTemplateOperationalData
 
     private function byTemplate(): array
     {
-        if (! $this->hasTable('prazzu_templates')) {
+        if (! $this->hasTable('prazzu_templates') || ! $this->hasColumn('item_controles', 'template_id')) {
             return [];
         }
 
@@ -134,11 +134,23 @@ class AccountingTemplateOperationalData
             ->whereNotNull('item_controles.template_id');
 
         if ($this->hasTable('prazzu_templates')) {
-            $query->leftJoin('prazzu_templates as tpl_summary', 'tpl_summary.id', '=', 'item_controles.template_id')
-                ->where(function (Builder $query): void {
-                    $query->whereIn('tpl_summary.module', ['contabil', 'rh', 'societario'])
-                        ->orWhereIn('item_controles.tipo', ['contabil', 'fiscal', 'dp', 'societario']);
+            $query->leftJoin('prazzu_templates as tpl_summary', 'tpl_summary.id', '=', 'item_controles.template_id');
+
+            $hasTemplateModule = $this->hasColumn('prazzu_templates', 'module');
+            $hasItemType = $this->hasColumn('item_controles', 'tipo');
+
+            if ($hasTemplateModule || $hasItemType) {
+                $query->where(function (Builder $query) use ($hasTemplateModule, $hasItemType): void {
+                    if ($hasTemplateModule) {
+                        $query->whereIn('tpl_summary.module', ['contabil', 'rh', 'societario']);
+                    }
+
+                    if ($hasItemType) {
+                        $method = $hasTemplateModule ? 'orWhereIn' : 'whereIn';
+                        $query->{$method}('item_controles.tipo', ['contabil', 'fiscal', 'dp', 'societario']);
+                    }
                 });
+            }
         }
 
         if ($this->hasTable('empresas')) {
@@ -160,6 +172,29 @@ class AccountingTemplateOperationalData
         }
 
         return $query;
+    }
+
+    private function openProcessCount(): int
+    {
+        if (! $this->hasColumn('item_controles', 'template_id')) {
+            return 0;
+        }
+
+        $query = $this->baseItemsQuery()
+            ->whereNotIn('item_controles.status', self::DONE_STATUSES);
+
+        $groupColumns = ['item_controles.template_id'];
+
+        if ($this->hasColumn('item_controles', 'empresa_id')) {
+            $groupColumns[] = 'item_controles.empresa_id';
+        }
+
+        return (int) DB::query()
+            ->fromSub(
+                $query->select($groupColumns)->groupBy($groupColumns),
+                'template_processes_open'
+            )
+            ->count();
     }
 
     private function blockedCount(): int
@@ -205,12 +240,17 @@ class AccountingTemplateOperationalData
             return 0;
         }
 
-        return (int) DB::table('prazzu_templates')
-            ->where('active', 1)
-            ->where(function (Builder $query): void {
-                $query->whereIn('module', ['contabil', 'rh', 'societario']);
-            })
-            ->count();
+        $query = DB::table('prazzu_templates');
+
+        if ($this->hasColumn('prazzu_templates', 'active')) {
+            $query->where('active', 1);
+        }
+
+        if ($this->hasColumn('prazzu_templates', 'module')) {
+            $query->whereIn('module', ['contabil', 'rh', 'societario']);
+        }
+
+        return (int) $query->count();
     }
 
     private function statusLabel(object $item): string

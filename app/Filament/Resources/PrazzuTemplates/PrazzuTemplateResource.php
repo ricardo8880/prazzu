@@ -35,7 +35,7 @@ use UnitEnum;
 class PrazzuTemplateResource extends Resource
 {
     protected static ?string $model = PrazzuTemplate::class;
-    protected static ?string $slug = 'templates-enterprise/modelos';
+    protected static ?string $slug = 'templates/modelos';
 
     protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-squares-plus';
     protected static string | UnitEnum | null $navigationGroup = 'Cadastros e Configurações';

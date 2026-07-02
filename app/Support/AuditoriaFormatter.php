@@ -54,7 +54,6 @@ class AuditoriaFormatter
         'CrmCliente' => 'Cliente CRM',
         'CrmHistorico' => 'Histórico CRM',
         'CrmPendencia' => 'Pendência CRM',
-        'DashboardWidgetConfiguracao' => 'Widget do dashboard',
         'FluxoOperacional' => 'Fluxo operacional',
         'FluxoOperacionalEtapa' => 'Etapa do fluxo operacional',
         'ItemControleAlerta' => 'Alerta do item',
