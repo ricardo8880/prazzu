@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="" />
+    <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/20/19/2019be086ac767b6402d59e465807db40cbf5e1d" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/20/19/2019be086ac767b6402d59e465807db40cbf5e1d" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/23/a4/23a4a7a0e3e218b8269da0d1ed65d9a5e8e196a3" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/23/a4/23a4a7a0e3e218b8269da0d1ed65d9a5e8e196a3" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/83/31837ec52562960f449e9f5b6dfbc6b0b18b8372" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/83/31837ec52562960f449e9f5b6dfbc6b0b18b8372" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/41/33/41339cfc02e3a49b95a2c3bb9c2ad6858ce77854" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/41/33/41339cfc02e3a49b95a2c3bb9c2ad6858ce77854" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/49/21/4921b507f7d37bf7cf559a36449ef1b08c004a67" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/49/21/4921b507f7d37bf7cf559a36449ef1b08c004a67" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/63/f2/63f2082cf5e2071499f4a2261b192dc164594d67" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/63/f2/63f2082cf5e2071499f4a2261b192dc164594d67" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/aa/96/aa968f55ff0a2eb42302af2e2d99db56df5c4b0b" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/aa/96/aa968f55ff0a2eb42302af2e2d99db56df5c4b0b" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/c2/bb/c2bb18db8d3bbdc24a75ad2294b2da87cc15f2bb" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/c2/bb/c2bb18db8d3bbdc24a75ad2294b2da87cc15f2bb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/e5/6c/e56c30c5de014e017245bb89a9ba5afc981ff032" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/e5/6c/e56c30c5de014e017245bb89a9ba5afc981ff032" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/ef/43/ef43a52e543dd3efaaaaa62f69cce540aa23c5af" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/ef/43/ef43a52e543dd3efaaaaa62f69cce540aa23c5af" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/framework/sessions/mZ50uNO2js2iChXwFmNPZ9pzC7CaAkTsNvrApLZ1" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/storage/logs/laravel.log" beforeDir="false" afterPath="$PROJECT_DIR$/storage/logs/laravel.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/Nova pasta/relatorio_estabilizacao_prazzu.docx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/Nova pasta/relatorio_estabilizacao_prazzu.md" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -230,6 +247,7 @@
       <workItem from="1782134842537" duration="4864000" />
       <workItem from="1782480490785" duration="4715000" />
       <workItem from="1782991073000" duration="1743000" />
+      <workItem from="1783080905918" duration="35000" />
     </task>
     <servers />
   </component>
