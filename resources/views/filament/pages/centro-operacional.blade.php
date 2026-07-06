@@ -455,7 +455,13 @@
                                         <small><i class="bi bi-calendar2-event"></i>{{ $item['due_human'] ?? ($item['due'] ?: 'Sem prazo') }}</small>
                                         <small><i class="bi bi-person"></i>{{ $item['responsavel'] ?? 'Sem responsável' }}</small>
                                         <small><i class="bi bi-activity"></i>{{ $item['status'] }}</small>
+                                        @if(! empty($item['workflow_stage_label']))
+                                            <small><i class="bi bi-diagram-3"></i>{{ $item['workflow_stage_label'] }}</small>
+                                        @endif
                                     </div>
+                                    @if(! empty($item['workflow_next_action']))
+                                        <p class="co-action-reason"><i class="bi bi-arrow-right-circle"></i>{{ $item['workflow_next_action'] }}</p>
+                                    @endif
                                 </div>
                             </a>
                             <div class="co-action-buttons-v2">

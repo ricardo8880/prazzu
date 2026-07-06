@@ -1,14 +1,14 @@
 <?php
 
 /**
- * Lote 02 - Verificador de aderência banco x Models.
+ * Lote 02 - Verificador de aderência banco oficial x Models.
  * Uso:
- *   php scripts/check-database.php /caminho/para/dump.sql
+ *   php scripts/check-database.php [database/sql/prazzu_schema_oficial.sql]
  *
  * Este script não conecta no banco, não altera dados e não executa migrations.
  */
 
-$dumpPath = $argv[1] ?? __DIR__ . '/../prazzu-03-07-26.sql';
+$dumpPath = $argv[1] ?? __DIR__ . '/../database/sql/prazzu_schema_oficial.sql';
 $basePath = dirname(__DIR__);
 
 if (! is_file($dumpPath)) {

@@ -101,6 +101,31 @@ class PrazzuAccessControl
         return $query->where($column, $user->empresa_id);
     }
 
+
+    /**
+     * Gate central para paginas Filament internas.
+     *
+     * Evita o padrao inseguro auth()->check() em paginas sensiveis e garante:
+     * - usuario autenticado;
+     * - area de trabalho ativa/empresa vinculada para usuarios comuns;
+     * - super_admin liberado;
+     * - permissao funcional explicita para o modulo.
+     */
+    public static function canAccessPage(string|array $permissions, ?User $user = null, string $scope = 'empresa'): bool
+    {
+        $user ??= self::user();
+
+        if (! self::canUseWorkArea($user)) {
+            return false;
+        }
+
+        if ($user?->isSuperAdmin()) {
+            return true;
+        }
+
+        return self::canAny((array) $permissions, $user, $scope);
+    }
+
     public static function canUseFeature(string $feature, ?User $user = null): bool
     {
         $user ??= self::user();

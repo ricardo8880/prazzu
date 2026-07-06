@@ -351,7 +351,13 @@
                                 <span class="{{ $item['sla_tone'] ?? 'gray' }}">SLA: {{ $item['sla_resumo'] ?? 'Sem SLA iniciado' }}</span>
                                 <span class="{{ ($item['bloqueado_operacional'] ?? false) ? 'danger' : 'ok' }}">{{ ($item['bloqueado_operacional'] ?? false) ? 'Bloqueada' : 'Sem bloqueio' }}</span>
                                 <span class="{{ ($item['dependencias_pendentes'] ?? 0) > 0 ? 'warning' : 'ok' }}">{{ $item['dependencias_resumo'] ?? 'Sem dependências cadastradas' }}</span>
+                                @if(! empty($item['workflow_stage_label']))
+                                    <span class="{{ $item['workflow_stage_tone'] ?? 'info' }}">Fluxo: {{ $item['workflow_stage_label'] }}</span>
+                                @endif
                             </div>
+                            @if(! empty($item['workflow_next_action']))
+                                <div class="pendencias-lote3-row-guidance {{ $item['workflow_stage_tone'] ?? 'info' }}">Próxima ação: {{ $item['workflow_next_action'] }}</div>
+                            @endif
                             <div class="pendencias-lote1-focus-meta">
                                 <span>Status: {{ $status }}</span>
                                 <span>Prazo: {{ $item['vencimento'] }}</span>

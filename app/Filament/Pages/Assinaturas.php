@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 
+use App\Support\PrazzuAccessControl;
 use App\Support\CachedSchema;
 use App\Support\FinanceiroClienteData;
 use BackedEnum;
@@ -258,8 +259,13 @@ class Assinaturas extends Page
             ->send();
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::canAccessPage(['contratos.view', 'financeiro.view']);
     }
 }

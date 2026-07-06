@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Support\PrazzuAccessControl;
 use App\Support\ComplianceModuleData;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -83,8 +84,13 @@ class ComplianceInterno extends Page
         ];
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::canAccessPage('governanca.view');
     }
 }

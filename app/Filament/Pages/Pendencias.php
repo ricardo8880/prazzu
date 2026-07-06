@@ -9,6 +9,7 @@ use App\Services\OperationalWorkflowService;
 use App\Support\CachedSchema;
 use App\Support\ComplianceModuleData;
 use App\Support\PrazzuPerformance;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
@@ -1180,8 +1181,13 @@ class Pendencias extends Page
         $this->dispatch('pendencias-lote8-feedback', message: $message, tone: $this->lastActionFeedback['tone']);
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
     }
 }

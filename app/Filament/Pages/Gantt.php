@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Support\PrazzuAccessControl;
 use App\Support\PrazzuWorkPlanningData;
 use BackedEnum;
 use Filament\Notifications\Notification;
@@ -106,8 +107,13 @@ class Gantt extends Page
         ];
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
     }
 }

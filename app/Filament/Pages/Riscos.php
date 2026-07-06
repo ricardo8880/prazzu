@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Support\PrazzuAccessControl;
 use App\Models\ItemControle;
 use App\Support\ComplianceModuleData;
 use BackedEnum;
@@ -74,8 +75,13 @@ class Riscos extends Page
         Notification::make()->title('Risco criado com sucesso')->success()->send();
     }
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::canAccessPage('governanca.view');
     }
 }

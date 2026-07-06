@@ -45,7 +45,6 @@
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
-            "@php artisan migrate --force",
             "npm install",
             "npm run build"
         ],
@@ -93,6 +92,9 @@
         ],
         "release:check": [
             "@php scripts/check-release.php"
+        ],
+        "lote1:check": [
+            "@php scripts/check-lote-01-ambiente.php"
         ]
     },
     "extra": {
