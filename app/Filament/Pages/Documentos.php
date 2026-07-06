@@ -6,6 +6,7 @@ use App\Filament\Concerns\UsesAdvancedPermissions;
 
 
 use App\Support\CachedSchema;
+use App\Support\DocumentStorage;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Filament\Pages\Contratos;
 use App\Filament\Pages\GestaoDocumentalEnterprise;
@@ -209,7 +210,7 @@ class Documentos extends Page
             $arquivo = $this->resolverArquivos[$documentoId];
 
             if ($arquivo) {
-                $updates['arquivo'] = $arquivo->store('item-controles', 'public');
+                $updates['arquivo'] = DocumentStorage::storeItemControlePrincipal($arquivo, (int) ($this->value($documento, 'empresa_id') ?? 0) ?: null, $documentoId);
             }
         }
 

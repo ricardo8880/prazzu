@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\SystemHealth\SystemHealthService;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Pages\Page;
 use Illuminate\Contracts\Support\Responsable;
@@ -31,12 +32,12 @@ class SystemHealthDashboard extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::can('system_health.view');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check();
+        return static::canAccess();
     }
 
     public function mount(SystemHealthService $health): void
@@ -61,6 +62,7 @@ class SystemHealthDashboard extends Page
 
     public function exportJson(): StreamedResponse|Responsable
     {
+        abort_unless(PrazzuAccessControl::can('system_health.export'), 403);
         $payload = $this->report ?: app(SystemHealthService::class)->latestReport();
         $filename = 'relatorio-saude-sistema-'.now()->format('Ymd-His').'.json';
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Services\PlanoService;
 use App\Services\PrazzuPermissionService;
+use App\Support\PrazzuAccessControl;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -197,6 +198,6 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return true;
+        return PrazzuAccessControl::canAccessAdminPanel($this);
     }
 }

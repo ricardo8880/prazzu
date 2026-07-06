@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ItemControles\Widgets;
 
 
 use App\Support\CachedSchema;
+use App\Support\DocumentStorage;
 use App\Models\ItemControle;
 use App\Models\PrazzuDocumentVersion;
 use Filament\Facades\Filament;
@@ -117,7 +118,7 @@ class ItemControleVersionamentoWidget extends Widget
             'numero' => 'Principal',
             'tipo' => 'Arquivo principal',
             'arquivo' => basename((string) $item->arquivo),
-            'url' => Storage::disk('public')->url($item->arquivo),
+            'url' => DocumentStorage::publicUrl($item->arquivo),
             'status' => 'atual',
             'status_label' => 'Atual',
             'status_tom' => 'success',
@@ -170,7 +171,7 @@ class ItemControleVersionamentoWidget extends Widget
             'numero' => 'v' . ($version->version_number ?: 1),
             'tipo' => Str::headline((string) ($version->document_type ?: 'documento')),
             'arquivo' => $arquivo !== '' ? basename($arquivo) : 'Sem arquivo vinculado',
-            'url' => $arquivo !== '' ? Storage::disk('public')->url($arquivo) : null,
+            'url' => $arquivo !== '' ? DocumentStorage::publicUrl($arquivo) : null,
             'status' => $status,
             'status_label' => $this->statusLabel($status),
             'status_tom' => $this->statusTone($status),

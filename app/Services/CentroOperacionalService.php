@@ -420,6 +420,7 @@ class CentroOperacionalService
         $status = (string) $item->status;
         $tone = $blocked ? 'warning' : $this->toneFor($item, $defaultTone);
         $operationalAction = $this->operationalActionFor($item, $blocked, $tone);
+        $workflowStage = app(OperationalWorkflowService::class)->stageForItem($item, $blocked, $tone);
 
         return [
             'id' => $item->id,
@@ -446,6 +447,12 @@ class CentroOperacionalService
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
             'primary_action' => $operationalAction,
             'actions' => CentroOperacionalAccess::actionPermissions($user, $item),
+            'workflow_stage_key' => $workflowStage['key'],
+            'workflow_stage_label' => $workflowStage['label'],
+            'workflow_stage_order' => $workflowStage['order'],
+            'workflow_stage_tone' => $workflowStage['tone'],
+            'workflow_next_action' => $workflowStage['next_action'],
+            'workflow_owner_hint' => $workflowStage['owner_hint'],
         ];
     }
 

@@ -14,6 +14,7 @@
         $atividades = collect($dashboard['atividades'] ?? []);
         $filaPrioridade = collect($dashboard['filaPrioridade']['itens'] ?? [])->take(5);
         $filaPrioridadeTotal = (int) ($dashboard['filaPrioridade']['total'] ?? $filaPrioridade->count());
+        $uxNavigation = collect($uxNavigation ?? []);
 
         $obrigacoesVencidas = $resumoHoje->get('Atrasados', []);
         $vencimentosSemana = $resumoHoje->get('Vencem em 7 dias', []);
@@ -120,6 +121,35 @@
             </div>
         </section>
 
+
+
+        <section class="pz-panel pz-ux-map" aria-label="Mapa de navegação do Prazzu">
+            <div class="pz-panel-head">
+                <div><h2>Mapa rápido do sistema</h2><p>Use estes grupos como caminho oficial. Cada assunto aponta para a tela dona do fluxo.</p></div>
+            </div>
+            <div class="pz-ux-map-grid">
+                @foreach($uxNavigation as $cluster)
+                    <article class="pz-ux-cluster">
+                        <div class="pz-ux-cluster-head">
+                            <span class="pz-icon-box"><i class="bi {{ $cluster['icon'] ?? 'bi-grid' }}"></i></span>
+                            <div>
+                                <strong>{{ $cluster['label'] ?? 'Grupo' }}</strong>
+                                <small>{{ $cluster['hint'] ?? '' }}</small>
+                            </div>
+                        </div>
+                        <div class="pz-ux-links">
+                            @foreach(($cluster['items'] ?? []) as $item)
+                                <a href="{{ $item['url'] ?? '#' }}" @class(['pz-ux-link', 'pz-ux-link--active' => $item['active'] ?? false])>
+                                    <span>{{ $item['label'] ?? 'Acessar' }}</span>
+                                    <small>{{ $item['hint'] ?? 'Abrir tela' }}</small>
+                                </a>
+                            @endforeach
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+
         <section class="pz-dashboard-grid">
             <div class="pz-panel">
                 <div class="pz-panel-head">
@@ -157,7 +187,7 @@
         </section>
 
         <section class="pz-footer-note">
-            <strong>Regra de conteúdo aplicada no Lote 2:</strong> a Home não ensina, não resolve e não duplica fluxos. Ela mostra o estado da operação e leva o usuário para a aba dona do assunto.
+            <strong>Regra de UX aplicada no Lote 12:</strong> a Home e o topo usam um mapa único de navegação. A tela inicial orienta, mas cada ação continua na aba dona do assunto.
         </section>
     </div>
 </x-filament-panels::page>

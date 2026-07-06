@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 
 use App\Support\CachedSchema;
+use App\Support\PrazzuAccessControl;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use BackedEnum;
 use Filament\Pages\Page;
@@ -31,8 +32,8 @@ class Contratos extends Page
     }
 
 
-    public static function shouldRegisterNavigation(): bool { return true; }
-    public static function canAccess(): bool { return true; }
+    public static function shouldRegisterNavigation(): bool { return static::canAccess(); }
+    public static function canAccess(): bool { return PrazzuAccessControl::can('contratos.view') && PrazzuAccessControl::canUseContratos(); }
 
     protected function getViewData(): array
     {
@@ -45,9 +46,10 @@ class Contratos extends Page
             return ['total' => 0, 'ativos' => 0, 'vencendo' => 0, 'valor' => 0, 'vencidos' => 0, 'semVigencia' => 0];
         }
 
-        $base = DB::table('item_controles')->where(function ($query) {
-            $query->where('tipo', 'like', '%contrato%')->orWhereNotNull('contrato_numero');
-        });
+        $base = PrazzuAccessControl::applyEmpresaScope(DB::table('item_controles'), column: 'item_controles.empresa_id')
+            ->where(function ($query) {
+                $query->where('tipo', 'like', '%contrato%')->orWhereNotNull('contrato_numero');
+            });
 
         return [
             'total' => (clone $base)->count(),
@@ -65,7 +67,7 @@ class Contratos extends Page
             return [];
         }
 
-        return DB::table('item_controles')
+        return PrazzuAccessControl::applyEmpresaScope(DB::table('item_controles'), column: 'item_controles.empresa_id')
             ->leftJoin('empresas', 'empresas.id', '=', 'item_controles.empresa_id')
             ->select('item_controles.id', 'item_controles.titulo', 'item_controles.descricao', 'item_controles.arquivo', 'item_controles.contrato_numero', 'item_controles.contrato_parte_nome', 'item_controles.contrato_parte_documento', 'item_controles.contrato_valor', 'item_controles.contrato_inicio_em', 'item_controles.contrato_fim_em', 'item_controles.contrato_status', 'item_controles.status', 'item_controles.updated_at', 'empresas.nome_fantasia', 'empresas.razao_social')
             ->where(function ($query) {

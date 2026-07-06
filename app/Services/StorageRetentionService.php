@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ItemControle;
 use App\Support\CachedSchema;
+use App\Support\DocumentStorage;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Collection;
@@ -236,7 +237,7 @@ class StorageRetentionService
         }
 
         $target = 'retencao/arquivados/' . now()->format('Y/m') . '/' . uniqid('', true) . '-' . basename($path);
-        Storage::move($path, $target);
+        Storage::disk(DocumentStorage::DISK)->move($path, $target);
         $this->updatePathReference($file, $target);
 
         return ['status' => 'processado', 'message' => 'Arquivo arquivado em ' . $target . '.'];
@@ -245,7 +246,7 @@ class StorageRetentionService
     private function deleteFile(array $file): array
     {
         $path = $this->existingPath((string) $file['caminho']);
-        if ($path) { Storage::delete($path); }
+        if ($path) { Storage::disk(DocumentStorage::DISK)->delete($path); }
         $this->clearPathReference($file);
 
         return ['status' => 'processado', 'message' => $path ? 'Arquivo excluído e referência limpa.' : 'Referência limpa; arquivo físico não estava no disco.'];
@@ -254,7 +255,11 @@ class StorageRetentionService
     private function updatePathReference(array $file, string $target): void
     {
         match ($file['origem']) {
-            'Anexo' => CachedSchema::hasTable('item_controle_anexos') && CachedSchema::hasColumn('item_controle_anexos', 'caminho') ? DB::table('item_controle_anexos')->where('id', $file['id'])->update(['caminho' => $target, 'updated_at' => now()]) : null,
+            'Anexo' => CachedSchema::hasTable('item_controle_anexos') ? DB::table('item_controle_anexos')->where('id', $file['id'])->update(array_filter([
+                'arquivo' => CachedSchema::hasColumn('item_controle_anexos', 'arquivo') ? $target : null,
+                'caminho' => CachedSchema::hasColumn('item_controle_anexos', 'caminho') ? $target : null,
+                'updated_at' => now(),
+            ], fn ($value) => $value !== null)) : null,
             'Documento' => CachedSchema::hasTable('item_controles') && CachedSchema::hasColumn('item_controles', 'arquivo') ? DB::table('item_controles')->where('id', $file['id'])->update(['arquivo' => $target, 'updated_at' => now()]) : null,
             'Portal' => CachedSchema::hasTable('portal_documentos') && CachedSchema::hasColumn('portal_documentos', 'arquivo') ? DB::table('portal_documentos')->where('id', $file['id'])->update(['arquivo' => $target, 'updated_at' => now()]) : null,
             default => null,
@@ -320,13 +325,13 @@ class StorageRetentionService
     private function realSize(string $path): int
     {
         $existing = $this->existingPath($path);
-        return $existing ? (int) Storage::size($existing) : 0;
+        return $existing ? (int) Storage::disk(DocumentStorage::DISK)->size($existing) : 0;
     }
 
     private function existingPath(string $path): ?string
     {
         foreach (array_unique([$path, ltrim($path, '/'), 'public/' . ltrim($path, '/'), str_replace('storage/', 'public/', ltrim($path, '/'))]) as $candidate) {
-            try { if ($candidate && Storage::exists($candidate)) { return $candidate; } } catch (Throwable) { }
+            try { if ($candidate && Storage::disk(DocumentStorage::DISK)->exists(DocumentStorage::normalizePath($candidate) ?: $candidate)) { return DocumentStorage::normalizePath($candidate) ?: $candidate; } } catch (Throwable) { }
         }
         return null;
     }

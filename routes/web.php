@@ -327,6 +327,12 @@ Route::middleware([ValidatePortalPublicAccess::class])->group(function (): void 
         ->middleware('throttle:120,1')
         ->name('portal.cliente.mensagens-novas');
 
+    Route::get('/portal/cliente/{token}/documentos/{documento}/download', [PortalClientePublicoController::class, 'downloadDocumento'])
+        ->where('token', '[A-Za-z0-9]{32,128}')
+        ->whereNumber('documento')
+        ->middleware('throttle:120,1')
+        ->name('portal.cliente.documentos.download');
+
     Route::post('/portal/cliente/{token}/mensagem', [PortalClientePublicoController::class, 'mensagem'])
         ->where('token', '[A-Za-z0-9]{32,128}')
         ->middleware('throttle:60,1')

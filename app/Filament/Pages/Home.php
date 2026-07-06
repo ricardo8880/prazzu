@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\HomeDashboardService;
+use App\Support\PrazzuUxNavigation;
 use BackedEnum;
 use UnitEnum;
 use Filament\Facades\Filament;
@@ -36,6 +37,7 @@ class Home extends Page
             'dashboard' => app(HomeDashboardService::class, [
                 'user' => Filament::auth()->user(),
             ])->data(),
+            'uxNavigation' => PrazzuUxNavigation::homeJourney(),
         ];
     }
 }

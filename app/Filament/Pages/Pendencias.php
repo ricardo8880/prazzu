@@ -5,8 +5,10 @@ namespace App\Filament\Pages;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Services\PlanoService;
+use App\Services\OperationalWorkflowService;
 use App\Support\CachedSchema;
 use App\Support\ComplianceModuleData;
+use App\Support\PrazzuPerformance;
 use BackedEnum;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
@@ -21,11 +23,13 @@ class Pendencias extends Page
 {
     protected function getDashboardStats(\Illuminate\Support\Collection $items): array
     {
-        $concluidasHoje = ItemControle::query()
+        $concluidasHojeQuery = ItemControle::query()
             ->visibleForUser(Filament::auth()->user())
-            ->where('status', 'concluido')
-            ->whereDate('data_conclusao', now()->toDateString())
-            ->count();
+            ->where('status', 'concluido');
+
+        PrazzuPerformance::whereDay($concluidasHojeQuery, 'data_conclusao', now());
+
+        $concluidasHoje = $concluidasHojeQuery->count();
 
         return [
             [
@@ -703,6 +707,7 @@ class Pendencias extends Page
         $item['is_due_today'] = $isDueToday;
         $item['is_due_soon'] = $isDueSoon;
         $item['sem_responsavel'] = $semResponsavel;
+        $item = app(OperationalWorkflowService::class)->enrichPayload($item);
 
         return $item;
     }

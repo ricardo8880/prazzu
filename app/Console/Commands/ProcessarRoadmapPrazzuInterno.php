@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 use App\Support\CachedSchema;
 use App\Models\ItemControle;
 use App\Services\PrazzuAutomationEngine;
+use App\Services\PrazzuSlaService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +18,7 @@ class ProcessarRoadmapPrazzuInterno extends Command
 
     protected $description = 'Processa SLA, dependências, risco operacional e automações internas do Prazzu sem depender de APIs externas.';
 
-    public function handle(PrazzuAutomationEngine $automationEngine): int
+    public function handle(PrazzuAutomationEngine $automationEngine, PrazzuSlaService $slaService): int
     {
         if (! CachedSchema::hasTable('item_controles')) {
             $this->warn('Tabela item_controles não encontrada.');
@@ -27,7 +28,7 @@ class ProcessarRoadmapPrazzuInterno extends Command
         $this->info('Processando roadmap interno do Prazzu...');
 
         $dependencies = $this->processDependencies();
-        $sla = $this->processSla();
+        $sla = $this->processSla($slaService);
         $risk = $this->processRiskScores();
         $automationEngine->primeRules();
         $automations = $this->processAutomations($automationEngine);
@@ -87,48 +88,15 @@ class ProcessarRoadmapPrazzuInterno extends Command
         return DB::table('item_controles')->whereIn('id', $blockedIds)->update($payload);
     }
 
-    private function processSla(): int
+    private function processSla(PrazzuSlaService $slaService): int
     {
-        if (! CachedSchema::hasColumn('item_controles', 'sla_limite_em') || ! CachedSchema::hasColumn('item_controles', 'sla_status')) {
-            return 0;
-        }
-
-        $total = 0;
-        $now = now();
-
-        $total += DB::table('item_controles')
-            ->whereNotNull('sla_concluido_em')
-            ->whereColumn('sla_concluido_em', '<=', 'sla_limite_em')
-            ->update(['sla_status' => 'concluido_no_prazo', 'updated_at' => $now]);
-
-        $total += DB::table('item_controles')
-            ->whereNotNull('sla_concluido_em')
-            ->whereColumn('sla_concluido_em', '>', 'sla_limite_em')
-            ->update(['sla_status' => 'concluido_atrasado', 'updated_at' => $now]);
-
-        $total += DB::table('item_controles')
-            ->whereNull('sla_concluido_em')
-            ->whereNotNull('sla_limite_em')
-            ->where('sla_limite_em', '<', $now)
-            ->update(['sla_status' => 'vencido', 'updated_at' => $now]);
-
-        $total += DB::table('item_controles')
-            ->whereNull('sla_concluido_em')
-            ->whereNotNull('sla_limite_em')
-            ->whereBetween('sla_limite_em', [$now, $now->copy()->addHours(8)])
-            ->update(['sla_status' => 'risco', 'updated_at' => $now]);
-
-        $total += DB::table('item_controles')
-            ->whereNull('sla_concluido_em')
-            ->whereNotNull('sla_limite_em')
-            ->where('sla_limite_em', '>', $now->copy()->addHours(8))
-            ->update(['sla_status' => 'ok', 'updated_at' => $now]);
+        $resultado = $slaService->recalcularItensControle(limit: 5000);
 
         if (! $this->option('silent-notifications')) {
             $this->createSlaNotifications();
         }
 
-        return $total;
+        return (int) ($resultado['atualizados'] ?? 0);
     }
 
     private function processRiskScores(): int

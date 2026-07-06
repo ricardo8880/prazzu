@@ -12,12 +12,17 @@
                     @foreach ($section['items'] as $item)
                         <a
                             href="{{ $item['url'] }}"
+                            title="{{ $item['hint'] ?? $item['label'] }}"
+                            aria-current="{{ $item['active'] ? 'page' : 'false' }}"
                             @class([
                                 'prazzu-top-navigation__item',
                                 'prazzu-top-navigation__item--active' => $item['active'],
                             ])
                         >
-                            {{ $item['label'] }}
+                            <span>{{ $item['label'] }}</span>
+                            @if (! empty($item['hint']))
+                                <small>{{ $item['hint'] }}</small>
+                            @endif
                         </a>
                     @endforeach
                 </div>

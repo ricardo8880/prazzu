@@ -12,7 +12,9 @@ use App\Models\ItemControleTimeline;
 use App\Models\PrazzuClientPortalMessage;
 use App\Models\PortalMensagem;
 use App\Support\ItemControleAnexoUploader;
+use App\Support\DocumentStorage;
 use App\Support\AtendimentoPortalService;
+use App\Services\AuditoriaTrailService;
 use App\Services\ItemControleStatusService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -142,6 +144,15 @@ class PortalItemControleController extends Controller
                 ->withErrors(['assinatura' => 'Não foi possível registrar a assinatura agora. Tente novamente em instantes.']);
         }
 
+        AuditoriaTrailService::portalCliente('portal_item.assinatura.registrada', [
+            'item_controle_id' => $item->id,
+            'empresa_id' => $item->empresa_id,
+            'cliente_nome' => $dados['nome'],
+            'cliente_email' => $dados['email'] ?? null,
+            'hash_assinatura' => $hash,
+            'token_hash' => hash('sha256', $token),
+        ], $item, (int) $item->empresa_id);
+
         return redirect()
             ->route('portal.item-controles.show', ['token' => $token])
             ->with('success', 'Assinatura registrada com sucesso.');
@@ -233,6 +244,15 @@ class PortalItemControleController extends Controller
                 ->withErrors(['message' => 'Não foi possível enviar a mensagem agora. Tente novamente em instantes.']);
         }
 
+        AuditoriaTrailService::portalCliente('portal_item.mensagem.enviada', [
+            'item_controle_id' => $item->id,
+            'empresa_id' => $item->empresa_id,
+            'cliente_nome' => $dados['client_name'],
+            'cliente_email' => $dados['client_email'] ?? null,
+            'mensagem_tamanho' => mb_strlen((string) $dados['message']),
+            'token_hash' => hash('sha256', $token),
+        ], $item, (int) $item->empresa_id);
+
         return redirect()
             ->route('portal.item-controles.show', ['token' => $token])
             ->with('success', 'Mensagem enviada com sucesso.');
@@ -280,7 +300,7 @@ class PortalItemControleController extends Controller
         }
 
         try {
-            $path = $arquivo->store('portal-cliente/documentos', 'public');
+            $path = DocumentStorage::storePortalDocumento($arquivo, (int) $item->empresa_id, (int) $item->id);
 
             if (! $path) {
                 throw new \RuntimeException('Falha ao gravar arquivo no disco público.');
@@ -358,6 +378,18 @@ class PortalItemControleController extends Controller
                 ->withInput()
                 ->withErrors(['documento' => 'Não foi possível enviar o documento agora. Tente novamente em instantes.']);
         }
+
+        AuditoriaTrailService::documento('portal_item.documento.enviado', [
+            'item_controle_id' => $item->id,
+            'empresa_id' => $item->empresa_id,
+            'cliente_nome' => $dados['client_name'],
+            'cliente_email' => $dados['client_email'] ?? null,
+            'nome_original' => $arquivo->getClientOriginalName(),
+            'mime_type' => $arquivo->getClientMimeType(),
+            'tamanho_bytes' => $arquivo->getSize(),
+            'path_hash' => hash('sha256', (string) $path),
+            'token_hash' => hash('sha256', $token),
+        ], $item, (int) $item->empresa_id);
 
         return redirect()
             ->route('portal.item-controles.show', ['token' => $token])

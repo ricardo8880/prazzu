@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Storage;
+use App\Support\DocumentStorage;
 
 class ItemControleAnexo extends Model
 {
@@ -40,7 +40,7 @@ class ItemControleAnexo extends Model
     {
         $caminho = $this->getCaminhoArquivo();
 
-        return $caminho ? Storage::disk('public')->url($caminho) : null;
+        return DocumentStorage::publicUrl($caminho);
     }
 
     public function getTamanhoFormatado(): string

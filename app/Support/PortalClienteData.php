@@ -7,6 +7,7 @@ use App\Models\PortalMensagem;
 use App\Models\PortalSolicitacao;
 use App\Services\ItemControleStatusService;
 use App\Support\PortalChatMessageContract;
+use App\Support\PortalClienteSecurity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -156,33 +157,17 @@ class PortalClienteData
 
         $token = trim((string) ($empresa->portal_token ?? ''));
 
-        return self::tokenPortalValido($token) ? route('portal.cliente.show', ['token' => $token]) : null;
+        return PortalClienteSecurity::tokenValido($token) ? route('portal.cliente.show', ['token' => $token]) : null;
     }
 
     private static function portalEmpresaDisponivel(object $empresa): bool
     {
-        if (CachedSchema::hasColumn('empresas', 'portal_ativo') && ! (bool) ($empresa->portal_ativo ?? false)) {
-            return false;
-        }
-
-        if (CachedSchema::hasColumn('empresas', 'portal_expira_em') && ! empty($empresa->portal_expira_em)) {
-            try {
-                if (Carbon::parse($empresa->portal_expira_em)->isPast()) {
-                    return false;
-                }
-            } catch (\Throwable) {
-                return false;
-            }
-        }
-
-        return true;
+        return PortalClienteSecurity::portalEmpresaDisponivel($empresa);
     }
 
     private static function tokenPortalValido(?string $token): bool
     {
-        $token = trim((string) $token);
-
-        return $token !== '' && preg_match('/\A[A-Za-z0-9]{32,128}\z/', $token) === 1;
+        return PortalClienteSecurity::tokenValido($token);
     }
 
     private static function itemPortalDisponivel(array $item): bool
@@ -326,11 +311,25 @@ class PortalClienteData
                 'conteudo' => $documento->conteudo,
                 'url' => $documento->url,
                 'arquivo' => $documento->arquivo,
-                'download_url' => $documento->arquivo ? asset('storage/' . $documento->arquivo) : $documento->url,
+                'download_url' => $documento->arquivo
+                    ? PortalClienteSecurity::downloadDocumentoUrl($documento->id, self::tokenDaEmpresa($empresaId), $documento->url)
+                    : $documento->url,
                 'created_at' => $documento->created_at,
                 'created_at_label' => self::formatarDataHora($documento->created_at),
             ])
             ->all();
+    }
+
+
+    private static function tokenDaEmpresa(?int $empresaId): ?string
+    {
+        if (! $empresaId || ! CachedSchema::hasTable('empresas') || ! CachedSchema::hasColumn('empresas', 'portal_token')) {
+            return null;
+        }
+
+        $token = DB::table('empresas')->where('id', $empresaId)->value('portal_token');
+
+        return PortalClienteSecurity::sanitizarToken(is_string($token) ? $token : null);
     }
 
     private static function atas(?int $empresaId): array

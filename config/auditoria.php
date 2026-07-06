@@ -6,6 +6,7 @@ use App\Models\AiProductImprovementResolution;
 use App\Models\AlertaEnviado;
 use App\Models\Anexo;
 use App\Models\AnexoItem;
+use App\Models\AsaasWebhookEvent;
 use App\Models\Assinatura;
 use App\Models\Atendimento;
 use App\Models\AtendimentoInteracao;
@@ -163,6 +164,7 @@ return [
 
     'excluded_models' => [
         AuditoriaDetalhada::class,
+        AsaasWebhookEvent::class,
         LogSistema::class,
         PrazzuPermissionAudit::class,
         HistoricoItem::class,
@@ -177,6 +179,7 @@ return [
 
     'excluded_tables' => [
         'auditoria_detalhada',
+        'asaas_webhook_events',
         'activity_log',
         'logs_sistema',
         'prazzu_permission_audits',
@@ -226,4 +229,39 @@ return [
     'protected_value' => '[valor protegido]',
     'max_value_length' => 4000,
     'default_level' => 'info',
+
+    /* Eventos manuais críticos esperados no sistema. O check do Lote 11 valida a presença deles no código. */
+    'manual_event_catalog' => [
+        'auditoria.exported' => 'Exportação de trilha de auditoria por usuário autorizado.',
+        'login.success' => 'Login interno bem-sucedido.',
+        'login.failed' => 'Tentativa de login interno negada.',
+        'logout' => 'Logout interno.',
+        'password.reset' => 'Reset de senha interno.',
+        'portal_cliente.login.failed' => 'Tentativa de login no portal do cliente negada.',
+        'portal_cliente.logout' => 'Logout do portal do cliente.',
+        'portal_cliente.password.reset_requested' => 'Solicitação de reset de senha do portal.',
+        'portal_cliente.password.reset_success' => 'Reset de senha do portal concluído.',
+        'portal_cliente.invite.accepted' => 'Convite do portal aceito.',
+        'portal_cliente.documento.download' => 'Download de documento pelo portal público.',
+        'portal_cliente.documento.link_externo_acessado' => 'Acesso a link externo de documento no portal público.',
+        'portal_item.assinatura.registrada' => 'Assinatura eletrônica registrada via portal do item.',
+        'portal_item.mensagem.enviada' => 'Mensagem enviada via portal do item.',
+        'portal_item.documento.enviado' => 'Documento enviado via portal do item.',
+        'asaas.webhook.rejected' => 'Webhook Asaas recusado.',
+        'asaas.webhook.duplicate_ignored' => 'Webhook Asaas duplicado ignorado.',
+        'asaas.webhook.received' => 'Webhook Asaas recebido.',
+        'asaas.webhook.processed' => 'Webhook Asaas processado.',
+        'asaas.webhook.failed' => 'Webhook Asaas com falha.',
+    ],
+
+    'high_risk_events' => [
+        'auditoria.exported',
+        'portal_cliente.documento.download',
+        'portal_cliente.documento.link_externo_acessado',
+        'portal_item.assinatura.registrada',
+        'portal_item.documento.enviado',
+        'asaas.webhook.rejected',
+        'asaas.webhook.failed',
+    ],
+
 ];

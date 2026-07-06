@@ -3,7 +3,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
@@ -70,8 +73,26 @@
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ],
+        "env:check": [
+            "@php scripts/check-environment.php"
+        ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "db:check": [
+            "@php scripts/check-database.php"
+        ],
+        "performance:check": [
+            "@php scripts/check-performance.php"
+        ],
+        "quality:check": [
+            "@php scripts/check-quality.php"
+        ],
+        "test:unit-core": [
+            "@php vendor/bin/phpunit tests/Unit/Services/PrazzuSlaEngineTest.php tests/Unit/Support/PrazzuPerformanceTest.php"
+        ],
+        "release:check": [
+            "@php scripts/check-release.php"
         ]
     },
     "extra": {

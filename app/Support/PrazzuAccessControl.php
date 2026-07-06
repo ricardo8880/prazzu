@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Services\PrazzuPermissionService;
 use App\Services\PlanoService;
 use Filament\Facades\Filament;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 class PrazzuAccessControl
 {
@@ -31,6 +33,21 @@ class PrazzuAccessControl
         return app(PrazzuPermissionService::class)->canAny($user, $permissions, $scope);
     }
 
+    public static function canAccessAdminPanel(?User $user = null): bool
+    {
+        $user ??= self::user();
+
+        if (! $user) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return self::canUseWorkArea($user);
+    }
+
     public static function canUseWorkArea(?User $user = null): bool
     {
         $user ??= self::user();
@@ -43,7 +60,45 @@ class PrazzuAccessControl
             return true;
         }
 
+        if (! $user->hasEmpresaVinculada()) {
+            return false;
+        }
+
         return (bool) $user->empresa?->isAtivo();
+    }
+
+    public static function userCanAccessEmpresa(int|string|null $empresaId, ?User $user = null): bool
+    {
+        $user ??= self::user();
+
+        if (! $user || blank($empresaId)) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        return (int) $user->empresa_id === (int) $empresaId;
+    }
+
+    public static function applyEmpresaScope(Builder|QueryBuilder $query, ?User $user = null, string $column = 'empresa_id'): Builder|QueryBuilder
+    {
+        $user ??= self::user();
+
+        if (! $user) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($user->isSuperAdmin()) {
+            return $query;
+        }
+
+        if (! $user->hasEmpresaVinculada()) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where($column, $user->empresa_id);
     }
 
     public static function canUseFeature(string $feature, ?User $user = null): bool

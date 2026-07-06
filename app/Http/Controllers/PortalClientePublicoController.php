@@ -8,10 +8,13 @@ use App\Models\PortalDocumento;
 use App\Models\PortalMensagem;
 use App\Models\ItemControle;
 use App\Models\PortalSolicitacao;
+use App\Services\AuditoriaTrailService;
 use App\Services\ItemControleStatusService;
 use App\Support\AtendimentoPortalService;
+use App\Support\DocumentStorage;
 use App\Support\ItemControleAnexoUploader;
 use App\Support\PortalClienteData;
+use App\Support\PortalClienteSecurity;
 use App\Support\PortalChatMessageContract;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -46,6 +49,41 @@ class PortalClientePublicoController extends Controller
             'modoPublico' => true,
             'socketIoConfig' => $this->socketIoConfigCliente($empresaId, $token),
         ]);
+    }
+
+
+    public function downloadDocumento(string $token, int|string $documento): \Symfony\Component\HttpFoundation\StreamedResponse|RedirectResponse
+    {
+        $registro = PortalClienteSecurity::documentoAutorizadoParaToken($documento, $token);
+
+        abort_if(! $registro, 404);
+
+        if (! empty($registro->url) && empty($registro->arquivo)) {
+            AuditoriaTrailService::documento('portal_cliente.documento.link_externo_acessado', [
+                'portal_documento_id' => $registro->id,
+                'empresa_id' => $registro->empresa_id,
+                'titulo' => $registro->titulo,
+                'url_hash' => hash('sha256', (string) $registro->url),
+                'token_hash' => hash('sha256', $token),
+            ], $registro, (int) $registro->empresa_id);
+
+            return redirect()->away((string) $registro->url);
+        }
+
+        $path = PortalClienteSecurity::caminhoStorageSeguro($registro->arquivo);
+
+        $downloadName = trim((string) ($registro->titulo ?: basename((string) $path))) ?: basename((string) $path);
+
+        AuditoriaTrailService::documento('portal_cliente.documento.download', [
+            'portal_documento_id' => $registro->id,
+            'empresa_id' => $registro->empresa_id,
+            'titulo' => $registro->titulo,
+            'arquivo_hash' => hash('sha256', (string) $path),
+            'download_name' => $downloadName,
+            'token_hash' => hash('sha256', $token),
+        ], $registro, (int) $registro->empresa_id);
+
+        return DocumentStorage::download((string) $path, $downloadName);
     }
 
 
@@ -223,7 +261,7 @@ class PortalClientePublicoController extends Controller
                 $inicioAnexo = microtime(true);
                 
 
-                $path = $arquivo->store('portal-cliente/chat', 'public');
+                $path = DocumentStorage::storePortalChatAnexo($arquivo, (int) $empresa->id, $atendimentoSelecionadoId);
 
                 if (! $path) {
                     throw new \RuntimeException('Falha ao gravar anexo no disco público.');
@@ -235,7 +273,7 @@ class PortalClientePublicoController extends Controller
                     'mime_type' => $arquivo->getClientMimeType(),
                     'tamanho_bytes' => $arquivo->getSize(),
                     'tipo' => str_starts_with((string) $arquivo->getClientMimeType(), 'image/') ? 'imagem' : 'documento',
-                    'download_url' => asset('storage/' . $path),
+                    'download_url' => DocumentStorage::publicUrl($path),
                 ];
 
                 
@@ -866,8 +904,8 @@ class PortalClientePublicoController extends Controller
         }
 
         try {
-            if (Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
+            if (DocumentStorage::exists($path)) {
+                Storage::disk(DocumentStorage::DISK)->delete(DocumentStorage::normalizePath($path));
             }
         } catch (Throwable) {
             // Evita transformar falha de limpeza em erro para o cliente; o erro principal já foi registrado no log.
@@ -901,11 +939,7 @@ class PortalClientePublicoController extends Controller
 
     private function empresaPorToken(string $token): ?object
     {
-        if (! CachedSchema::hasTable('empresas') || ! CachedSchema::hasColumn('empresas', 'portal_token')) {
-            return null;
-        }
-
-        return DB::table('empresas')->where('portal_token', $token)->first();
+        return PortalClienteSecurity::empresaPorToken($token);
     }
 
 
@@ -953,15 +987,7 @@ class PortalClientePublicoController extends Controller
 
     private function portalDisponivel(object $empresa): bool
     {
-        if (CachedSchema::hasColumn('empresas', 'portal_ativo') && ! (bool) ($empresa->portal_ativo ?? false)) {
-            return false;
-        }
-
-        if (CachedSchema::hasColumn('empresas', 'portal_expira_em') && ! empty($empresa->portal_expira_em)) {
-            return now()->lessThanOrEqualTo($empresa->portal_expira_em);
-        }
-
-        return true;
+        return PortalClienteSecurity::portalEmpresaDisponivel($empresa);
     }
     private function cacheKeyClienteDigitando(int $empresaId): string
     {

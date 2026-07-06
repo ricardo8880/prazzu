@@ -11,25 +11,11 @@ use Illuminate\Validation\ValidationException;
 
 class ItemControleAnexoUploader
 {
-    public const MAX_SIZE_KB = 10240;
+    public const MAX_SIZE_KB = DocumentStorage::MAX_SIZE_KB;
 
-    public const ALLOWED_EXTENSIONS = [
-        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'txt',
-        'jpg', 'jpeg', 'png', 'webp',
-    ];
+    public const ALLOWED_EXTENSIONS = DocumentStorage::ALLOWED_EXTENSIONS;
 
-    public const ALLOWED_MIME_TYPES = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/csv',
-        'text/plain',
-        'image/jpeg',
-        'image/png',
-        'image/webp',
-    ];
+    public const ALLOWED_MIME_TYPES = DocumentStorage::ALLOWED_MIME_TYPES;
 
     /**
      * @param  array<int, string>  $arquivos
@@ -47,7 +33,7 @@ class ItemControleAnexoUploader
         }
 
         foreach ($arquivos as $arquivoPath) {
-            $arquivoPath = (string) $arquivoPath;
+            $arquivoPath = DocumentStorage::normalizePath((string) $arquivoPath) ?: '';
             $nomeOriginal = basename($arquivoPath);
             $extension = strtolower(pathinfo($nomeOriginal, PATHINFO_EXTENSION));
 
@@ -59,7 +45,7 @@ class ItemControleAnexoUploader
                 ]);
             }
 
-            if (! Storage::disk('public')->exists($arquivoPath)) {
+            if (! DocumentStorage::exists($arquivoPath)) {
                 throw ValidationException::withMessages([
                     'arquivos' => 'Não foi possível localizar o arquivo enviado. Tente fazer o upload novamente.',
                 ]);
@@ -69,8 +55,8 @@ class ItemControleAnexoUploader
             $tamanho = null;
 
             try {
-                $mimeType = Storage::disk('public')->mimeType($arquivoPath);
-                $tamanho = Storage::disk('public')->size($arquivoPath);
+                $mimeType = Storage::disk(DocumentStorage::DISK)->mimeType($arquivoPath);
+                $tamanho = Storage::disk(DocumentStorage::DISK)->size($arquivoPath);
             } catch (\Throwable) {
                 $mimeType = null;
                 $tamanho = null;
@@ -125,8 +111,8 @@ class ItemControleAnexoUploader
     public static function safeDelete(string $arquivoPath): void
     {
         try {
-            if (Storage::disk('public')->exists($arquivoPath)) {
-                Storage::disk('public')->delete($arquivoPath);
+            if (DocumentStorage::exists($arquivoPath)) {
+                Storage::disk(DocumentStorage::DISK)->delete(DocumentStorage::normalizePath($arquivoPath));
             }
         } catch (\Throwable) {
             // Evita quebrar a tela por falha ao remover arquivo temporário inválido.

@@ -23,6 +23,10 @@ class PrazzuPermissionService
         'armazenamento' => 'Armazenamento',
         'relatorios' => 'Relatórios',
         'governanca' => 'Governança',
+        'configuracoes' => 'Configurações',
+        'auditoria' => 'Auditoria',
+        'contratos' => 'Contratos',
+        'system_health' => 'Saúde do Sistema',
     ];
 
     public const ACTIONS = [
@@ -133,6 +137,10 @@ class PrazzuPermissionService
             'armazenamento' => ['view', 'create', 'edit', 'delete', 'export'],
             'relatorios' => ['view', 'export'],
             'governanca' => ['view', 'create', 'edit', 'delete', 'approve', 'export'],
+            'configuracoes' => ['view', 'edit'],
+            'auditoria' => ['view', 'export'],
+            'contratos' => ['view', 'create', 'edit', 'delete', 'approve', 'export'],
+            'system_health' => ['view', 'export'],
         ];
     }
 
@@ -337,7 +345,7 @@ class PrazzuPermissionService
         }
 
         if ($action === 'view') {
-            return true;
+            return ! in_array($module, ['governanca', 'configuracoes', 'auditoria', 'system_health'], true);
         }
 
         if ($action === 'create' || $action === 'edit') {

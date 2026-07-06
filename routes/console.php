@@ -12,9 +12,11 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // 🔔 NOTIFICAÇÕES
-Schedule::command('item-controle:notificar-vencimentos')
+Schedule::command('item-controle:notificar-vencimentos --limit=1000')
     ->dailyAt('08:00')
-    ->withoutOverlapping()
+    ->timezone(config('app.timezone', 'America/Sao_Paulo'))
+    ->withoutOverlapping(60)
+    ->onOneServer()
     ->runInBackground();
 
 // 🔥 ATUALIZA STATUS VENCIDO (CORRIGIDO AQUI)
@@ -26,6 +28,13 @@ Schedule::command('itens-controle:atualizar-vencidos')
 
 // 💳 ASAAS: reconciliação de assinaturas/cobranças
 Schedule::command('asaas:reconciliar-assinaturas --limit=100')
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+
+// ⏱️ SLA/PRAZOS: recalcula status pela regra oficial
+Schedule::command('prazzu:sla-recalcular --limit=5000')
     ->hourly()
     ->withoutOverlapping()
     ->runInBackground();

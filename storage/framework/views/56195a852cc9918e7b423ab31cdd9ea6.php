@@ -25,6 +25,7 @@
         $atividades = collect($dashboard['atividades'] ?? []);
         $filaPrioridade = collect($dashboard['filaPrioridade']['itens'] ?? [])->take(5);
         $filaPrioridadeTotal = (int) ($dashboard['filaPrioridade']['total'] ?? $filaPrioridade->count());
+        $uxNavigation = collect($uxNavigation ?? []);
 
         $obrigacoesVencidas = $resumoHoje->get('Atrasados', []);
         $vencimentosSemana = $resumoHoje->get('Vencem em 7 dias', []);
@@ -131,6 +132,35 @@
             </div>
         </section>
 
+
+
+        <section class="pz-panel pz-ux-map" aria-label="Mapa de navegação do Prazzu">
+            <div class="pz-panel-head">
+                <div><h2>Mapa rápido do sistema</h2><p>Use estes grupos como caminho oficial. Cada assunto aponta para a tela dona do fluxo.</p></div>
+            </div>
+            <div class="pz-ux-map-grid">
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = $uxNavigation; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cluster): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                    <article class="pz-ux-cluster">
+                        <div class="pz-ux-cluster-head">
+                            <span class="pz-icon-box"><i class="bi <?php echo e($cluster['icon'] ?? 'bi-grid'); ?>"></i></span>
+                            <div>
+                                <strong><?php echo e($cluster['label'] ?? 'Grupo'); ?></strong>
+                                <small><?php echo e($cluster['hint'] ?? ''); ?></small>
+                            </div>
+                        </div>
+                        <div class="pz-ux-links">
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if BLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::openLoop(); ?><?php endif; ?><?php $__currentLoopData = ($cluster['items'] ?? []); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::startLoopIteration(); ?><?php endif; ?>
+                                <a href="<?php echo e($item['url'] ?? '#'); ?>" class="<?php echo \Illuminate\Support\Arr::toCssClasses(['pz-ux-link', 'pz-ux-link--active' => $item['active'] ?? false]); ?>">
+                                    <span><?php echo e($item['label'] ?? 'Acessar'); ?></span>
+                                    <small><?php echo e($item['hint'] ?? 'Abrir tela'); ?></small>
+                                </a>
+                            <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+                        </div>
+                    </article>
+                <?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::endLoop(); ?><?php endif; ?><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?><?php if(\Livewire\Mechanisms\ExtendBlade\ExtendBlade::isRenderingLivewireComponent()): ?><!--[if ENDBLOCK]><![endif]--><?php \Livewire\Features\SupportCompiledWireKeys\SupportCompiledWireKeys::closeLoop(); ?><?php endif; ?>
+            </div>
+        </section>
+
         <section class="pz-dashboard-grid">
             <div class="pz-panel">
                 <div class="pz-panel-head">
@@ -168,7 +198,7 @@
         </section>
 
         <section class="pz-footer-note">
-            <strong>Regra de conteúdo aplicada no Lote 2:</strong> a Home não ensina, não resolve e não duplica fluxos. Ela mostra o estado da operação e leva o usuário para a aba dona do assunto.
+            <strong>Regra de UX aplicada no Lote 12:</strong> a Home e o topo usam um mapa único de navegação. A tela inicial orienta, mas cada ação continua na aba dona do assunto.
         </section>
     </div>
  <?php echo $__env->renderComponent(); ?>

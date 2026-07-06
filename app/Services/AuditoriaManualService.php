@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 class AuditoriaManualService
@@ -50,7 +51,7 @@ class AuditoriaManualService
                 'nivel' => mb_substr($nivel, 0, 50),
                 'campo' => 'evento_manual',
                 'valor_anterior' => null,
-                'valor_novo' => self::normalizarDados($dados),
+                'valor_novo' => self::normalizarDados(self::enriquecerContexto($dados, $evento)),
                 'ip' => request()?->ip(),
                 'user_agent' => mb_substr((string) request()?->userAgent(), 0, 500),
                 'created_at' => now(),
@@ -63,6 +64,33 @@ class AuditoriaManualService
                 'message' => $exception->getMessage(),
             ]);
         }
+    }
+
+
+    protected static function enriquecerContexto(array $dados, string $evento): array
+    {
+        $request = request();
+
+        if (! $request) {
+            return $dados + [
+                '_auditoria' => [
+                    'evento' => $evento,
+                    'canal' => app()->runningInConsole() ? 'console' : 'app',
+                ],
+            ];
+        }
+
+        return $dados + [
+            '_auditoria' => [
+                'evento' => $evento,
+                'canal' => app()->runningInConsole() ? 'console' : 'http',
+                'metodo' => $request->method(),
+                'rota' => optional($request->route())->getName(),
+                'path' => $request->path(),
+                'referer' => $request->headers->get('referer'),
+                'request_id' => $request->headers->get('X-Request-Id') ?: (string) Str::uuid(),
+            ],
+        ];
     }
 
     protected static function resolverEmpresaId(?Model $auditable, $user, array $dados): ?int

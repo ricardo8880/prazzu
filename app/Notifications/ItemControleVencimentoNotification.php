@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\Configuracao;
 use App\Models\ItemControle;
 use App\Support\WhiteLabelSettings;
 use Illuminate\Bus\Queueable;
@@ -15,19 +16,35 @@ class ItemControleVencimentoNotification extends Notification
     public function __construct(
         public ItemControle $item,
         public string $tipo,
+        public ?Configuracao $configuracao = null,
         public ?string $destinatarioLabel = null
     ) {
     }
 
     public function via(object $notifiable): array
     {
-        return ['mail', 'database'];
+        $channels = [];
+
+        if ($this->configuracao?->enviar_email ?? true) {
+            $channels[] = 'mail';
+        }
+
+        if ($this->configuracao?->enviar_sistema ?? true) {
+            $channels[] = 'database';
+        }
+
+        return $channels;
+    }
+
+    public function canaisAtivos(): array
+    {
+        return $this->via(new \stdClass());
     }
 
     protected function getAssunto(): string
     {
         return match ($this->tipo) {
-            '3_dias' => 'Item de controle vence em 3 dias',
+            '3_dias' => 'Item de controle vence em breve',
             'hoje' => 'Item de controle vence hoje',
             'vencido' => 'Item de controle vencido',
             'lembrete_recorrente' => 'Lembrete recorrente de item vencido',
@@ -38,7 +55,7 @@ class ItemControleVencimentoNotification extends Notification
     protected function getMensagem(): string
     {
         return match ($this->tipo) {
-            '3_dias' => "O item \"{$this->item->titulo}\" vence em 3 dias.",
+            '3_dias' => "O item \"{$this->item->titulo}\" está próximo do vencimento.",
             'hoje' => "O item \"{$this->item->titulo}\" vence hoje.",
             'vencido' => "O item \"{$this->item->titulo}\" está vencido.",
             'lembrete_recorrente' => "O item \"{$this->item->titulo}\" continua vencido e ainda precisa de ação.",
@@ -115,6 +132,8 @@ class ItemControleVencimentoNotification extends Notification
             'url' => $this->getUrl(),
             'mensagem' => $this->getMensagem(),
             'assunto' => $this->getAssunto(),
+            'empresa_id' => $this->item->empresa_id,
+            'responsavel_id' => $this->item->responsavel_id,
         ];
     }
 }

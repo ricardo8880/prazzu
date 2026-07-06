@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AsaasWebhookEvent;
 use App\Services\AsaasService;
-use App\Services\AuditoriaManualService;
+use App\Services\AuditoriaTrailService;
+use App\Services\Financeiro\AsaasWebhookEventRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -12,7 +14,7 @@ use Throwable;
 
 class AsaasWebhookController extends Controller
 {
-    public function __invoke(Request $request, AsaasService $asaas): JsonResponse
+    public function __invoke(Request $request, AsaasService $asaas, AsaasWebhookEventRecorder $eventRecorder): JsonResponse
     {
         $configuredToken = config('services.asaas.webhook_token');
         $receivedToken = $request->header('asaas-access-token')
@@ -25,7 +27,7 @@ class AsaasWebhookController extends Controller
                 'event' => $request->input('event'),
             ]);
 
-            AuditoriaManualService::registrarEvento('asaas.webhook.rejected', [
+            AuditoriaTrailService::financeiro('asaas.webhook.rejected', [
                 'motivo' => 'webhook_token_nao_configurado',
                 'event' => $request->input('event'),
                 'payment_id' => data_get($request->all(), 'payment.id'),
@@ -41,7 +43,7 @@ class AsaasWebhookController extends Controller
                 'event' => $request->input('event'),
             ]);
 
-            AuditoriaManualService::registrarEvento('asaas.webhook.rejected', [
+            AuditoriaTrailService::financeiro('asaas.webhook.rejected', [
                 'motivo' => 'token_invalido',
                 'event' => $request->input('event'),
                 'payment_id' => data_get($request->all(), 'payment.id'),
@@ -51,15 +53,37 @@ class AsaasWebhookController extends Controller
             return response()->json(['message' => 'Token inválido.'], Response::HTTP_UNAUTHORIZED);
         }
 
+        $webhookEvent = $eventRecorder->registrarRecebimento($request->all(), $request->ip());
+
+        if ($webhookEvent instanceof AsaasWebhookEvent && $webhookEvent->estaProcessado()) {
+            Log::channel('asaas')->info('Webhook Asaas duplicado ignorado com segurança.', [
+                'asaas_webhook_event_id' => $webhookEvent->id,
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ]);
+
+            AuditoriaTrailService::financeiro('asaas.webhook.duplicate_ignored', [
+                'asaas_webhook_event_id' => $webhookEvent->id,
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ], null, nivel: 'info');
+
+            return response()->json(['message' => 'Webhook duplicado já processado.']);
+        }
+
         try {
             Log::channel('asaas')->info('Webhook Asaas recebido para processamento.', [
+                'asaas_webhook_event_id' => $webhookEvent?->id,
                 'ip' => $request->ip(),
                 'event' => $request->input('event'),
                 'payment_id' => data_get($request->all(), 'payment.id'),
                 'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
             ]);
 
-            AuditoriaManualService::registrarEvento('asaas.webhook.received', [
+            AuditoriaTrailService::financeiro('asaas.webhook.received', [
+                'asaas_webhook_event_id' => $webhookEvent?->id,
                 'event' => $request->input('event'),
                 'payment_id' => data_get($request->all(), 'payment.id'),
                 'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
@@ -67,7 +91,10 @@ class AsaasWebhookController extends Controller
 
             $asaas->processarWebhook($request->all());
 
-            AuditoriaManualService::registrarEvento('asaas.webhook.processed', [
+            $eventRecorder->marcarProcessado($webhookEvent);
+
+            AuditoriaTrailService::financeiro('asaas.webhook.processed', [
+                'asaas_webhook_event_id' => $webhookEvent?->id,
                 'event' => $request->input('event'),
                 'payment_id' => data_get($request->all(), 'payment.id'),
                 'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
@@ -75,12 +102,14 @@ class AsaasWebhookController extends Controller
 
             return response()->json(['message' => 'Webhook processado.']);
         } catch (Throwable $exception) {
+            $eventRecorder->marcarFalha($webhookEvent, $exception);
             Log::channel('asaas')->error('Erro ao processar webhook Asaas.', [
                 'message' => $exception->getMessage(),
                 'payload' => $request->all(),
             ]);
 
-            AuditoriaManualService::registrarEvento('asaas.webhook.failed', [
+            AuditoriaTrailService::financeiro('asaas.webhook.failed', [
+                'asaas_webhook_event_id' => $webhookEvent?->id,
                 'event' => $request->input('event'),
                 'payment_id' => data_get($request->all(), 'payment.id'),
                 'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),

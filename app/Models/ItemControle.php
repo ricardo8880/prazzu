@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use App\Support\CachedSchema;
+use App\Services\ItemControleCoreService;
 use App\Traits\Loggable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,14 @@ class ItemControle extends Model
         'arquivo',
         'data_vencimento',
         'data_conclusao',
+        'notificado_3_dias',
+        'notificado_no_dia',
+        'notificado_vencido',
+        'ultimo_alerta_enviado_em',
+        'ultimo_lembrete_enviado_em',
+        'qtd_lembretes_enviados',
+        'ultima_falha_notificacao_em',
+        'ultima_falha_notificacao_msg',
         'empresa_id',
         'atendimento_id',
         'responsavel_id',
@@ -80,6 +89,13 @@ class ItemControle extends Model
     protected $casts = [
         'data_vencimento' => 'date',
         'data_conclusao' => 'date',
+        'notificado_3_dias' => 'boolean',
+        'notificado_no_dia' => 'boolean',
+        'notificado_vencido' => 'boolean',
+        'ultimo_alerta_enviado_em' => 'datetime',
+        'ultimo_lembrete_enviado_em' => 'datetime',
+        'qtd_lembretes_enviados' => 'integer',
+        'ultima_falha_notificacao_em' => 'datetime',
         'categoria_id' => 'integer',
         'atendimento_id' => 'integer',
         'portal_ativo' => 'boolean',
@@ -473,49 +489,23 @@ class ItemControle extends Model
 
     public function getPrioridadeExibicao(): string
     {
-        return match ($this->prioridade) {
-            'baixa' => 'Baixa',
-            'media' => 'Média',
-            'alta' => 'Alta',
-            'critica' => 'Crítica',
-            'urgente' => 'Urgente',
-            default => 'Média',
-        };
+        return ItemControleCoreService::priorityLabel($this->prioridade);
     }
 
     public function getPrioridadeColor(): string
     {
-        return match ($this->prioridade) {
-            'baixa' => 'gray',
-            'media' => 'info',
-            'alta' => 'warning',
-            'critica' => 'danger',
-            'urgente' => 'danger',
-            default => 'info',
-        };
+        return ItemControleCoreService::priorityColor($this->prioridade);
     }
 
 
     public function getUrgenciaExibicao(): string
     {
-        return match ($this->urgencia ?: $this->prioridade) {
-            'baixa' => 'Baixa',
-            'media' => 'Média',
-            'alta' => 'Alta',
-            'critica', 'urgente' => 'Crítica',
-            default => 'Média',
-        };
+        return ItemControleCoreService::priorityLabel($this->urgencia ?: $this->prioridade);
     }
 
     public function getUrgenciaColor(): string
     {
-        return match ($this->urgencia ?: $this->prioridade) {
-            'baixa' => 'gray',
-            'media' => 'info',
-            'alta' => 'warning',
-            'critica', 'urgente' => 'danger',
-            default => 'info',
-        };
+        return ItemControleCoreService::priorityColor($this->urgencia ?: $this->prioridade);
     }
 
     public function estaBloqueadoOperacionalmente(): bool
@@ -532,22 +522,7 @@ class ItemControle extends Model
 
     public function getStatusExibicao(): string
     {
-        return match ($this->status) {
-            'pendente' => 'Pendente',
-            'pronto' => 'Pronto',
-            'em_revisao' => 'Em revisão',
-            'aguardando_aprovacao' => 'Aguardando aprovação',
-            'em_aprovacao' => 'Em aprovação',
-            'correcao_necessaria' => 'Correção necessária',
-            'aprovado' => 'Aprovado',
-            'reprovado' => 'Reprovado',
-            'em_andamento' => 'Em andamento',
-            'assinado' => 'Assinado',
-            'concluido' => 'Concluído',
-            'cancelado' => 'Cancelado',
-            'vencido' => 'Vencido',
-            default => ucfirst((string) $this->status),
-        };
+        return ItemControleCoreService::statusLabel($this->status);
     }
 
     public function getStatusExibicaoFormatado(): string
@@ -557,22 +532,7 @@ class ItemControle extends Model
 
     public function getStatusExibicaoColor(): string
     {
-        return match ($this->status) {
-            'pendente' => 'warning',
-            'pronto' => 'info',
-            'em_revisao' => 'warning',
-            'aguardando_aprovacao' => 'warning',
-            'em_aprovacao' => 'warning',
-            'correcao_necessaria' => 'danger',
-            'aprovado' => 'success',
-            'reprovado' => 'danger',
-            'em_andamento' => 'info',
-            'assinado' => 'success',
-            'concluido' => 'success',
-            'cancelado' => 'gray',
-            'vencido' => 'danger',
-            default => 'secondary',
-        };
+        return ItemControleCoreService::statusColor($this->status);
     }
 
     public function isVencido(): bool
@@ -582,12 +542,12 @@ class ItemControle extends Model
         }
 
         return $this->data_vencimento < now()
-            && ! in_array((string) $this->status, ['concluido', 'cancelado'], true);
+            && ! ItemControleCoreService::isFinalStatus($this->status);
     }
 
     public function isConcluido(): bool
     {
-        return $this->status === 'concluido';
+        return ItemControleCoreService::isFinalStatus($this->status);
     }
 
     public function getDiasRestantes(): ?int
@@ -1330,27 +1290,17 @@ class ItemControle extends Model
 
     public function scopeVisibleForUser(Builder $query, ?User $user): Builder
     {
-        if (! $user) {
-            return $query->whereRaw('1 = 0');
-        }
+        return app(ItemControleCoreService::class)->applyVisibility($query, $user);
+    }
 
-        if ($user->isSuperAdmin()) {
-            return $query;
-        }
+    public function getOperationalPayload(): array
+    {
+        return app(ItemControleCoreService::class)->operationalPayload($this);
+    }
 
-        if (! $user->empresa_id) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        if ($user->isAdminEmpresa() || $user->isGestor()) {
-            return $query->where('empresa_id', $user->empresa_id);
-        }
-
-        if ($user->isUser()) {
-            return $query->where('responsavel_id', $user->responsavel?->id);
-        }
-
-        return $query;
+    public function alterarStatusOperacional(string $novoStatus, ?User $user = null, ?string $motivo = null): bool
+    {
+        return app(ItemControleCoreService::class)->transitionStatus($this, $novoStatus, $user, $motivo);
     }
 
     public function canBeAccessedBy(?User $user): bool

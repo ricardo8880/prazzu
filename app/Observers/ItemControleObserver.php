@@ -7,6 +7,7 @@ use App\Support\CachedSchema;
 use App\Models\ItemControle;
 use App\Models\Responsavel;
 use App\Models\User;
+use App\Services\ItemControleCoreService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
@@ -14,8 +15,10 @@ class ItemControleObserver
 {
     public function saving(ItemControle $item): void
     {
+        app(ItemControleCoreService::class)->normalizeBeforeSave($item);
+
         $statusMudou = $item->isDirty('status');
-        $status = (string) $item->status;
+        $status = ItemControleCoreService::normalizeStatus($item->status);
 
         if ($status === 'pronto') {
             $gerente = $this->resolverGerenteResponsavel($item);
@@ -32,18 +35,6 @@ class ItemControleObserver
             $item->status_operacional_at = now();
         }
 
-        if (CachedSchema::hasColumn('item_controles', 'urgencia') && blank($item->urgencia)) {
-            $item->urgencia = match ((string) $item->prioridade) {
-                'urgente' => 'critica',
-                'alta' => 'alta',
-                'baixa' => 'baixa',
-                default => 'media',
-            };
-        }
-
-        if (CachedSchema::hasColumn('item_controles', 'valor_tarefa') && blank($item->valor_tarefa) && filled($item->contrato_valor)) {
-            $item->valor_tarefa = $item->contrato_valor;
-        }
     }
 
     public function saved(ItemControle $item): void
