@@ -331,7 +331,7 @@ class Pendencias extends Page
         return match ($this->filtroPendencias) {
             'minhas' => [
                 'title' => 'Sua fila individual está limpa.',
-                'message' => 'Não há pendências atribuídas a você neste momento. Use Todas para fazer triagem geral ou crie uma nova pendência quando necessário.',
+                'message' => 'Não há pendências atribuídas a você neste momento. Use Todas para fazer triagem geral ou abra Tarefas Operacionais quando precisar criar uma nova demanda.',
                 'action_label' => 'Ver todas as pendências',
                 'action' => $this->getPendenciasClusterUrl('todas'),
             ],
@@ -370,8 +370,8 @@ class Pendencias extends Page
                 'message' => $items->isEmpty()
                     ? 'Quando uma pendência for criada, ela aparecerá aqui com prioridade, responsável e prazo.'
                     : 'Troque de cluster no topo da página ou ajuste a busca para ampliar os resultados.',
-                'action_label' => 'Criar pendência',
-                'action' => '#nova-pendencia',
+                'action_label' => 'Abrir Tarefas Operacionais',
+                'action' => ItemControleResource::getUrl('list'),
             ],
         };
     }
@@ -714,6 +714,23 @@ class Pendencias extends Page
         return $item;
     }
 
+    protected function formatPendenciaDate(mixed $value, string $format = 'd/m/Y', ?string $fallback = null): ?string
+    {
+        if (blank($value)) {
+            return $fallback;
+        }
+
+        try {
+            if ($value instanceof \DateTimeInterface) {
+                return Carbon::instance($value)->format($format);
+            }
+
+            return Carbon::parse((string) $value)->format($format);
+        } catch (\Throwable) {
+            return $fallback;
+        }
+    }
+
     protected function parsePendenciaDueDate(?string $date): ?Carbon
     {
         if (blank($date) || $date === 'Sem prazo') {
@@ -943,7 +960,7 @@ class Pendencias extends Page
             'responsavel' => $record->responsavel?->nome ?: 'Sem responsável',
             'status' => (string) $record->status,
             'prioridade' => (string) $record->prioridade,
-            'vencimento' => $record->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+            'vencimento' => $this->formatPendenciaDate($record->data_vencimento, 'd/m/Y', 'Sem prazo'),
             'is_late' => $isLate,
             'tone' => $tone,
         ]);
@@ -959,7 +976,7 @@ class Pendencias extends Page
             'status_key' => $record->status,
             'prioridade' => $record->getPrioridadeExibicao(),
             'prioridade_key' => $record->prioridade,
-            'vencimento' => $record->data_vencimento?->format('d/m/Y') ?: 'Sem prazo',
+            'vencimento' => $this->formatPendenciaDate($record->data_vencimento, 'd/m/Y', 'Sem prazo'),
             'prazo' => $record->getSituacaoPrazo(),
             'is_late' => $isLate,
             'tone' => $tone,
@@ -980,6 +997,19 @@ class Pendencias extends Page
             'bloqueio_resumo' => $this->getBloqueioResumo($record),
             'dependencias' => $this->getDependenciasResumo($record),
             'descricao_curta' => Str::limit(strip_tags((string) $record->descricao), 180),
+            'observacao' => filled($record->observacao) ? $record->observacao : null,
+            'arquivo' => filled($record->arquivo) ? $record->arquivo : null,
+            'document_status' => $this->formatStatusLabel($record->document_status ?: null, 'Não exigido'),
+            'signature_status' => $this->formatStatusLabel($record->signature_status ?: null, 'Não exigida'),
+            'portal_status' => $this->formatStatusLabel($record->portal_status ?: null, $record->portal_ativo ? 'Ativo' : 'Não publicado'),
+            'portal_cliente' => filled($record->portal_cliente_nome) ? $record->portal_cliente_nome : null,
+            'portal_email' => filled($record->portal_cliente_email) ? $record->portal_cliente_email : null,
+            'ultima_interacao_cliente' => $this->formatPendenciaDate($record->ultima_interacao_cliente_em, 'd/m/Y H:i', null),
+            'tempo_estimado' => $record->estimated_minutes ? $this->formatMinutes((int) $record->estimated_minutes) : 'Não informado',
+            'tempo_real' => $record->actual_minutes ? $this->formatMinutes((int) $record->actual_minutes) : 'Não informado',
+            'risco' => $this->getRiscoOperacionalResumo($record),
+            'created_at' => $this->formatPendenciaDate($record->created_at, 'd/m/Y H:i', null),
+            'updated_at' => $this->formatPendenciaDate($record->updated_at, 'd/m/Y H:i', null),
             'prioridade_operacional_label' => $priorityPreview['prioridade_operacional_label'],
             'prioridade_operacional_message' => $priorityPreview['prioridade_operacional_message'],
             'prioridade_operacional_tone' => $priorityPreview['prioridade_operacional_tone'],
@@ -1137,6 +1167,50 @@ class Pendencias extends Page
             ])
             ->values()
             ->all();
+    }
+
+
+    protected function formatStatusLabel(?string $status, string $fallback = 'Não informado'): string
+    {
+        if (blank($status)) {
+            return $fallback;
+        }
+
+        return Str::of($status)->replace(['_', '-'], ' ')->headline()->toString();
+    }
+
+    protected function formatMinutes(int $minutes): string
+    {
+        if ($minutes <= 0) {
+            return 'Não informado';
+        }
+
+        if ($minutes < 60) {
+            return $minutes . ' min';
+        }
+
+        $hours = intdiv($minutes, 60);
+        $remaining = $minutes % 60;
+
+        return $remaining > 0 ? $hours . 'h ' . $remaining . 'min' : $hours . 'h';
+    }
+
+    protected function getRiscoOperacionalResumo(ItemControle $record): string
+    {
+        $score = $record->risk_score ?? $record->risco_score;
+
+        if (blank($score)) {
+            return 'Sem risco calculado';
+        }
+
+        $score = (int) $score;
+
+        return match (true) {
+            $score >= 16 => 'Risco crítico (' . $score . ')',
+            $score >= 9 => 'Risco alto (' . $score . ')',
+            $score >= 4 => 'Risco moderado (' . $score . ')',
+            default => 'Risco baixo (' . $score . ')',
+        };
     }
 
     protected function canSolicitarAprovacao(ItemControle $record): bool
