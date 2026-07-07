@@ -19,6 +19,10 @@ class DocumentStorage
         'jpg', 'jpeg', 'png', 'webp',
     ];
 
+    public const BLOCKED_EXTENSIONS = [
+        'php', 'phtml', 'phar', 'js', 'html', 'htm', 'svg', 'exe', 'bat', 'cmd', 'sh', 'com', 'scr', 'jar',
+    ];
+
     public const ALLOWED_MIME_TYPES = [
         'application/pdf',
         'application/msword',
@@ -66,6 +70,8 @@ class DocumentStorage
 
     public static function assertValidUpload(UploadedFile $file): void
     {
+        self::assertSafeOriginalName($file);
+
         if (! $file->isValid()) {
             throw ValidationException::withMessages([
                 'arquivo' => 'O arquivo enviado não pôde ser processado. Selecione o arquivo novamente.',
@@ -76,7 +82,13 @@ class DocumentStorage
         $mimeType = strtolower((string) ($file->getMimeType() ?: $file->getClientMimeType()));
         $size = (int) $file->getSize();
 
-        if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+        if ($size <= 0) {
+            throw ValidationException::withMessages([
+                'arquivo' => 'O arquivo enviado está vazio.',
+            ]);
+        }
+
+        if (in_array($extension, self::BLOCKED_EXTENSIONS, true) || ! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
             throw ValidationException::withMessages([
                 'arquivo' => 'Extensão não permitida. Envie PDF, Word, Excel, CSV, TXT ou imagem.',
             ]);
@@ -91,6 +103,26 @@ class DocumentStorage
         if ($size > (self::MAX_SIZE_KB * 1024)) {
             throw ValidationException::withMessages([
                 'arquivo' => 'O arquivo ultrapassa o limite de 10 MB.',
+            ]);
+        }
+    }
+
+    public static function assertSafeOriginalName(UploadedFile $file): void
+    {
+        $originalName = strtolower(str_replace('\\', '/', $file->getClientOriginalName()));
+        $parts = array_values(array_filter(explode('.', basename($originalName))));
+
+        foreach ($parts as $part) {
+            if (in_array($part, self::BLOCKED_EXTENSIONS, true)) {
+                throw ValidationException::withMessages([
+                    'arquivo' => 'Nome de arquivo não permitido por segurança.',
+                ]);
+            }
+        }
+
+        if (str_contains($originalName, "\0") || str_contains($originalName, '../')) {
+            throw ValidationException::withMessages([
+                'arquivo' => 'Nome de arquivo inválido.',
             ]);
         }
     }
@@ -147,7 +179,9 @@ class DocumentStorage
 
     public static function safeDownloadName(string $name): string
     {
-        $name = trim(str_replace(["\r", "\n"], ' ', $name));
+        $name = basename(trim(str_replace(["\r", "\n", '/', '\\'], ' ', $name)));
+        $name = trim(preg_replace('/[\x00-\x1F\x7F]+/', '', $name) ?: '');
+        $name = Str::limit($name, 160, '');
 
         return $name !== '' ? $name : 'documento';
     }

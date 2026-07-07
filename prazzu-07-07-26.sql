@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 07-Jul-2026 às 15:31
+-- Tempo de geração: 07-Jul-2026 às 19:58
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.2.12
 
@@ -591,7 +591,14 @@ INSERT INTO `auditoria_detalhada` (`id`, `empresa_id`, `user_id`, `auditable_typ
 (178, 5, 376, 'App\\Models\\UserSidebarFavorite', 6, 'created', 'info', 'user_id', NULL, '376', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-02 13:10:45', '2026-07-02 13:10:45'),
 (179, 5, 376, 'App\\Models\\UserSidebarFavorite', 6, 'created', 'info', 'item_key', NULL, 'Administração|Administração|http://localhost:8000/admin/central-administrativa', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-02 13:10:45', '2026-07-02 13:10:45'),
 (180, 5, 376, 'App\\Models\\UserSidebarFavorite', 6, 'created', 'info', 'position', NULL, '2', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-02 13:10:45', '2026-07-02 13:10:45'),
-(181, 5, 376, 'App\\Models\\UserSidebarFavorite', 6, 'created', 'info', 'id', NULL, '6', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-02 13:10:45', '2026-07-02 13:10:45');
+(181, 5, 376, 'App\\Models\\UserSidebarFavorite', 6, 'created', 'info', 'id', NULL, '6', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-02 13:10:45', '2026-07-02 13:10:45'),
+(182, NULL, 111, 'App\\Models\\User', 111, 'login.success', 'info', 'evento_manual', NULL, '{\"guard\":\"web\",\"remember\":false,\"email\":\"admin@admin.com\",\"_auditoria\":{\"evento\":\"login.success\",\"canal\":\"http\",\"metodo\":\"POST\",\"rota\":\"default-livewire.update\",\"path\":\"livewire-50fe612b/update\",\"referer\":\"http://localhost:8000/admin/login\",\"request_id\":\"83b467ea-7cc1-4c20-b2d9-56c0a52092d3\"}}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-07 14:56:30', '2026-07-07 14:56:30'),
+(183, NULL, 111, 'App\\Models\\User', 111, 'login.success', 'info', 'evento_manual', NULL, '{\"guard\":\"web\",\"remember\":false,\"email\":\"admin@admin.com\",\"_auditoria\":{\"evento\":\"login.success\",\"canal\":\"http\",\"metodo\":\"POST\",\"rota\":\"default-livewire.update\",\"path\":\"livewire-50fe612b/update\",\"referer\":\"http://localhost:8000/admin/login\",\"request_id\":\"d3c30554-4baf-4433-b289-d869baab2a5f\"}}', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-07 17:24:56', '2026-07-07 17:24:56'),
+(184, NULL, 111, 'App\\Models\\UserSidebarFavorite', 7, 'created', 'info', 'user_id', NULL, '111', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-07 17:30:33', '2026-07-07 17:30:33'),
+(185, NULL, 111, 'App\\Models\\UserSidebarFavorite', 7, 'created', 'info', 'item_key', NULL, 'Clientes e Atendimentos|Clientes e Atendimentos|http://localhost:8000/admin/atendimentos', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-07 17:30:33', '2026-07-07 17:30:33');
+INSERT INTO `auditoria_detalhada` (`id`, `empresa_id`, `user_id`, `auditable_type`, `auditable_id`, `evento`, `nivel`, `campo`, `valor_anterior`, `valor_novo`, `ip`, `user_agent`, `created_at`, `updated_at`) VALUES
+(186, NULL, 111, 'App\\Models\\UserSidebarFavorite', 7, 'created', 'info', 'position', NULL, '1', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-07 17:30:33', '2026-07-07 17:30:33'),
+(187, NULL, 111, 'App\\Models\\UserSidebarFavorite', 7, 'created', 'info', 'id', NULL, '7', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36', '2026-07-07 17:30:33', '2026-07-07 17:30:33');
 
 -- --------------------------------------------------------
 
@@ -3239,6 +3246,13 @@ CREATE TABLE `user_sidebar_favorites` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Extraindo dados da tabela `user_sidebar_favorites`
+--
+
+INSERT INTO `user_sidebar_favorites` (`id`, `user_id`, `item_key`, `position`, `created_at`, `updated_at`) VALUES
+(7, 111, 'Clientes e Atendimentos|Clientes e Atendimentos|http://localhost:8000/admin/atendimentos', 1, '2026-07-07 17:30:33', '2026-07-07 17:30:33');
+
 -- --------------------------------------------------------
 
 --
@@ -3356,16 +3370,21 @@ ALTER TABLE `anexo_items`
 ALTER TABLE `asaas_webhook_events`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `asaas_webhook_events_payload_hash_unique` (`payload_hash`),
+  ADD UNIQUE KEY `uniq_lote02_asaas_payload_hash` (`payload_hash`),
   ADD KEY `asaas_webhook_events_gateway_payment_id_index` (`gateway_payment_id`),
   ADD KEY `asaas_webhook_events_gateway_subscription_id_index` (`gateway_subscription_id`),
   ADD KEY `asaas_webhook_events_status_index` (`status`),
-  ADD KEY `asaas_webhook_events_received_at_index` (`received_at`);
+  ADD KEY `asaas_webhook_events_received_at_index` (`received_at`),
+  ADD KEY `idx_lote02_asaas_status_datas` (`status`,`processed_at`,`failed_at`),
+  ADD KEY `idx_lote02_asaas_gateway_payment` (`gateway_payment_id`),
+  ADD KEY `idx_lote02_asaas_gateway_subscription` (`gateway_subscription_id`);
 
 --
 -- Índices para tabela `assinaturas`
 --
 ALTER TABLE `assinaturas`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_lote02_assinaturas_empresa_status` (`empresa_id`,`status`);
 
 --
 -- Índices para tabela `atendimentos`
@@ -3401,7 +3420,8 @@ ALTER TABLE `auditoria_detalhada`
   ADD KEY `idx_auditoria_empresa` (`empresa_id`,`created_at`),
   ADD KEY `idx_auditoria_user` (`user_id`,`created_at`),
   ADD KEY `idx_auditoria_registro` (`auditable_type`,`auditable_id`),
-  ADD KEY `idx_auditoria_evento` (`evento`,`created_at`);
+  ADD KEY `idx_auditoria_evento` (`evento`,`created_at`),
+  ADD KEY `idx_lote02_audit_empresa_modelo_data` (`empresa_id`,`auditable_type`,`auditable_id`,`created_at`);
 
 --
 -- Índices para tabela `audit_timeline`
@@ -3699,7 +3719,10 @@ ALTER TABLE `item_controles`
   ADD KEY `idx_trabalho_empresa_tipo_updated` (`empresa_id`,`tipo`,`updated_at`),
   ADD KEY `idx_trabalho_responsavel_tipo_updated` (`responsavel_id`,`tipo`,`updated_at`),
   ADD KEY `idx_trabalho_prioridade_status` (`prioridade`,`status`),
-  ADD KEY `idx_atendimento_id` (`atendimento_id`);
+  ADD KEY `idx_atendimento_id` (`atendimento_id`),
+  ADD KEY `idx_lote02_item_empresa_status_vencimento` (`empresa_id`,`status`,`data_vencimento`),
+  ADD KEY `idx_lote02_item_responsavel_status_vencimento` (`responsavel_id`,`status`,`data_vencimento`),
+  ADD KEY `idx_lote02_item_portal_token` (`portal_token`);
 
 --
 -- Índices para tabela `item_controle_alertas`
@@ -3867,7 +3890,8 @@ ALTER TABLE `notifications`
 --
 ALTER TABLE `pagamentos`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_pagamentos_empresa_status` (`empresa_id`,`status`);
+  ADD KEY `idx_pagamentos_empresa_status` (`empresa_id`,`status`),
+  ADD KEY `idx_lote02_pagamentos_empresa_status_vencimento` (`empresa_id`,`status`,`vencimento`);
 
 --
 -- Índices para tabela `password_reset_tokens`
@@ -3895,7 +3919,8 @@ ALTER TABLE `portal_documentos`
   ADD KEY `portal_documentos_visivel_cliente_index` (`visivel_cliente`),
   ADD KEY `portal_documentos_empresa_visivel_tipo_created_idx` (`empresa_id`,`visivel_cliente`,`tipo`,`created_at`),
   ADD KEY `idx_portal_documentos_empresa_updated` (`empresa_id`,`updated_at`,`created_at`),
-  ADD KEY `portal_documentos_tamanho_bytes_index` (`tamanho_bytes`);
+  ADD KEY `portal_documentos_tamanho_bytes_index` (`tamanho_bytes`),
+  ADD KEY `idx_lote02_portal_doc_empresa_item` (`empresa_id`,`item_controle_id`);
 
 --
 -- Índices para tabela `portal_mensagens`
@@ -3909,7 +3934,8 @@ ALTER TABLE `portal_mensagens`
   ADD KEY `portal_mensagens_empresa_status_created_idx` (`empresa_id`,`conversa_status`,`created_at`),
   ADD KEY `idx_portal_msg_empresa_status_created` (`empresa_id`,`conversa_status`,`created_at`),
   ADD KEY `idx_portal_mensagens_empresa_created` (`empresa_id`,`created_at`),
-  ADD KEY `idx_atendimento_id` (`atendimento_id`);
+  ADD KEY `idx_atendimento_id` (`atendimento_id`),
+  ADD KEY `idx_lote02_portal_msg_empresa_item` (`empresa_id`,`item_controle_id`);
 
 --
 -- Índices para tabela `portal_solicitacoes`
@@ -4332,7 +4358,7 @@ ALTER TABLE `atendimento_interacoes`
 -- AUTO_INCREMENT de tabela `auditoria_detalhada`
 --
 ALTER TABLE `auditoria_detalhada`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=182;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=188;
 
 --
 -- AUTO_INCREMENT de tabela `audit_timeline`
@@ -4842,7 +4868,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT de tabela `user_sidebar_favorites`
 --
 ALTER TABLE `user_sidebar_favorites`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT de tabela `white_label`

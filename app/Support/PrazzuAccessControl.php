@@ -82,6 +82,46 @@ class PrazzuAccessControl
         return (int) $user->empresa_id === (int) $empresaId;
     }
 
+
+    /**
+     * Confirma se um registro pertence à mesma empresa do usuário autenticado.
+     *
+     * Objetivo do Lote 3: centralizar a regra multiempresa para evitar comparações
+     * manuais divergentes espalhadas por Policies, Resources e Pages.
+     */
+    public static function canAccessCompanyRecord(object|array|null $record, ?User $user = null, string $companyKey = 'empresa_id'): bool
+    {
+        $user ??= self::user();
+
+        if (! $user || ! $record) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->hasEmpresaVinculada()) {
+            return false;
+        }
+
+        $empresaId = is_array($record)
+            ? ($record[$companyKey] ?? null)
+            : ($record->{$companyKey} ?? null);
+
+        return filled($empresaId) && (int) $empresaId === (int) $user->empresa_id;
+    }
+
+    public static function abortUnlessCompanyRecord(object|array|null $record, ?User $user = null, string $companyKey = 'empresa_id'): void
+    {
+        abort_unless(self::canAccessCompanyRecord($record, $user, $companyKey), 403);
+    }
+
+    public static function requirePermission(string $permission, ?User $user = null, string $scope = 'empresa'): void
+    {
+        abort_unless(self::can($permission, $user, $scope), 403);
+    }
+
     public static function applyEmpresaScope(Builder|QueryBuilder $query, ?User $user = null, string $column = 'empresa_id'): Builder|QueryBuilder
     {
         $user ??= self::user();

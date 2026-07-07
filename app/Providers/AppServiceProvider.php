@@ -82,6 +82,10 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
+        if (! (bool) config('prazzu_security.allow_debug_query_parameters', false) && app()->environment('production')) {
+            return;
+        }
+
         if (! request()->has('debug_sql') && ! request()->has('debug_performance')) {
             return;
         }

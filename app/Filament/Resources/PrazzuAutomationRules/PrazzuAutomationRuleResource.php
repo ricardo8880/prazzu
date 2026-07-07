@@ -7,6 +7,7 @@ use App\Filament\Resources\PrazzuAutomationRules\Pages\EditPrazzuAutomationRule;
 use App\Filament\Resources\PrazzuAutomationRules\Pages\ListPrazzuAutomationRules;
 use App\Models\PrazzuAutomationRule;
 use App\Support\CachedSchema;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -44,12 +45,12 @@ class PrazzuAutomationRuleResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->check() && CachedSchema::hasTable('prazzu_automation_rules');
+        return PrazzuAccessControl::canAccessPage('governanca.view') && CachedSchema::hasTable('prazzu_automation_rules');
     }
 
     public static function canAccess(): bool
     {
-        return auth()->check() && CachedSchema::hasTable('prazzu_automation_rules');
+        return PrazzuAccessControl::canAccessPage('governanca.view') && CachedSchema::hasTable('prazzu_automation_rules');
     }
 
     public static function form(Schema $schema): Schema

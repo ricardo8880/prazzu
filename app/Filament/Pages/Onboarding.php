@@ -325,6 +325,6 @@ class Onboarding extends Page
 
     public static function canAccess(): bool
     {
-        return auth()->check();
+        return PrazzuAccessControl::canAccessPage('configuracoes.view');
     }
 }

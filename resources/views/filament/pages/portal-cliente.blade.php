@@ -166,7 +166,7 @@
                 </details>
 
                 <div class="pc-inbox-footer-action">
-                    <button type="button" class="pc-view-all-btn">Ver todos os atendimentos</button>
+                    <a href="{{ \App\Filament\Pages\Atendimentos::getUrl() }}" class="pc-view-all-btn">Ver todos os atendimentos</a>
                 </div>
             </aside>
 
@@ -370,7 +370,6 @@
                         <input type="hidden" name="empresa" value="{{ $empresaId }}">
                         <div class="pc-composer-tabs" role="tablist" aria-label="Modo de mensagem">
                             <button type="button" class="pc-composer-tab is-active" role="tab" aria-selected="true">Responder</button>
-                            <button type="button" class="pc-composer-tab" role="tab" aria-selected="false" disabled title="Mensagem interna ficará para o próximo lote funcional">Mensagem interna</button>
                         </div>
                         <div class="pc-composer-box">
                             <textarea class="pc-composer-textarea" x-ref="replyTextarea" name="mensagem" data-admin-chat-textarea placeholder="Digite sua mensagem..." aria-label="Mensagem de resposta para o cliente" x-on:input="grow($event.target); window.portalClienteAvisarSuporteDigitando && window.portalClienteAvisarSuporteDigitando($event.target.value)" x-on:keydown.enter="if (!$event.shiftKey && !$event.isComposing) { $event.preventDefault(); const form = $event.target.closest('form'); if (form && $event.target.value.trim().length > 0 && window.portalClienteEnviarMensagemSuporte) window.portalClienteEnviarMensagemSuporte(form); }"></textarea>

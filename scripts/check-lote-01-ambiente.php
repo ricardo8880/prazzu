@@ -1,7 +1,11 @@
 <?php
 /**
- * Lote 01 - Ambiente e Segredos
- * Executa validações básicas de ambiente sem depender do Laravel subir.
+ * Lote 01 - Segurança e Ambiente de Produção
+ *
+ * Valida hardening básico sem depender do Laravel inicializar. O projeto usa
+ * banco SQL oficial, então este check também garante que nenhum script padrão
+ * do Composer execute migrations automaticamente.
+ *
  * Uso: php scripts/check-lote-01-ambiente.php
  */
 
@@ -15,9 +19,30 @@ function add_result(array &$list, string $message): void
     $list[] = $message;
 }
 
+function env_pairs(string $file): array
+{
+    if (! is_file($file)) {
+        return [];
+    }
+
+    $pairs = [];
+    foreach (file($file, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || ! str_contains($line, '=')) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $pairs[trim($key)] = trim($value, " \t\n\r\0\x0B\"'");
+    }
+
+    return $pairs;
+}
+
 $requiredExtensions = [
-    'ctype', 'curl', 'dom', 'fileinfo', 'filter', 'hash', 'mbstring',
-    'openssl', 'pcre', 'pdo', 'pdo_mysql', 'session', 'tokenizer', 'xml', 'zip',
+    'bcmath', 'ctype', 'curl', 'dom', 'fileinfo', 'filter', 'gd', 'iconv', 'intl',
+    'json', 'libxml', 'mbstring', 'openssl', 'pdo', 'pdo_mysql', 'session',
+    'tokenizer', 'xml', 'zip',
 ];
 
 foreach ($requiredExtensions as $extension) {
@@ -39,12 +64,11 @@ if (is_file($composerJson)) {
     $composer = json_decode((string) file_get_contents($composerJson), true);
     if (json_last_error() === JSON_ERROR_NONE) {
         add_result($ok, 'composer.json válido');
-        $setup = $composer['scripts']['setup'] ?? [];
-        $setupText = implode("\n", is_array($setup) ? $setup : [$setup]);
-        if (stripos($setupText, 'migrate') === false) {
-            add_result($ok, 'composer setup não executa migrations automaticamente');
-        } else {
-            add_result($errors, 'composer setup ainda contém migrate. O projeto usa banco SQL oficial, não migrations.');
+        foreach (($composer['scripts'] ?? []) as $name => $script) {
+            $scriptText = implode("\n", is_array($script) ? $script : [$script]);
+            if (stripos($scriptText, 'artisan migrate') !== false) {
+                add_result($errors, "Composer script '{$name}' executa migration automaticamente. O projeto usa SQL oficial.");
+            }
         }
     } else {
         add_result($errors, 'composer.json inválido: ' . json_last_error_msg());
@@ -53,54 +77,87 @@ if (is_file($composerJson)) {
     add_result($errors, 'composer.json não encontrado');
 }
 
-$env = $basePath . DIRECTORY_SEPARATOR . '.env';
-$envExample = $basePath . DIRECTORY_SEPARATOR . '.env.example';
-$envProdExample = $basePath . DIRECTORY_SEPARATOR . '.env.production.example';
+$requiredFiles = [
+    '.env.example',
+    '.env.production.example',
+    'config/prazzu_security.php',
+    'app/Http/Middleware/ApplySecurityHeaders.php',
+    'app/Http/Middleware/BlockUnsafeDebugParameters.php',
+];
 
-if (is_file($envExample)) {
-    add_result($ok, '.env.example encontrado');
-} else {
-    add_result($warnings, '.env.example não encontrado');
-}
-
-if (is_file($envProdExample)) {
-    add_result($ok, '.env.production.example encontrado');
-} else {
-    add_result($warnings, '.env.production.example não encontrado');
-}
-
-if (is_file($env)) {
-    $envContent = (string) file_get_contents($env);
-    if (preg_match('/APP_ENV\s*=\s*production/i', $envContent) && preg_match('/APP_DEBUG\s*=\s*false/i', $envContent)) {
-        add_result($ok, '.env aparenta estar configurado para produção');
+foreach ($requiredFiles as $file) {
+    if (is_file($basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $file))) {
+        add_result($ok, "Arquivo encontrado: {$file}");
     } else {
-        add_result($warnings, '.env existe, mas não aparenta estar pronto para produção. Confira APP_ENV=production e APP_DEBUG=false.');
+        add_result($errors, "Arquivo obrigatório não encontrado: {$file}");
     }
-
-    $secretPatterns = [
-        '/ASAAS_API_KEY\s*=\s*$/m' => 'ASAAS_API_KEY vazio',
-        '/ASAAS_WEBHOOK_TOKEN\s*=\s*$/m' => 'ASAAS_WEBHOOK_TOKEN vazio',
-        '/APP_KEY\s*=\s*$/m' => 'APP_KEY vazio',
-    ];
-    foreach ($secretPatterns as $pattern => $message) {
-        if (preg_match($pattern, $envContent)) {
-            add_result($warnings, $message);
-        }
-    }
-} else {
-    add_result($warnings, '.env não encontrado. Crie a partir de .env.production.example no servidor.');
 }
 
-$storageDirs = ['storage', 'storage/app', 'storage/framework', 'storage/logs', 'bootstrap/cache'];
+$envProduction = env_pairs($basePath . DIRECTORY_SEPARATOR . '.env.production.example');
+$expectedProduction = [
+    'APP_ENV' => 'production',
+    'APP_DEBUG' => 'false',
+    'SESSION_ENCRYPT' => 'true',
+    'SESSION_SECURE_COOKIE' => 'true',
+    'SESSION_HTTP_ONLY' => 'true',
+    'PRAZZU_SECURITY_HEADERS_ENABLED' => 'true',
+    'PRAZZU_HSTS_ENABLED' => 'true',
+    'PRAZZU_ALLOW_DEBUG_QUERY_PARAMETERS' => 'false',
+    'PRAZZU_BLOCK_DEBUG_QUERY_PARAMETERS_IN_PRODUCTION' => 'true',
+];
+
+foreach ($expectedProduction as $key => $expected) {
+    $actual = strtolower((string) ($envProduction[$key] ?? ''));
+    if ($actual === strtolower($expected)) {
+        add_result($ok, ".env.production.example {$key}={$expected}");
+    } else {
+        add_result($errors, ".env.production.example precisa conter {$key}={$expected}. Valor atual: " . ($envProduction[$key] ?? '[ausente]'));
+    }
+}
+
+foreach (['APP_KEY', 'ASAAS_API_KEY', 'ASAAS_WEBHOOK_TOKEN', 'ADMIN_PASSWORD'] as $secretKey) {
+    $value = (string) ($envProduction[$secretKey] ?? '');
+    if ($value === '' || str_starts_with($value, 'trocar_')) {
+        add_result($ok, ".env.production.example não expõe segredo real em {$secretKey}");
+    } else {
+        add_result($errors, ".env.production.example parece expor segredo real em {$secretKey}");
+    }
+}
+
+$env = $basePath . DIRECTORY_SEPARATOR . '.env';
+if (is_file($env)) {
+    add_result($warnings, '.env existe na cópia local. Não envie este arquivo em commits/ZIPs de entrega. Use .env.production.example no servidor.');
+}
+
+$bootstrap = (string) @file_get_contents($basePath . DIRECTORY_SEPARATOR . 'bootstrap/app.php');
+foreach (['BlockUnsafeDebugParameters', 'ApplySecurityHeaders', 'DebugPerformanceMiddleware'] as $middleware) {
+    if (str_contains($bootstrap, $middleware)) {
+        add_result($ok, "Middleware registrado: {$middleware}");
+    } else {
+        add_result($errors, "Middleware não registrado no bootstrap/app.php: {$middleware}");
+    }
+}
+
+$appProvider = (string) @file_get_contents($basePath . DIRECTORY_SEPARATOR . 'app/Providers/AppServiceProvider.php');
+if (str_contains($appProvider, 'allow_debug_query_parameters') && str_contains($appProvider, "app()->environment('production')")) {
+    add_result($ok, 'Debug SQL bloqueado por padrão em produção no AppServiceProvider');
+} else {
+    add_result($errors, 'AppServiceProvider não bloqueia debug SQL por padrão em produção');
+}
+
+$storageDirs = ['storage', 'storage/app', 'storage/app/private', 'storage/framework', 'storage/logs', 'bootstrap/cache'];
 foreach ($storageDirs as $dir) {
     $path = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $dir);
+    if (! is_dir($path)) {
+        @mkdir($path, 0775, true);
+    }
     if (is_dir($path)) {
         add_result($ok, "Diretório encontrado: {$dir}");
-        if (!is_writable($path)) {
+        if (! is_writable($path)) {
             add_result($warnings, "Diretório sem permissão de escrita para o usuário atual: {$dir}");
         }
     } else {
-        add_result($warnings, "Diretório não encontrado: {$dir}");
+        add_result($errors, "Diretório obrigatório não encontrado: {$dir}");
     }
 }
 
@@ -108,7 +165,7 @@ function print_section(string $title, array $items): void
 {
     echo "\n{$title}\n";
     echo str_repeat('-', strlen($title)) . "\n";
-    if (!$items) {
+    if (! $items) {
         echo "Nenhum item.\n";
         return;
     }
@@ -127,5 +184,5 @@ if ($errors) {
     exit(1);
 }
 
-echo "APROVADO COM " . count($warnings) . " AVISO(S)\n";
+echo 'APROVADO COM ' . count($warnings) . " AVISO(S)\n";
 exit(0);

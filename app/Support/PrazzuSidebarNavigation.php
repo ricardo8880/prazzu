@@ -48,6 +48,51 @@ class PrazzuSidebarNavigation
     ];
 
     /**
+     * Labels liberadas na sidebar para usuários que não são super admin.
+     *
+     * A regra principal é por label para evitar que um grupo amplo como
+     * "Cadastros e Configurações" exponha telas administrativas por engano.
+     * O super admin continua vendo tudo que o Filament registrar.
+     */
+    private const ACCOUNTING_ALLOWED_LABELS = [
+        'Home',
+        'Resumo Executivo',
+
+        // Dia a dia operacional do escritório contábil.
+        'Tarefas Operacionais',
+        'Mesa Operacional',
+        'Pendências',
+        'SLA e Prazos',
+        'Calendário Operacional',
+        'Aprovações',
+        'Checklists',
+        'Kanban',
+        'Timeline Operacional',
+
+        // Relacionamento com clientes.
+        'Carteira de Clientes',
+        'Clientes e Atendimentos',
+        'Portal do Cliente',
+        'Empresas Cadastradas',
+        'Responsáveis',
+
+        // Documentos e processos contratuais.
+        'Documentos',
+        'Gestão Documental',
+        'Contratos',
+
+        // Cobrança operacional do escritório. A tela de gateway financeiro fica fora
+        // do usuário comum porque é configuração sensível.
+        'Cobranças',
+        'Assinaturas',
+
+        // Análise e rastreabilidade operacional.
+        'Relatórios Operacionais',
+        'Auditoria e Rastreabilidade',
+        'Riscos e Evidências',
+    ];
+
+    /**
      * Ordem e nomes finais dos blocos da área contábil na sidebar.
      */
     private const ACCOUNTING_GROUP_LABELS = [
@@ -83,6 +128,7 @@ class PrazzuSidebarNavigation
         'Contabilidade · Documentos e Modelos' => 50,
         'Contabilidade · Contratos e Financeiro' => 60,
         'Contabilidade · Relatórios e Auditoria' => 70,
+        'Escritório Contábil · Configurações' => 80,
     ];
 
     /**
@@ -195,11 +241,15 @@ class PrazzuSidebarNavigation
 
             $section = self::sectionFor($item);
 
-            if ($section === self::SECTION_SUPER_ADMIN && ! $isSuperAdmin) {
+            // Super admin mantém a visão completa do sistema.
+            if ($isSuperAdmin) {
+                $allowed[] = $item;
                 continue;
             }
 
-            if ($section === self::SECTION_GLOBAL && self::isSuperAdminOnlyItem($item) && ! $isSuperAdmin) {
+            // Usuários comuns veem somente a lista fechada de telas de
+            // contabilidade/escritório contábil definida acima.
+            if (! in_array($item->getLabel(), self::ACCOUNTING_ALLOWED_LABELS, true)) {
                 continue;
             }
 
@@ -333,14 +383,29 @@ class PrazzuSidebarNavigation
 
     private static function accountingGroupLabel(NavigationItem $item): string
     {
-        $group = self::normalizeGroup($item->getGroup());
+        $label = $item->getLabel();
 
-        return self::ACCOUNTING_GROUP_LABELS[$group] ?? self::SECTION_ACCOUNTING;
+        return match ($label) {
+            'Home', 'Resumo Executivo' => 'Contabilidade · Visão Geral',
+            'Tarefas Operacionais', 'Mesa Operacional', 'Aprovações', 'Checklists', 'Kanban', 'Timeline Operacional', 'Cronograma Gantt', 'Painéis - Tabelas' => 'Contabilidade · Operação',
+            'Pendências', 'SLA e Prazos', 'Calendário Operacional' => 'Contabilidade · Pendências e Prazos',
+            'Carteira de Clientes', 'Clientes e Atendimentos', 'Portal do Cliente', 'Empresas Cadastradas', 'Responsáveis' => 'Contabilidade · Clientes e Atendimento',
+            'Documentos', 'Gestão Documental', 'Armazenamento' => 'Contabilidade · Documentos e Modelos',
+            'Contratos', 'Assinaturas', 'Financeiro', 'Cobranças' => 'Contabilidade · Contratos e Financeiro',
+            'Relatórios Operacionais', 'Relatórios Personalizados', 'Auditoria e Rastreabilidade', 'Riscos e Evidências' => 'Contabilidade · Relatórios e Auditoria',
+            'Dados do Escritório', 'Parâmetros do Escritório', 'Modelos Operacionais', 'Categorias Operacionais', 'Tags Operacionais', 'Meus Atalhos' => 'Escritório Contábil · Configurações',
+            default => self::ACCOUNTING_GROUP_LABELS[self::normalizeGroup($item->getGroup())] ?? self::SECTION_ACCOUNTING,
+        };
     }
 
     private static function sectionFor(NavigationItem $item): string
     {
         $group = self::normalizeGroup($item->getGroup());
+        $label = $item->getLabel();
+
+        if (in_array($label, self::ACCOUNTING_ALLOWED_LABELS, true)) {
+            return self::SECTION_ACCOUNTING;
+        }
 
         if (in_array($group, self::GLOBAL_GROUPS, true)) {
             return self::SECTION_GLOBAL;

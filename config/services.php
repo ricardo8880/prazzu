@@ -45,6 +45,8 @@ return [
         'base_url' => env('ASAAS_BASE_URL', 'https://api-sandbox.asaas.com/v3'),
         'api_key' => env('ASAAS_API_KEY'),
         'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
+        'webhook_max_payload_kb' => (int) env('ASAAS_WEBHOOK_MAX_PAYLOAD_KB', 256),
+        'webhook_allow_token_input' => (bool) env('ASAAS_WEBHOOK_ALLOW_TOKEN_INPUT', false),
         'timeout' => env('ASAAS_TIMEOUT', 30),
         'billing_type' => env('ASAAS_BILLING_TYPE', 'UNDEFINED'),
         'webhook_events' => [

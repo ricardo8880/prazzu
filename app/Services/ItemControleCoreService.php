@@ -256,35 +256,9 @@ class ItemControleCoreService
 
     public function transitionStatus(ItemControle $item, string $novoStatus, ?User $user = null, ?string $motivo = null): bool
     {
-        $statusAnterior = self::normalizeStatus($item->status);
-        $novoStatus = self::normalizeStatus($novoStatus);
+        app(ItemControleFluxoService::class)->atualizarStatus($item, $novoStatus, $user, $motivo);
 
-        if ($statusAnterior === $novoStatus) {
-            return true;
-        }
-
-        $payload = ['status' => $novoStatus];
-
-        if (self::isFinalStatus($novoStatus) && blank($item->data_conclusao)) {
-            $payload['data_conclusao'] = now()->toDateString();
-        }
-
-        $resultado = $item->update($payload);
-
-        if ($resultado) {
-            $item->registrarTimeline(
-                'status_operacional',
-                'Status operacional atualizado',
-                'Status alterado de ' . self::statusLabel($statusAnterior) . ' para ' . self::statusLabel($novoStatus) . '.',
-                [
-                    'status_anterior' => $statusAnterior,
-                    'status_novo' => $novoStatus,
-                    'motivo' => $motivo,
-                ],
-                $user
-            );
-        }
-
-        return $resultado;
+        return true;
     }
+
 }

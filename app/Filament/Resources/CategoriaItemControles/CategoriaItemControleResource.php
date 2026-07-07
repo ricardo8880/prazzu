@@ -7,6 +7,7 @@ use App\Filament\Resources\CategoriaItemControles\Pages\EditCategoriaItemControl
 use App\Filament\Resources\CategoriaItemControles\Pages\ListCategoriaItemControles;
 use App\Models\CategoriaItemControle;
 use App\Models\Empresa;
+use App\Support\PrazzuAccessControl;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -214,7 +215,7 @@ class CategoriaItemControleResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Filament::auth()->check();
+        return PrazzuAccessControl::canAccessPage('configuracoes.view');
     }
 
     public static function canCreate(): bool

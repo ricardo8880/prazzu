@@ -8,6 +8,7 @@ use App\Filament\Resources\SugestaoMelhorias\Pages\ListSugestaoMelhorias;
 use App\Filament\Resources\SugestaoMelhorias\Schemas\SugestaoMelhoriaForm;
 use App\Filament\Resources\SugestaoMelhorias\Tables\SugestaoMelhoriasTable;
 use App\Models\SugestaoMelhoria;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
@@ -98,6 +99,6 @@ class SugestaoMelhoriaResource extends Resource
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Filament::auth()->check();
+        return PrazzuAccessControl::canAccessPage('configuracoes.view');
     }
 }

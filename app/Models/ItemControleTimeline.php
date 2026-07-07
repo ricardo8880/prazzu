@@ -56,6 +56,11 @@ class ItemControleTimeline extends Model
             'sla' => 'SLA',
             'contrato' => 'Contrato',
             'etapa' => 'Etapa operacional',
+            'status_operacional' => 'Status operacional',
+            'prazo' => 'Prazo',
+            'responsavel' => 'Responsável',
+            'evidencia' => 'Evidência',
+            'reabertura' => 'Reabertura',
             'auditoria' => 'Auditoria',
             default => ucfirst(str_replace('_', ' ', (string) $this->tipo)),
         };
@@ -77,6 +82,11 @@ class ItemControleTimeline extends Model
             'sla' => '⏱️',
             'contrato' => '📄',
             'etapa' => '🧩',
+            'status_operacional' => '🔁',
+            'prazo' => '📅',
+            'responsavel' => '👤',
+            'evidencia' => '📌',
+            'reabertura' => '↩️',
             'auditoria' => '🛡️',
             default => '•',
         };
@@ -89,7 +99,7 @@ class ItemControleTimeline extends Model
             'aprovacao_reprovada' => 'danger',
             'aprovacao_solicitada', 'notificacao' => 'warning',
             'comentario' => 'info',
-            'sla', 'contrato', 'etapa', 'auditoria' => 'info',
+            'sla', 'contrato', 'etapa', 'status_operacional', 'prazo', 'responsavel', 'evidencia', 'reabertura', 'auditoria' => 'info',
             default => 'gray',
         };
     }

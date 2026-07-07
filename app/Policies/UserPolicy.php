@@ -3,35 +3,40 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Support\PrazzuAccessControl;
 
 class UserPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->isSuperAdmin() || $user->isAdminEmpresa();
+        return PrazzuAccessControl::canAccessPage('governanca.view', $user);
     }
 
     public function view(User $user, User $model): bool
     {
-        if ($user->isSuperAdmin()) return true;
+        if (! PrazzuAccessControl::can('governanca.view', $user)) {
+            return false;
+        }
 
-        return $user->empresa_id === $model->empresa_id;
+        return PrazzuAccessControl::canAccessCompanyRecord($model, $user);
     }
 
     public function create(User $user): bool
     {
-        return $user->isSuperAdmin() || $user->isAdminEmpresa();
+        return PrazzuAccessControl::canAccessPage('governanca.create', $user);
     }
 
     public function update(User $user, User $model): bool
     {
-        if ($user->isSuperAdmin()) return true;
+        if (! PrazzuAccessControl::can('governanca.edit', $user)) {
+            return false;
+        }
 
-        return $user->empresa_id === $model->empresa_id;
+        return PrazzuAccessControl::canAccessCompanyRecord($model, $user);
     }
 
     public function delete(User $user, User $model): bool
     {
-        return $user->isSuperAdmin();
+        return PrazzuAccessControl::can('governanca.delete', $user) && $user->isSuperAdmin();
     }
 }

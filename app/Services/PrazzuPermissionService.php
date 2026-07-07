@@ -340,12 +340,27 @@ class PrazzuPermissionService
 
     private function fallbackCan(User $user, string $module, string $action): bool
     {
-        if ($user->isAdmin() || $user->isGestor()) {
-            return true;
+        // Super admin já é liberado no início de can(). O fallback abaixo só existe para
+        // instalações onde a matriz avançada ainda não foi carregada no banco.
+        // Por segurança, módulos de governança/sistema nunca são liberados por fallback amplo.
+        if ($module === 'system_health') {
+            return false;
+        }
+
+        if ($user->isAdminEmpresa()) {
+            return ! in_array($module, ['system_health'], true);
+        }
+
+        if ($user->isGestor()) {
+            if (in_array($module, ['governanca', 'configuracoes', 'auditoria', 'system_health', 'financeiro'], true)) {
+                return false;
+            }
+
+            return in_array($action, ['view', 'create', 'edit', 'reply', 'close', 'reassign', 'export'], true);
         }
 
         if ($action === 'view') {
-            return ! in_array($module, ['governanca', 'configuracoes', 'auditoria', 'system_health'], true);
+            return ! in_array($module, ['governanca', 'configuracoes', 'auditoria', 'system_health', 'financeiro'], true);
         }
 
         if ($action === 'create' || $action === 'edit') {

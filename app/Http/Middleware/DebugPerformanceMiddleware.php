@@ -50,6 +50,10 @@ class DebugPerformanceMiddleware
 
     protected function shouldDebug(Request $request): bool
     {
+        if (app()->environment('production') && ! (bool) config('prazzu_security.allow_debug_query_parameters', false)) {
+            return false;
+        }
+
         return $request->has('debug_sql')
             || $request->has('debug_performance')
             || $request->has('debug_sql_all');

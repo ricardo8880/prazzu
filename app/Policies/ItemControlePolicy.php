@@ -10,26 +10,26 @@ class ItemControlePolicy
 {
     public function viewAny(User $user): bool
     {
-        return PrazzuAccessControl::canUseWorkArea($user);
+        return PrazzuAccessControl::canAccessPage('tarefas.view', $user);
     }
 
     public function view(User $user, ItemControle $item): bool
     {
-        return $item->canBeAccessedBy($user);
+        return PrazzuAccessControl::can('tarefas.view', $user) && $item->canBeAccessedBy($user);
     }
 
     public function create(User $user): bool
     {
-        return PrazzuAccessControl::canUseWorkArea($user);
+        return PrazzuAccessControl::canAccessPage('tarefas.create', $user);
     }
 
     public function update(User $user, ItemControle $item): bool
     {
-        return $item->canBeModifiedBy($user);
+        return PrazzuAccessControl::can('tarefas.edit', $user) && $item->canBeModifiedBy($user);
     }
 
     public function delete(User $user, ItemControle $item): bool
     {
-        return $user->isSuperAdmin();
+        return PrazzuAccessControl::can('tarefas.delete', $user) && $item->canBeModifiedBy($user);
     }
 }

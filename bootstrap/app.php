@@ -11,6 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(\App\Http\Middleware\BlockUnsafeDebugParameters::class);
+        $middleware->append(\App\Http\Middleware\ApplySecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\LogLivewireUtf8Error::class);
         $middleware->append(\App\Http\Middleware\DebugPerformanceMiddleware::class);
         $middleware->validateCsrfTokens(except: [

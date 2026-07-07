@@ -8,6 +8,7 @@ use App\Services\AuditoriaTrailService;
 use App\Services\Financeiro\AsaasWebhookEventRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,10 +18,15 @@ class AsaasWebhookController extends Controller
 {
     public function __invoke(Request $request, AsaasService $asaas, AsaasWebhookEventRecorder $eventRecorder): JsonResponse
     {
+        $this->recusarPayloadGrande($request);
+
         $configuredToken = config('services.asaas.webhook_token');
         $receivedToken = $request->header('asaas-access-token')
-            ?: $request->header('access_token')
-            ?: $request->input('token');
+            ?: $request->header('access_token');
+
+        if (blank($receivedToken) && (bool) config('services.asaas.webhook_allow_token_input', false)) {
+            $receivedToken = $request->input('token');
+        }
 
         if (blank($configuredToken)) {
             Log::channel('asaas')->critical('Webhook Asaas recusado: ASAAS_WEBHOOK_TOKEN não está configurado.', [
@@ -90,9 +96,26 @@ class AsaasWebhookController extends Controller
                 'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
             ], null, nivel: 'info');
 
-            $asaas->processarWebhook($request->all());
+            $lockKey = $this->lockKey($request->all());
+            $lock = Cache::lock($lockKey, 30);
 
-            $eventRecorder->marcarProcessado($webhookEvent);
+            if (! $lock->get()) {
+                Log::channel('asaas')->warning('Webhook Asaas recusado temporariamente por processamento concorrente.', [
+                    'asaas_webhook_event_id' => $webhookEvent?->id,
+                    'event' => $request->input('event'),
+                    'payment_id' => data_get($request->all(), 'payment.id'),
+                    'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+                ]);
+
+                return response()->json(['message' => 'Webhook em processamento.'], Response::HTTP_CONFLICT);
+            }
+
+            try {
+                $asaas->processarWebhook($request->all());
+                $eventRecorder->marcarProcessado($webhookEvent);
+            } finally {
+                optional($lock)->release();
+            }
 
             AuditoriaTrailService::financeiro('asaas.webhook.processed', [
                 'asaas_webhook_event_id' => $webhookEvent?->id,
@@ -139,4 +162,24 @@ class AsaasWebhookController extends Controller
             return response()->json(['message' => 'Erro ao processar webhook.'], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    private function recusarPayloadGrande(Request $request): void
+    {
+        $maxKb = max(16, (int) config('services.asaas.webhook_max_payload_kb', 256));
+        $contentLength = (int) ($request->server('CONTENT_LENGTH') ?: strlen((string) $request->getContent()));
+
+        abort_if($contentLength > ($maxKb * 1024), Response::HTTP_REQUEST_ENTITY_TOO_LARGE, 'Payload do webhook excede o limite permitido.');
+    }
+
+    private function lockKey(array $payload): string
+    {
+        $event = (string) data_get($payload, 'event', 'unknown');
+        $paymentId = (string) data_get($payload, 'payment.id', '');
+        $subscriptionId = (string) (data_get($payload, 'subscription.id') ?: data_get($payload, 'payment.subscription', ''));
+        $fingerprint = $paymentId !== '' || $subscriptionId !== ''
+            ? implode('|', [$event, $paymentId, $subscriptionId])
+            : json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        return 'asaas:webhook:lock:' . hash('sha256', (string) $fingerprint);
+    }
+
 }

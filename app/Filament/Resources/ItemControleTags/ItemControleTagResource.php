@@ -6,6 +6,7 @@ use App\Filament\Resources\ItemControleTags\Pages\CreateItemControleTag;
 use App\Filament\Resources\ItemControleTags\Pages\EditItemControleTag;
 use App\Filament\Resources\ItemControleTags\Pages\ListItemControleTags;
 use App\Models\Empresa;
+use App\Support\PrazzuAccessControl;
 use App\Models\ItemControleTag;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -176,7 +177,7 @@ class ItemControleTagResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return Filament::auth()->check();
+        return PrazzuAccessControl::canAccessPage('configuracoes.view');
     }
 
     public static function canCreate(): bool

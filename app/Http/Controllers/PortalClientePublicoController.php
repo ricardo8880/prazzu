@@ -277,7 +277,7 @@ class PortalClientePublicoController extends Controller
                 $anexosArmazenados[] = [
                     'path' => $path,
                     'nome_original' => $arquivo->getClientOriginalName(),
-                    'mime_type' => $arquivo->getClientMimeType(),
+                    'mime_type' => $arquivo->getMimeType() ?: $arquivo->getClientMimeType(),
                     'tamanho_bytes' => $arquivo->getSize(),
                     'tipo' => str_starts_with((string) $arquivo->getClientMimeType(), 'image/') ? 'imagem' : 'documento',
                     'download_url' => DocumentStorage::publicUrl($path),
