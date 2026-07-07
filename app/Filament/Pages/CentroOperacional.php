@@ -5,9 +5,11 @@ namespace App\Filament\Pages;
 use App\Models\ItemControle;
 use App\Models\Responsavel;
 use App\Services\CentroOperacionalService;
+use App\Services\ItemControleOperationalService;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Support\CachedSchema;
 use App\Support\CentroOperacionalAccess;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -23,6 +25,16 @@ class CentroOperacional extends Page
     protected static ?string $title = 'Mesa Operacional';
     protected static ?int $navigationSort = 10;
     protected string $view = 'filament.pages.centro-operacional';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
+    }
 
     public string $dateRange = 'all';
     public ?string $customStartDate = null;
@@ -424,31 +436,11 @@ class CentroOperacional extends Page
             return;
         }
 
-        $payload = ['status' => 'concluido'];
-
-        if (CachedSchema::hasColumn('item_controles', 'data_conclusao')) {
-            $payload['data_conclusao'] = now();
-        }
-
-        if (CachedSchema::hasColumn('item_controles', 'sla_concluido_em') && blank($item->sla_concluido_em)) {
-            $payload['sla_concluido_em'] = now();
-        }
-
-        if (CachedSchema::hasColumn('item_controles', 'sla_status')) {
-            $payload['sla_status'] = 'concluido';
-        }
-
-        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
-            $payload['status_operacional_at'] = now();
-        }
-
-        $item->update($payload);
-        $item->registrarTimeline(
-            'conclusao',
-            'Item resolvido pelo Centro Operacional',
-            'Marcado como resolvido pelo popup de Detalhes da Ação Recomendada.',
-            null,
-            Filament::auth()->user()
+        app(ItemControleOperationalService::class)->concluir(
+            $item,
+            Filament::auth()->user(),
+            'centro_operacional',
+            'Marcado como resolvido pelo popup de Detalhes da Ação Recomendada.'
         );
 
         $this->closeItemDetailModal();
@@ -471,18 +463,12 @@ class CentroOperacional extends Page
         $days = in_array($days, [1, 3, 7], true) ? $days : 1;
         $newDate = now()->addDays($days)->toDateString();
 
-        $payload = ['data_vencimento' => $newDate];
-        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
-            $payload['status_operacional_at'] = now();
-        }
-
-        $item->update($payload);
-        $item->registrarTimeline(
-            'prazo_alterado',
-            'Prazo adiado pelo Centro Operacional',
-            "Prazo adiado por {$days} dia(s) pelo popup de Detalhes da Ação Recomendada.",
-            ['dias' => $days, 'novo_prazo' => $newDate],
-            Filament::auth()->user()
+        app(ItemControleOperationalService::class)->alterarPrazo(
+            $item,
+            $newDate,
+            Filament::auth()->user(),
+            'centro_operacional',
+            "Prazo adiado por {$days} dia(s) pelo popup de Detalhes da Ação Recomendada."
         );
 
         $this->notifySuccess('Prazo adiado e registrado na linha do tempo.');
@@ -505,19 +491,9 @@ class CentroOperacional extends Page
 
         $descricao = $motivos[$motivo] ?? 'Impedimento operacional registrado.';
 
-        $payload = [];
-        if (CachedSchema::hasColumn('item_controles', 'bloqueado')) {
-            $payload['bloqueado'] = true;
-        }
-        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
-            $payload['status_operacional_at'] = now();
-        }
-
-        if (! empty($payload)) {
-            $item->update($payload);
-        }
-
-        $item->registrarTimeline(
+        app(ItemControleOperationalService::class)->atualizarSituacao(
+            $item,
+            ['bloqueado' => true],
             'impedimento',
             'Impedimento registrado pelo Centro Operacional',
             $descricao,
@@ -570,21 +546,9 @@ class CentroOperacional extends Page
             return;
         }
 
-        $payload = [];
-
-        if (CachedSchema::hasColumn('item_controles', 'bloqueado')) {
-            $payload['bloqueado'] = (bool) $dados['bloqueado'];
-        }
-
-        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
-            $payload['status_operacional_at'] = now();
-        }
-
-        if (! empty($payload)) {
-            $item->update($payload);
-        }
-
-        $item->registrarTimeline(
+        app(ItemControleOperationalService::class)->atualizarSituacao(
+            $item,
+            ['bloqueado' => (bool) $dados['bloqueado']],
             'situacao_cliente',
             $dados['titulo'],
             $dados['descricao'],
@@ -702,13 +666,12 @@ class CentroOperacional extends Page
         $responsavelAnterior = $item->responsavel?->nome ?: 'Sem responsável';
         $responsavelNovo = $novoResponsavel->nome ?: 'Novo responsável';
 
-        $item->update(['responsavel_id' => $novoResponsavel->id]);
-        $item->registrarTimeline(
-            'redistribuicao',
-            'Item redistribuído pelo Centro Operacional',
-            "Responsável alterado de {$responsavelAnterior} para {$responsavelNovo} pelo painel de Workload.",
-            ['responsavel_anterior_id' => $this->workloadResponsavelId, 'responsavel_novo_id' => $novoResponsavel->id],
-            Filament::auth()->user()
+        app(ItemControleOperationalService::class)->alterarResponsavel(
+            $item,
+            $novoResponsavel,
+            Filament::auth()->user(),
+            'centro_operacional_workload',
+            "Responsável alterado de {$responsavelAnterior} para {$responsavelNovo} pelo painel de Workload."
         );
 
         $this->redistributionItemId = null;
@@ -752,13 +715,15 @@ class CentroOperacional extends Page
             return;
         }
 
-        $payload = ['status' => 'correcao_necessaria'];
-        if (CachedSchema::hasColumn('item_controles', 'status_operacional_at')) {
-            $payload['status_operacional_at'] = now();
-        }
-
-        $item->update($payload);
-        $item->registrarTimeline('correcao', 'Correção solicitada', 'Item enviado para correção pelo Centro Operacional.', null, Filament::auth()->user());
+        app(ItemControleOperationalService::class)->atualizarSituacao(
+            $item,
+            ['status' => 'correcao_necessaria'],
+            'correcao',
+            'Correção solicitada',
+            'Item enviado para correção pelo Centro Operacional.',
+            [],
+            Filament::auth()->user()
+        );
         $this->notifySuccess('Item enviado para correção.');
     }
 
@@ -825,19 +790,12 @@ class CentroOperacional extends Page
             return;
         }
 
-        $item->update([
-            'responsavel_id' => $novoResponsavel->id,
-        ]);
-
-        $item->registrarTimeline(
-            'delegacao',
-            'Item delegado pelo Centro Operacional',
-            "Responsável alterado de {$responsavelAnterior} para {$responsavelNovo}.",
-            [
-                'responsavel_anterior_id' => $responsavelAnteriorId,
-                'responsavel_novo_id' => $novoResponsavel->id,
-            ],
-            Filament::auth()->user()
+        app(ItemControleOperationalService::class)->alterarResponsavel(
+            $item,
+            $novoResponsavel,
+            Filament::auth()->user(),
+            'centro_operacional_delegacao',
+            "Responsável alterado de {$responsavelAnterior} para {$responsavelNovo}."
         );
 
         $this->cancelDelegateModal();

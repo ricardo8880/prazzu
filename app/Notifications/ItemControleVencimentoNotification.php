@@ -7,11 +7,20 @@ use App\Models\ItemControle;
 use App\Support\WhiteLabelSettings;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
-class ItemControleVencimentoNotification extends Notification
+class ItemControleVencimentoNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public int $timeout = 60;
+
+    public string $connection = 'database';
+
+    public string $queue = 'notificacoes';
 
     public function __construct(
         public ItemControle $item,

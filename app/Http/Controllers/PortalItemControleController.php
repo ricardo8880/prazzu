@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
@@ -420,6 +421,17 @@ class PortalItemControleController extends Controller
         return PortalMensagem::query()->create($payload);
     }
 
+    private function validarSessaoPortalCliente(int $empresaId): void
+    {
+        $cliente = Auth::guard('portal_cliente')->user();
+
+        if (! $cliente) {
+            return;
+        }
+
+        abort_if((int) $cliente->empresa_id !== $empresaId || ! $cliente->estaAtivo(), 403, 'Sua sessão não pertence a este portal.');
+    }
+
     protected function getItemDisponivel(string $token): ItemControle
     {
         $item = ItemControle::query()
@@ -448,6 +460,7 @@ class PortalItemControleController extends Controller
             ->firstOrFail();
 
         abort_unless($item->portalEstaDisponivel(), 403, 'Este link não está disponível ou expirou.');
+        $this->validarSessaoPortalCliente((int) $item->empresa_id);
 
         return $item;
     }

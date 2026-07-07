@@ -6,6 +6,8 @@ use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Models\ItemControleChecklist;
 use App\Models\ItemControleComentario;
+use App\Support\PrazzuAccessControl;
+use App\Services\ItemControleOperationalService;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -27,6 +29,16 @@ class Kanban extends Page
     protected static ?int $navigationSort = 40;
 
     protected string $view = 'filament.pages.kanban';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
+    }
 
     public ?int $itemSelecionadoId = null;
 
@@ -221,12 +233,13 @@ class Kanban extends Page
             return;
         }
 
-        $item->update([
-            'status' => $status,
-            'data_conclusao' => $status === 'concluido' ? now()->toDateString() : null,
-            'sla_concluido_em' => $status === 'concluido' ? now() : null,
-            'sla_status' => $status === 'concluido' ? 'concluido' : $item->sla_status,
-        ]);
+        app(ItemControleOperationalService::class)->alterarStatus(
+            $item,
+            $status,
+            Filament::auth()->user(),
+            'kanban',
+            'Status alterado pelo quadro Kanban.'
+        );
 
         if (! $silencioso) {
             Notification::make()

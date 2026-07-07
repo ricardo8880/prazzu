@@ -370,14 +370,17 @@ Route::middleware([ValidatePortalPublicAccess::class])->group(function (): void 
 
     Route::post('/portal/itens/{token}/assinar', [PortalItemControleController::class, 'assinar'])
         ->where('token', '[A-Za-z0-9]{32,128}')
+        ->middleware('throttle:30,1')
         ->name('portal.item-controles.assinar');
 
     Route::post('/portal/itens/{token}/mensagem', [PortalItemControleController::class, 'mensagem'])
         ->where('token', '[A-Za-z0-9]{32,128}')
+        ->middleware('throttle:60,1')
         ->name('portal.item-controles.mensagem');
 
     Route::post('/portal/itens/{token}/documentos', [PortalItemControleController::class, 'enviarDocumento'])
         ->where('token', '[A-Za-z0-9]{32,128}')
+        ->middleware('throttle:30,1')
         ->name('portal.item-controles.documentos');
 });
 

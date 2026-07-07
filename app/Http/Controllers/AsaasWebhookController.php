@@ -9,6 +9,7 @@ use App\Services\Financeiro\AsaasWebhookEventRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
 
@@ -101,6 +102,25 @@ class AsaasWebhookController extends Controller
             ], null, nivel: 'info');
 
             return response()->json(['message' => 'Webhook processado.']);
+        } catch (InvalidArgumentException $exception) {
+            $eventRecorder->marcarFalha($webhookEvent, $exception);
+            Log::channel('asaas')->warning('Webhook Asaas inválido recusado durante processamento.', [
+                'message' => $exception->getMessage(),
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+            ]);
+
+            AuditoriaTrailService::financeiro('asaas.webhook.rejected', [
+                'asaas_webhook_event_id' => $webhookEvent?->id,
+                'motivo' => 'payload_invalido',
+                'event' => $request->input('event'),
+                'payment_id' => data_get($request->all(), 'payment.id'),
+                'subscription_id' => data_get($request->all(), 'subscription.id') ?: data_get($request->all(), 'payment.subscription'),
+                'erro' => $exception->getMessage(),
+            ], null, nivel: 'warning');
+
+            return response()->json(['message' => $exception->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (Throwable $exception) {
             $eventRecorder->marcarFalha($webhookEvent, $exception);
             Log::channel('asaas')->error('Erro ao processar webhook Asaas.', [

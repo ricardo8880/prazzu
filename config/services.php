@@ -47,6 +47,22 @@ return [
         'webhook_token' => env('ASAAS_WEBHOOK_TOKEN'),
         'timeout' => env('ASAAS_TIMEOUT', 30),
         'billing_type' => env('ASAAS_BILLING_TYPE', 'UNDEFINED'),
+        'webhook_events' => [
+            'PAYMENT_CREATED',
+            'PAYMENT_UPDATED',
+            'PAYMENT_CONFIRMED',
+            'PAYMENT_RECEIVED',
+            'PAYMENT_OVERDUE',
+            'PAYMENT_DELETED',
+            'PAYMENT_REFUNDED',
+            'PAYMENT_CHARGEBACK_REQUESTED',
+            'PAYMENT_CHARGEBACK_DISPUTE',
+            'PAYMENT_AWAITING_CHARGEBACK_REVERSAL',
+            'SUBSCRIPTION_CREATED',
+            'SUBSCRIPTION_UPDATED',
+            'SUBSCRIPTION_DELETED',
+            'SUBSCRIPTION_INACTIVATED',
+        ],
     ],
 
     'clicksign' => [

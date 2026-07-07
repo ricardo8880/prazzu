@@ -8,6 +8,7 @@ use App\Models\ItemControleTimeline;
 use App\Models\PrazzuTemplate;
 use App\Models\Responsavel;
 use App\Services\PlanoService;
+use App\Services\ItemControleOperationalService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\DeleteAction;
@@ -519,18 +520,10 @@ class ItemControlesTable
             return;
         }
 
-        $record->update([
-            'status' => 'concluido',
-            'data_conclusao' => now(),
-        ]);
-
-        if (filled($record->sla_status) && ! $record->sla_concluido_em) {
-            $record->concluirSla();
-        }
-
-        $record->registrarTimeline(
-            'atualizacao',
-            'Tarefa concluída',
+        app(ItemControleOperationalService::class)->concluir(
+            $record,
+            Filament::auth()->user(),
+            'item_controles_table',
             'A tarefa foi marcada como concluída pela ação rápida da listagem.'
         );
 
@@ -569,13 +562,11 @@ class ItemControlesTable
             return;
         }
 
-        $record->update([
-            'responsavel_id' => $user->responsavel->id,
-        ]);
-
-        $record->registrarTimeline(
-            'atualizacao',
-            'Tarefa assumida',
+        app(ItemControleOperationalService::class)->alterarResponsavel(
+            $record,
+            $user->responsavel,
+            $user,
+            'item_controles_table',
             'A tarefa foi assumida por ' . ($user->name ?? 'usuário') . '.'
         );
 

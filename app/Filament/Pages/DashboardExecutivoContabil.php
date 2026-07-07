@@ -3,8 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Support\DashboardExecutivoContabilData;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
-use Filament\Facades\Filament;
 use Filament\Pages\Page;
 use Filament\Support\Enums\Width;
 use UnitEnum;
@@ -34,7 +34,7 @@ class DashboardExecutivoContabil extends Page
 
     public static function canAccess(): bool
     {
-        return Filament::auth()->check();
+        return PrazzuAccessControl::canAccessPage(['relatorios.view', 'tarefas.view']);
     }
 
     public function getMaxContentWidth(): Width|string|null

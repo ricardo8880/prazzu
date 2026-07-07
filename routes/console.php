@@ -81,3 +81,20 @@ Schedule::command('storage:processar-retencao --limit=100')
     ->dailyAt('02:20')
     ->withoutOverlapping()
     ->runInBackground();
+
+
+// 🧵 FILAS: monitoramento, poda e reprocessamento seguro
+Schedule::command('prazzu:filas-monitorar --alert-threshold=100 --failed-threshold=1')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+Schedule::command('queue:prune-failed --hours=168')
+    ->dailyAt('03:10')
+    ->withoutOverlapping()
+    ->runInBackground();
+
+Schedule::command('prazzu:filas-reprocessar --limit=25')
+    ->hourly()
+    ->withoutOverlapping(60)
+    ->runInBackground();

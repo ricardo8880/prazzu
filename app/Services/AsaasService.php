@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
 
@@ -193,6 +194,9 @@ class AsaasService
     public function processarWebhook(array $payload): void
     {
         $event = $payload['event'] ?? null;
+
+        $this->validarEventoWebhook($event, $payload);
+
         $payment = $payload['payment'] ?? null;
         $subscriptionPayload = $payload['subscription'] ?? null;
 
@@ -206,10 +210,12 @@ class AsaasService
             return;
         }
 
-        Log::channel('asaas')->warning('Webhook Asaas ignorado: payload sem payment/subscription reconhecível.', [
+        Log::channel('asaas')->warning('Webhook Asaas recusado: payload sem payment/subscription reconhecível.', [
             'event' => $event,
             'payload_keys' => array_keys($payload),
         ]);
+
+        throw new InvalidArgumentException('Webhook Asaas inválido: payload sem payment/subscription reconhecível.');
     }
 
     public function reconciliarAssinatura(Assinatura $assinatura): array
@@ -332,11 +338,49 @@ class AsaasService
         return $resultado;
     }
 
+    protected function validarEventoWebhook(?string $event, array $payload): void
+    {
+        if (blank($event)) {
+            Log::channel('asaas')->warning('Webhook Asaas recusado: evento ausente.', [
+                'payload_keys' => array_keys($payload),
+            ]);
+
+            throw new InvalidArgumentException('Webhook Asaas inválido: evento ausente.');
+        }
+
+        $event = Str::upper((string) $event);
+        $eventosPermitidos = config('services.asaas.webhook_events', []);
+
+        if (! in_array($event, $eventosPermitidos, true)) {
+            Log::channel('asaas')->warning('Webhook Asaas recusado: evento não homologado no projeto.', [
+                'event' => $event,
+                'payment_id' => data_get($payload, 'payment.id'),
+                'subscription_id' => data_get($payload, 'subscription.id') ?: data_get($payload, 'payment.subscription'),
+            ]);
+
+            throw new InvalidArgumentException("Webhook Asaas inválido: evento {$event} não homologado.");
+        }
+    }
+
     protected function processarWebhookPagamento(?string $event, array $payment): void
     {
         $subscriptionId = $payment['subscription'] ?? null;
         $paymentId = $payment['id'] ?? null;
         $assinatura = $this->resolverAssinaturaDoPagamento($payment);
+
+        if (! $paymentId) {
+            Log::channel('asaas')->warning('Webhook de pagamento Asaas recusado: pagamento sem ID.', [
+                'event' => $event,
+                'gateway_subscription_id' => $subscriptionId,
+                'status' => $payment['status'] ?? null,
+            ]);
+
+            throw new InvalidArgumentException('Webhook Asaas inválido: pagamento sem ID.');
+        }
+
+        if (! $assinatura) {
+            $assinatura = $this->tentarReconciliarAssinaturaDoPagamento($payment);
+        }
 
         if (! $assinatura) {
             Log::channel('asaas')->warning('Webhook de pagamento Asaas aguardando reconciliação: assinatura local não encontrada.', [
@@ -348,7 +392,7 @@ class AsaasService
                 'status' => $payment['status'] ?? null,
             ]);
 
-            return;
+            throw new RuntimeException('Webhook Asaas não reconciliado: assinatura local não encontrada.');
         }
 
         if ($subscriptionId && ! $assinatura->gateway_subscription_id) {
@@ -443,6 +487,47 @@ class AsaasService
             'gateway_subscription_id' => $subscriptionId,
             'status' => $subscriptionPayload['status'] ?? null,
         ]);
+    }
+
+    protected function tentarReconciliarAssinaturaDoPagamento(array $payment): ?Assinatura
+    {
+        $subscriptionId = $payment['subscription'] ?? null;
+
+        if (! $subscriptionId) {
+            return null;
+        }
+
+        try {
+            $subscriptionPayload = $this->consultarAssinatura($subscriptionId);
+        } catch (Throwable $exception) {
+            Log::channel('asaas')->warning('Não foi possível consultar assinatura Asaas durante reconciliação de pagamento.', [
+                'gateway_subscription_id' => $subscriptionId,
+                'gateway_payment_id' => $payment['id'] ?? null,
+                'message' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        $assinatura = $this->resolverAssinaturaPorExternalReference(
+            array_merge($subscriptionPayload, [
+                'status' => $subscriptionPayload['status'] ?? $payment['status'] ?? null,
+                'customer' => $subscriptionPayload['customer'] ?? $payment['customer'] ?? null,
+                'nextDueDate' => $subscriptionPayload['nextDueDate'] ?? $payment['dueDate'] ?? null,
+            ]),
+            $subscriptionId
+        );
+
+        if ($assinatura) {
+            Log::channel('asaas')->info('Assinatura local reconciliada automaticamente antes de processar pagamento Asaas.', [
+                'assinatura_id' => $assinatura->id,
+                'empresa_id' => $assinatura->empresa_id,
+                'gateway_subscription_id' => $subscriptionId,
+                'gateway_payment_id' => $payment['id'] ?? null,
+            ]);
+        }
+
+        return $assinatura;
     }
 
     protected function resolverAssinaturaDoPagamento(array $payment): ?Assinatura

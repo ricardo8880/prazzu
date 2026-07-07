@@ -4,6 +4,8 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
+use App\Services\ItemControleOperationalService;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -24,6 +26,16 @@ class Calendario extends Page
     protected static ?int $navigationSort = 30;
 
     protected string $view = 'filament.pages.calendario';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
+    }
 
     public int $mesOffset = 0;
 
@@ -120,20 +132,13 @@ class Calendario extends Page
             return;
         }
 
-        $dados = ['status' => $status];
-
-        if ($status === 'concluido') {
-            $dados['data_conclusao'] = now()->toDateString();
-            $dados['sla_concluido_em'] = now();
-            $dados['sla_status'] = 'concluido';
-        }
-
-        if ($status !== 'concluido') {
-            $dados['data_conclusao'] = null;
-            $dados['sla_concluido_em'] = null;
-        }
-
-        $item->update($dados);
+        app(ItemControleOperationalService::class)->alterarStatus(
+            $item,
+            $status,
+            Filament::auth()->user(),
+            'calendario',
+            'O item foi atualizado diretamente pelo calendário.'
+        );
         $this->limparCacheCalendario();
 
         Notification::make()

@@ -4,7 +4,11 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
+use App\Services\PrazzuSlaEngine;
+use App\Services\PrazzuSlaService;
+use App\Services\ItemControleCoreService;
 use App\Support\CachedSchema;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Navigation\NavigationItem;
@@ -29,6 +33,16 @@ class SlaPrazos extends Page
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
 
     protected string $view = 'filament.pages.sla-prazos';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
+    }
 
     public string $aba = 'sla-prazos';
 
@@ -94,26 +108,41 @@ class SlaPrazos extends Page
         $query = $this->baseQuery();
 
         return [
-            'com_sla' => (clone $query)->whereNotNull('sla_limite_em')->count(),
-            'em_andamento' => (clone $query)->where('sla_status', 'em_andamento')->count(),
+            'com_sla' => (clone $query)->where(function (Builder $query): void {
+                $query->whereNotNull('sla_limite_em')->orWhereNotNull('data_vencimento');
+            })->count(),
+            'em_andamento' => (clone $query)->whereIn('sla_status', PrazzuSlaEngine::statusAbertos())->count(),
             'vencidos' => (clone $query)->where(function (Builder $query): void {
-                $query->where('sla_status', 'vencido')
+                $query->where('sla_status', PrazzuSlaEngine::STATUS_VENCIDO)
                     ->orWhere(function (Builder $query): void {
                         $query->whereNotNull('sla_limite_em')
                             ->whereNull('sla_concluido_em')
                             ->where('sla_limite_em', '<', now());
+                    })
+                    ->orWhere(function (Builder $query): void {
+                        $query->whereNull('sla_limite_em')
+                            ->whereNotNull('data_vencimento')
+                            ->whereNull('data_conclusao')
+                            ->whereDate('data_vencimento', '<', now()->toDateString());
                     });
             })->count(),
-            'concluidos' => (clone $query)->whereNotNull('sla_concluido_em')->count(),
+            'concluidos' => (clone $query)->where(function (Builder $query): void {
+                $query->whereNotNull('sla_concluido_em')
+                    ->orWhereIn('sla_status', PrazzuSlaEngine::statusFinalizados())
+                    ->orWhereIn('status', $this->statusFinalizados());
+            })->count(),
         ];
     }
 
     public function getItensCriticos(): array
     {
         return $this->baseQuery()
-            ->whereNotNull('sla_limite_em')
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('sla_limite_em')->orWhereNotNull('data_vencimento');
+            })
             ->whereNull('sla_concluido_em')
-            ->orderBy('sla_limite_em')
+            ->whereNotIn('status', $this->statusFinalizados())
+            ->orderByRaw('COALESCE(sla_limite_em, data_vencimento) ASC')
             ->limit(12)
             ->get()
             ->map(fn (ItemControle $item): array => $this->formatarItemSla($item))
@@ -131,9 +160,9 @@ class SlaPrazos extends Page
 
         return [
             'total' => (clone $query)->whereNotNull('data_vencimento')->count(),
-            'vencidos' => (clone $query)->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->count(),
-            'sete_dias' => (clone $query)->whereBetween('data_vencimento', [now()->toDateString(), now()->copy()->addDays(7)->toDateString()])->count(),
-            'trinta_dias' => (clone $query)->whereBetween('data_vencimento', [now()->toDateString(), now()->copy()->addDays(30)->toDateString()])->count(),
+            'vencidos' => (clone $query)->whereNotIn('status', $this->statusFinalizados())->whereNotNull('data_vencimento')->whereDate('data_vencimento', '<', now()->toDateString())->count(),
+            'sete_dias' => (clone $query)->whereNotIn('status', $this->statusFinalizados())->whereBetween('data_vencimento', [now()->toDateString(), now()->copy()->addDays(7)->toDateString()])->count(),
+            'trinta_dias' => (clone $query)->whereNotIn('status', $this->statusFinalizados())->whereBetween('data_vencimento', [now()->toDateString(), now()->copy()->addDays(30)->toDateString()])->count(),
             'sem_data' => (clone $query)->whereNull('data_vencimento')->count(),
             'concluidos' => $this->hasColumn('status') ? (clone $query)->whereIn('status', $this->statusFinalizados())->count() : 0,
         ];
@@ -222,16 +251,19 @@ class SlaPrazos extends Page
 
     protected function formatarItemSla(ItemControle $item): array
     {
-        $limite = $item->sla_limite_em;
-        $vencido = $limite && $limite->isPast() && blank($item->sla_concluido_em);
+        $limite = $item->sla_limite_em ?: $item->data_vencimento;
+        $slaService = app(PrazzuSlaService::class);
+        $slaStatus = $slaService->status($item);
+        $vencido = $slaStatus === PrazzuSlaEngine::STATUS_VENCIDO;
 
         return [
             'id' => $item->id,
             'titulo' => $item->titulo,
             'titulo_curto' => Str::limit((string) $item->titulo, 80),
-            'status' => $vencido ? 'Vencido' : 'Em andamento',
-            'sla' => $item->sla_horas ? $item->sla_horas . 'h' : '-',
-            'limite' => $limite?->format('d/m/Y H:i') ?? '-',
+            'status' => $this->formatarStatusSla($slaStatus),
+            'sla' => $item->sla_horas ? $item->sla_horas . 'h' : 'Prazo por vencimento',
+            'limite' => $limite?->format($item->sla_limite_em ? 'd/m/Y H:i' : 'd/m/Y') ?? '-',
+            'tempo_restante' => $slaService->tempoRestante($item),
             'empresa' => $item->empresa?->razao_social ?? '-',
             'responsavel' => $item->responsavel?->nome ?? '-',
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
@@ -247,7 +279,26 @@ class SlaPrazos extends Page
     /** @return array<int, string> */
     protected function statusFinalizados(): array
     {
-        return ['concluido', 'concluído', 'finalizado', 'cancelado', 'aprovado'];
+        return [
+            ItemControleCoreService::STATUS_CONCLUIDO,
+            'concluído',
+            'finalizado',
+            ItemControleCoreService::STATUS_CANCELADO,
+            ItemControleCoreService::STATUS_APROVADO,
+            ItemControleCoreService::STATUS_ASSINADO,
+        ];
+    }
+
+    protected function formatarStatusSla(string $status): string
+    {
+        return match ($status) {
+            PrazzuSlaEngine::STATUS_EM_ANDAMENTO => 'Em andamento',
+            PrazzuSlaEngine::STATUS_RISCO => 'Em risco',
+            PrazzuSlaEngine::STATUS_VENCIDO => 'Vencido',
+            PrazzuSlaEngine::STATUS_CONCLUIDO_NO_PRAZO => 'Concluído no prazo',
+            PrazzuSlaEngine::STATUS_CONCLUIDO_ATRASADO => 'Concluído com atraso',
+            default => 'Sem SLA',
+        };
     }
 
     protected function formatarTempoRestante(ItemControle $item): string

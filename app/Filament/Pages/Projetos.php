@@ -6,6 +6,8 @@ use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\Comentario;
 use App\Models\ItemControle;
 use App\Models\ItemControleChecklist;
+use App\Support\PrazzuAccessControl;
+use App\Services\ItemControleOperationalService;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Notifications\Notification;
@@ -28,6 +30,16 @@ class Projetos extends Page
     protected static ?int $navigationSort = 11;
 
     protected string $view = 'filament.pages.projetos';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('tarefas.view');
+    }
 
     public string $busca = '';
 
@@ -138,15 +150,13 @@ class Projetos extends Page
             return;
         }
 
-        $dados = ['status' => $status];
-
-        if (in_array($status, ['concluido', 'concluida'], true)) {
-            $dados['data_conclusao'] = now()->toDateString();
-        } elseif ($item->data_conclusao) {
-            $dados['data_conclusao'] = null;
-        }
-
-        $item->update($dados);
+        app(ItemControleOperationalService::class)->alterarStatus(
+            $item,
+            $status,
+            Filament::auth()->user(),
+            'projetos',
+            'Status alterado pelo painel de Projetos.'
+        );
 
         Notification::make()->title('Status atualizado com sucesso.')->success()->send();
     }

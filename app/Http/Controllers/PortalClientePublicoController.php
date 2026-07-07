@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Throwable;
@@ -39,6 +40,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
 
         $empresaId = (int) $empresa->id;
 
@@ -57,8 +59,10 @@ class PortalClientePublicoController extends Controller
         $registro = PortalClienteSecurity::documentoAutorizadoParaToken($documento, $token);
 
         abort_if(! $registro, 404);
+        $this->validarSessaoPortalCliente((int) $registro->empresa_id);
 
         if (! empty($registro->url) && empty($registro->arquivo)) {
+            abort_if(! $this->urlExternaPermitida((string) $registro->url), 404);
             AuditoriaTrailService::documento('portal_cliente.documento.link_externo_acessado', [
                 'portal_documento_id' => $registro->id,
                 'empresa_id' => $registro->empresa_id,
@@ -119,6 +123,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
 
         $payload = $request->validate([
             'step' => ['nullable', 'string', 'max:160'],
@@ -161,6 +166,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
 
         $dados = $request->validate([
             'nome' => ['nullable', 'string', 'max:255'],
@@ -185,6 +191,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
         
@@ -376,6 +383,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
         $empresaId = (int) $empresa->id;
@@ -422,6 +430,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
         $data = $request->validate([
@@ -452,6 +461,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
 
         $empresaId = (int) $empresa->id;
         $atendimentoId = $this->atendimentoPublicoDaEmpresa($empresaId, $request->integer('atendimento_id'))?->id;
@@ -677,6 +687,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
         abort_if(! CachedSchema::hasTable('portal_solicitacoes'), 500, 'Tabela portal_solicitacoes não encontrada.');
 
         $data = $request->validate([
@@ -757,6 +768,7 @@ class PortalClientePublicoController extends Controller
 
         abort_if(! $empresa, 404);
         abort_if(! $this->portalDisponivel($empresa), 403, 'Portal indisponível ou expirado.');
+        $this->validarSessaoPortalCliente((int) $empresa->id);
         abort_if(! CachedSchema::hasTable('portal_solicitacoes'), 500, 'Tabela portal_solicitacoes não encontrada.');
         abort_if(! CachedSchema::hasTable('portal_mensagens'), 500, 'Tabela portal_mensagens não encontrada.');
 
@@ -800,6 +812,14 @@ class PortalClientePublicoController extends Controller
 
                 if (CachedSchema::hasColumn('portal_solicitacoes', 'resposta')) {
                     $update['resposta'] = trim((string) $data['resposta']);
+                }
+
+                if (CachedSchema::hasColumn('portal_solicitacoes', 'respondido_por')) {
+                    $update['respondido_por'] = trim((string) $data['nome']);
+                }
+
+                if (CachedSchema::hasColumn('portal_solicitacoes', 'respondido_em')) {
+                    $update['respondido_em'] = now();
                 }
 
                 if (! empty($update)) {
@@ -968,6 +988,29 @@ class PortalClientePublicoController extends Controller
         return $payload;
     }
 
+
+    private function validarSessaoPortalCliente(int $empresaId): void
+    {
+        $cliente = Auth::guard('portal_cliente')->user();
+
+        if (! $cliente) {
+            return;
+        }
+
+        abort_if((int) $cliente->empresa_id !== $empresaId || ! $cliente->estaAtivo(), 403, 'Sua sessão não pertence a este portal.');
+    }
+
+    private function urlExternaPermitida(string $url): bool
+    {
+        $partes = parse_url(trim($url));
+
+        if (! is_array($partes)) {
+            return false;
+        }
+
+        return in_array(strtolower((string) ($partes['scheme'] ?? '')), ['http', 'https'], true)
+            && filled($partes['host'] ?? null);
+    }
 
     private function querRespostaJsonPortal(Request $request): bool
     {

@@ -6,19 +6,30 @@
   <component name="ChangeListManager">
     <list default="true" id="f58da85a-650d-4a20-84c1-01884bb021f1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Assinaturas.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Assinaturas.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/ComplianceInterno.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/ComplianceInterno.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Gantt.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Gantt.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Calendario.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Calendario.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/CentroOperacional.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/CentroOperacional.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivoContabil.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/DashboardExecutivoContabil.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/GestaoDocumentalEnterprise.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/GestaoDocumentalEnterprise.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Kanban.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Kanban.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Pendencias.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Pendencias.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Riscos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Riscos.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Support/PrazzuAccessControl.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Support/PrazzuAccessControl.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/centro-operacional.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/centro-operacional.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/resources/views/filament/pages/compliance-pendencias.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/resources/views/filament/pages/compliance-pendencias.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/check-database.php" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/check-database.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/31/71/3171369eb793bc236da381348a80fcc279ec93b5" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/59/8c/598c166530e221237816d093ccfbfd6358bf8854" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" beforeDir="false" afterPath="$PROJECT_DIR$/storage/framework/cache/data/d4/d9/d4d9b813f8c95640e01bcedefd896a8a8216cd1a" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/Projetos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/Projetos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/SlaPrazos.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/SlaPrazos.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Pages/WhiteLabel.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Pages/WhiteLabel.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Filament/Resources/ItemControles/Tables/ItemControlesTable.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Filament/Resources/ItemControles/Tables/ItemControlesTable.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/AsaasWebhookController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/AsaasWebhookController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/PortalClientePublicoController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/PortalClientePublicoController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Http/Controllers/PortalItemControleController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Http/Controllers/PortalItemControleController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Notifications/ItemControleVencimentoNotification.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Notifications/ItemControleVencimentoNotification.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Services/AsaasService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/AsaasService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Services/AuditoriaDetalhadaService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/Services/AuditoriaDetalhadaService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/auditoria.php" beforeDir="false" afterPath="$PROJECT_DIR$/config/auditoria.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/services.php" beforeDir="false" afterPath="$PROJECT_DIR$/config/services.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/console.php" beforeDir="false" afterPath="$PROJECT_DIR$/routes/console.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/routes/web.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/check-portal-cliente.php" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/check-portal-cliente.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/Nova pasta/engenharia_reversa_prazzu_inicial.zip" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/ferramentas/~$sa é exatamente o tipo de funcionalidade que eu esperaria encontrar nas reclamações dos concorrentes.docx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tarefas/o que mais posso criar eu quero ter varias coisas de contabilidade.docx" beforeDir="false" afterPath="$PROJECT_DIR$/tarefas/o que mais posso criar eu quero ter varias coisas de contabilidade.docx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -248,6 +259,7 @@
       <workItem from="1783080905918" duration="35000" />
       <workItem from="1783336217388" duration="7939000" />
       <workItem from="1783352476083" duration="4444000" />
+      <workItem from="1783423362919" duration="2909000" />
     </task>
     <servers />
   </component>

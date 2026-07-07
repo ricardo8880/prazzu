@@ -6,6 +6,8 @@ namespace App\Filament\Pages;
 use App\Support\CachedSchema;
 use App\Models\Configuracao;
 use App\Support\WhiteLabelSettings;
+use App\Services\PlanoService;
+use App\Support\PrazzuAccessControl;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
@@ -52,7 +54,13 @@ class WhiteLabel extends Page implements HasForms
 
     public static function shouldRegisterNavigation(): bool
     {
-        return true;
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('configuracoes.edit')
+            && PrazzuAccessControl::canUseFeature(PlanoService::FEATURE_WHITE_LABEL);
     }
 
     public function mount(): void

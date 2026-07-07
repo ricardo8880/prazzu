@@ -6,6 +6,7 @@ use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Models\ItemControle;
 use App\Services\PlanoService;
 use App\Services\OperationalWorkflowService;
+use App\Services\ItemControleOperationalService;
 use App\Support\CachedSchema;
 use App\Support\ComplianceModuleData;
 use App\Support\PrazzuPerformance;
@@ -777,18 +778,10 @@ class Pendencias extends Page
             return;
         }
 
-        $record->update([
-            'status' => 'concluido',
-            'data_conclusao' => now(),
-        ]);
-
-        if (filled($record->sla_status) && ! $record->sla_concluido_em) {
-            $record->concluirSla();
-        }
-
-        $record->registrarTimeline(
-            'atualizacao',
-            'Pendência concluída',
+        app(ItemControleOperationalService::class)->concluir(
+            $record,
+            Filament::auth()->user(),
+            'pendencias',
             'O item foi concluído pela central de Pendências da Governança.'
         );
 
@@ -911,16 +904,16 @@ class Pendencias extends Page
             return;
         }
 
-        ItemControle::query()->create([
+        app(ItemControleOperationalService::class)->criarPendencia([
             'titulo' => $this->titulo,
             'descricao' => $this->descricao,
             'tipo' => 'pendencia_compliance',
-            'status' => 'pendente',
             'prioridade' => $this->prioridade,
             'empresa_id' => $empresaId,
             'responsavel_id' => $responsavelId,
             'data_vencimento' => $this->dataVencimento ?: null,
-        ]);
+            'origem' => 'pendencias',
+        ], Filament::auth()->user());
 
         $this->reset(['empresaId', 'responsavelId', 'titulo', 'descricao', 'dataVencimento']);
         $this->prioridade = 'media';

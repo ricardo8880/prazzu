@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Support\GestaoDocumentalEnterpriseData;
+use App\Support\PrazzuAccessControl;
 use BackedEnum;
 use Filament\Facades\Filament;
 use Filament\Pages\Page;
@@ -17,6 +18,16 @@ class GestaoDocumentalEnterprise extends Page
     protected static ?string $title = 'Gestão Documental Enterprise';
     protected static ?int $navigationSort = 2;
     protected string $view = 'filament.pages.gestao-documental-enterprise';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::canAccess();
+    }
+
+    public static function canAccess(): bool
+    {
+        return PrazzuAccessControl::canAccessPage('documentos.view');
+    }
 
     protected function getViewData(): array
     {
