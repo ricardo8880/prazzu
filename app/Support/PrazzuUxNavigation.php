@@ -18,7 +18,6 @@ use App\Filament\Pages\SlaPrazos;
 use App\Filament\Pages\SystemHealthDashboard;
 use App\Filament\Resources\Empresas\EmpresaResource;
 use App\Filament\Resources\ItemControles\ItemControleResource;
-use App\Filament\Resources\Responsaveis\ResponsavelResource;
 use Throwable;
 
 class PrazzuUxNavigation
@@ -58,11 +57,10 @@ class PrazzuUxNavigation
             [
                 'key' => 'clientes',
                 'label' => 'Clientes',
-                'hint' => 'Carteira, responsáveis e portal público.',
+                'hint' => 'Carteira de clientes e portal público.',
                 'icon' => 'bi-buildings',
                 'items' => [
                     self::resource('Empresas', EmpresaResource::class, 'Cadastro e vínculo multiempresa'),
-                    self::resource('Responsáveis', ResponsavelResource::class, 'Contatos e responsáveis'),
                     self::page('Portal do Cliente', PortalCliente::class, 'Acesso externo controlado'),
                 ],
             ],

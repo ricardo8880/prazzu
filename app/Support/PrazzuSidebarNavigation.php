@@ -74,11 +74,9 @@ class PrazzuSidebarNavigation
         'Clientes e Atendimentos',
         'Portal do Cliente',
         'Empresas Cadastradas',
-        'Responsáveis',
 
         // Documentos e processos contratuais.
         'Documentos',
-        'Gestão Documental',
         'Contratos',
 
         // Cobrança operacional do escritório. A tela de gateway financeiro fica fora
@@ -389,8 +387,8 @@ class PrazzuSidebarNavigation
             'Home', 'Resumo Executivo' => 'Contabilidade · Visão Geral',
             'Tarefas Operacionais', 'Mesa Operacional', 'Aprovações', 'Checklists', 'Kanban', 'Timeline Operacional', 'Cronograma Gantt', 'Painéis - Tabelas' => 'Contabilidade · Operação',
             'Pendências', 'SLA e Prazos', 'Calendário Operacional' => 'Contabilidade · Pendências e Prazos',
-            'Carteira de Clientes', 'Clientes e Atendimentos', 'Portal do Cliente', 'Empresas Cadastradas', 'Responsáveis' => 'Contabilidade · Clientes e Atendimento',
-            'Documentos', 'Gestão Documental', 'Armazenamento' => 'Contabilidade · Documentos e Modelos',
+            'Carteira de Clientes', 'Clientes e Atendimentos', 'Portal do Cliente', 'Empresas Cadastradas' => 'Contabilidade · Clientes e Atendimento',
+            'Documentos', 'Armazenamento' => 'Contabilidade · Documentos e Modelos',
             'Contratos', 'Assinaturas', 'Financeiro', 'Cobranças' => 'Contabilidade · Contratos e Financeiro',
             'Relatórios Operacionais', 'Relatórios Personalizados', 'Auditoria e Rastreabilidade', 'Riscos e Evidências' => 'Contabilidade · Relatórios e Auditoria',
             'Dados do Escritório', 'Parâmetros do Escritório', 'Modelos Operacionais', 'Categorias Operacionais', 'Tags Operacionais', 'Meus Atalhos' => 'Escritório Contábil · Configurações',

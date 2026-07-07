@@ -70,9 +70,9 @@
                         <span>{{ $coluna['total'] }}</span>
                     </div>
 
-                    <div class="tp-kanban-cards" data-kanban-list="{{ $coluna['status'] }}">
+                    <div class="tp-kanban-cards" data-kanban-list="{{ $coluna['status'] }}" data-kanban-accepts-drop="{{ $coluna['status'] === 'vencido' ? '0' : '1' }}">
                         @forelse($coluna['itens'] as $item)
-                            <button type="button" wire:click="abrirItem({{ $item['id'] }})" wire:loading.attr="disabled" wire:target="abrirItem({{ $item['id'] }})" data-kanban-card="{{ $item['id'] }}" draggable="true" class="tp-kanban-card @if($item['vencido']) is-late @endif">
+                            <article role="button" tabindex="0" aria-label="Abrir item {{ $item['titulo'] }}" data-kanban-card="{{ $item['id'] }}" data-kanban-open="{{ $item['id'] }}" class="tp-kanban-card @if($item['vencido']) is-late @endif">
                                 <div class="tp-kanban-card-top">
                                     <strong>{{ $item['titulo'] }}</strong>
                                     @if($item['vencido'])
@@ -107,7 +107,7 @@
                                     <span>{{ $item['comentarios'] }} comentário(s)</span>
                                     <span>Ver painel</span>
                                 </div>
-                            </button>
+                            </article>
                         @empty
                             <div class="tp-empty tp-empty-column">
                                 <strong>Coluna sem itens</strong>
@@ -122,31 +122,90 @@
 
     @if($itemSelecionado)
         <div class="tp-modal-backdrop" wire:key="kanban-modal-{{ $itemSelecionado['id'] }}">
-            <div class="tp-modal">
-                <div class="tp-modal-head">
-                    <div>
+            <div class="tp-modal tp-kanban-modal">
+                <div class="tp-modal-head tp-kanban-modal-head">
+                    <div class="tp-kanban-modal-title">
                         <span class="tp-eyebrow-dark">ITEM DO KANBAN</span>
                         <h3>{{ $itemSelecionado['titulo'] }}</h3>
                         <p>{{ $itemSelecionado['empresa'] }} • {{ $itemSelecionado['responsavel'] }}</p>
                     </div>
-                    <button type="button" wire:click="fecharItem" wire:loading.attr="disabled" wire:target="fecharItem" class="tp-modal-close">×</button>
+                    <div class="tp-kanban-modal-head-actions">
+                        <span class="tp-badge @if($itemSelecionado['vencido'] || ($itemSelecionado['proxima_acao']['tom'] ?? '') === 'danger') tp-badge-danger @endif">{{ $itemSelecionado['status'] }}</span>
+                        <button type="button" wire:click="fecharItem" wire:loading.attr="disabled" wire:target="fecharItem" class="tp-modal-close">×</button>
+                    </div>
                 </div>
 
-                <div class="tp-modal-grid">
+                <div class="tp-kanban-focus @if(($itemSelecionado['proxima_acao']['tom'] ?? '') === 'danger') is-danger @elseif(($itemSelecionado['proxima_acao']['tom'] ?? '') === 'warning') is-warning @else is-success @endif">
+                    <div>
+                        <span>Próxima ação recomendada</span>
+                        <strong>{{ $itemSelecionado['proxima_acao']['titulo'] }}</strong>
+                        <p>{{ $itemSelecionado['proxima_acao']['descricao'] }}</p>
+                    </div>
+                    <div class="tp-kanban-focus-status">
+                        <small>Prazo</small>
+                        <b>{{ $itemSelecionado['vencimento'] }}</b>
+                    </div>
+                </div>
+
+                <div class="tp-kanban-modal-summary">
+                    <div>
+                        <span>Cliente</span>
+                        <strong>{{ $itemSelecionado['empresa'] }}</strong>
+                    </div>
+                    <div>
+                        <span>Responsável</span>
+                        <strong>{{ $itemSelecionado['responsavel'] }}</strong>
+                    </div>
+                    <div>
+                        <span>Tipo / Categoria</span>
+                        <strong>{{ $itemSelecionado['tipo'] }} @if($itemSelecionado['categoria'] !== '-') • {{ $itemSelecionado['categoria'] }} @endif</strong>
+                    </div>
+                    <div>
+                        <span>Prioridade</span>
+                        <strong>{{ $itemSelecionado['prioridade'] ?: '-' }}</strong>
+                    </div>
+                </div>
+
+                <div class="tp-modal-grid tp-kanban-modal-grid">
                     <div class="tp-modal-main">
+                        @if(! empty($itemSelecionado['alertas_operacionais']))
+                            <div class="tp-detail-card tp-kanban-alerts-card">
+                                <div class="tp-detail-title">
+                                    <strong>Pontos de atenção</strong>
+                                    <span>{{ count($itemSelecionado['alertas_operacionais']) }}</span>
+                                </div>
+                                <div class="tp-kanban-alerts">
+                                    @foreach($itemSelecionado['alertas_operacionais'] as $alerta)
+                                        <div class="tp-kanban-alert is-{{ $alerta['tom'] }}">
+                                            <i>{{ $alerta['tom'] === 'danger' ? '!' : ($alerta['tom'] === 'warning' ? '•' : 'i') }}</i>
+                                            <span>{{ $alerta['texto'] }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="tp-detail-card">
                             <div class="tp-detail-title">
-                                <strong>Resumo</strong>
-                                <span class="tp-badge @if($itemSelecionado['vencido']) tp-badge-danger @endif">{{ $itemSelecionado['status'] }}</span>
+                                <strong>Resumo operacional</strong>
+                                <span class="tp-mini-badge">{{ $itemSelecionado['status'] }}</span>
                             </div>
 
                             <div class="tp-detail-text">
-                                {!! nl2br(e($itemSelecionado['descricao_completa'] ?? 'Sem descrição cadastrada.')) !!}
+                                {!! nl2br(e($itemSelecionado['descricao_completa'] ?? 'Sem descrição cadastrada. Use os comentários para registrar o contexto do atendimento.')) !!}
                             </div>
+
+                            @if(! empty($itemSelecionado['tags']))
+                                <div class="tp-kanban-tags">
+                                    @foreach($itemSelecionado['tags'] as $tag)
+                                        <span>{{ $tag }}</span>
+                                    @endforeach
+                                </div>
+                            @endif
 
                             @if($itemSelecionado['observacao'])
                                 <div class="tp-note">
-                                    <strong>Observação</strong>
+                                    <strong>Observação interna</strong>
                                     <span>{!! nl2br(e($itemSelecionado['observacao'])) !!}</span>
                                 </div>
                             @endif
@@ -154,7 +213,7 @@
 
                         <div class="tp-detail-card">
                             <div class="tp-detail-title">
-                                <strong>Checklist rápido</strong>
+                                <strong>Checklist de execução</strong>
                                 <span>{{ $itemSelecionado['checklists_concluidos'] }}/{{ $itemSelecionado['checklists_total'] }}</span>
                             </div>
 
@@ -172,23 +231,83 @@
                                 @empty
                                     <div class="tp-empty tp-empty-small">
                                         <strong>Checklist ainda vazio</strong>
-                                        <span>Adicione a primeira etapa no campo abaixo para acompanhar a execução.</span>
+                                        <span>Adicione etapas simples para a equipe saber exatamente o que falta fazer.</span>
                                     </div>
                                 @endforelse
                             </div>
 
                             <form wire:submit.prevent="adicionarChecklist" class="tp-inline-form">
-                                <input type="text" wire:model.defer="novoChecklistTitulo" wire:loading.attr="disabled" wire:target="adicionarChecklist" placeholder="Nova etapa do checklist">
+                                <input type="text" wire:model.defer="novoChecklistTitulo" wire:loading.attr="disabled" wire:target="adicionarChecklist" placeholder="Ex.: Conferir guia, validar documento, avisar cliente">
                                 <button type="submit" wire:loading.attr="disabled" wire:target="adicionarChecklist">
-                                    <span wire:loading.remove wire:target="adicionarChecklist">Adicionar</span>
+                                    <span wire:loading.remove wire:target="adicionarChecklist">Adicionar etapa</span>
                                     <span wire:loading.inline-flex wire:target="adicionarChecklist" class="tp-inline-loading"><i class="tp-spinner"></i> Salvando</span>
                                 </button>
                             </form>
                         </div>
 
+                        <div class="tp-kanban-split">
+                            <div class="tp-detail-card">
+                                <div class="tp-detail-title">
+                                    <strong>Documentos</strong>
+                                    <span>{{ $itemSelecionado['anexos'] }} arquivo(s)</span>
+                                </div>
+                                <div class="tp-mini-list">
+                                    @forelse($itemSelecionado['anexos_lista'] as $anexo)
+                                        <div class="tp-mini-row">
+                                            <i>📎</i>
+                                            <div>
+                                                <strong>{{ $anexo['nome'] }}</strong>
+                                                <span>{{ $anexo['data'] }}</span>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="tp-empty tp-empty-small">
+                                            <strong>Nenhum anexo neste item</strong>
+                                            <span>Se o processo depende de arquivo, registre isso antes de concluir.</span>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            <div class="tp-detail-card">
+                                <div class="tp-detail-title">
+                                    <strong>Dependências</strong>
+                                    <span>{{ $itemSelecionado['dependencias'] + $itemSelecionado['bloqueios'] }}</span>
+                                </div>
+                                <div class="tp-mini-list">
+                                    @forelse($itemSelecionado['dependencias_lista'] as $dependencia)
+                                        <div class="tp-mini-row">
+                                            <i>↳</i>
+                                            <div>
+                                                <strong>{{ $dependencia['titulo'] }}</strong>
+                                                <span>{{ $dependencia['status'] }}</span>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        @if(empty($itemSelecionado['bloqueios_lista']))
+                                            <div class="tp-empty tp-empty-small">
+                                                <strong>Sem dependências cadastradas</strong>
+                                                <span>O item pode avançar sem aguardar outro processo.</span>
+                                            </div>
+                                        @endif
+                                    @endforelse
+
+                                    @foreach($itemSelecionado['bloqueios_lista'] as $bloqueio)
+                                        <div class="tp-mini-row is-warning">
+                                            <i>!</i>
+                                            <div>
+                                                <strong>Impacta: {{ $bloqueio['titulo'] }}</strong>
+                                                <span>{{ $bloqueio['status'] }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="tp-detail-card">
                             <div class="tp-detail-title">
-                                <strong>Comentários</strong>
+                                <strong>Comentários e histórico rápido</strong>
                                 <span>{{ $itemSelecionado['comentarios'] }}</span>
                             </div>
 
@@ -202,24 +321,25 @@
                                 @empty
                                     <div class="tp-empty tp-empty-small">
                                         <strong>Sem comentários</strong>
-                                        <span>Registre uma observação para manter o histórico claro para a equipe.</span>
+                                        <span>Registre decisões, contato com cliente ou motivo de bloqueio.</span>
                                     </div>
                                 @endforelse
                             </div>
 
                             <form wire:submit.prevent="adicionarComentario" class="tp-comment-form">
-                                <textarea wire:model.defer="novoComentario" wire:loading.attr="disabled" wire:target="adicionarComentario" rows="3" placeholder="Escreva um comentário rápido"></textarea>
+                                <textarea wire:model.defer="novoComentario" wire:loading.attr="disabled" wire:target="adicionarComentario" rows="3" placeholder="Ex.: Cliente avisado, documento conferido, aguardando retorno..."></textarea>
                                 <button type="submit" wire:loading.attr="disabled" wire:target="adicionarComentario">
-                                    <span wire:loading.remove wire:target="adicionarComentario">Comentar</span>
+                                    <span wire:loading.remove wire:target="adicionarComentario">Registrar comentário</span>
                                     <span wire:loading.inline-flex wire:target="adicionarComentario" class="tp-inline-loading"><i class="tp-spinner"></i> Salvando</span>
                                 </button>
                             </form>
                         </div>
                     </div>
 
-                    <aside class="tp-modal-side">
+                    <aside class="tp-modal-side tp-kanban-side">
                         <div class="tp-detail-card">
-                            <strong class="tp-side-title">Ações rápidas</strong>
+                            <strong class="tp-side-title">Mover status</strong>
+                            <p class="tp-side-help">Use quando a etapa realmente mudou. Se existir bloqueio, registre comentário antes de concluir.</p>
                             <div class="tp-action-stack">
                                 <button type="button" wire:click="atualizarStatus({{ $itemSelecionado['id'] }}, 'pendente')" wire:loading.attr="disabled" wire:target="atualizarStatus({{ $itemSelecionado['id'] }}, 'pendente')">Marcar como pendente</button>
                                 <button type="button" wire:click="atualizarStatus({{ $itemSelecionado['id'] }}, 'em_andamento')" wire:loading.attr="disabled" wire:target="atualizarStatus({{ $itemSelecionado['id'] }}, 'em_andamento')">Mover para andamento</button>
@@ -228,11 +348,28 @@
                         </div>
 
                         <div class="tp-detail-card tp-info-list">
-                            <strong class="tp-side-title">Informações</strong>
-                            <p><span>Tipo</span><b>{{ $itemSelecionado['tipo'] }}</b></p>
-                            <p><span>Prioridade</span><b>{{ $itemSelecionado['prioridade'] ?: '-' }}</b></p>
+                            <strong class="tp-side-title">Controle do processo</strong>
                             <p><span>Vencimento</span><b>{{ $itemSelecionado['vencimento'] }}</b></p>
                             <p><span>SLA</span><b>{{ $itemSelecionado['sla'] }}</b></p>
+                            <p><span>Status SLA</span><b>{{ $itemSelecionado['sla_status'] }}</b></p>
+                            <p><span>Urgência</span><b>{{ $itemSelecionado['urgencia'] }}</b></p>
+                            <p><span>Risco</span><b>{{ $itemSelecionado['risco_score'] ?: '-' }}</b></p>
+                            <p><span>Bloqueado</span><b>{{ $itemSelecionado['bloqueado'] ? 'Sim' : 'Não' }}</b></p>
+                        </div>
+
+                        <div class="tp-detail-card tp-info-list">
+                            <strong class="tp-side-title">Cliente e documentação</strong>
+                            <p><span>Documento</span><b>{{ $itemSelecionado['document_status'] }}</b></p>
+                            <p><span>Portal</span><b>{{ $itemSelecionado['portal_status'] }}</b></p>
+                            <p><span>Mensagens portal</span><b>{{ $itemSelecionado['mensagens_portal'] }}</b></p>
+                            <p><span>Versões</span><b>{{ $itemSelecionado['versoes'] }}</b></p>
+                            <p><span>Aprovação</span><b>{{ $itemSelecionado['approval_required'] ? $itemSelecionado['approval_status'] : 'Não exige' }}</b></p>
+                        </div>
+
+                        <div class="tp-detail-card tp-info-list">
+                            <strong class="tp-side-title">Tempo e auditoria</strong>
+                            <p><span>Estimado</span><b>{{ $itemSelecionado['tempo_estimado'] }}</b></p>
+                            <p><span>Real</span><b>{{ $itemSelecionado['tempo_real'] }}</b></p>
                             <p><span>Criado em</span><b>{{ $itemSelecionado['data_criacao'] }}</b></p>
                             <p><span>Atualizado em</span><b>{{ $itemSelecionado['data_atualizacao'] }}</b></p>
                         </div>
@@ -245,89 +382,203 @@
     @endif
 
     <script>
-        document.addEventListener('livewire:navigated', iniciarKanbanArrastarSoltar);
-        document.addEventListener('livewire:initialized', iniciarKanbanArrastarSoltar);
-        document.addEventListener('DOMContentLoaded', iniciarKanbanArrastarSoltar);
+        (function () {
+            const KANBAN_SELECTOR = '[data-kanban-list]';
+            const CARD_SELECTOR = '[data-kanban-card]';
+            const OPEN_SELECTOR = '[data-kanban-open]';
 
-        let tpKanbanUltimoPonto = { x: 0, y: 0 };
+            window.PrazzuKanban = window.PrazzuKanban || {
+                instances: [],
+                dragStartedAt: 0,
+                lastMovedItemId: null,
+            };
 
-        document.addEventListener('dragover', function (event) {
-            tpKanbanUltimoPonto = { x: event.clientX, y: event.clientY };
-        }, true);
-
-        document.addEventListener('mousemove', function (event) {
-            if (document.body.classList.contains('tp-kanban-is-dragging')) {
-                tpKanbanUltimoPonto = { x: event.clientX, y: event.clientY };
-            }
-        }, true);
-
-        function iniciarKanbanArrastarSoltar() {
-            if (typeof Sortable === 'undefined') {
-                return;
+            function getLivewireComponent() {
+                try {
+                    return @this;
+                } catch (error) {
+                    return null;
+                }
             }
 
-            document.querySelectorAll('[data-kanban-list]').forEach((lista) => {
-                if (lista.dataset.sortableAtivo === '1') {
+            function destruirSortablesAntigos() {
+                (window.PrazzuKanban.instances || []).forEach((instance) => {
+                    try {
+                        instance.destroy();
+                    } catch (error) {
+                        // Mantém a página utilizável mesmo se uma instância já tiver sido destruída pelo Livewire.
+                    }
+                });
+
+                window.PrazzuKanban.instances = [];
+
+                document.querySelectorAll(KANBAN_SELECTOR).forEach((lista) => {
+                    delete lista.dataset.sortableAtivo;
+                });
+            }
+
+            function abrirCardPeloClique(event) {
+                const card = event.target.closest(OPEN_SELECTOR);
+
+                if (! card) {
                     return;
                 }
 
-                lista.dataset.sortableAtivo = '1';
+                const agora = Date.now();
+                const acabouDeArrastar = agora - (window.PrazzuKanban.dragStartedAt || 0) < 350;
 
-                new Sortable(lista, {
-                    group: 'prazzu-kanban',
-                    animation: 150,
-                    draggable: '[data-kanban-card]',
-                    ghostClass: 'tp-kanban-card-ghost',
-                    chosenClass: 'tp-kanban-card-chosen',
-                    dragClass: 'tp-kanban-card-drag',
-                    forceFallback: true,
-                    fallbackOnBody: true,
-                    fallbackTolerance: 1,
-                    touchStartThreshold: 1,
-                    swapThreshold: 0.18,
-                    invertedSwapThreshold: 0.85,
-                    emptyInsertThreshold: 140,
-                    filter: '.tp-empty',
-                    onStart: function () {
-                        document.body.classList.add('tp-kanban-is-dragging');
-                    },
-                    onMove: function (event, originalEvent) {
-                        if (originalEvent) {
-                            tpKanbanUltimoPonto = { x: originalEvent.clientX, y: originalEvent.clientY };
-                        }
+                if (acabouDeArrastar) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
 
-                        return true;
-                    },
-                    onEnd: function (event) {
-                        document.body.classList.remove('tp-kanban-is-dragging');
+                const itemId = Number(card.dataset.kanbanOpen || 0);
+                const livewire = getLivewireComponent();
 
-                        const card = event.item;
-                        const itemId = Number(card.dataset.kanbanCard || 0);
+                if (itemId && livewire) {
+                    livewire.call('abrirItem', itemId);
+                }
+            }
 
-                        let destino = event.to;
-                        const elementoNoPonto = document.elementFromPoint(tpKanbanUltimoPonto.x, tpKanbanUltimoPonto.y);
-                        const colunaNoPonto = elementoNoPonto ? elementoNoPonto.closest('[data-kanban-list]') : null;
+            function abrirCardPeloTeclado(event) {
+                if (! ['Enter', ' '].includes(event.key)) {
+                    return;
+                }
 
-                        if (colunaNoPonto) {
-                            destino = colunaNoPonto;
+                const card = event.target.closest(OPEN_SELECTOR);
 
-                            if (card.parentElement !== destino) {
-                                destino.appendChild(card);
-                            }
-                        }
+                if (! card) {
+                    return;
+                }
 
-                        const novoStatus = destino.dataset.kanbanList;
+                event.preventDefault();
+                const itemId = Number(card.dataset.kanbanOpen || 0);
+                const livewire = getLivewireComponent();
 
-                        if (! itemId || ! novoStatus) {
-                            return;
-                        }
+                if (itemId && livewire) {
+                    livewire.call('abrirItem', itemId);
+                }
+            }
 
-                        if (window.Livewire && @this) {
-                            @this.call('moverItemKanban', itemId, novoStatus);
-                        }
-                    },
+            function moverCard(event) {
+                const card = event.item;
+                const origem = event.from;
+                const destino = event.to;
+                const itemId = Number(card?.dataset?.kanbanCard || 0);
+                const novoStatus = destino?.dataset?.kanbanList;
+                const statusAnterior = origem?.dataset?.kanbanList;
+
+                window.PrazzuKanban.dragStartedAt = Date.now();
+
+                if (! itemId || ! novoStatus || ! statusAnterior) {
+                    return;
+                }
+
+                if (novoStatus === statusAnterior) {
+                    return;
+                }
+
+                if (novoStatus === 'vencido') {
+                    // "Vencido" é uma coluna calculada pela data de vencimento, não um status manual.
+                    // Reverte imediatamente para não passar a sensação de que o sistema ignorou o usuário.
+                    origem.insertBefore(card, origem.children[event.oldIndex] || null);
+                    window.dispatchEvent(new CustomEvent('prazzu-kanban-invalid-drop'));
+                    return;
+                }
+
+                const livewire = getLivewireComponent();
+
+                if (! livewire) {
+                    origem.insertBefore(card, origem.children[event.oldIndex] || null);
+                    return;
+                }
+
+                card.classList.add('is-saving');
+                window.PrazzuKanban.lastMovedItemId = itemId;
+
+                livewire.call('moverItemKanban', itemId, novoStatus)
+                    .catch(() => {
+                        origem.insertBefore(card, origem.children[event.oldIndex] || null);
+                    })
+                    .finally(() => {
+                        card.classList.remove('is-saving');
+                    });
+            }
+
+            function iniciarKanbanArrastarSoltar() {
+                if (typeof Sortable === 'undefined') {
+                    return;
+                }
+
+                destruirSortablesAntigos();
+
+                document.querySelectorAll(KANBAN_SELECTOR).forEach((lista) => {
+                    lista.dataset.sortableAtivo = '1';
+
+                    const instance = new Sortable(lista, {
+                        group: {
+                            name: 'prazzu-kanban',
+                            pull: true,
+                            put: function (to) {
+                                return to.el?.dataset?.kanbanAcceptsDrop !== '0';
+                            },
+                        },
+                        animation: 180,
+                        draggable: CARD_SELECTOR,
+                        ghostClass: 'tp-kanban-card-ghost',
+                        chosenClass: 'tp-kanban-card-chosen',
+                        dragClass: 'tp-kanban-card-drag',
+                        fallbackOnBody: true,
+                        forceFallback: false,
+                        fallbackTolerance: 5,
+                        touchStartThreshold: 5,
+                        emptyInsertThreshold: 80,
+                        swapThreshold: 0.65,
+                        invertSwap: true,
+                        filter: '.tp-empty',
+                        preventOnFilter: false,
+                        onStart: function () {
+                            document.body.classList.add('tp-kanban-is-dragging');
+                        },
+                        onAdd: moverCard,
+                        onEnd: function () {
+                            document.body.classList.remove('tp-kanban-is-dragging');
+                            window.PrazzuKanban.dragStartedAt = Date.now();
+                        },
+                    });
+
+                    window.PrazzuKanban.instances.push(instance);
                 });
-            });
-        }
+            }
+
+            if (! window.PrazzuKanban.listenersRegistered) {
+                window.PrazzuKanban.listenersRegistered = true;
+
+                document.addEventListener('click', abrirCardPeloClique, true);
+                document.addEventListener('keydown', abrirCardPeloTeclado, true);
+                document.addEventListener('DOMContentLoaded', iniciarKanbanArrastarSoltar);
+                document.addEventListener('livewire:navigated', iniciarKanbanArrastarSoltar);
+                document.addEventListener('livewire:initialized', iniciarKanbanArrastarSoltar);
+
+                window.addEventListener('prazzu-kanban-invalid-drop', function () {
+                    if (window.FilamentNotification) {
+                        new window.FilamentNotification()
+                            .title('A coluna Vencido é automática')
+                            .body('Para aparecer como vencido, o item precisa estar com prazo expirado. Use Pendente, Em andamento ou Concluído.')
+                            .warning()
+                            .send();
+                    }
+                });
+
+                if (window.Livewire?.hook) {
+                    window.Livewire.hook('morph.updated', () => {
+                        window.requestAnimationFrame(iniciarKanbanArrastarSoltar);
+                    });
+                }
+            }
+
+            window.requestAnimationFrame(iniciarKanbanArrastarSoltar);
+        })();
     </script>
 </x-filament-panels::page>

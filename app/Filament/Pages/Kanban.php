@@ -55,8 +55,20 @@ class Kanban extends Page
                 'descricao',
                 'observacao',
                 'tipo',
+                'categoria_id',
                 'status',
                 'prioridade',
+                'urgencia',
+                'document_status',
+                'portal_status',
+                'approval_required',
+                'approval_status',
+                'bloqueado',
+                'blocked_by_dependency',
+                'risco_score',
+                'risk_score',
+                'estimated_minutes',
+                'actual_minutes',
                 'empresa_id',
                 'responsavel_id',
                 'data_vencimento',
@@ -71,11 +83,18 @@ class Kanban extends Page
             ->with([
                 'empresa:id,razao_social',
                 'responsavel:id,nome',
+                'categoria:id,nome',
+                'tags:id,nome',
             ])
             ->withCount([
                 'checklists',
                 'checklists as checklists_concluidos_count' => fn (Builder $query): Builder => $query->where('concluido', true),
                 'comentariosKanban as comentarios_total',
+                'anexos as anexos_total',
+                'documentVersions as versoes_total',
+                'clientPortalMessages as mensagens_portal_total',
+                'dependencies as dependencias_total',
+                'blockers as bloqueios_total',
             ])
             ->visibleForUser(Filament::auth()->user());
     }
@@ -87,6 +106,13 @@ class Kanban extends Page
                 'checklists:id,item_controle_id,titulo,concluido,concluido_em,concluido_por,ordem',
                 'comentariosKanban:id,item_controle_id,user_id,comentario,created_at',
                 'comentariosKanban.user:id,name',
+                'anexos:id,item_controle_id,nome_original,arquivo,created_at',
+                'documentVersions:id,item_controle_id,version_number,status,created_at',
+                'clientPortalMessages:id,item_controle_id,user_id,sender_type,message,created_at',
+                'dependencies:id,item_controle_id,depends_on_item_controle_id,type,notes,blocked_until_resolved',
+                'dependencies.dependsOnItem:id,titulo,status,data_vencimento',
+                'blockers:id,item_controle_id,depends_on_item_controle_id,type,notes,blocked_until_resolved',
+                'blockers.itemControle:id,titulo,status,data_vencimento',
             ]);
     }
 
@@ -144,20 +170,169 @@ class Kanban extends Page
             'id' => $item->id,
             'titulo' => $item->titulo,
             'descricao' => Str::limit(strip_tags((string) $item->descricao), 140),
-            'tipo' => ucfirst(str_replace('_', ' ', (string) $item->tipo)),
-            'status' => ucfirst(str_replace('_', ' ', (string) $item->status)),
+            'tipo' => $this->formatarRotulo($item->tipo),
+            'categoria' => $item->categoria?->nome ?? '-',
+            'status' => $this->formatarRotulo($item->status),
             'status_raw' => (string) $item->status,
-            'prioridade' => ucfirst((string) $item->prioridade),
+            'status_normalized' => $this->normalizarStatus((string) $item->status),
+            'prioridade' => $this->formatarRotulo($item->prioridade),
+            'prioridade_raw' => (string) ($item->prioridade ?: 'media'),
+            'urgencia' => $this->formatarRotulo($item->urgencia ?: 'media'),
             'empresa' => $item->empresa?->razao_social ?? '-',
             'responsavel' => $item->responsavel?->nome ?? '-',
             'vencimento' => $item->data_vencimento?->format('d/m/Y') ?? '-',
+            'dias_para_vencer' => $this->calcularDiasParaVencer($item),
             'vencido' => $vencido,
+            'bloqueado' => (bool) ($item->bloqueado || $item->blocked_by_dependency),
+            'risco_score' => (int) ($item->risco_score ?? $item->risk_score ?? 0),
             'comentarios' => (int) ($item->comentarios_total ?? ($item->relationLoaded('comentariosKanban') ? $item->comentariosKanban->count() : 0)),
+            'anexos' => (int) ($item->anexos_total ?? ($item->relationLoaded('anexos') ? $item->anexos->count() : 0)),
+            'versoes' => (int) ($item->versoes_total ?? ($item->relationLoaded('documentVersions') ? $item->documentVersions->count() : 0)),
+            'mensagens_portal' => (int) ($item->mensagens_portal_total ?? ($item->relationLoaded('clientPortalMessages') ? $item->clientPortalMessages->count() : 0)),
+            'dependencias' => (int) ($item->dependencias_total ?? ($item->relationLoaded('dependencies') ? $item->dependencies->count() : 0)),
+            'bloqueios' => (int) ($item->bloqueios_total ?? ($item->relationLoaded('blockers') ? $item->blockers->count() : 0)),
+            'document_status' => $this->formatarRotulo($item->document_status ?: 'nao_informado'),
+            'portal_status' => $this->formatarRotulo($item->portal_status ?: 'nao_informado'),
+            'approval_status' => $this->formatarRotulo($item->approval_status ?: 'nao_exige'),
+            'approval_required' => (bool) $item->approval_required,
+            'tempo_estimado' => $this->formatarMinutos($item->estimated_minutes),
+            'tempo_real' => $this->formatarMinutos($item->actual_minutes),
             'checklists_total' => $totalChecklist,
             'checklists_concluidos' => $checklistsConcluidos,
             'checklists_percentual' => $percentualChecklist,
+            'tags' => $item->relationLoaded('tags') ? $item->tags->pluck('nome')->take(5)->values()->all() : [],
             'url' => ItemControleResource::getUrl('edit', ['record' => $item]),
         ];
+    }
+
+
+    protected function formatarRotulo(mixed $valor): string
+    {
+        $valor = trim((string) $valor);
+
+        if ($valor === '') {
+            return '-';
+        }
+
+        return Str::of($valor)
+            ->replace(['_', '-'], ' ')
+            ->lower()
+            ->title()
+            ->toString();
+    }
+
+    protected function normalizarStatus(string $status): string
+    {
+        return match ($status) {
+            'concluida' => 'concluido',
+            'andamento' => 'em_andamento',
+            default => $status,
+        };
+    }
+
+    protected function calcularDiasParaVencer(ItemControle $item): ?int
+    {
+        if (! $item->data_vencimento) {
+            return null;
+        }
+
+        return (int) now()->startOfDay()->diffInDays($item->data_vencimento->copy()->startOfDay(), false);
+    }
+
+    protected function formatarMinutos(mixed $minutos): string
+    {
+        $minutos = (int) $minutos;
+
+        if ($minutos <= 0) {
+            return '-';
+        }
+
+        if ($minutos < 60) {
+            return $minutos . ' min';
+        }
+
+        $horas = intdiv($minutos, 60);
+        $restante = $minutos % 60;
+
+        return $restante > 0 ? $horas . 'h ' . $restante . 'min' : $horas . 'h';
+    }
+
+    protected function definirProximaAcao(array $dados): array
+    {
+        if ($dados['bloqueado']) {
+            return [
+                'tom' => 'danger',
+                'titulo' => 'Resolver bloqueio antes de avançar',
+                'descricao' => 'Existe dependência ou bloqueio operacional impedindo a execução segura deste item.',
+            ];
+        }
+
+        if ($dados['vencido']) {
+            return [
+                'tom' => 'danger',
+                'titulo' => 'Priorizar regularização hoje',
+                'descricao' => 'O prazo já passou. Atualize o status, registre o impedimento ou conclua a pendência.',
+            ];
+        }
+
+        if (($dados['checklists_total'] ?? 0) > 0 && ($dados['checklists_percentual'] ?? 0) < 100) {
+            return [
+                'tom' => 'warning',
+                'titulo' => 'Executar a próxima etapa do checklist',
+                'descricao' => 'Use o checklist para deixar claro o que falta fazer e evitar retrabalho.',
+            ];
+        }
+
+        if (($dados['approval_required'] ?? false) && ! in_array(strtolower((string) ($dados['approval_status'] ?? '')), ['aprovado', 'approved'], true)) {
+            return [
+                'tom' => 'warning',
+                'titulo' => 'Acompanhar aprovação',
+                'descricao' => 'Este item exige aprovação. Verifique se o responsável já validou antes de concluir.',
+            ];
+        }
+
+        if (($dados['anexos'] ?? 0) === 0 && in_array(strtolower((string) ($dados['document_status'] ?? '')), ['solicitado', 'pendente'], true)) {
+            return [
+                'tom' => 'warning',
+                'titulo' => 'Solicitar ou anexar documento',
+                'descricao' => 'Há sinal de documento pendente. Centralize o arquivo para manter o histórico completo.',
+            ];
+        }
+
+        return [
+            'tom' => 'success',
+            'titulo' => 'Fluxo sem bloqueio crítico',
+            'descricao' => 'Revise os detalhes, mova o card para o próximo status ou registre um comentário se necessário.',
+        ];
+    }
+
+    protected function montarAlertasOperacionais(array $dados): array
+    {
+        $alertas = [];
+
+        if ($dados['bloqueado']) {
+            $alertas[] = ['tom' => 'danger', 'texto' => 'Bloqueado por dependência ou impedimento operacional.'];
+        }
+
+        if ($dados['vencido']) {
+            $alertas[] = ['tom' => 'danger', 'texto' => 'Prazo vencido. Deve aparecer como prioridade do dia.'];
+        } elseif (($dados['dias_para_vencer'] ?? null) !== null && $dados['dias_para_vencer'] <= 2) {
+            $alertas[] = ['tom' => 'warning', 'texto' => 'Vence em até 2 dias. Bom acompanhar de perto.'];
+        }
+
+        if (($dados['risco_score'] ?? 0) >= 70) {
+            $alertas[] = ['tom' => 'danger', 'texto' => 'Risco operacional alto. Evite concluir sem validação.'];
+        }
+
+        if (($dados['dependencias'] ?? 0) > 0) {
+            $alertas[] = ['tom' => 'warning', 'texto' => 'Possui dependências relacionadas. Confira antes de mover para concluído.'];
+        }
+
+        if (($dados['approval_required'] ?? false)) {
+            $alertas[] = ['tom' => 'info', 'texto' => 'Exige aprovação antes do encerramento definitivo.'];
+        }
+
+        return $alertas;
     }
 
     public function abrirItem(int $itemId): void
@@ -194,6 +369,43 @@ class Kanban extends Page
         $dados['data_criacao'] = $item->created_at?->format('d/m/Y H:i') ?? '-';
         $dados['data_atualizacao'] = $item->updated_at?->format('d/m/Y H:i') ?? '-';
         $dados['sla'] = $item->sla_limite_em?->format('d/m/Y H:i') ?? ($item->sla_horas ? $item->sla_horas . ' horas' : '-');
+        $dados['sla_status'] = $this->formatarRotulo($item->sla_status ?: 'nao_informado');
+        $dados['proxima_acao'] = $this->definirProximaAcao($dados);
+        $dados['alertas_operacionais'] = $this->montarAlertasOperacionais($dados);
+        $dados['anexos_lista'] = $item->anexos
+            ->take(4)
+            ->map(fn ($anexo): array => [
+                'nome' => $anexo->nome_original ?: basename((string) $anexo->arquivo),
+                'data' => $anexo->created_at?->format('d/m/Y H:i') ?? '-',
+            ])
+            ->values()
+            ->all();
+        $dados['versoes_lista'] = $item->documentVersions
+            ->take(3)
+            ->map(fn ($versao): array => [
+                'numero' => $versao->version_number,
+                'status' => $this->formatarRotulo($versao->status ?: 'registrada'),
+                'data' => $versao->created_at?->format('d/m/Y H:i') ?? '-',
+            ])
+            ->values()
+            ->all();
+        $dados['dependencias_lista'] = $item->dependencies
+            ->take(4)
+            ->map(fn ($dependencia): array => [
+                'titulo' => $dependencia->dependsOnItem?->titulo ?? 'Dependência operacional',
+                'status' => $dependencia->blocked_until_resolved ? 'Bloqueia até resolver' : 'Informativa',
+                'observacao' => $dependencia->notes,
+            ])
+            ->values()
+            ->all();
+        $dados['bloqueios_lista'] = $item->blockers
+            ->take(4)
+            ->map(fn ($dependencia): array => [
+                'titulo' => $dependencia->itemControle?->titulo ?? 'Item impactado',
+                'status' => $dependencia->blocked_until_resolved ? 'Bloqueia até resolver' : 'Informativa',
+            ])
+            ->values()
+            ->all();
         $dados['checklists'] = $item->checklists->map(fn (ItemControleChecklist $checklist): array => [
             'id' => $checklist->id,
             'titulo' => $checklist->titulo,

@@ -8,7 +8,6 @@ use App\Filament\Pages\Clientes;
 use App\Filament\Resources\AuditoriaDetalhada\AuditoriaDetalhadaResource;
 use App\Filament\Resources\Empresas\EmpresaResource;
 use App\Filament\Resources\ItemControles\ItemControleResource;
-use App\Filament\Resources\Responsaveis\ResponsavelResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AuditoriaDetalhada;
 use App\Models\Comentario;
@@ -18,7 +17,6 @@ use App\Models\ItemControleAprovacao;
 use App\Models\ItemControleAnexo;
 use App\Models\ItemControleComentario;
 use App\Models\PrazzuDocumentVersion;
-use App\Models\Responsavel;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -64,7 +62,6 @@ class GlobalSearchService
             $this->safeGroup(fn () => $this->documentos($user, $term, $limitPerGroup), 'Documentos e anexos', 'Arquivos, anexos e versões documentais vinculadas aos controles', 'bi-folder2-open'),
             $this->safeGroup(fn () => $this->contratos($user, $term, $limitPerGroup), 'Contratos', 'Contratos vinculados aos itens de controle', 'bi-file-earmark-text'),
             $this->safeGroup(fn () => $this->usuarios($user, $term, $limitPerGroup), 'Usuários', 'Usuários do sistema', 'bi-people'),
-            $this->safeGroup(fn () => $this->responsaveis($user, $term, $limitPerGroup), 'Responsáveis', 'Pessoas responsáveis por controles e clientes', 'bi-person-badge'),
             $this->safeGroup(fn () => $this->comentarios($user, $term, $limitPerGroup), 'Comentários', 'Conversas, observações e comentários internos', 'bi-chat-left-text'),
             $this->safeGroup(fn () => $this->protocolosCodigos($user, $term, $limitPerGroup), 'Protocolos e códigos', 'IDs, contratos, tokens e códigos internos pesquisáveis', 'bi-upc-scan'),
             $this->safeGroup(fn () => $this->aprovacoes($user, $term, $limitPerGroup), 'Aprovações', 'Fluxos de aprovação', 'bi-patch-check'),
@@ -274,35 +271,6 @@ class GlobalSearchService
             ));
 
         return $this->group('Usuários', 'Pessoas com acesso ao sistema', 'bi-people', $items);
-    }
-
-    private function responsaveis(User $user, string $term, int $limit): array
-    {
-        if (! CachedSchema::hasTable('responsaveis')) {
-            return $this->group('Responsáveis', 'Pessoas responsáveis por controles e clientes', 'bi-person-badge', collect());
-        }
-
-        $items = Responsavel::query()
-            ->select($this->existingColumns('responsaveis', ['id', 'nome', 'email', 'telefone', 'cargo', 'empresa_id', 'updated_at']))
-            ->with('empresa:id,razao_social,nome_fantasia')
-            ->when(! $user->isSuperAdmin(), fn (Builder $query): Builder => $query->where('empresa_id', $user->empresa_id))
-            ->where(function (Builder $query) use ($term): void {
-                $this->applyLike($query, ['id', 'nome', 'email', 'telefone', 'cargo'], $term, 'responsaveis');
-            })
-            ->orderBy('nome')
-            ->limit($limit)
-            ->get()
-            ->map(fn (Responsavel $responsavel): array => $this->item(
-                title: $responsavel->nome ?: 'Responsável #' . $responsavel->id,
-                subtitle: trim(($responsavel->cargo ?: 'Responsável') . ' · ' . ($responsavel->empresa?->nome_fantasia ?: $responsavel->empresa?->razao_social ?: 'Sem empresa')),
-                type: 'Responsável',
-                icon: 'bi-person-badge',
-                color: 'emerald',
-                url: $this->safeResourceUrl(ResponsavelResource::class, 'edit', ['record' => $responsavel]) ?: Clientes::getUrl(),
-                meta: $responsavel->email ?: $responsavel->telefone,
-            ));
-
-        return $this->group('Responsáveis', 'Pessoas responsáveis por controles e clientes', 'bi-person-badge', $items);
     }
 
     private function comentarios(User $user, string $term, int $limit): array

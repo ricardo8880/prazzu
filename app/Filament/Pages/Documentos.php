@@ -9,7 +9,6 @@ use App\Support\CachedSchema;
 use App\Support\DocumentStorage;
 use App\Filament\Resources\ItemControles\ItemControleResource;
 use App\Filament\Pages\Contratos;
-use App\Filament\Pages\GestaoDocumentalEnterprise;
 use App\Filament\Pages\Pendencias;
 use App\Filament\Pages\Validades;
 use App\Models\ItemControle;
@@ -20,6 +19,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\WithFileUploads;
 use UnitEnum;
@@ -38,12 +38,12 @@ class Documentos extends Page
 
     public function getHeading(): string
     {
-        return 'Documentos e Modelos';
+        return 'Centro de Documentos';
     }
 
     public function getSubheading(): ?string
     {
-        return 'Fonte única da gestão documental: recebimento, pendências documentais, vencimentos, armazenamento e retenção.';
+        return 'Documentos organizados por empresa, categoria, competência, status e permissão de acesso.';
     }
 
 
@@ -59,6 +59,11 @@ class Documentos extends Page
     }
 
     public string $clusterDocumentos = 'visao-geral';
+    public string $buscaDocumento = '';
+    public string $filtroSituacao = 'todos';
+    public string $filtroCategoria = 'todas';
+    public string $filtroStatus = 'todos';
+    public string $filtroEmpresa = 'todas';
     public ?int $documentoResolucaoSelecionado = null;
     public bool $abrirProximoAutomaticamente = true;
     public ?int $ultimoDocumentoResolvido = null;
@@ -77,6 +82,15 @@ class Documentos extends Page
         if (is_string($cluster) && $this->isClusterDocumentosValido($cluster)) {
             $this->clusterDocumentos = $cluster;
         }
+    }
+
+    public function limparFiltrosDocumentos(): void
+    {
+        $this->buscaDocumento = '';
+        $this->filtroSituacao = 'todos';
+        $this->filtroCategoria = 'todas';
+        $this->filtroStatus = 'todos';
+        $this->filtroEmpresa = 'todas';
     }
 
 
@@ -287,7 +301,6 @@ class Documentos extends Page
             'atalhos' => $this->atalhos(),
             'acoesInteligentes' => $this->acoesInteligentes(),
             'indicadoresPrioridade' => $this->indicadoresPrioridade($documentos),
-            'integracaoEnterprise' => $this->integracaoEnterprise(),
             'clusterDocumentos' => $this->clusterDocumentos,
             'clusterAtivo' => $this->clusterDocumentosAtivo(),
             'clustersDocumentos' => $this->clustersDocumentos(),
@@ -295,6 +308,9 @@ class Documentos extends Page
             'documentoResolucaoEmEdicao' => $this->documentoResolucaoEmEdicao(),
             'prioridadeInteligente' => $this->prioridadeInteligente($documentos),
             'fluxoContinuo' => $this->fluxoContinuo($documentos),
+            'categoriasDocumentais' => $this->categoriasDocumentais(),
+            'empresasFiltro' => $this->empresasFiltro(),
+            'statusFiltroOptions' => $this->statusFiltroOptions(),
         ];
     }
 
@@ -340,9 +356,9 @@ class Documentos extends Page
                 'next_action' => 'Regularizar vencidos e monitorar próximos prazos',
             ],
             [
-                'key' => 'enterprise',
+                'key' => 'consulta',
                 'label' => 'Consulta completa',
-                'icon' => 'heroicon-o-rocket-launch',
+                'icon' => 'heroicon-o-magnifying-glass-circle',
                 'sort' => 4,
                 'tone' => 'primary',
                 'count' => (int) ($resumo['total'] ?? 0),
@@ -524,18 +540,11 @@ class Documentos extends Page
             ->values()
             ->all();
 
-        $enterprise = $colecao
-            ->filter(fn (array $documento): bool => in_array((string) ($documento['prioridade_operacional']['nivel'] ?? 'estavel'), ['critica', 'alta', 'monitorar'], true))
-            ->sortByDesc(fn (array $documento): int => (int) ($documento['prioridade_score'] ?? 0))
-            ->take(6)
-            ->values()
-            ->all();
-
         return [
             'visao-geral' => $colecao->take(6)->values()->all(),
             'pendencias' => $pendencias,
             'vencimentos' => $vencimentos,
-            'enterprise' => $enterprise,
+            'consulta' => $colecao->values()->all(),
             'fila' => $colecao->take(24)->values()->all(),
         ];
     }
@@ -545,9 +554,9 @@ class Documentos extends Page
     {
         return [
             [
-                'label' => 'Gestão documental',
-                'descricao' => 'Abrir painel completo de documentos, prioridades e filtros.',
-                'url' => $this->enterpriseUrl(),
+                'label' => 'Consultar documentos',
+                'descricao' => 'Abrir a lista completa de documentos com filtros e ações úteis.',
+                'url' => $this->clusterDocumentosUrl('consulta'),
                 'tom' => 'primary',
             ],
             [
@@ -559,7 +568,7 @@ class Documentos extends Page
             [
                 'label' => 'Validades documentais',
                 'descricao' => 'Ver vencidos, prazos próximos e itens sem data dentro de Documentos.',
-                'url' => $this->enterpriseUrl(['situacao' => 'vence_30']),
+                'url' => $this->clusterDocumentosUrl('vencimentos'),
                 'tom' => 'warning',
             ],
             [
@@ -757,96 +766,6 @@ class Documentos extends Page
     }
 
 
-    /** @return array<string, mixed> */
-    private function integracaoEnterprise(): array
-    {
-        $resumo = $this->resumo();
-        $vencidos = (int) ($resumo['vencidos'] ?? 0);
-        $semArquivo = (int) ($resumo['semArquivo'] ?? 0);
-        $vencem30 = (int) ($resumo['vencem30'] ?? 0);
-        $total = (int) ($resumo['total'] ?? 0);
-
-        $fluxos = [
-            [
-                'titulo' => 'Vencidos',
-                'descricao' => 'Abre a Gestão Documental Enterprise já filtrada para documentos vencidos.',
-                'total' => $vencidos,
-                'url' => $this->enterpriseUrl(['situacao' => 'vencido']),
-                'tom' => 'danger',
-            ],
-            [
-                'titulo' => 'Sem anexo',
-                'descricao' => 'Leva direto para itens sem arquivo/evidência dentro do painel completo.',
-                'total' => $semArquivo,
-                'url' => $this->enterpriseUrl(['situacao' => 'sem_arquivo']),
-                'tom' => 'warning',
-            ],
-            [
-                'titulo' => 'Vencem em 30 dias',
-                'descricao' => 'Mostra a fila preventiva antes que os documentos virem urgência.',
-                'total' => $vencem30,
-                'url' => $this->enterpriseUrl(['situacao' => 'vence_30']),
-                'tom' => 'primary',
-            ],
-            [
-                'titulo' => 'Visão completa',
-                'descricao' => 'Mantém o hub como entrada rápida e usa a Enterprise como tela operacional principal.',
-                'total' => $total,
-                'url' => $this->enterpriseUrl(),
-                'tom' => 'success',
-            ],
-        ];
-
-        return [
-            'url' => $this->enterpriseUrl(),
-            'descricao' => 'O hub orienta a decisão inicial e a Gestão Documental Enterprise assume a operação detalhada com filtros, fila, aprovação e cadastros.',
-            'fluxos' => $fluxos,
-        ];
-    }
-
-    /** @return array<string, string> */
-    private function enterpriseQueryForItem(ItemControle $item, array $prioridadeOperacional): array
-    {
-        $nivel = (string) ($prioridadeOperacional['nivel'] ?? 'estavel');
-        $query = [];
-
-        if ($nivel === 'critica') {
-            $motivo = mb_strtolower((string) ($prioridadeOperacional['motivo'] ?? ''));
-            $query['situacao'] = str_contains($motivo, 'sem arquivo') ? 'sem_arquivo' : 'vencido';
-        } elseif ($nivel === 'alta') {
-            $query['situacao'] = 'vence_7';
-        } elseif ($nivel === 'monitorar') {
-            $query['situacao'] = 'vence_30';
-        }
-
-        $empresaId = $this->value($item, 'empresa_id');
-
-        if (filled($empresaId)) {
-            $query['empresa_id'] = (string) $empresaId;
-        }
-
-        $titulo = $this->value($item, 'titulo');
-
-        if (filled($titulo)) {
-            $query['busca'] = (string) $titulo;
-        }
-
-        return $query;
-    }
-
-    /** @param array<string, string|null> $query */
-    private function enterpriseUrl(array $query = []): string
-    {
-        $url = GestaoDocumentalEnterprise::getUrl();
-        $query = array_filter($query, fn ($value): bool => filled($value));
-
-        if ($query === []) {
-            return $url;
-        }
-
-        return $url . '?' . http_build_query($query);
-    }
-
     private function mensagemHub(int $total, int $vencidos, int $semArquivo, int $vencem30): string
     {
         if ($total === 0) {
@@ -886,7 +805,7 @@ class Documentos extends Page
             return 'Revisar próximos vencimentos';
         }
 
-        return 'Abrir gestão documental';
+        return 'Consultar documentos';
     }
 
     private function documentos(): array
@@ -899,6 +818,8 @@ class Documentos extends Page
             ->select($this->selectColumns())
             ->with($this->withRelations());
 
+        $this->aplicarFiltrosDocumentais($query);
+
         if ($this->hasColumn('data_vencimento')) {
             $query->orderByRaw('CASE WHEN data_vencimento IS NULL THEN 1 ELSE 0 END')
                 ->orderBy('data_vencimento');
@@ -907,15 +828,191 @@ class Documentos extends Page
         $query->orderByDesc($this->hasColumn('updated_at') ? 'updated_at' : 'id');
 
         return $query
-            ->limit(80)
+            ->limit(120)
             ->get()
             ->map(fn (ItemControle $item): array => $this->documentoParaArray($item))
             ->sortByDesc('prioridade_score')
-            ->take(24)
+            ->take(60)
             ->values()
             ->all();
     }
 
+
+    private function aplicarFiltrosDocumentais(Builder $query): void
+    {
+        $busca = trim($this->buscaDocumento);
+
+        if ($busca !== '') {
+            $query->where(function (Builder $builder) use ($busca): void {
+                foreach (['titulo', 'descricao', 'tipo', 'status', 'arquivo'] as $column) {
+                    if ($this->hasColumn($column)) {
+                        $builder->orWhere($column, 'like', '%' . $busca . '%');
+                    }
+                }
+
+                if (CachedSchema::hasTable('empresas') && $this->hasColumn('empresa_id')) {
+                    $builder->orWhereHas('empresa', function (Builder $empresaQuery) use ($busca): void {
+                        $empresaQuery->where('razao_social', 'like', '%' . $busca . '%')
+                            ->orWhere('nome_fantasia', 'like', '%' . $busca . '%');
+                    });
+                }
+            });
+        }
+
+        if ($this->filtroStatus !== 'todos' && $this->hasColumn('status')) {
+            $query->where('status', $this->filtroStatus);
+        }
+
+        if ($this->filtroEmpresa !== 'todas' && $this->hasColumn('empresa_id')) {
+            $query->where('empresa_id', (int) $this->filtroEmpresa);
+        }
+
+        if ($this->filtroCategoria !== 'todas') {
+            $termos = $this->tiposPorCategoriaDocumental($this->filtroCategoria);
+
+            if ($termos !== []) {
+                $query->where(function (Builder $builder) use ($termos): void {
+                    foreach ($termos as $termo) {
+                        foreach (['tipo', 'titulo', 'descricao'] as $column) {
+                            if ($this->hasColumn($column)) {
+                                $builder->orWhere($column, 'like', '%' . $termo . '%');
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        if ($this->filtroSituacao !== 'todos') {
+            match ($this->filtroSituacao) {
+                'sem_arquivo' => $this->hasColumn('arquivo') ? $query->where(function (Builder $builder): void {
+                    $builder->whereNull('arquivo')->orWhere('arquivo', '');
+                }) : null,
+                'vencidos' => $this->hasColumn('data_vencimento') ? $query->whereDate('data_vencimento', '<', now()->toDateString()) : null,
+                'vence_30' => $this->hasColumn('data_vencimento') ? $query->whereBetween('data_vencimento', [now()->toDateString(), now()->addDays(30)->toDateString()]) : null,
+                'portal' => $this->hasColumn('portal_ativo') ? $query->where('portal_ativo', true) : null,
+                default => null,
+            };
+        }
+    }
+
+    /** @return array<string, string> */
+    private function categoriasDocumentais(): array
+    {
+        return [
+            'fiscal' => 'Fiscal',
+            'contabil' => 'Contábil',
+            'dp' => 'Departamento Pessoal',
+            'societario' => 'Societário / Jurídico',
+            'financeiro' => 'Financeiro',
+            'geral' => 'Geral',
+        ];
+    }
+
+    /** @return array<string, array<int, string>> */
+    private function mapaTiposCategorias(): array
+    {
+        return [
+            'fiscal' => ['fiscal', 'nota', 'notas', 'xml', 'sped', 'apuracao', 'apuração', 'darf', 'das'],
+            'contabil' => ['contabil', 'contábil', 'balanco', 'balanço', 'balancete', 'ecd', 'ecf', 'diario', 'diário', 'razao', 'razão'],
+            'dp' => ['dp', 'rh', 'folha', 'fgts', 'esocial', 'ferias', 'férias', 'admissao', 'admissão', 'rescisao', 'rescisão'],
+            'societario' => ['societario', 'societário', 'juridico', 'jurídico', 'contrato', 'alteracao', 'alteração', 'procuracao', 'procuração', 'certidao', 'certidão', 'licenca', 'licença', 'alvara', 'alvará'],
+            'financeiro' => ['financeiro', 'boleto', 'comprovante', 'extrato', 'pagamento', 'cobranca', 'cobrança'],
+            'geral' => ['documento', 'geral', 'anexo', 'evidencia', 'evidência'],
+        ];
+    }
+
+    /** @return array<int, string> */
+    private function tiposPorCategoriaDocumental(string $categoria): array
+    {
+        return $this->mapaTiposCategorias()[$categoria] ?? [];
+    }
+
+    private function categoriaDocumento(ItemControle $item): string
+    {
+        $texto = Str::lower(trim(implode(' ', array_filter([
+            (string) $this->value($item, 'tipo'),
+            (string) $this->value($item, 'titulo'),
+            (string) $this->value($item, 'descricao'),
+        ]))));
+
+        foreach ($this->mapaTiposCategorias() as $categoria => $termos) {
+            foreach ($termos as $termo) {
+                if ($termo !== '' && str_contains($texto, Str::lower($termo))) {
+                    return $categoria;
+                }
+            }
+        }
+
+        return 'geral';
+    }
+
+    private function competenciaDocumento(ItemControle $item): ?string
+    {
+        $payload = $this->value($item, 'custom_payload');
+
+        if (is_string($payload)) {
+            $payload = json_decode($payload, true) ?: [];
+        }
+
+        if (is_array($payload)) {
+            foreach (['competencia', 'competência', 'periodo', 'referencia', 'referência'] as $key) {
+                if (filled($payload[$key] ?? null)) {
+                    return (string) $payload[$key];
+                }
+            }
+        }
+
+        $vencimento = $this->value($item, 'data_vencimento');
+
+        if (filled($vencimento)) {
+            try {
+                return \Carbon\Carbon::parse($vencimento)->format('m/Y');
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<string, string> */
+    private function empresasFiltro(): array
+    {
+        if (! CachedSchema::hasTable('empresas') || ! $this->hasColumn('empresa_id')) {
+            return [];
+        }
+
+        return $this->baseQuery()
+            ->with('empresa:id,razao_social,nome_fantasia')
+            ->select('empresa_id')
+            ->whereNotNull('empresa_id')
+            ->distinct()
+            ->limit(200)
+            ->get()
+            ->mapWithKeys(function (ItemControle $item): array {
+                $empresa = $item->empresa;
+                $nome = $empresa?->nome_fantasia ?: $empresa?->razao_social;
+
+                return $empresa && $nome ? [(string) $empresa->id => $nome] : [];
+            })
+            ->sort()
+            ->all();
+    }
+
+    /** @return array<string, string> */
+    private function statusFiltroOptions(): array
+    {
+        return $this->baseQuery()
+            ->when($this->hasColumn('status'), fn (Builder $query): Builder => $query->whereNotNull('status'))
+            ->limit(500)
+            ->pluck('status')
+            ->filter(fn ($status): bool => filled($status))
+            ->unique()
+            ->mapWithKeys(fn ($status): array => [(string) $status => ucfirst(str_replace('_', ' ', (string) $status))])
+            ->sort()
+            ->all();
+    }
 
     /** @return array<string, mixed> */
     private function documentoParaArray(ItemControle $item): array
@@ -929,6 +1026,9 @@ class Documentos extends Page
             'titulo' => $this->value($item, 'titulo') ?: 'Documento sem título',
             'descricao' => $this->value($item, 'descricao'),
             'tipo' => $this->value($item, 'tipo'),
+            'categoria_documental' => $this->categoriaDocumento($item),
+            'categoria_documental_label' => $this->categoriasDocumentais()[$this->categoriaDocumento($item)] ?? 'Geral',
+            'competencia' => $this->competenciaDocumento($item),
             'status' => $this->value($item, 'status'),
             'prioridade' => $this->value($item, 'prioridade'),
             'data_vencimento' => $this->value($item, 'data_vencimento'),
@@ -942,7 +1042,7 @@ class Documentos extends Page
             'nome_fantasia' => $empresa?->nome_fantasia,
             'razao_social' => $empresa?->razao_social,
             'empresa_id' => $this->value($item, 'empresa_id'),
-            'enterprise_url' => $this->enterpriseUrl($this->enterpriseQueryForItem($item, $prioridadeOperacional)),
+            'documentos_url' => $this->clusterDocumentosUrl('consulta'),
             'edit_url' => ItemControleResource::getUrl('edit', ['record' => $item->id]),
             'arquivo_url' => filled($arquivo) ? asset('storage/' . ltrim((string) $arquivo, '/')) : null,
             'prioridade_operacional' => $prioridadeOperacional,
@@ -1137,7 +1237,7 @@ class Documentos extends Page
         foreach ([
             'titulo', 'descricao', 'tipo', 'status', 'prioridade', 'data_vencimento', 'arquivo',
             'portal_ativo', 'portal_cliente_nome', 'portal_cliente_email', 'portal_expira_em',
-            'empresa_id', 'created_at', 'updated_at',
+            'empresa_id', 'custom_payload', 'created_at', 'updated_at',
         ] as $column) {
             if ($this->hasColumn($column)) {
                 $columns[] = $column;
