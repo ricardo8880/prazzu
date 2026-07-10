@@ -1,0 +1,106 @@
+Prazzu Tools (Plataforma de Ferramentas)
+Prazzu Blog (Conteúdo + SEO)
+Prazzu Core (SaaS de Contabilidade)
+Prazzu Contabilidade (Sua empresa de contabilidade/laboratório)
+Prazzu Learn (Academia, cursos, tutoriais e treinamentos)
+Prazzu Community (Comunidade/Fórum para contadores)
+Prazzu Store (Marketplace de plugins, templates e módulos)
+Prazzu API (APIs para desenvolvedores e outras empresas)
+Prazzu AI (IA especializada em contabilidade)
+Prazzu Insights (Dados e inteligência de mercado)
+Prazzu Cloud (Hospedagem e infraestrutura para clientes)
+Prazzu Hub (Biblioteca de processos, checklists e modelos compartilhados)
+Prazzu Docs (Documentação pública, normas, integrações e guias técnicos)
+Prazzu Labs (Ambiente para testar funcionalidades experimentais)
+Prazzu Status (Página pública de disponibilidade e transparência)
+
+
+
+
+Tools → atrai usuários.
+Blog → gera SEO e autoridade.
+Core → principal fonte de receita recorrente.
+Contabilidade → valida tudo na prática e gera receita offline/online.
+Learn → educa e fortalece a marca.
+Community → cria conteúdo gerado pelos usuários.
+Store → aumenta o ticket médio.
+API → vende sua tecnologia para terceiros.
+AI → agrega inteligência aos produtos.
+Insights → transforma dados em novos produtos.
+Cloud → fornece infraestrutura.
+Hub → compartilhamento de processos e modelos.
+Docs → documentação e tráfego técnico.
+Labs → inovação contínua.
+Status → transparência e confiança.
+
+
+
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                  O UNIVERSO PRAZZU                                           │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                              │
+│  ┌────────────────┐      ┌────────────────┐      ┌────────────────┐                         │
+│  │  PRAZZU TOOLS  │─────▶│  PRAZZU BLOG   │─────▶│  PRAZZU LEARN  │                         │
+│  │ (Ferramentas)  │      │ (SEO/Conteúdo) │      │ (Cursos/Guias) │                         │
+│  └────────────────┘      └────────────────┘      └────────────────┘                         │
+│           │                        │                        │                                 │
+│           └────────────────────────┼────────────────────────┘                                 │
+│                                    ▼                                                         │
+│                         ┌─────────────────────────┐                                           │
+│                         │      PRAZZU CORE        │                                           │
+│                         │   SaaS de Contabilidade │                                           │
+│                         └─────────────────────────┘                                           │
+│                                    │                                                         │
+│              ┌─────────────────────┼──────────────────────┐                                  │
+│              ▼                     ▼                      ▼                                  │
+│      ┌──────────────┐      ┌──────────────┐      ┌────────────────┐                         │
+│      │ PRAZZU STORE │      │ PRAZZU API  │      │ PRAZZU CLOUD   │                         │
+│      │ Marketplace  │      │ Integrações │      │ Infraestrutura │                         │
+│      └──────────────┘      └──────────────┘      └────────────────┘                         │
+│              │                     │                      │                                  │
+│              └─────────────────────┼──────────────────────┘                                  │
+│                                    ▼                                                         │
+│                      ┌─────────────────────────────────┐                                      │
+│                      │      PRAZZU CONTABILIDADE       │ ◄──── VOCÊ É O DONO                 │
+│                      │ Empresa Contábil / Laboratório  │                                      │
+│                      └─────────────────────────────────┘                                      │
+│                                    │                                                         │
+│                                    ▼                                                         │
+│                 ┌────────────────────────────────────────────┐                               │
+│                 │        VALIDAÇÃO EM AMBIENTE REAL          │                               │
+│                 │ • Testa novas funcionalidades              │                               │
+│                 │ • Gera feedback diário                     │                               │
+│                 │ • Descobre dores reais                     │                               │
+│                 │ • Cria cases de sucesso                    │                               │
+│                 └────────────────────────────────────────────┘                               │
+│                                    │                                                         │
+│                                    ▼                                                         │
+│        ┌────────────────┐   ┌────────────────┐   ┌────────────────┐                         │
+│        │  PRAZZU AI     │   │ PRAZZU INSIGHTS│   │ PRAZZU HUB     │                         │
+│        │ Inteligência   │   │ Dados Mercado  │   │ Processos      │                         │
+│        └────────────────┘   └────────────────┘   └────────────────┘                         │
+│                 │                    │                     │                                  │
+│                 └────────────────────┼─────────────────────┘                                  │
+│                                      ▼                                                       │
+│        ┌────────────────┐   ┌────────────────┐   ┌────────────────┐                         │
+│        │ COMMUNITY      │   │ DOCS           │   │ LABS           │                         │
+│        │ Fórum          │   │ Documentação   │   │ Experimental   │                         │
+│        └────────────────┘   └────────────────┘   └────────────────┘                         │
+│                                      │                                                       │
+│                                      ▼                                                       │
+│                             ┌───────────────────┐                                            │
+│                             │   PRAZZU STATUS   │                                            │
+│                             │ Transparência     │                                            │
+│                             └───────────────────┘                                            │
+│                                                                                              │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│                               FLUXO DO ECOSSISTEMA                                            │
+│                                                                                              │
+│ Redes Sociais + Google                                                                       │
+│          │                                                                                   │
+│          ▼                                                                                   │
+│ Prazzu Tools ──► Blog ──► Learn ──► Core ──► Contabilidade ──► AI/Insights ──► Comunidade    │
+│          │                                                                                   │
+│          └────────────── Receita recorrente financia toda a expansão ───────────────────────┘│
+└──────────────────────────────────────────────────────────────────────────────────────────────┘

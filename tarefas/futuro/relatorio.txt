@@ -1,0 +1,435 @@
+Acho que este documento deve ser o Documento Mestre do Prazzu Tools. Não apenas uma lista de funcionalidades, mas um guia para que, daqui a um ano, você ainda saiba exatamente qual era a filosofia do projeto.
+
+DOCUMENTO MESTRE — PRAZZU TOOLS
+
+Versão: 1.0
+
+Status: Planejamento Inicial
+
+Objetivo Principal
+
+Criar a maior plataforma brasileira de ferramentas gratuitas para contadores, escritórios contábeis e empresas, oferecendo soluções úteis, rápidas e sem burocracia.
+
+Missão
+
+Resolver problemas reais em menos de 1 minuto.
+
+Toda ferramenta criada deve seguir esse princípio.
+
+Se uma ferramenta exigir muitos passos ou gerar dúvidas, ela deve ser simplificada.
+
+Visão
+
+Ser o primeiro lugar que um contador pensa quando precisa resolver qualquer problema rápido relacionado à contabilidade.
+
+Filosofia
+
+O Prazzu Tools não existe para obrigar alguém a comprar.
+
+Ele existe para entregar valor primeiro.
+
+A venda acontece naturalmente.
+
+Princípios
+1. Cadastro nunca será obrigatório
+
+O usuário entra.
+
+Usa.
+
+Resolve.
+
+Sai.
+
+Sem:
+
+cadastro
+login
+confirmação de e-mail
+cartão
+
+Nada.
+
+2. O gratuito precisa ser excelente
+
+O usuário nunca deve pensar:
+
+"Essa ferramenta é ruim porque querem vender."
+
+Pelo contrário.
+
+Ele deve pensar:
+
+"Se o gratuito é tão bom, imagina o Premium."
+
+3. O Premium vende produtividade
+
+Nunca bloquear funcionalidades essenciais.
+
+O Premium existe para:
+
+economizar tempo;
+automatizar tarefas;
+facilitar trabalho repetitivo.
+4. Uma experiência Premium por dia
+
+Todo visitante pode utilizar a melhor versão da ferramenta uma vez por dia.
+
+Depois disso.
+
+Continua usando gratuitamente.
+
+5. Velocidade acima de tudo
+
+Cada ferramenta deve abrir rapidamente.
+
+Sem telas desnecessárias.
+
+Público
+
+Inicialmente:
+
+Escritórios contábeis
+Contadores autônomos
+Empresas
+MEIs
+Departamentos fiscais
+Departamentos financeiros
+Objetivo de cada ferramenta
+
+Cada ferramenta precisa responder:
+
+Qual dor ela resolve?
+
+Exemplo.
+
+Calculadora Simples Nacional
+
+↓
+
+Resolver cálculo tributário.
+
+Validador XML
+
+↓
+
+Encontrar erros rapidamente.
+
+OCR
+
+↓
+
+Extrair texto.
+
+Nunca criar ferramentas sem um problema claro.
+
+Organização
+
+Ferramentas divididas por categorias.
+
+Calculadoras
+Simples Nacional
+Rescisão
+INSS
+FGTS
+IRRF
+Férias
+Validadores
+XML
+CNPJ
+CPF
+IE
+NCM
+Conversores
+PDF
+Excel
+CSV
+XML
+TXT
+Geradores
+Contratos
+Procuração
+PIX
+QR Code
+Etiquetas
+Organizadores
+PDFs
+Documentos
+Pastas
+Outros
+
+Tudo que não entrar nas categorias.
+
+Estrutura da plataforma
+
+Página inicial
+
+↓
+
+Pesquisa
+
+↓
+
+Categorias
+
+↓
+
+Ferramentas
+
+↓
+
+Artigos relacionados
+
+↓
+
+Newsletter
+
+↓
+
+Premium
+
+Pesquisa
+
+A pesquisa deve encontrar ferramentas rapidamente.
+
+No futuro.
+
+Pesquisa inteligente com IA.
+
+Página da ferramenta
+
+Cada ferramenta possui:
+
+título;
+descrição;
+botão principal;
+instruções;
+perguntas frequentes;
+artigos relacionados;
+ferramentas relacionadas.
+Blog
+
+Cada ferramenta obrigatoriamente gera conteúdo.
+
+Exemplo.
+
+Ferramenta
+
+↓
+
+Como usar
+
+↓
+
+Erros comuns
+
+↓
+
+Perguntas frequentes
+
+↓
+
+Legislação
+
+↓
+
+Artigos relacionados
+
+SEO
+
+Toda ferramenta deve ser feita pensando no Google.
+
+Cada página deve possuir:
+
+URL amigável;
+título otimizado;
+meta descrição;
+FAQ;
+Schema.org;
+Open Graph;
+conteúdo relevante;
+velocidade alta.
+Redes sociais
+
+Todo conteúdo gera vídeos.
+
+Exemplo.
+
+Uma ferramenta.
+
+↓
+
+Cinco vídeos.
+
+↓
+
+Instagram
+
+↓
+
+TikTok
+
+↓
+
+Shorts
+
+↓
+
+LinkedIn
+
+↓
+
+Facebook
+
+Modelo Premium
+
+Gratuito
+
+ilimitado
+excelente
+rápido
+
+Premium
+
+IA
+histórico
+automação
+exportações
+processamento em lote
+integrações
+produtividade
+Modelo de assinatura
+
+Um único plano.
+
+Mensal.
+
+Trimestral.
+
+Anual.
+
+Sem dezenas de planos.
+
+Cadastro
+
+Cadastro apenas quando existir benefício.
+
+Por exemplo.
+
+salvar histórico;
+assinar Premium;
+sincronizar dados.
+Experiência
+
+Objetivo.
+
+Entrou.
+
+Resolveu.
+
+Saiu satisfeito.
+
+Design
+
+Minimalista.
+
+Moderno.
+
+Escuro e claro.
+
+Responsivo.
+
+Sem poluição.
+
+Analytics
+
+Monitorar.
+
+ferramenta mais usada;
+origem do tráfego;
+tempo médio;
+conversão Premium;
+artigos mais lidos;
+buscas realizadas.
+Monetização
+
+Premium.
+
+Nada de anúncios invasivos.
+
+Nada de pop-ups irritantes.
+
+Integração com o Core
+
+Quando fizer sentido.
+
+Mostrar.
+
+Gostou das ferramentas?
+
+Conheça o Prazzu Core.
+
+Sem insistência.
+
+Roadmap Inicial
+Versão 1
+Plataforma
+Pesquisa
+Categorias
+10 ferramentas
+Blog
+Premium
+SEO
+Versão 2
+IA
+Favoritos
+Histórico
+Pesquisa inteligente
+Mais ferramentas
+Versão 3
+Aplicativo
+API
+Automações
+Integrações
+Regras de Ouro
+Nunca exigir cadastro para usar.
+Nunca piorar o gratuito para vender o Premium.
+Sempre lançar ferramentas que resolvem dores reais.
+Cada ferramenta deve gerar conteúdo para o blog.
+Cada artigo deve levar naturalmente a uma ferramenta.
+Toda ferramenta precisa ser extremamente rápida.
+O Premium vende tempo, não necessidade.
+Nenhuma ferramenta é lançada sem SEO.
+Nenhuma funcionalidade é criada sem resolver um problema claro.
+O usuário deve conseguir utilizar qualquer ferramenta em menos de um minuto.
+Cada ferramenta deve fortalecer a marca Prazzu.
+O objetivo não é ter muitas ferramentas, mas ter as melhores ferramentas.
+Visão de Longo Prazo
+
+O Prazzu Tools não será apenas um site de ferramentas.
+
+Ele será a porta de entrada de todo o ecossistema Prazzu.
+
+Cada nova ferramenta criada terá cinco funções simultâneas:
+
+Resolver uma dor real.
+Atrair visitantes pelo Google e redes sociais.
+Fortalecer a marca Prazzu.
+Gerar receita através do Premium.
+Apresentar naturalmente o usuário ao Prazzu Core.
+Minha recomendação
+
+Antes de escrever a primeira linha de código amanhã, faça uma coisa que poucos desenvolvedores fazem: defina a arquitetura antes das funcionalidades.
+
+Ou seja, não comece pela primeira ferramenta. Comece pelo motor que permitirá criar a segunda, a décima e a centésima ferramenta sem precisar reescrever tudo.
+
+Eu dividiria o projeto em módulos desde o início:
+
+Site institucional (Home, Sobre, Planos, Contato)
+Motor de Ferramentas (estrutura reutilizável para qualquer ferramenta)
+Motor de Blog (artigos, categorias, SEO)
+Motor Premium (planos, permissões e recursos avançados)
+Painel Administrativo (gerenciar ferramentas, artigos e métricas)
+Infraestrutura compartilhada (autenticação para quem assinar, analytics, cache, busca e componentes de UI)
+
+Essa base pode parecer mais lenta no primeiro mês, mas quando você estiver criando a ferramenta número 50, vai agradecer por ter investido tempo nela. O objetivo não é construir apenas 10 ferramentas; é construir uma plataforma capaz de crescer para centenas delas com consistência.
